@@ -195,7 +195,7 @@ class Purchase_orders extends CI_Controller
         $filter_part_no = trim(base64_decode($this->input->get('filter_part_no')));
 
         $po = $this->api->read("purchase_orders", [], ["purchase_order_no" => $purchase_order_no]);
-        $start_date = date("Y-m-d", strtotime(@$po->p_year."-".@$po->p_month."-10"));
+        $start_date = date("Y-m-d");
         $valid_date = date("Y-m-t", strtotime(@$po->p_year."-".@$po->p_month."-10"));
 
         //Select Query
@@ -289,7 +289,7 @@ class Purchase_orders extends CI_Controller
             $pr = $this->api->read("purchase_requests", ["purchase_request_no" => $purchase_request_no]);
             $this->api->delete("purchase_orders", ["purchase_request_no" => $purchase_request_no]);
 
-            $start_date = date("Y-m-d", strtotime(@$pr->p_year."-".@$pr->p_month."-10"));
+            $start_date = date("Y-m-d");
             $valid_date = date("Y-m-t", strtotime(@$pr->p_year."-".@$pr->p_month."-10"));
 
             //Select Query
@@ -549,8 +549,10 @@ class Purchase_orders extends CI_Controller
         if ($this->input->post()) {
             $id = $this->input->post('id');
             $data = $this->api->read("purchase_orders", [], ["id" => $id]);
+            $purchase_order_no = @$data->purchase_order_no;
+            $maxRev = $this->api->query("SELECT max(rev) as rev FROM purchase_orders WHERE purchase_order_no = '$purchase_order_no'");
 
-            $start_date = date("Y-m-d", strtotime(@$data->p_year."-".@$data->p_month."-10"));
+            $start_date = date("Y-m-d");
 
             $this->db->select('b.price, b.currency');
             $this->db->from('supplier_items a');
@@ -561,12 +563,14 @@ class Purchase_orders extends CI_Controller
 
             if(!empty($supplier_item)){
                 $total = ($data->qty * $supplier_item->price);
-                $update = $this->db->update('purchase_orders', ["price" => $supplier_item->price, "currency" => $supplier_item->currency, "total" => $total], ["id" => $id]);
+                $update = $this->db->update('purchase_orders', ["price" => $supplier_item->price, "currency" => $supplier_item->currency, "total" => $total, "rev" => (@$maxRev->rev + 1)], ["id" => $id]);
                 if($update){
                     echo json_encode(array("title" => "Good Job", "message" => $data->item_id . " | Sync Price Successfully", "theme" => "success"));
                 } else {
                     echo json_encode(array("title" => "Error", "message" => $data->item_id . " | Sync Price Failed", "theme" => "error"));
                 }
+            }else{
+                echo json_encode(array("title" => "Error", "message" => "Valid Date not match", "theme" => "error"));
             }
         }
     }
@@ -637,6 +641,9 @@ class Purchase_orders extends CI_Controller
             $revision = $post['revision'];
             $databf = $this->api->read("purchase_orders", [], ["id" => $id]);
 
+            $purchase_order_no = @$databf->purchase_order_no;
+            $maxRev = $this->api->query("SELECT max(rev) as rev FROM purchase_orders WHERE purchase_order_no = '$purchase_order_no'");
+
             $send = $this->db->update('purchase_orders', [
                     "purchase_order_no" => $post['purchase_order_no'], 
                     "supplier_id" => $post['supplier_id'], 
@@ -647,6 +654,7 @@ class Purchase_orders extends CI_Controller
                     "reason" => $post['reason'], 
                     "revision" => $revision,
                     "status_edit" => 1,
+                    "rev" => (@$maxRev->rev + 1),
                     "log" => json_encode(["qty" => $databf->qty, "total" => $databf->total, "revision" => $databf->revision, "log" => $databf->log, "reason" => $databf->reason])
                 ], ["id" => $id]
             );
@@ -977,8 +985,14 @@ class Purchase_orders extends CI_Controller
                 } else {
                     $digits = 0;
                 }
+
+                if(!empty($record['reason'])){
+                    $styles = "background:#FFDD9E;";
+                }else{
+                    $styles = "";
+                }
                 
-                $html .= '  <tr>
+                $html .= '  <tr style="'.$styles.'">
                                 <td  style="text-align:center;">' . $no . '</td>
                                 <td>' . $record['item_id'] . '</td>
                                 <td>' . $record['item_supplier'] . '</td>

@@ -172,7 +172,7 @@
                 <th data-options="field:'currency',width:80,align:'center'">Currency</th>
                 <th data-options="field:'sync',width:80,align:'center',formatter:BtnSync">#</th>
                 <!-- <th data-options="field:'eta',width:100,halign:'center'">ETA</th> -->
-                <th data-options="field:'revision',width:50,align:'center'">Rev</th>
+                <th data-options="field:'rev',width:50,align:'center'">Rev</th>
                 <th data-options="field:'reason',width:150,halign:'center'">Reason</th>
             </tr>
         </thead>
@@ -593,6 +593,8 @@
                 });
             }
         });
+
+        $('.messager-input').attr('type', 'password');
     }
 
     function pushData(){
@@ -1227,7 +1229,7 @@
     }
     
     function BtnSync(val, row) {
-        if(parseInt(row.price) == parseInt(row.dprice) && row.currency == row.dcurrency){
+        if(parseFloat(row.price) == parseFloat(row.dprice) && row.currency == row.dcurrency){
             return "-";
         } else if(val == 0){
             return "-";

@@ -54,9 +54,9 @@
 <!-- TOOLBAR DATAGRID -->
 <div id="toolbar" style="height: 220px;">
     <div style="width: 100%;">
-        <fieldset style="width: 80%; border:2px solid #d0d0d0; margin-bottom: 5px; margin-top: 5px; border-radius:4px;">
+        <fieldset style="width: 100%; border:2px solid #d0d0d0; margin-bottom: 5px; margin-top: 5px; border-radius:4px;">
             <legend><b>Form Filter Data</b></legend>
-            <div style="width: 50%; float: left;">
+            <div style="width: 30%; float: left;">
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Plant</span>
                     <input style="width:60%;" name="filter_plant" id="filter_plant" class="easyui-combogrid">
@@ -74,7 +74,7 @@
                     <a href="javascript:;" class="easyui-linkbutton" onclick="filter()"><i class="fa fa-search"></i> Filter Data</a>
                 </div>
             </div>
-            <div style="width: 50%; float: left;">
+            <div style="width: 30%; float: left;">
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Category</span>
                     <input style="width:60%;" id="filter_category" class="easyui-combobox">
@@ -87,9 +87,15 @@
                     <span style="width:35%; display:inline-block;">Part Vendor</span>
                     <input style="width:60%;" name="filter_item_vendor" id="filter_item_vendor" class="easyui-combobox">
                 </div>
-                <div class="fitem">
+            </div>
+            <div style="width: 30%; float: left;">
+                <div class="fitem" style="margin-bottom: 5px;">
                     <span style="width:35%; display:inline-block;">Share Order</span>
                     <input style="width:60%;" name="filter_share_order" id="filter_share_order" class="easyui-combobox">
+                </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Doouble Item</span>
+                    <input name="filter_check" id="filter_check" class="easyui-checkbox" value="1">
                 </div>
             </div>
         </fieldset>
@@ -455,6 +461,7 @@
         var filter_items = $("#filter_items").combogrid('getValue');
         var filter_item_vendor = $("#filter_item_vendor").combobox('getValue');
         var filter_share_order = $("#filter_share_order").combobox('getValue');
+        var filter_check = $("#filter_check").checkbox('options');
 
         var url = "?filter_suppliers=" + window.btoa(filter_suppliers) +
             "&filter_items=" + window.btoa(filter_items) +
@@ -462,6 +469,7 @@
             "&filter_maker=" + window.btoa(filter_maker) +
             "&filter_item_vendor=" + window.btoa(filter_item_vendor) +
             "&filter_share_order=" + window.btoa(filter_share_order) +
+            "&filter_check=" + filter_check.checked +
             "&filter_plant=" + window.btoa(filter_plant);
 
         $('#dg').datagrid({
@@ -486,6 +494,7 @@
         var filter_items = $("#filter_items").combogrid('getValue');
         var filter_item_vendor = $("#filter_item_vendor").combobox('getValue');
         var filter_share_order = $("#filter_share_order").combobox('getValue');
+        var filter_check = $("#filter_check").checkbox('options');
 
         var url = "?filter_suppliers=" + window.btoa(filter_suppliers) +
             "&filter_items=" + window.btoa(filter_items) +
@@ -493,6 +502,7 @@
             "&filter_maker=" + window.btoa(filter_maker) +
             "&filter_item_vendor=" + window.btoa(filter_item_vendor) +
             "&filter_share_order=" + window.btoa(filter_share_order) +
+            "&filter_check=" + filter_check.checked +
             "&filter_plant=" + window.btoa(filter_plant);
 
         window.location.assign('<?= base_url('planning/supplier_items/print/excel') ?>' + url);

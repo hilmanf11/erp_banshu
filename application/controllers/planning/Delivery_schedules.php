@@ -244,9 +244,15 @@ class Delivery_schedules extends CI_Controller
             $this->db->where('a.p_month', $filter_month);
             $this->db->where('a.p_year', $filter_year);
             $this->db->where('a.revision', $filter_revision);
-            $this->db->like('a.po_no', $filter_po_no);
-            $this->db->like('a.product_family', $filter_product_family);
-            $this->db->like('a.part_no', $filter_part_no);
+            if($filter_po_no != ""){
+                $this->db->like('a.po_no', $filter_po_no);
+            }
+            if($filter_product_family != ""){
+                $this->db->like('a.product_family', $filter_product_family);
+            }
+            if($filter_part_no != ""){
+                $this->db->like('a.part_no', $filter_part_no);
+            }
             $this->db->order_by('a.po_no', 'ASC');
             //Total Data
             $totalRows = $this->db->count_all_results('', false);

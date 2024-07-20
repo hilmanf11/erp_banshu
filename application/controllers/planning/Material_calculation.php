@@ -316,15 +316,21 @@ class Material_calculation extends CI_Controller
                         <td style='text-align:right;'>" . round($record['eta']) . "</td>
                         <td style='text-align:right;'>" . round($record['total']) . "</td>
                         <td style='text-align:right; ".$styles."'><a href='#' onclick='".$onclickBalance."'>". number_format(@$balances) ."</a></td>";
-
+            
+            //ini di ambil dari total ETA yang harian
+            //$record['eta']
             $wp = "";
             $styles2 = "";
             $balance = @$balances;
             while (strtotime($firstDate2) <= strtotime($endDate2)) {
                 $working_date2 = date("Y-m-d", strtotime($firstDate2));
 
-                $delivery_schedule = $this->api->read("delivery_schedules", [], ["part_no" => $item_id, "p_month" => $filter_month, "p_year" => $filter_year, "revision" => $filter_revision, "delivey_date_1" => $working_date2]);
-                $qty_delivery_schedule = empty($delivery_schedule->delivey_qty_1) ? 0 : $delivery_schedule->delivey_qty_1;
+                // $delivery_schedule = $this->api->read("delivery_schedules", [], ["part_no" => $item_id, "p_month" => $filter_month, "p_year" => $filter_year, "revision" => $filter_revision, "delivey_date_1" => $working_date2]);
+                // $qty_delivery_schedule = empty($delivery_schedule->delivey_qty_1) ? 0 : $delivery_schedule->delivey_qty_1;
+
+                $delivery_schedule = $this->dummy->query("SELECT SUM(por_receiveqty) as total from por where item_id = '$item_id' and por_pocreqdate = '$working_date2'");
+                $totalRow = $delivery_schedule->row();
+                $qty_delivery_schedule = empty(@$totalRow->total) ? 0 : @$totalRow->total;
                 
                 $ithSupply = $this->dummy->query("SELECT SUM(ith_qty) as supply from ith where ith_form like '%OU%' and ith_date = '$working_date2' and ith_item_id = '$item_id'");
                 $ithSupplyRow = $ithSupply->row();

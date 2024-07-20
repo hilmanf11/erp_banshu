@@ -43,7 +43,7 @@
                         <td style="padding:10px;"><input value="on" readonly="true" class="easyui-checkbox" id="check_rm"> &nbsp; Stock Raw Material</td>
                     </tr>
                     <tr>
-                        <td style="padding:10px;"><input value="on" readonly="true" class="easyui-checkbox" id="check_rm"> &nbsp; Stock Raw Material</td>
+                        <!-- <td style="padding:10px;"><input value="on" readonly="true" class="easyui-checkbox" id="check_rm"> &nbsp; Stock Raw Material</td> -->
                         <td style="padding:10px;"><input value="on" class="easyui-checkbox" id="check_bypass"> &nbsp; By Pass Breakdown</td>
                     </tr>
                 </table>

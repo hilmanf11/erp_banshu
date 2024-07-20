@@ -286,14 +286,8 @@ class Generate_mrp extends CI_Controller
             $filter_part_no = base64_decode($this->input->get('filter_part_no'));
 
             //Select Query
-            $this->db->select('a.p_month, a.p_year, a.revision, a.product_no, a.product_name, a.product_family,
-                coalesce(b.mpq, 0) as mpq, 
-                coalesce(b.moq, 0) as moq, 
-                coalesce(b.leadtime, 0) as leadtime,
-                c.type as supplier_type');
+            $this->db->select('a.p_month, a.p_year, a.revision, a.product_no, a.product_name, a.product_family');
             $this->db->from('generate_mrp a');
-            $this->db->join('supplier_items b', 'a.product_no = b.item_id and b.share_order > 0', 'left');
-            $this->db->join('mst_maker c', 'b.maker_code = c.number', 'left');
             // $this->db->join('mst_item_raw h', 'a.product_no = h.item_id');
             // $this->db->join('(select * from upload_gp order by leadtime desc) b', "b.item_id = h.item_id and a.p_month = b.p_month and a.p_year = b.p_year and a.revision = b.revision", 'left');
             // $this->db->join('rm_stock c', 'a.product_no = c.product_no and a.p_month = c.p_month and a.p_year = c.p_year and a.revision = c.revision', 'left');
@@ -312,7 +306,6 @@ class Generate_mrp extends CI_Controller
                 $this->db->where('a.product_no', $filter_part_no);
             }
             $this->db->group_by('a.product_no');
-            $this->db->order_by('a.product_no', 'asc');
             $this->db->order_by('a.product_no', 'asc');
             $generates = $this->db->get()->result_array();
 
@@ -445,6 +438,18 @@ class Generate_mrp extends CI_Controller
             $os_supply = $this->api->read("os_supply", [], ["product_no" => $product_no, "p_month" => $filter_month, "p_year" => $filter_year, "revision" => $filter_revision]);
             $os_mpp = $this->api->read("os_mpp", [], ["product_no" => $product_no, "p_month" => $filter_month, "p_year" => $filter_year, "revision" => $filter_revision]);
 
+            $this->db->select('coalesce(a.mpq, 0) as mpq, 
+                coalesce(a.moq, 0) as moq, 
+                coalesce(a.leadtime, 0) as leadtime,
+                b.type as supplier_type');
+            $this->db->from('supplier_items a');
+            $this->db->join('mst_maker b', 'a.maker_code = b.number', 'left');
+            $this->db->where('a.item_id', $generate['product_no']);
+            $this->db->where('a.share_order >', 0);
+            // $this->db->group_by('a.item_id');
+            $this->db->order_by('a.leadtime', 'desc');
+            $supplier_item = $this->db->get()->row();
+
             $qty_rm = @$rm_stock->actual;
             $qty_wip = @$balance_wip->qty;
             $qty_vendor = @$os_vendor->actual;
@@ -517,8 +522,8 @@ class Generate_mrp extends CI_Controller
             $balance_5 = ($balance_4 - $need_5);
             $balance_6 = ($balance_5 - $need_6);
             
-            if($generate['leadtime'] <= 30){
-                if($generate['supplier_type'] == "LOCAL"){
+            if(@$supplier_item->leadtime <= 30){
+                if(@$supplier_item->supplier_type == "LOCAL"){
                     if($balance_1 > 0){
                         $total_need = 0;
                     }else{
@@ -531,8 +536,8 @@ class Generate_mrp extends CI_Controller
                         $total_need = abs($balance_2);
                     }
                 }
-            }elseif($generate['leadtime'] > 30 && $generate['leadtime'] <= 60){
-                if($generate['supplier_type'] == "LOCAL"){
+            }elseif(@$supplier_item->leadtime > 30 && @$supplier_item->leadtime <= 60){
+                if(@$supplier_item->supplier_type == "LOCAL"){
                     if($balance_2 > 0){
                         $total_need = 0;
                     }else{
@@ -545,8 +550,8 @@ class Generate_mrp extends CI_Controller
                         $total_need = abs($balance_3);
                     }
                 }
-            }elseif($generate['leadtime'] > 60 && $generate['leadtime'] <= 90){
-                if($generate['supplier_type'] == "LOCAL"){
+            }elseif(@$supplier_item->leadtime > 60 && @$supplier_item->leadtime <= 90){
+                if(@$supplier_item->supplier_type == "LOCAL"){
                     if($balance_3 > 0){
                         $total_need = 0;
                     }else{
@@ -559,8 +564,8 @@ class Generate_mrp extends CI_Controller
                         $total_need = abs($balance_4);
                     }
                 }
-            }elseif($generate['leadtime'] > 90 && $generate['leadtime'] <= 120){
-                if($generate['supplier_type'] == "LOCAL"){
+            }elseif(@$supplier_item->leadtime > 90 && @$supplier_item->leadtime <= 120){
+                if(@$supplier_item->supplier_type == "LOCAL"){
                     if($balance_4 > 0){
                         $total_need = 0;
                     }else{
@@ -573,8 +578,8 @@ class Generate_mrp extends CI_Controller
                         $total_need = abs($balance_5);
                     }
                 }
-            }elseif($generate['leadtime'] > 120 and $generate['leadtime'] <= 150){
-                if($generate['supplier_type'] == "LOCAL"){
+            }elseif(@$supplier_item->leadtime > 120 and @$supplier_item->leadtime <= 150){
+                if(@$supplier_item->supplier_type == "LOCAL"){
                     if($balance_5 > 0){
                         $total_need = 0;
                     }else{
@@ -595,7 +600,7 @@ class Generate_mrp extends CI_Controller
                 }
             }
 
-            $leadtimeMonth = ceil($generate['leadtime'] / 30);
+            $leadtimeMonth = ceil(@$supplier_item->leadtime / 30);
 
             switch ($leadtimeMonth) {
                 case 6:
@@ -666,11 +671,11 @@ class Generate_mrp extends CI_Controller
                     $avg_balance = ($balance_6 - $avg_need);
             }
 
-            if($total_need > 0 && $generate['moq'] > 0 && $generate['mpq'] > 0){
-                if($total_need > $generate['moq']){
-                    $purchase_order = (ceil($total_need / $generate['mpq']) * $generate['mpq']);
+            if($total_need > 0 && @$supplier_item->moq > 0 && @$supplier_item->mpq > 0){
+                if($total_need > @$supplier_item->moq){
+                    $purchase_order = (ceil($total_need / @$supplier_item->mpq) * @$supplier_item->mpq);
                 }else{
-                    $purchase_order = (ceil($total_need / $generate['moq']) * $generate['moq']);
+                    $purchase_order = (ceil($total_need / @$supplier_item->moq) * @$supplier_item->moq);
                 }
             }else{
                 $purchase_order = 0;
@@ -683,9 +688,9 @@ class Generate_mrp extends CI_Controller
                 "part_no" => $generate['product_no'],
                 "part_name" => $generate['product_name'],
                 "product_family" => $generate['product_family'],
-                "mpq" => $generate['mpq'],
-                "moq" => $generate['moq'],
-                "leadtime" => $generate['leadtime'],
+                "mpq" => @$supplier_item->mpq,
+                "moq" => @$supplier_item->moq,
+                "leadtime" => @$supplier_item->leadtime,
                 "qty_rm" => $qty_rm,
                 "qty_wip" => $qty_wip,
                 "qty_vendor" => $qty_vendor,

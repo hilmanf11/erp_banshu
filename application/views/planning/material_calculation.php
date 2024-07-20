@@ -1,4 +1,4 @@
-<div class="easyui-accordion" style="width:100%;">
+<div class="easyui-accordion" style="width:99.5%;">
     <div title="Hide Menu" data-options="selected:true" style="padding:10px; background:#F4F4F4;">
         <div style="width: 100%; display: grid; grid-template-columns: auto auto auto; grid-gap: 5px; display: flex;">
             <fieldset style="width: 60%; border:2px solid #d0d0d0; margin-bottom: 5px; margin-top: 5px; border-radius:4px;">
@@ -61,7 +61,7 @@
     </div>
 </div>
 
-<div id="p" class="easyui-panel" title="Print Preview" style="width:100%;" data-options="fit:true">
+<div id="p" class="easyui-panel" title="Print Preview" style="width:99.5%; height: 550px;">
     <iframe id="printout" src="" style="width: 100%; height:95%; border: 0;"></iframe>
 </div>
 <script>

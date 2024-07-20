@@ -65,6 +65,7 @@ class Supplier_items extends CI_Controller
         $filter_items = base64_decode($this->input->get('filter_items'));
         $filter_item_vendor = base64_decode($this->input->get('filter_item_vendor'));
         $filter_share_order = base64_decode($this->input->get('filter_share_order'));
+        $filter_check = $this->input->get('filter_check');
 
         $page = $this->input->post('page');
         $rows = $this->input->post('rows');
@@ -82,6 +83,9 @@ class Supplier_items extends CI_Controller
         $this->db->join('mst_item_family e', 'c.pfm_id = e.number', 'left');
         $this->db->join('mst_maker f', 'a.maker_code = f.number');
         $this->db->join("(SELECT supplier_item_id, price, currency, valid_date FROM supplier_item_prices WHERE (supplier_item_id, valid_date) IN (SELECT supplier_item_id, MAX(valid_date) FROM supplier_item_prices GROUP BY supplier_item_id)) g", 'a.id = g.supplier_item_id', 'left');
+        if($filter_check == "true"){
+            $this->db->join("(SELECT item_id FROM supplier_items GROUP BY item_id HAVING COUNT(*) > 1) h", 'a.item_id = h.item_id');
+        }
         if($filter_plant != ""){
             $this->db->like('a.plant', $filter_plant);
         }
@@ -97,7 +101,9 @@ class Supplier_items extends CI_Controller
         if($filter_share_order != ""){
             $this->db->where('a.share_order', $filter_share_order);
         }
-        $this->db->order_by('b.name', 'ASC');
+        if($filter_check == "false"){
+            $this->db->order_by('b.name', 'ASC');
+        }
         $this->db->order_by('a.item_id', 'ASC');
         //Total Data
         $totalRows = $this->db->count_all_results('', false);
@@ -278,19 +284,22 @@ class Supplier_items extends CI_Controller
             $start_date = $post['start_date'];
             $valid_date = $post['valid_date'];
 
+            $price = $this->api->read('supplier_item_prices', [], ["id" => $id]);
+
             if($start_date > $valid_date){
                 show_error("Start date and valid date not valid");
             }else{
                 $send = $this->api->update('supplier_item_prices', ["id" => $id], $post);
                 $history = array(
                     "supplier_item_id" => $id,
-                    "price" => $post['price'],
-                    "currency" => $post['currency'],
-                    "start_date" => $post['start_date'],
-                    "valid_date" => $post['valid_date'],
-                    "remarks" => $post['remarks'],
+                    "price" => @$price->price,
+                    "currency" => @$price->currency,
+                    "start_date" => @$price->start_date,
+                    "valid_date" => @$price->valid_date,
+                    "remarks" => @$price->remarks,
                 );
 
+                // die(json_encode($history));
                 $this->api->create("supplier_item_prices_log", $history, "JUTA", "supplier_items_log");
                 echo $send;
             }
@@ -303,6 +312,10 @@ class Supplier_items extends CI_Controller
     public function delete()
     {
         $data = $this->input->post();
+        $this->api->delete('supplier_items_log', ["supplier_item_id" => $data['id']]);
+        $this->api->delete('supplier_item_prices', ["supplier_item_id" => $data['id']]);
+        $this->api->delete('supplier_item_prices_log', ["supplier_item_id" => $data['id']]);
+
         $send = $this->api->delete('supplier_items', $data);
         echo $send;
     }

@@ -74,7 +74,6 @@ class Os_vendor extends CI_Controller
             $this->pg->from("(SELECT item_id, SUM(por_receiveqty) as por_receiveqty FROM por WHERE por_date <= '$filter_cutoff' GROUP BY item_id) a");
             $this->pg->join('mst_item b', "a.item_id = b.item_id and b.stscode_id = '01'");
             $this->pg->join('r_prodfam c', "b.pfm_id = c.pfm_id and c.prod_group = 'Raw Material' and c.pfm_id != '05'");
-            // $this->pg->join("(SELECT DISTINCT por_pocid, item_id, por_pocreqqty FROM por WHERE por_date <= '$filter_cutoff' ORDER by item_id asc) d", "b.item_id = d.item_id");
             $this->pg->join("(SELECT item_id, SUM(poc_reqqty) as poc_reqqty from poc where poc_date <= '$filter_cutoff' GROUP BY item_id) d", "b.item_id = d.item_id");
             $this->pg->like('b.pfm_id', $filter_product_family);
             $this->pg->like('b.item_id', $filter_product_no);
