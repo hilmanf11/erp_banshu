@@ -94,6 +94,8 @@ class Report_history_po extends CI_Controller
                 c.approved_by as po_approved_by,
                 c.approved_date as po_approved_date,
                 c.approved_to as po_approved_to,
+                c.email_date,
+                c.confirm_date,
                 c.status');
             $this->db->from('generate_mrp_finals a');
             $this->db->join('purchase_requests b', 'a.part_no = b.part_no and a.p_month = b.p_month and a.p_year = b.p_year and a.revision = b.revision', 'left');

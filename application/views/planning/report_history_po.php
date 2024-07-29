@@ -9,30 +9,32 @@
     <thead>
         <tr>
             <th rowspan="2" data-options="field:'product_family',width:120,halign:'center'">Product Family</th>
-            <th colspan="3" data-options="field:'mrp',width:100,halign:'center'">MRP</th>
-            <th colspan="8" data-options="field:'mrp',width:100,halign:'center'">Purchase Request</th>
-            <th colspan="8" data-options="field:'mrp',width:100,halign:'center'">Purchase Order</th>
+            <th colspan="2" data-options="field:'mrp',width:100,halign:'center',hstyler: function(value, row, index) { return 'background-color:#B0CFFF'; }">MRP</th>
+            <th colspan="4" data-options="field:'mrp',width:100,halign:'center',hstyler: function(value, row, index) { return 'background-color:#FFF9B0'; }">Purchase Request</th>
+            <th colspan="6" data-options="field:'mrp',width:100,halign:'center',hstyler: function(value, row, index) { return 'background-color:#B8FFB0'; }">Purchase Order</th>
         </tr>
         <tr>
             <th data-options="field:'generate_date',width:150,align:'center'">Generate Date</th>
-            <th data-options="field:'generate_by',width:120,align:'center'">Generate By</th>
+            <!-- <th data-options="field:'generate_by',width:120,align:'center'">Generate By</th> -->
             <th data-options="field:'total_need',width:80,halign:'center',align:'right', formatter: numberformat">Total Need</th>
             <th data-options="field:'pr_date',width:150,align:'center'">Create Date</th>
-            <th data-options="field:'pr_by',width:120,align:'center'">Create By</th>
+            <!-- <th data-options="field:'pr_by',width:120,align:'center'">Create By</th> -->
             <th data-options="field:'purchase_request_no',width:180,align:'center'">Purchase Request No</th>
             <th data-options="field:'pr_supplier_name',width:150,halign:'center'">Supplier</th>
             <th data-options="field:'total_pr',width:80,halign:'center',align:'right', formatter: numberformat">Qty</th>
-            <th data-options="field:'pr_approved_by',width:120,align:'center'">Last Approve</th>
-            <th data-options="field:'pr_approved_date',width:150,align:'center'">Approve Date</th>
-            <th data-options="field:'pr_approved_to',width:120,align:'center'">Next Approve</th>
+            <!-- <th data-options="field:'pr_approved_by',width:120,align:'center'">Last Approve</th> -->
+            <!-- <th data-options="field:'pr_approved_date',width:150,align:'center'">Approve Date</th> -->
+            <!-- <th data-options="field:'pr_approved_to',width:120,align:'center'">Next Approve</th> -->
             <th data-options="field:'po_date',width:150,align:'center'">Create Date</th>
-            <th data-options="field:'po_by',width:120,align:'center'">Create By</th>
+            <!-- <th data-options="field:'po_by',width:120,align:'center'">Create By</th> -->
             <th data-options="field:'purchase_order_no',width:180,align:'center'">Purchase Order No</th>
             <th data-options="field:'po_supplier_name',width:150,halign:'center'">Supplier</th>
             <th data-options="field:'total_po',width:80,halign:'center',align:'right', formatter: numberformat">Qty</th>
-            <th data-options="field:'po_approved_by',width:120,align:'center'">Last Approve</th>
-            <th data-options="field:'po_approved_date',width:150,align:'center'">Approve Date</th>
-            <th data-options="field:'po_approved_to',width:120,align:'center'">Next Approve</th>
+            <!-- <th data-options="field:'po_approved_by',width:120,align:'center'">Last Approve</th> -->
+            <!-- <th data-options="field:'po_approved_date',width:150,align:'center'">Approve Date</th> -->
+            <!-- <th data-options="field:'po_approved_to',width:120,align:'center'">Next Approve</th> -->
+            <th data-options="field:'email_date',width:150,align:'center'">Send Date</th>
+            <th data-options="field:'confirm_date',width:150,align:'center'">Confirm Date</th>
         </tr>
     </thead>
 </table>

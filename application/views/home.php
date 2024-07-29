@@ -503,6 +503,13 @@
 		$('#pageNotification').attr('src', '<?= base_url("notification/supplier_item_prices") ?>');
 	}
 
+	function notificationDelivery() {
+		$("#header_notification").html("DELIVERY SCHEDULE ETD EXPIRED in 14 DAY");
+
+		$('#dlg_notification_detail').window('open');
+		$('#pageNotification').attr('src', '<?= base_url("notification/delivery_schedules") ?>');
+	}
+
 	notificationList();
 	notificationCount();
 	setInterval(notificationList, 10000);

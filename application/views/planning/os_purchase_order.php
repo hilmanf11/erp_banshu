@@ -7,7 +7,7 @@
             <th data-options="field:'item_id',width:250,halign:'center'">Item Id</th>
             <th data-options="field:'item_name',width:250,halign:'center'">Item Name</th>
             <th data-options="field:'pfm_name',width:150,halign:'center'">Product Family</th>
-            <th data-options="field:'um_id',width:50,halign:'center'">UoM</th>
+            <!-- <th data-options="field:'um_id',width:50,halign:'center'">UoM</th> -->
             <th data-options="field:'moq',width:100,halign:'center',align:'right',formatter: numberformat">MOQ</th>
             <th data-options="field:'mpq',width:100,halign:'center',align:'right',formatter: numberformat">MPQ</th>
             <!-- <th data-options="field:'por_pocreqqty',width:100,halign:'center',align:'right',formatter: numberformat">Request Qty</th>
@@ -55,6 +55,7 @@
             <div class="fitem">
                 <span style="width:35%; display:inline-block;">PO Status</span>
                 <select style="width:60%;" id="po_status" class="easyui-combobox" panelHeight="auto">
+                    <option value="All">All</option>
                     <option value="Open">Open</option>
                     <option value="Closed">Closed</option>
                     <option value="Over">Over</option> 
@@ -89,8 +90,8 @@
             "&po_no=" + window.btoa(po_no) +
             "&trans_type=" + window.btoa(trans_type);
 
-        if(vendor_id == ""){
-            toastr.info("Please Select Vendor");
+        if(vendor_id == "" && item_id == ""){
+            toastr.info("Please Select Vendor or Item ID");
         }else{
             $('#dg').datagrid({
                 url: '<?= base_url('planning/os_purchase_order/datatables') ?>' + url,
@@ -104,7 +105,7 @@
                 onExpandRow: function(index, row) {
                     var ddv = $(this).datagrid('getRowDetail', index).find('table.ddv');
                     ddv.datagrid({
-                        url: '<?= base_url('planning/os_purchase_order/datatableDetails/') ?>' + window.btoa(row.item_id) + "/" + window.btoa(vendor_id) + "/" + window.btoa(po_status),
+                        url: '<?= base_url('planning/os_purchase_order/datatableDetails/') ?>' + window.btoa(row.item_id) + "/" + window.btoa(row.ven_id) + "/" + window.btoa(po_status),
                         singleSelect: true,
                         rownumbers: true,
                         columns: [
@@ -199,8 +200,8 @@
             "&po_no=" + window.btoa(po_no) +
             "&trans_type=" + window.btoa(trans_type);
 
-        if(vendor_id == ""){
-            toastr.info("Please Select Vendor");
+        if(vendor_id == "" && item_id == ""){
+            toastr.info("Please Select Vendor or Item ID");
         }else{
             window.location.assign('<?= base_url('planning/os_purchase_order/print/excel') ?>' + url);
         }
@@ -278,6 +279,34 @@
                     }
                 });
             }
+        });
+
+        $('#item_id').combogrid({
+            url: '<?= base_url('planning/mst_item/reads'); ?>',
+            panelWidth: 350,
+            idField: 'item_id',
+            textField: 'item_id',
+            mode: 'remote',
+            fitColumns: true,
+            pagination: true,
+            prompt: "Select Part No",
+            icons: [{
+                iconCls: 'icon-clear',
+                handler: function(e) {
+                    $(e.data.target).combogrid('clear').combogrid('textbox').focus();
+                }
+            }],
+            columns: [
+                [{
+                    field: 'item_id',
+                    title: 'Part No',
+                    width: 200
+                }, {
+                    field: 'item_name',
+                    title: 'Part Name',
+                    width: 100
+                }, ]
+            ]
         });
     });
 

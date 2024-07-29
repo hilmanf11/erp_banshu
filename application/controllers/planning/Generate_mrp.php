@@ -345,10 +345,16 @@ class Generate_mrp extends CI_Controller
             $product_family = "";
             $arr = array();
             foreach ($generates as $generate) {
-                if($generate['product_family'] != $product_family){
-                    $total_need = $generate['total_need'];
+                if($filter_revision == "0"){
+                    $need = $generate['need_1'];
                 }else{
-                    $total_need += $generate['total_need'];
+                    $need = $generate['need_2'];
+                }
+
+                if($generate['product_family'] != $product_family){
+                    $total_need = $need;
+                }else{
+                    $total_need += $need;
                 }
 
                 $this->db->select('product_family, SUM(total_need) as total');
@@ -378,12 +384,12 @@ class Generate_mrp extends CI_Controller
                     "part_no" => $generate['part_no'],
                     "part_name" => $generate['part_name'],
                     "product_family" => $generate['product_family'],
-                    "need" => $generate['total_need'],
+                    "need" => $need,
                     "total" => @$mrp->total,
                     "composition" => $composition,
                     "class" => $safety_stock->number,
                     "safety" => $safety_stock->safety,
-                    "safety_stock" => round($generate['total_need'] * (@$safety_stock->safety / 100)),
+                    "safety_stock" => round($need * (@$safety_stock->safety / 100)),
                 );
 
                 $product_family = $generate['product_family'];
@@ -450,140 +456,149 @@ class Generate_mrp extends CI_Controller
             $this->db->order_by('a.leadtime', 'desc');
             $supplier_item = $this->db->get()->row();
 
-            $qty_rm = @$rm_stock->actual;
-            $qty_wip = @$balance_wip->qty;
-            $qty_vendor = @$os_vendor->actual;
-            $qty_supply = @$os_supply->actual;
-            $qty_wo = @$os_mpp->actual;
-            $total_stock = ($qty_rm + $qty_wip + $qty_vendor);
-            $total_wo = ($qty_supply + $qty_wo);
+            if(!empty($supplier_item)){
 
-            $this->db->select('product_no, period, SUM(qty) as need');
-            $this->db->from('generate_mrp');
-            $this->db->where('product_no', $generate['product_no']);
-            $this->db->where('p_month', $filter_month);
-            $this->db->where('p_year', $filter_year);
-            $this->db->where('revision', $filter_revision);
-            $this->db->group_by('product_no');
-            $this->db->group_by('period');
-            $this->db->order_by('period', 'asc');
-            $periods = $this->db->get()->result_array();
+                $qty_rm = @$rm_stock->actual;
+                $qty_wip = @$balance_wip->qty;
+                $qty_vendor = @$os_vendor->actual;
+                $qty_supply = @$os_supply->actual;
+                $qty_wo = @$os_mpp->actual;
+                $total_stock = ($qty_rm + $qty_wip + $qty_vendor);
+                $total_wo = ($qty_supply + $qty_wo);
 
-            $no = 1;
-            $need_1 = 0;
-            $need_2 = 0;
-            $need_3 = 0;
-            $need_4 = 0;
-            $need_5 = 0;
-            $need_6 = 0;
-            $need_11 = 0;
+                $this->db->select('product_no, period, SUM(qty) as need');
+                $this->db->from('generate_mrp');
+                $this->db->where('product_no', $generate['product_no']);
+                $this->db->where('p_month', $filter_month);
+                $this->db->where('p_year', $filter_year);
+                $this->db->where('revision', $filter_revision);
+                $this->db->group_by('product_no');
+                $this->db->group_by('period');
+                $this->db->order_by('period', 'asc');
+                $periods = $this->db->get()->result_array();
 
-            $balance_1 = 0;
-            $balance_2 = 0;
-            $balance_3 = 0;
-            $balance_4 = 0;
-            $balance_5 = 0;
-            $balance_6 = 0;
-            foreach ($periods as $period) {
-                $product_no = $generate['product_no'];
-                
-                if($no == 1){
-                    $need_1 += $period['need'];
+                $no = 1;
+                $need_1 = 0;
+                $need_2 = 0;
+                $need_3 = 0;
+                $need_4 = 0;
+                $need_5 = 0;
+                $need_6 = 0;
+                $need_11 = 0;
 
-                    if($filter_revision == 0){
-                        $need_11 += $period['need'];
-                    }else{
-                        $need_11 += 0;
-                    }
+                $balance_1 = 0;
+                $balance_2 = 0;
+                $balance_3 = 0;
+                $balance_4 = 0;
+                $balance_5 = 0;
+                $balance_6 = 0;
+                foreach ($periods as $period) {
+                    $product_no = $generate['product_no'];
                     
-                    $no = 2;
-                }elseif($no == 2){
-                    $need_2 += $period['need'];
-                    $no = 3;
-                }elseif($no == 3){
-                    $need_3 += $period['need'];
-                    $no = 4;
-                }elseif($no == 4){
-                    $need_4 += $period['need'];
-                    $no = 5;
-                }elseif($no == 5){
-                    $need_5 += $period['need'];
-                    $no = 6;
-                }elseif($no == 6){
-                    $need_6 += $period['need'];
-                    $no = 1;
-                }
-            }
+                    if($no == 1){
+                        $need_1 += $period['need'];
 
-            $balance_1 = ($total_stock - ($total_wo + $need_11));
-            $balance_2 = ($balance_1 - $need_2);
-            $balance_3 = ($balance_2 - $need_3);
-            $balance_4 = ($balance_3 - $need_4);
-            $balance_5 = ($balance_4 - $need_5);
-            $balance_6 = ($balance_5 - $need_6);
-            
-            if(@$supplier_item->leadtime <= 30){
-                if(@$supplier_item->supplier_type == "LOCAL"){
-                    if($balance_1 > 0){
-                        $total_need = 0;
-                    }else{
-                        $total_need = abs($balance_1);
-                    }
-                }else{
-                    if($balance_2 > 0){
-                        $total_need = 0;
-                    }else{
-                        $total_need = abs($balance_2);
-                    }
-                }
-            }elseif(@$supplier_item->leadtime > 30 && @$supplier_item->leadtime <= 60){
-                if(@$supplier_item->supplier_type == "LOCAL"){
-                    if($balance_2 > 0){
-                        $total_need = 0;
-                    }else{
-                        $total_need = abs($balance_2);
-                    }
-                }else{
-                    if($balance_3 > 0){
-                        $total_need = 0;
-                    }else{
-                        $total_need = abs($balance_3);
+                        if($filter_revision == 0){
+                            $need_11 += $period['need'];
+                        }else{
+                            $need_11 += 0;
+                        }
+                        
+                        $no = 2;
+                    }elseif($no == 2){
+                        $need_2 += $period['need'];
+                        $no = 3;
+                    }elseif($no == 3){
+                        $need_3 += $period['need'];
+                        $no = 4;
+                    }elseif($no == 4){
+                        $need_4 += $period['need'];
+                        $no = 5;
+                    }elseif($no == 5){
+                        $need_5 += $period['need'];
+                        $no = 6;
+                    }elseif($no == 6){
+                        $need_6 += $period['need'];
+                        $no = 1;
                     }
                 }
-            }elseif(@$supplier_item->leadtime > 60 && @$supplier_item->leadtime <= 90){
-                if(@$supplier_item->supplier_type == "LOCAL"){
-                    if($balance_3 > 0){
-                        $total_need = 0;
+
+                $balance_1 = ($total_stock - ($total_wo + $need_11));
+                $balance_2 = ($balance_1 - $need_2);
+                $balance_3 = ($balance_2 - $need_3);
+                $balance_4 = ($balance_3 - $need_4);
+                $balance_5 = ($balance_4 - $need_5);
+                $balance_6 = ($balance_5 - $need_6);
+                
+                if(@$supplier_item->leadtime <= 30){
+                    if(@$supplier_item->supplier_type == "LOCAL"){
+                        if($balance_1 > 0){
+                            $total_need = 0;
+                        }else{
+                            $total_need = abs($balance_1);
+                        }
                     }else{
-                        $total_need = abs($balance_3);
+                        if($balance_2 > 0){
+                            $total_need = 0;
+                        }else{
+                            $total_need = abs($balance_2);
+                        }
                     }
-                }else{
-                    if($balance_4 > 0){
-                        $total_need = 0;
+                }elseif(@$supplier_item->leadtime > 30 && @$supplier_item->leadtime <= 60){
+                    if(@$supplier_item->supplier_type == "LOCAL"){
+                        if($balance_2 > 0){
+                            $total_need = 0;
+                        }else{
+                            $total_need = abs($balance_2);
+                        }
                     }else{
-                        $total_need = abs($balance_4);
+                        if($balance_3 > 0){
+                            $total_need = 0;
+                        }else{
+                            $total_need = abs($balance_3);
+                        }
                     }
-                }
-            }elseif(@$supplier_item->leadtime > 90 && @$supplier_item->leadtime <= 120){
-                if(@$supplier_item->supplier_type == "LOCAL"){
-                    if($balance_4 > 0){
-                        $total_need = 0;
+                }elseif(@$supplier_item->leadtime > 60 && @$supplier_item->leadtime <= 90){
+                    if(@$supplier_item->supplier_type == "LOCAL"){
+                        if($balance_3 > 0){
+                            $total_need = 0;
+                        }else{
+                            $total_need = abs($balance_3);
+                        }
                     }else{
-                        $total_need = abs($balance_4);
+                        if($balance_4 > 0){
+                            $total_need = 0;
+                        }else{
+                            $total_need = abs($balance_4);
+                        }
                     }
-                }else{
-                    if($balance_5 > 0){
-                        $total_need = 0;
+                }elseif(@$supplier_item->leadtime > 90 && @$supplier_item->leadtime <= 120){
+                    if(@$supplier_item->supplier_type == "LOCAL"){
+                        if($balance_4 > 0){
+                            $total_need = 0;
+                        }else{
+                            $total_need = abs($balance_4);
+                        }
                     }else{
-                        $total_need = abs($balance_5);
+                        if($balance_5 > 0){
+                            $total_need = 0;
+                        }else{
+                            $total_need = abs($balance_5);
+                        }
                     }
-                }
-            }elseif(@$supplier_item->leadtime > 120 and @$supplier_item->leadtime <= 150){
-                if(@$supplier_item->supplier_type == "LOCAL"){
-                    if($balance_5 > 0){
-                        $total_need = 0;
+                }elseif(@$supplier_item->leadtime > 120 and @$supplier_item->leadtime <= 150){
+                    if(@$supplier_item->supplier_type == "LOCAL"){
+                        if($balance_5 > 0){
+                            $total_need = 0;
+                        }else{
+                            $total_need = abs($balance_5);
+                        }
                     }else{
-                        $total_need = abs($balance_5);
+                        if($balance_6 > 0){
+                            $total_need = 0;
+                        }else{
+                            $total_need = abs($balance_6);
+                        }
                     }
                 }else{
                     if($balance_6 > 0){
@@ -592,210 +607,206 @@ class Generate_mrp extends CI_Controller
                         $total_need = abs($balance_6);
                     }
                 }
-            }else{
-                if($balance_6 > 0){
-                    $total_need = 0;
-                }else{
-                    $total_need = abs($balance_6);
+
+                $leadtimeMonth = ceil(@$supplier_item->leadtime / 30);
+
+                switch ($leadtimeMonth) {
+                    case 6:
+                        $avg_need = (($need_1 + $need_2 + $need_3 + $need_4 + $need_5 + $need_6) / 6);
+                        $avg_balance = ($balance_6 - $avg_need);
+                        if($avg_balance > 0){
+                            $total_need = 0;
+                        }else{
+                            $total_need = abs($avg_balance);
+                        }
+                    break;
+                    case 7:
+                        $avg_need = (($need_1 + $need_2 + $need_3 + $need_4 + $need_5 + $need_6) / 6);
+                        $avg_balance = ($balance_6 - $avg_need);
+                        if($avg_balance > 0){
+                            $total_need = 0;
+                        }else{
+                            $total_need = abs($avg_balance);
+                        }
+                    break;
+                    case 8:
+                        $avg_need = ((($need_1 + $need_2 + $need_3 + $need_4 + $need_5 + $need_6) / 6) * 2);
+                        $avg_balance = ($balance_6 - $avg_need);
+                        if($avg_balance > 0){
+                            $total_need = 0;
+                        }else{
+                            $total_need = abs($avg_balance);
+                        }
+                    break;
+                    case 9:
+                        $avg_need = ((($need_1 + $need_2 + $need_3 + $need_4 + $need_5 + $need_6) / 6) * 3);
+                        $avg_balance = ($balance_6 - $avg_need);
+                        if($avg_balance > 0){
+                            $total_need = 0;
+                        }else{
+                            $total_need = abs($avg_balance);
+                        }
+                    break;
+                    case 10:
+                        $avg_need = ((($need_1 + $need_2 + $need_3 + $need_4 + $need_5 + $need_6) / 6) * 4);
+                        $avg_balance = ($balance_6 - $avg_need);
+                        if($avg_balance > 0){
+                            $total_need = 0;
+                        }else{
+                            $total_need = abs($avg_balance);
+                        }
+                    break;
+                    case 11:
+                        $avg_need = ((($need_1 + $need_2 + $need_3 + $need_4 + $need_5 + $need_6) / 6) * 5);
+                        $avg_balance = ($balance_6 - $avg_need);
+                        if($avg_balance > 0){
+                            $total_need = 0;
+                        }else{
+                            $total_need = abs($avg_balance);
+                        }
+                    break;
+                    case 12:
+                        $avg_need = ((($need_1 + $need_2 + $need_3 + $need_4 + $need_5 + $need_6) / 6) * 6);
+                        $avg_balance = ($balance_6 - $avg_need);
+                        if($avg_balance > 0){
+                            $total_need = 0;
+                        }else{
+                            $total_need = abs($avg_balance);
+                        }
+                    break;
+                    default:
+                        $avg_need = 0;
+                        $avg_balance = ($balance_6 - $avg_need);
                 }
-            }
 
-            $leadtimeMonth = ceil(@$supplier_item->leadtime / 30);
-
-            switch ($leadtimeMonth) {
-                case 6:
-                    $avg_need = (($need_1 + $need_2 + $need_3 + $need_4 + $need_5 + $need_6) / 6);
-                    $avg_balance = ($balance_6 - $avg_need);
-                    if($avg_balance > 0){
-                        $total_need = 0;
+                if($total_need > 0 && @$supplier_item->moq > 0 && @$supplier_item->mpq > 0){
+                    if($total_need > @$supplier_item->moq){
+                        $purchase_order = (ceil($total_need / @$supplier_item->mpq) * @$supplier_item->mpq);
                     }else{
-                        $total_need = abs($avg_balance);
+                        $purchase_order = (ceil($total_need / @$supplier_item->moq) * @$supplier_item->moq);
                     }
-                break;
-                case 7:
-                    $avg_need = (($need_1 + $need_2 + $need_3 + $need_4 + $need_5 + $need_6) / 6);
-                    $avg_balance = ($balance_6 - $avg_need);
-                    if($avg_balance > 0){
-                        $total_need = 0;
-                    }else{
-                        $total_need = abs($avg_balance);
-                    }
-                break;
-                case 8:
-                    $avg_need = ((($need_1 + $need_2 + $need_3 + $need_4 + $need_5 + $need_6) / 6) * 2);
-                    $avg_balance = ($balance_6 - $avg_need);
-                    if($avg_balance > 0){
-                        $total_need = 0;
-                    }else{
-                        $total_need = abs($avg_balance);
-                    }
-                break;
-                case 9:
-                    $avg_need = ((($need_1 + $need_2 + $need_3 + $need_4 + $need_5 + $need_6) / 6) * 3);
-                    $avg_balance = ($balance_6 - $avg_need);
-                    if($avg_balance > 0){
-                        $total_need = 0;
-                    }else{
-                        $total_need = abs($avg_balance);
-                    }
-                break;
-                case 10:
-                    $avg_need = ((($need_1 + $need_2 + $need_3 + $need_4 + $need_5 + $need_6) / 6) * 4);
-                    $avg_balance = ($balance_6 - $avg_need);
-                    if($avg_balance > 0){
-                        $total_need = 0;
-                    }else{
-                        $total_need = abs($avg_balance);
-                    }
-                break;
-                case 11:
-                    $avg_need = ((($need_1 + $need_2 + $need_3 + $need_4 + $need_5 + $need_6) / 6) * 5);
-                    $avg_balance = ($balance_6 - $avg_need);
-                    if($avg_balance > 0){
-                        $total_need = 0;
-                    }else{
-                        $total_need = abs($avg_balance);
-                    }
-                break;
-                case 12:
-                    $avg_need = ((($need_1 + $need_2 + $need_3 + $need_4 + $need_5 + $need_6) / 6) * 6);
-                    $avg_balance = ($balance_6 - $avg_need);
-                    if($avg_balance > 0){
-                        $total_need = 0;
-                    }else{
-                        $total_need = abs($avg_balance);
-                    }
-                break;
-                default:
-                    $avg_need = 0;
-                    $avg_balance = ($balance_6 - $avg_need);
-            }
-
-            if($total_need > 0 && @$supplier_item->moq > 0 && @$supplier_item->mpq > 0){
-                if($total_need > @$supplier_item->moq){
-                    $purchase_order = (ceil($total_need / @$supplier_item->mpq) * @$supplier_item->mpq);
                 }else{
-                    $purchase_order = (ceil($total_need / @$supplier_item->moq) * @$supplier_item->moq);
+                    $purchase_order = 0;
+                }
+
+                $arr = array(
+                    "p_month" => $filter_month,
+                    "p_year" => $filter_year,
+                    "revision" => $filter_revision,
+                    "part_no" => $generate['product_no'],
+                    "part_name" => $generate['product_name'],
+                    "product_family" => $generate['product_family'],
+                    "mpq" => @$supplier_item->mpq,
+                    "moq" => @$supplier_item->moq,
+                    "leadtime" => @$supplier_item->leadtime,
+                    "qty_rm" => $qty_rm,
+                    "qty_wip" => $qty_wip,
+                    "qty_vendor" => $qty_vendor,
+                    "total_stock" => $total_stock,
+                    "qty_supply" => $qty_supply,
+                    "qty_wo" => $qty_wo,
+                    "total_wo" => $total_wo,
+                    "need_1" => $need_1,
+                    "need_2" => $need_2,
+                    "need_3" => $need_3,
+                    "need_4" => $need_4,
+                    "need_5" => $need_5,
+                    "need_6" => $need_6,
+                    "balance_1" => $balance_1,
+                    "balance_2" => $balance_2,
+                    "balance_3" => $balance_3,
+                    "balance_4" => $balance_4,
+                    "balance_5" => $balance_5,
+                    "balance_6" => $balance_6,
+                    "avg_need" => $avg_need,
+                    "avg_balance" => $avg_balance,
+                    "total_need" => $total_need,
+                    "purchase_order" => $purchase_order,
+                );
+
+                //Select Query
+                $this->db->select('*');
+                $this->db->from('generate_mrp_finals');
+                $this->db->where('p_month', $generate['p_month']);
+                $this->db->where('p_year', $generate['p_year']);
+                $this->db->where('revision', $generate['revision']);
+                $this->db->where('part_no', $product_no);
+                $records = $this->db->get()->result_array();
+
+                $this->pg = $this->load->database('pg', TRUE);
+
+                $period_1 = date("Ym", strtotime("-1 month", strtotime($generate['p_year']."-".$generate['p_month']."-01")));
+                $period_2 = date("Ym", strtotime("-2 month", strtotime($generate['p_year']."-".$generate['p_month']."-01")));
+                $period_3 = date("Ym", strtotime("-3 month", strtotime($generate['p_year']."-".$generate['p_month']."-01")));
+
+                // $qissued = $this->pg->query("SELECT b.item_id, SUM(b.qty_need) as need from wip_trx_mpp a
+                //     join serial_detail_kanbanrm b ON a.temp_woc_id = b.kanbanrm_woc_id
+                //     where a.periode IN ('$period_1','$period_2','$period_3') and b.item_id = '$part_no'
+                //     group by b.item_id, a.periode
+                //     order by b.item_id, a.periode");
+
+                $maxRevQuery1 = $this->pg->query("SELECT max(rev) as revision FROM wip_trx_mpp WHERE periode = '$period_1'");
+                $maxRev1 = $maxRevQuery1->row();
+                $maxRevQuery2 = $this->pg->query("SELECT max(rev) as revision FROM wip_trx_mpp WHERE periode = '$period_2'");
+                $maxRev2 = $maxRevQuery2->row();
+                $maxRevQuery3 = $this->pg->query("SELECT max(rev) as revision FROM wip_trx_mpp WHERE periode = '$period_3'");
+                $maxRev3 = $maxRevQuery3->row();
+                $rev1 = @$maxRev1->revision;
+                $rev2 = @$maxRev2->revision;
+                $rev3 = @$maxRev3->revision;
+
+                $qissued1 = $this->pg->query("SELECT z.periode, z.bom_com_item, SUM(z.need) as need FROM(
+                    SELECT b.bom_com_item, a.periode, (a.qty * b.bom_qty_perassy) as need from wip_trx_mpp a
+                    JOIN mst_bom b ON b.bom_par_item = a.assy_no
+                    where a.periode = '$period_1' and b.bom_com_item = '$product_no' and a.rev = '$rev1'
+                    order by b.bom_com_item, a.periode) z GROUP BY z.periode, z.bom_com_item ORDER by z.periode asc");
+                $missued1 = $qissued1->result_array();
+
+                $qissued2 = $this->pg->query("SELECT z.periode, z.bom_com_item, SUM(z.need) as need FROM(
+                    SELECT b.bom_com_item, a.periode, (a.qty * b.bom_qty_perassy) as need from wip_trx_mpp a
+                    JOIN mst_bom b ON b.bom_par_item = a.assy_no
+                    where a.periode = '$period_2' and b.bom_com_item = '$product_no' and a.rev = '$rev2'
+                    order by b.bom_com_item, a.periode) z GROUP BY z.periode, z.bom_com_item ORDER by z.periode asc");
+                $missued2 = $qissued2->result_array();
+
+                $qissued3 = $this->pg->query("SELECT z.periode, z.bom_com_item, SUM(z.need) as need FROM(
+                    SELECT b.bom_com_item, a.periode, (a.qty * b.bom_qty_perassy) as need from wip_trx_mpp a
+                    JOIN mst_bom b ON b.bom_par_item = a.assy_no
+                    where a.periode = '$period_3' and b.bom_com_item = '$product_no' and a.rev = '$rev3'
+                    order by b.bom_com_item, a.periode) z GROUP BY z.periode, z.bom_com_item ORDER by z.periode asc");
+                $missued3 = $qissued3->result_array();
+
+                //Select Query
+                $this->db->select('*');
+                $this->db->from('generate_mrp_finals');
+                $this->db->where('p_month', $generate['p_month']);
+                $this->db->where('p_year', $generate['p_year']);
+                $this->db->where('revision', $generate['revision']);
+                $this->db->where('part_no', $product_no);
+                $records = $this->db->get()->result_array();
+
+                $postFinal = array_merge($arr, array(
+                    "issued_1" => @$missued1[0]['need'],
+                    "issued_2" => @$missued2[0]['need'],
+                    "issued_3" => @$missued3[0]['need'],
+                    "issued_avg" => ((@$missued1[0]['need'] + @$missued2[0]['need'] + @$missued3[0]['need']) / 3),
+                ));
+
+                if (count($records) > 0) {
+                    $send = $this->api->update('generate_mrp_finals', [
+                        "p_month" => $generate['p_month'],
+                        "p_year" => $generate['p_year'],
+                        "revision" => $generate['revision'],
+                        "part_no" => $product_no
+                    ], $postFinal);
+
+                    echo $send;
+                } else {
+                    $send = $this->api->create('generate_mrp_finals', $postFinal, "MRP", "JUTA");
+                    echo $send;
                 }
             }else{
-                $purchase_order = 0;
-            }
-
-            $arr = array(
-                "p_month" => $filter_month,
-                "p_year" => $filter_year,
-                "revision" => $filter_revision,
-                "part_no" => $generate['product_no'],
-                "part_name" => $generate['product_name'],
-                "product_family" => $generate['product_family'],
-                "mpq" => @$supplier_item->mpq,
-                "moq" => @$supplier_item->moq,
-                "leadtime" => @$supplier_item->leadtime,
-                "qty_rm" => $qty_rm,
-                "qty_wip" => $qty_wip,
-                "qty_vendor" => $qty_vendor,
-                "total_stock" => $total_stock,
-                "qty_supply" => $qty_supply,
-                "qty_wo" => $qty_wo,
-                "total_wo" => $total_wo,
-                "need_1" => $need_1,
-                "need_2" => $need_2,
-                "need_3" => $need_3,
-                "need_4" => $need_4,
-                "need_5" => $need_5,
-                "need_6" => $need_6,
-                "balance_1" => $balance_1,
-                "balance_2" => $balance_2,
-                "balance_3" => $balance_3,
-                "balance_4" => $balance_4,
-                "balance_5" => $balance_5,
-                "balance_6" => $balance_6,
-                "avg_need" => $avg_need,
-                "avg_balance" => $avg_balance,
-                "total_need" => $total_need,
-                "purchase_order" => $purchase_order,
-            );
-
-            //Select Query
-            $this->db->select('*');
-            $this->db->from('generate_mrp_finals');
-            $this->db->where('p_month', $generate['p_month']);
-            $this->db->where('p_year', $generate['p_year']);
-            $this->db->where('revision', $generate['revision']);
-            $this->db->where('part_no', $product_no);
-            $records = $this->db->get()->result_array();
-
-            $this->pg = $this->load->database('pg', TRUE);
-
-            $period_1 = date("Ym", strtotime("-1 month", strtotime($generate['p_year']."-".$generate['p_month']."-01")));
-            $period_2 = date("Ym", strtotime("-2 month", strtotime($generate['p_year']."-".$generate['p_month']."-01")));
-            $period_3 = date("Ym", strtotime("-3 month", strtotime($generate['p_year']."-".$generate['p_month']."-01")));
-
-            // $qissued = $this->pg->query("SELECT b.item_id, SUM(b.qty_need) as need from wip_trx_mpp a
-            //     join serial_detail_kanbanrm b ON a.temp_woc_id = b.kanbanrm_woc_id
-            //     where a.periode IN ('$period_1','$period_2','$period_3') and b.item_id = '$part_no'
-            //     group by b.item_id, a.periode
-            //     order by b.item_id, a.periode");
-
-            $maxRevQuery1 = $this->pg->query("SELECT max(rev) as revision FROM wip_trx_mpp WHERE periode = '$period_1'");
-            $maxRev1 = $maxRevQuery1->row();
-            $maxRevQuery2 = $this->pg->query("SELECT max(rev) as revision FROM wip_trx_mpp WHERE periode = '$period_2'");
-            $maxRev2 = $maxRevQuery2->row();
-            $maxRevQuery3 = $this->pg->query("SELECT max(rev) as revision FROM wip_trx_mpp WHERE periode = '$period_3'");
-            $maxRev3 = $maxRevQuery3->row();
-            $rev1 = @$maxRev1->revision;
-            $rev2 = @$maxRev2->revision;
-            $rev3 = @$maxRev3->revision;
-
-            $qissued1 = $this->pg->query("SELECT z.periode, z.bom_com_item, SUM(z.need) as need FROM(
-                SELECT b.bom_com_item, a.periode, (a.qty * b.bom_qty_perassy) as need from wip_trx_mpp a
-                JOIN mst_bom b ON b.bom_par_item = a.assy_no
-                where a.periode = '$period_1' and b.bom_com_item = '$product_no' and a.rev = '$rev1'
-                order by b.bom_com_item, a.periode) z GROUP BY z.periode, z.bom_com_item ORDER by z.periode asc");
-            $missued1 = $qissued1->result_array();
-
-            $qissued2 = $this->pg->query("SELECT z.periode, z.bom_com_item, SUM(z.need) as need FROM(
-                SELECT b.bom_com_item, a.periode, (a.qty * b.bom_qty_perassy) as need from wip_trx_mpp a
-                JOIN mst_bom b ON b.bom_par_item = a.assy_no
-                where a.periode = '$period_2' and b.bom_com_item = '$product_no' and a.rev = '$rev2'
-                order by b.bom_com_item, a.periode) z GROUP BY z.periode, z.bom_com_item ORDER by z.periode asc");
-            $missued2 = $qissued2->result_array();
-
-            $qissued3 = $this->pg->query("SELECT z.periode, z.bom_com_item, SUM(z.need) as need FROM(
-                SELECT b.bom_com_item, a.periode, (a.qty * b.bom_qty_perassy) as need from wip_trx_mpp a
-                JOIN mst_bom b ON b.bom_par_item = a.assy_no
-                where a.periode = '$period_3' and b.bom_com_item = '$product_no' and a.rev = '$rev3'
-                order by b.bom_com_item, a.periode) z GROUP BY z.periode, z.bom_com_item ORDER by z.periode asc");
-            $missued3 = $qissued3->result_array();
-
-            //Select Query
-            $this->db->select('*');
-            $this->db->from('generate_mrp_finals');
-            $this->db->where('p_month', $generate['p_month']);
-            $this->db->where('p_year', $generate['p_year']);
-            $this->db->where('revision', $generate['revision']);
-            $this->db->where('part_no', $product_no);
-            $records = $this->db->get()->result_array();
-
-            $postFinal = array_merge($arr, array(
-                "issued_1" => @$missued1[0]['need'],
-                "issued_2" => @$missued2[0]['need'],
-                "issued_3" => @$missued3[0]['need'],
-                "issued_avg" => ((@$missued1[0]['need'] + @$missued2[0]['need'] + @$missued3[0]['need']) / 3),
-            ));
-
-            if (count($records) > 0) {
-                $send = $this->api->update('generate_mrp_finals', [
-                    "p_month" => $generate['p_month'],
-                    "p_year" => $generate['p_year'],
-                    "revision" => $generate['revision'],
-                    "part_no" => $product_no
-                ], $postFinal);
-
-                echo $send;
-            } else {
-                $send = $this->api->create('generate_mrp_finals', $postFinal, "MRP", "JUTA");
-                echo $send;
+                echo json_encode(array("title" => "Error", "theme" => "error", "message" => "Share Order 0"));
             }
         }
     }
@@ -865,7 +876,7 @@ class Generate_mrp extends CI_Controller
             // $this->db->join('upload_gp d', 'a.part_no = d.item_id and a.p_month = d.p_month and a.p_year = d.p_year and a.revision = d.revision', 'left');
             $this->db->join('supplier_items e', 'a.part_no = e.item_id');
             $this->db->join('mst_maker f', 'e.maker_code = f.number');
-            // $this->db->where('a.purchase_order >', 0);
+            // $this->db->where('e.share_order >', 0);
             $this->db->where('a.p_month', $filter_month);
             $this->db->where('a.p_year', $filter_year);
             $this->db->where('a.revision', $filter_revision);

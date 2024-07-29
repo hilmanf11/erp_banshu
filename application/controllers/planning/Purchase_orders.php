@@ -505,7 +505,9 @@ class Purchase_orders extends CI_Controller
     public function completeMail(){
         if ($this->input->post()) {
             $purchase_order_no = $this->input->post('purchase_order_no');
-            $this->db->update('purchase_orders', ["email_status" => "SENT", "confirm" => "Pending", "email_date" => date("Y-m-d H:i:s")], ["purchase_order_no" => $purchase_order_no]);
+            $email_date = $this->input->post('email_date');
+            
+            $this->db->update('purchase_orders', ["email_status" => "SENT", "confirm" => "Pending", "email_date" => $email_date], ["purchase_order_no" => $purchase_order_no]);
             
             echo json_encode(array("message" => "Complete Mail Success"));
         }
@@ -1314,6 +1316,61 @@ class Purchase_orders extends CI_Controller
         $html .= '</table>';
         $html .= '<script>window.print()</script>';
         die($html);
+    }
+
+    public function csv()
+    {
+        header("Content-type: text/csv; charset=utf-8");
+        header("Content-Disposition: attachment; filename=purchase_orders_" . time() . ".csv");
+        $output = fopen("php://output", "w");
+        fputcsv($output, array(
+            "Month", "Year", "Revision", "PO No", "PO Date", "Part No", "Part Name", "Part Supplier", "Product Family", "Supplier No",
+            "Supplier Name", "Qty", "Price", "Total", "Currency", "Uom", "Leadtime", "ETA", "Forecast 1",
+            "Forecast 2", "Forecast 3"
+        ));
+
+        $this->db->select('a.*, b.item_supplier, c.number as supplier_no, c.name as supplier_name');
+        $this->db->from('purchase_orders a');
+        $this->db->join('mst_item_raw b', 'a.item_id = b.item_id');
+        $this->db->join('suppliers c', 'a.supplier_id = c.id');
+        $this->db->order_by('a.p_month', 'asc');
+        $this->db->order_by('a.p_year', 'asc');
+        $this->db->order_by('a.revision', 'asc');
+        $this->db->order_by('c.name', 'asc');
+        $this->db->order_by('a.product_family_name', 'asc');
+        $this->db->order_by('a.item_id', 'asc');
+        $records = $this->db->get()->result_array();
+
+        $no = 1;
+        foreach ($records as $data) {
+            $data = array(
+                $data['p_month'],
+                $data['p_year'],
+                $data['revision'],
+                $data['purchase_order_no'],
+                $data['purchase_order_date'],
+                $data['item_id'],
+                $data['item_supplier'],
+                $data['item_name'],
+                $data['product_family_name'],
+                $data['supplier_no'],
+                $data['supplier_name'],
+                $data['qty'],
+                $data['price'],
+                $data['total'],
+                $data['currency'],
+                $data['uom'],
+                $data['leadtime'],
+                $data['eta'],
+                $data['forecast_1'],
+                $data['forecast_2'],
+                $data['forecast_3'],
+            );
+
+            fputcsv($output, $data);
+
+            $no++;
+        }
     }
 
     public function print($option = "")

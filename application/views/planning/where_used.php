@@ -34,25 +34,25 @@
     function filter() {
         var filter_item_id = $("#filter_item_id").combogrid('getValue');
 
-        if (filter_item_id == "") {
-            toastr.warning("Please Choose Item Id");
-        } else {
+        // if (filter_item_id == "") {
+        //     toastr.warning("Please Choose Item Id");
+        // } else {
             var url = "?filter_item_id=" + btoa(filter_item_id);
 
             $("#printout").contents().find('html').html("<center><br><br><br><b style='font-size:20px;'>Please Wait...</b></center>");
             $("#printout").attr('src', '<?= base_url('planning/where_used/print') ?>' + url);
-        }
+        // }
     }
 
     function excel() {
         var filter_item_id = $("#filter_item_id").combogrid('getValue');
 
-        if (filter_item_id == "") {
-            toastr.warning("Please Choose Item Id");
-        } else {
+        // if (filter_item_id == "") {
+        //     toastr.warning("Please Choose Item Id");
+        // } else {
             var url = "?filter_item_id=" + btoa(filter_item_id);
             window.location.assign('<?= base_url('planning/where_used/print/excel') ?>' + url);
-        }
+        // }
     }
 
     $(function() {

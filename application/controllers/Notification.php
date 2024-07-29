@@ -52,8 +52,27 @@ class Notification extends CI_Controller
                 $totalNotificationPrice = 1;
             }
         }
+        
+        $notificationDelivery = [];
+        $totalNotificationDelivery = 0;
+        $menuDelivery = $this->api->read("user_setting", [], ["id_user" => $this->session->username, "id_menu" => "MNU-202301000011", "v_view" => 1]);
+        if(!empty($menuDelivery)){
+            $trans_date_1 = date("Y-m-d");
+            $trans_date_2 = date("Y-m-d", strtotime("+14 days"));
+            $notificationDelivery = $this->api->query("SELECT id FROM delivery_schedules 
+                WHERE etd_1 between '$trans_date_1' and '$trans_date_2' 
+                or etd_2 between '$trans_date_1' and '$trans_date_2'
+                or etd_3 between '$trans_date_1' and '$trans_date_2'
+                or etd_4 between '$trans_date_1' and '$trans_date_2'
+                or etd_5 between '$trans_date_1' and '$trans_date_2'
+                or etd_6 between '$trans_date_1' and '$trans_date_2'");
 
-        $totalRows = (count($notificationUser) + count($notificationPr) + count($notificationPo) + $totalNotificationPrice);
+            if(count($notificationDelivery) > 0){
+                $totalNotificationDelivery = 1;
+            }
+        }
+
+        $totalRows = (count($notificationUser) + count($notificationPr) + count($notificationPo) + $totalNotificationPrice + $totalNotificationDelivery);
         if ($totalRows > 0) {
             echo '<span class="badge">' . $totalRows . '</span>';
         } else {
@@ -109,8 +128,45 @@ class Notification extends CI_Controller
                                             </div>
                                         </td>
                                         <td style="padding-left: 10px;">
-                                            <b>SYSTEM AUTOMATIC</b><br>
+                                            <b>System Automatic</b><br>
                                             <small>There are several prices to expired in <b>VENDOR CONTRACT</b></small>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </a>
+                        </li>';
+            }
+        }
+
+        $notificationDelivery = [];
+        $menuDelivery = $this->api->read("user_setting", [], ["id_user" => $this->session->username, "id_menu" => "MNU-202301000011", "v_view" => 1]);
+        if(!empty($menuDelivery)){
+            $trans_date_1 = date("Y-m-d");
+            $trans_date_2 = date("Y-m-d", strtotime("+14 days"));
+            
+            $notificationDelivery = $this->api->query("SELECT id FROM delivery_schedules 
+                WHERE etd_1 between '$trans_date_1' and '$trans_date_2' 
+                or etd_2 between '$trans_date_1' and '$trans_date_2'
+                or etd_3 between '$trans_date_1' and '$trans_date_2'
+                or etd_4 between '$trans_date_1' and '$trans_date_2'
+                or etd_5 between '$trans_date_1' and '$trans_date_2'
+                or etd_6 between '$trans_date_1' and '$trans_date_2'");
+
+            if(count($notificationDelivery) > 0){
+                $link = "notificationDelivery()";
+                echo '  <li class="list-isi">
+                            <a onclick="' . $link . '">
+                                <table style="width: 100%;">
+                                    <tr>
+                                        <td>
+                                            <div class="icon-container">
+                                                <img src="assets/image/users/default.png" class="user-online" />
+                                                <div class="status-circle"></div>
+                                            </div>
+                                        </td>
+                                        <td style="padding-left: 10px;">
+                                            <b>System Automatic</b><br>
+                                            <small>There are several delivery to expired in <b>SCHEDULE DELIVERY IMPORT</b></small>
                                         </td>
                                     </tr>
                                 </table>
@@ -201,6 +257,17 @@ class Notification extends CI_Controller
         }
     }
 
+    public function delivery_schedules(){
+        if (empty($this->session->username)) {
+            redirect('error_session');
+        } else {
+            $data['table'] = "delivery_schedules";
+            
+            $this->load->view('template/header', $data);
+            $this->load->view('notification/delivery_schedules');
+        }
+    }
+
     public function notificationData($table = "", $user = "", $name = "")
     {
         $user = base64_decode($user);
@@ -282,6 +349,168 @@ class Notification extends CI_Controller
         //Mapping Data
         $result['total'] = $totalRows;
         $result = array_merge($result, ['rows' => $records]);
+        echo json_encode($result);
+    }
+
+    public function notificationDelivery()
+    {
+        $filters = json_decode($this->input->post('filterRules'));
+        $page = $this->input->post('page');
+        $rows = $this->input->post('rows');
+
+        //Pagination 1-10
+        $page   = isset($page) ? intval($page) : 1;
+        $rows   = isset($rows) ? intval($rows) : 10;
+        $offset = ($page - 1) * $rows;
+        $result = array();
+
+        $trans_date_1 = date("Y-m-d");
+        $trans_date_2 = date("Y-m-d", strtotime("+14 days"));
+
+        //Select Query
+        $this->db->select('a.*, b.name as supplier_name');
+        $this->db->from('delivery_schedules a');
+        $this->db->join('suppliers b', 'a.supplier_id = b.id');
+        $this->db->group_start();
+        $this->db->where("a.etd_1 between '$trans_date_1' and '$trans_date_2'");
+        $this->db->or_where("a.etd_2 between '$trans_date_1' and '$trans_date_2'");
+        $this->db->or_where("a.etd_3 between '$trans_date_1' and '$trans_date_2'");
+        $this->db->or_where("a.etd_4 between '$trans_date_1' and '$trans_date_2'");
+        $this->db->or_where("a.etd_5 between '$trans_date_1' and '$trans_date_2'");
+        $this->db->or_where("a.etd_6 between '$trans_date_1' and '$trans_date_2'");
+        $this->db->group_end();
+        if (@count($filters) > 0) {
+            foreach ($filters as $filter) {
+                if($filter->field == "supplier_name"){
+                    $this->db->like("b.name", $filter->value);
+                }else{
+                    $this->db->like("a.".$filter->field, $filter->value);
+                }
+            }
+        }
+        $this->db->order_by('a.po_no', 'ASC');
+        $records = $this->db->get()->result_array();
+
+        foreach ($records as $data) {
+            if($data['delivey_date_1'] == "0000-00-00"){ $eta_1 = "-"; }else{ $eta_1 = $data['delivey_date_1']; }
+            if($data['delivey_date_2'] == "0000-00-00"){ $eta_2 = "-"; }else{ $eta_2 = $data['delivey_date_2']; }
+            if($data['delivey_date_3'] == "0000-00-00"){ $eta_3 = "-"; }else{ $eta_3 = $data['delivey_date_3']; }
+            if($data['delivey_date_4'] == "0000-00-00"){ $eta_4 = "-"; }else{ $eta_4 = $data['delivey_date_4']; }
+            if($data['delivey_date_5'] == "0000-00-00"){ $eta_5 = "-"; }else{ $eta_5 = $data['delivey_date_5']; }
+            if($data['delivey_date_6'] == "0000-00-00"){ $eta_6 = "-"; }else{ $eta_6 = $data['delivey_date_6']; }
+            if($data['etd_1'] == "0000-00-00"){ $etd_1 = "-"; }else{ $etd_1 = $data['etd_1']; }
+            if($data['etd_2'] == "0000-00-00"){ $etd_2 = "-"; }else{ $etd_2 = $data['etd_2']; }
+            if($data['etd_3'] == "0000-00-00"){ $etd_3 = "-"; }else{ $etd_3 = $data['etd_3']; }
+            if($data['etd_4'] == "0000-00-00"){ $etd_4 = "-"; }else{ $etd_4 = $data['etd_4']; }
+            if($data['etd_5'] == "0000-00-00"){ $etd_5 = "-"; }else{ $etd_5 = $data['etd_5']; }
+            if($data['etd_6'] == "0000-00-00"){ $etd_6 = "-"; }else{ $etd_6 = $data['etd_6']; }
+            
+            if($data['delivey_qty_1'] > 0){
+                $recordFinal[] = array(
+                    "po_no" => $data['po_no'],
+                    "supplier_name" => $data['supplier_name'],
+                    "product_family" => $data['product_family'],
+                    "part_no" => $data['part_no'],
+                    "part_name" => $data['part_name'],
+                    "leadtime" => $data['leadtime'],
+                    "mpq" => $data['mpq'],
+                    "moq" => $data['moq'],
+                    "qty" => $data['qty'],
+                    "delivey_qty" => $data['delivey_qty_1'],
+                    "etd" => $etd_1,
+                    "eta" => $eta_1,
+                );
+            }
+
+            if($data['delivey_qty_2'] > 0){
+                $recordFinal[] = array(
+                    "po_no" => $data['po_no'],
+                    "supplier_name" => $data['supplier_name'],
+                    "product_family" => $data['product_family'],
+                    "part_no" => $data['part_no'],
+                    "part_name" => $data['part_name'],
+                    "leadtime" => $data['leadtime'],
+                    "mpq" => $data['mpq'],
+                    "moq" => $data['moq'],
+                    "qty" => $data['qty'],
+                    "delivey_qty" => $data['delivey_qty_2'],
+                    "etd" => $etd_2,
+                    "eta" => $eta_2,
+                );
+            }
+
+            if($data['delivey_qty_3'] > 0){
+                $recordFinal[] = array(
+                    "po_no" => $data['po_no'],
+                    "supplier_name" => $data['supplier_name'],
+                    "product_family" => $data['product_family'],
+                    "part_no" => $data['part_no'],
+                    "part_name" => $data['part_name'],
+                    "leadtime" => $data['leadtime'],
+                    "mpq" => $data['mpq'],
+                    "moq" => $data['moq'],
+                    "qty" => $data['qty'],
+                    "delivey_qty" => $data['delivey_qty_3'],
+                    "etd" => $etd_3,
+                    "eta" => $eta_3,
+                );
+            }
+
+            if($data['delivey_qty_4'] > 0){
+                $recordFinal[] = array(
+                    "po_no" => $data['po_no'],
+                    "supplier_name" => $data['supplier_name'],
+                    "product_family" => $data['product_family'],
+                    "part_no" => $data['part_no'],
+                    "part_name" => $data['part_name'],
+                    "leadtime" => $data['leadtime'],
+                    "mpq" => $data['mpq'],
+                    "moq" => $data['moq'],
+                    "qty" => $data['qty'],
+                    "delivey_qty" => $data['delivey_qty_4'],
+                    "etd" => $etd_4,
+                    "eta" => $eta_4,
+                );
+            }
+
+            if($data['delivey_qty_5'] > 0){
+                $recordFinal[] = array(
+                    "po_no" => $data['po_no'],
+                    "supplier_name" => $data['supplier_name'],
+                    "product_family" => $data['product_family'],
+                    "part_no" => $data['part_no'],
+                    "part_name" => $data['part_name'],
+                    "leadtime" => $data['leadtime'],
+                    "mpq" => $data['mpq'],
+                    "moq" => $data['moq'],
+                    "qty" => $data['qty'],
+                    "delivey_qty" => $data['delivey_qty_5'],
+                    "etd" => $etd_5,
+                    "eta" => $eta_5,
+                );
+            }
+
+            if($data['delivey_qty_6'] > 0){
+                $recordFinal[] = array(
+                    "po_no" => $data['po_no'],
+                    "supplier_name" => $data['supplier_name'],
+                    "product_family" => $data['product_family'],
+                    "part_no" => $data['part_no'],
+                    "part_name" => $data['part_name'],
+                    "leadtime" => $data['leadtime'],
+                    "mpq" => $data['mpq'],
+                    "moq" => $data['moq'],
+                    "qty" => $data['qty'],
+                    "delivey_qty" => $data['delivey_qty_6'],
+                    "etd" => $etd_6,
+                    "eta" => $eta_6,
+                );
+            }
+        }
+
+        //Mapping Data
+        $result['total'] = $recordFinal;
+        $result = array_merge($result, ['rows' => $recordFinal]);
         echo json_encode($result);
     }
 }

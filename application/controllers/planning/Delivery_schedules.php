@@ -77,6 +77,7 @@ class Delivery_schedules extends CI_Controller
             $this->db->select('a.*, b.mpq, b.moq');
             $this->db->from('purchase_orders a');
             $this->db->join('supplier_items b', 'a.supplier_id = b.supplier_id and a.item_id = b.item_id');
+            $this->db->join('mst_maker c', 'b.maker_code = c.number');
             $this->db->where('a.p_month', $filter_month);
             $this->db->where('a.p_year', $filter_year);
             $this->db->where('a.revision', $filter_revision);
@@ -84,6 +85,7 @@ class Delivery_schedules extends CI_Controller
             $this->db->like('a.product_family_name', $filter_product_family);
             $this->db->like('a.item_id', $filter_product_no);
             // $this->db->where('b.purchase_request >', 0);
+            // $this->db->where('c.type', 'IMPORT');
             $this->db->group_by('a.item_id');
             $this->db->group_by('a.supplier_id');
             $this->db->order_by('a.item_id', 'asc');

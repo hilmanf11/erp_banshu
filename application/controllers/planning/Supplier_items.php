@@ -466,27 +466,34 @@ class Supplier_items extends CI_Controller
         $filter_plant  = base64_decode($this->input->get('filter_plant'));
         $filter_suppliers  = base64_decode($this->input->get('filter_suppliers'));
         $filter_category  = base64_decode($this->input->get('filter_category'));
+        $filter_maker  = base64_decode($this->input->get('filter_maker'));
         $filter_items = base64_decode($this->input->get('filter_items'));
-        $filter_maker = base64_decode($this->input->get('filter_maker'));
         $filter_item_vendor = base64_decode($this->input->get('filter_item_vendor'));
         $filter_share_order = base64_decode($this->input->get('filter_share_order'));
+        $filter_check = $this->input->get('filter_check');
         
         //Config
         $this->db->select('*');
         $this->db->from('config');
         $config = $this->db->get()->row();
 
-        $this->db->select('a.*, c.item_id, c.item_name, c.item_supplier, b.number as supplier_number, b.origin, e.name as pfm_name, b.name as supplier_name, b.type, b.currency, d.name as uom, f.name as maker_name, f.type as maker_type, f.origin as maker_origin');
+        $this->db->select('a.*, g.valid_date, g.price, g.currency, c.item_id, c.item_name, c.item_supplier, b.number as supplier_number, b.origin, e.name as pfm_name, b.name as supplier_name, b.type, d.name as uom, f.name as maker_name, f.type as maker_type, f.origin as maker_origin');
         $this->db->from('supplier_items a');
         $this->db->join('suppliers b', 'b.id = a.supplier_id');
         $this->db->join('mst_item_raw c', 'c.item_id = a.item_id');
         $this->db->join('uom d', 'c.um_id = d.number', 'left');
         $this->db->join('mst_item_family e', 'c.pfm_id = e.number', 'left');
         $this->db->join('mst_maker f', 'a.maker_code = f.number');
+        $this->db->join("(SELECT supplier_item_id, price, currency, valid_date FROM supplier_item_prices WHERE (supplier_item_id, valid_date) IN (SELECT supplier_item_id, MAX(valid_date) FROM supplier_item_prices GROUP BY supplier_item_id)) g", 'a.id = g.supplier_item_id', 'left');
+        if($filter_check == "true"){
+            $this->db->join("(SELECT item_id FROM supplier_items GROUP BY item_id HAVING COUNT(*) > 1) h", 'a.item_id = h.item_id');
+        }
         if($filter_plant != ""){
             $this->db->like('a.plant', $filter_plant);
         }
-        $this->db->like('c.pfm_id', $filter_category);
+        if($filter_category != ""){
+            $this->db->like('c.pfm_id', $filter_category);
+        }
         $this->db->like('a.supplier_id', $filter_suppliers);
         $this->db->like('a.item_id', $filter_items);
         $this->db->like('f.number', $filter_maker);
@@ -496,7 +503,9 @@ class Supplier_items extends CI_Controller
         if($filter_share_order != ""){
             $this->db->where('a.share_order', $filter_share_order);
         }
-        $this->db->order_by('b.name', 'ASC');
+        if($filter_check == "false"){
+            $this->db->order_by('b.name', 'ASC');
+        }
         $this->db->order_by('a.item_id', 'ASC');
         $records = $this->db->get()->result_array();
 

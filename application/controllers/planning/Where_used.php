@@ -39,11 +39,12 @@ class Where_used extends CI_Controller
         if ($this->input->get()) {
             $filter_item_id = base64_decode($this->input->get('filter_item_id'));
 
-            $query = $this->db->query("SELECT a.item_id, b.item_name, a.qty, c.name as customer_name
+            $query = $this->db->query("SELECT a.component_id, d.item_name as component_name, a.item_id, b.item_name, a.qty, c.name as customer_name
                 FROM mst_bom a
                 LEFT JOIN mst_item b ON a.item_id = b.item_id
                 LEFT JOIN mst_customer c ON b.id_customer = c.number
-                WHERE a.component_id = '$filter_item_id' and b.pfm_id = '06'");
+                LEFT JOIN mst_item_raw d ON a.component_id = d.item_id
+                WHERE b.pfm_id = '06' and a.component_id like '%$filter_item_id%' ORDER BY a.component_id ASC");
             $records = $query->result_array();
 
             //Config
@@ -80,6 +81,8 @@ class Where_used extends CI_Controller
                     <table id="customers" border="1">
                         <tr>
                             <th width="30">No</th>
+                            <th style="text-align:center;">Part No</th>
+                            <th style="text-align:center;">Part Name</th>
                             <th style="text-align:center;">Product No</th>
                             <th style="text-align:center;">Product Name</th>
                             <th style="text-align:center;">Qty</th>
@@ -89,6 +92,8 @@ class Where_used extends CI_Controller
             foreach ($records as $record) {
                 $html .= '<tr>
                             <td style="text-align:center;">' . $no . '</td>
+                            <td>' . $record['component_id'] . '</td>
+                            <td>' . $record['component_name'] . '</td>
                             <td>' . $record['item_id'] . '</td>
                             <td>' . $record['item_name'] . '</td>
                             <td>' . $record['qty'] . '</td>

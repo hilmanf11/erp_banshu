@@ -114,6 +114,7 @@
         </fieldset>
     </div>
     <?= $button ?>
+    <a href="javascript:;" class="easyui-linkbutton" plain="true" onclick="csv()"><i class="fa fa-file"></i> Export to CSV</a>
 </div>
 
 <div id="toolbar2" style="height: auto; padding:10px;">
@@ -137,6 +138,10 @@
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Supplier Name</span>
                     <input style="width:60%;" id="d_supplier" class="easyui-textbox" readonly>
+                </div>
+                <div class="fitem" id="completeMailDate">
+                    <span style="width:35%; display:inline-block;">Send Date</span>
+                    <input style="width:60%;" id="d_email_date" class="easyui-datebox" value="<?= date("Y-m-d") ?>" data-options="formatter:myformatter,parser:myparser, editable:false">
                 </div>
             </div>
             <div style="width: 30%; float: left;">
@@ -497,17 +502,20 @@
             $("#sendMail").hide();
             $("#completeMail").hide();
             $("#sendBlink").hide();
+            $("#completeMailDate").hide();
         }else if(push == "push"){
             $("#pushData").show();
             $("#detailEdit").hide();
             $("#sendMail").hide();
             $("#completeMail").hide();
             $("#sendBlink").hide();
+            $("#completeMailDate").hide();
         }else{
             $("#pushData").hide();
             $("#detailEdit").hide();
             $("#sendMail").show();
             $("#completeMail").show();
+            $("#completeMailDate").show();
             $("#sendBlink").show();
             $("#sendMailText").html(email);
             $("#mail_to").textbox("setValue", email);
@@ -675,11 +683,12 @@
         $.messager.prompt('Complete Mail', 'Please input Password to Complete Mail PO', function(r){
             if (r == "COMPLETEMAIL"){
                 var purchase_order_no = $("#d_purchase_order_no").textbox('getValue');
+                var email_date = $("#d_email_date").datebox('getValue');
 
                 $.ajax({
                     type: "post",
                     url: "<?= base_url("planning/purchase_orders/completeMail") ?>",
-                    data: "purchase_order_no=" + purchase_order_no,
+                    data: "purchase_order_no=" + purchase_order_no + "&email_date=" + email_date,
                     dataType: "json",
                     success: function (response) {
                         toastr.success(response.message);
@@ -815,6 +824,15 @@
         } else {
             window.location.assign('<?= base_url('planning/purchase_orders/print/excel') ?>' + url);
         }
+    }
+
+    function csv() {
+        $.messager.prompt('Export CSV', 'Please input Password to Export to CSV', function(r){
+            if (r == "CSV"){
+                $.messager.alert('Info','Please Wait Export to CSV');
+                window.location.assign('<?= base_url('planning/purchase_orders/csv') ?>');
+            }
+        });
     }
 
     //Upload Data
