@@ -10,8 +10,8 @@
         <tr>
             <th rowspan="2" data-options="field:'product_family',width:120,halign:'center'">Product Family</th>
             <th colspan="2" data-options="field:'mrp',width:100,halign:'center',hstyler: function(value, row, index) { return 'background-color:#B0CFFF'; }">MRP</th>
-            <th colspan="4" data-options="field:'mrp',width:100,halign:'center',hstyler: function(value, row, index) { return 'background-color:#FFF9B0'; }">Purchase Request</th>
-            <th colspan="6" data-options="field:'mrp',width:100,halign:'center',hstyler: function(value, row, index) { return 'background-color:#B8FFB0'; }">Purchase Order</th>
+            <th colspan="5" data-options="field:'mrp',width:100,halign:'center',hstyler: function(value, row, index) { return 'background-color:#FFF9B0'; }">Purchase Request</th>
+            <th colspan="7" data-options="field:'mrp',width:100,halign:'center',hstyler: function(value, row, index) { return 'background-color:#B8FFB0'; }">Purchase Order</th>
         </tr>
         <tr>
             <th data-options="field:'generate_date',width:150,align:'center'">Generate Date</th>
@@ -22,6 +22,7 @@
             <th data-options="field:'purchase_request_no',width:180,align:'center'">Purchase Request No</th>
             <th data-options="field:'pr_supplier_name',width:150,halign:'center'">Supplier</th>
             <th data-options="field:'total_pr',width:80,halign:'center',align:'right', formatter: numberformat">Qty</th>
+            <th data-options="field:'reason_pr',width:200,halign:'center',align:'right'">Reason</th>
             <!-- <th data-options="field:'pr_approved_by',width:120,align:'center'">Last Approve</th> -->
             <!-- <th data-options="field:'pr_approved_date',width:150,align:'center'">Approve Date</th> -->
             <!-- <th data-options="field:'pr_approved_to',width:120,align:'center'">Next Approve</th> -->
@@ -30,6 +31,7 @@
             <th data-options="field:'purchase_order_no',width:180,align:'center'">Purchase Order No</th>
             <th data-options="field:'po_supplier_name',width:150,halign:'center'">Supplier</th>
             <th data-options="field:'total_po',width:80,halign:'center',align:'right', formatter: numberformat">Qty</th>
+            <th data-options="field:'reason_po',width:200,halign:'center',align:'right'">Reason</th>
             <!-- <th data-options="field:'po_approved_by',width:120,align:'center'">Last Approve</th> -->
             <!-- <th data-options="field:'po_approved_date',width:150,align:'center'">Approve Date</th> -->
             <!-- <th data-options="field:'po_approved_to',width:120,align:'center'">Next Approve</th> -->

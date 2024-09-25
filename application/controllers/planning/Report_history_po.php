@@ -82,6 +82,7 @@ class Report_history_po extends CI_Controller
                 b.created_date as pr_date,
                 b.purchase_request as total_pr,
                 b.purchase_request_no,
+                b.reason as reason_pr,
                 d.name as pr_supplier_name,
                 b.approved_by as pr_approved_by,
                 b.approved_date as pr_approved_date,
@@ -90,6 +91,7 @@ class Report_history_po extends CI_Controller
                 c.created_date as po_date,
                 c.qty as total_po,
                 c.purchase_order_no,
+                c.reason as reason_po,
                 e.name as po_supplier_name,
                 c.approved_by as po_approved_by,
                 c.approved_date as po_approved_date,
@@ -167,6 +169,7 @@ class Report_history_po extends CI_Controller
                 b.created_date as pr_date,
                 b.purchase_request as total_pr,
                 b.purchase_request_no,
+                b.reason as reason_pr,
                 d.name as pr_supplier_name,
                 b.approved_by as pr_approved_by,
                 b.approved_date as pr_approved_date,
@@ -175,10 +178,13 @@ class Report_history_po extends CI_Controller
                 c.created_date as po_date,
                 c.qty as total_po,
                 c.purchase_order_no,
+                c.reason as reason_po,
                 e.name as po_supplier_name,
                 c.approved_by as po_approved_by,
                 c.approved_date as po_approved_date,
                 c.approved_to as po_approved_to,
+                c.email_date,
+                c.confirm_date,
                 c.status');
             $this->db->from('generate_mrp_finals a');
             $this->db->join('purchase_requests b', 'a.part_no = b.part_no and a.p_month = b.p_month and a.p_year = b.p_year and a.revision = b.revision', 'left');
@@ -249,34 +255,28 @@ class Report_history_po extends CI_Controller
         <table id="customers" border="1">
             <tr>
                 <th style="text-align:center;" rowspan="2" width="20">NO</th>
-                <th style="text-align:center;" rowspan="2">PART NO</th>
-                <th style="text-align:center;" rowspan="2">PART NAME</th>
-                <th style="text-align:center;" rowspan="2">PRODUCT FAMILY</th>
-                <th style="text-align:center;" colspan="3">MRP</th>
-                <th style="text-align:center;" colspan="8">PURCHASE REQUEST</th>
-                <th style="text-align:center;" colspan="8">PURCHASE ORDER</th>
-                <th style="text-align:center;" rowspan="2">STATUS</th>
+                <th style="text-align:center;" rowspan="2">Part No</th>
+                <th style="text-align:center;" rowspan="2">Part Name</th>
+                <th style="text-align:center;" rowspan="2">Product Family</th>
+                <th style="text-align:center;" colspan="2">MRP</th>
+                <th style="text-align:center;" colspan="5">Purchase Request</th>
+                <th style="text-align:center;" colspan="7">Purchase Order</th>
             </tr>
             <tr>
-                <th style="text-align:center;">GENERATE DATE</th>
-                <th style="text-align:center;">GENERATE BY</th>
-                <th style="text-align:center;">MRP RESULT</th>
-                <th style="text-align:center;">CREATE DATE</th>
-                <th style="text-align:center;">CREATE BY</th>
-                <th style="text-align:center;">PR NO</th>
-                <th style="text-align:center;">SUPPLIER</th>
-                <th style="text-align:center;">QTY</th>
-                <th style="text-align:center;">LAST APPROVE</th>
-                <th style="text-align:center;">LAST APPROVE DATE</th>
-                <th style="text-align:center;">NEXT APPROVE</th>
-                <th style="text-align:center;">CREATE DATE</th>
-                <th style="text-align:center;">CREATE BY</th>
-                <th style="text-align:center;">PO NO</th>
-                <th style="text-align:center;">SUPPLIER</th>
-                <th style="text-align:center;">QTY</th>
-                <th style="text-align:center;">LAST APPROVE</th>
-                <th style="text-align:center;">LAST APPROVE DATE</th>
-                <th style="text-align:center;">NEXT APPROVE</th>
+                <th style="text-align:center;">Generate Date</th>
+                <th style="text-align:center;">Total Need</th>
+                <th style="text-align:center;">Create Date</th>
+                <th style="text-align:center;">PR No</th>
+                <th style="text-align:center;">Supplier</th>
+                <th style="text-align:center;">Qty</th>
+                <th style="text-align:center;">Reason</th>
+                <th style="text-align:center;">Create Date</th>
+                <th style="text-align:center;">PO No</th>
+                <th style="text-align:center;">Supplier</th>
+                <th style="text-align:center;">Qty</th>
+                <th style="text-align:center;">Reason</th>
+                <th style="text-align:center;">Send Date</th>
+                <th style="text-align:center;">Confirm Date</th>
             </tr>';
 
             $no = 1;
@@ -287,25 +287,19 @@ class Report_history_po extends CI_Controller
                                 <td>' . $record['part_name'] . '</td>
                                 <td>' . $record['product_family'] . '</td>
                                 <td>' . $record['generate_date'] . '</td>
-                                <td>' . $record['generate_by'] . '</td>
                                 <td style="text-align:right;">' . $record['total_need'] . '</td>
                                 <td>' . $record['pr_date'] . '</td>
-                                <td>' . $record['pr_by'] . '</td>
                                 <td>' . $record['purchase_request_no'] . '</td>
                                 <td>' . $record['pr_supplier_name'] . '</td>
                                 <td style="text-align:right;">' . $record['total_pr'] . '</td>
-                                <td>' . $record['pr_approved_by'] . '</td>
-                                <td>' . $record['pr_approved_date'] . '</td>
-                                <td>' . $record['pr_approved_to'] . '</td>
+                                <td>' . $record['reason_pr'] . '</td>
                                 <td>' . $record['po_date'] . '</td>
-                                <td>' . $record['po_by'] . '</td>
                                 <td>' . $record['purchase_order_no'] . '</td>
                                 <td>' . $record['po_supplier_name'] . '</td>
                                 <td style="text-align:right;">' . $record['total_po'] . '</td>
-                                <td>' . $record['po_approved_by'] . '</td>
-                                <td>' . $record['po_approved_date'] . '</td>
-                                <td>' . $record['po_approved_to'] . '</td>
-                                <td>' . $record['status'] . '</td>
+                                <td>' . $record['reason_po'] . '</td>
+                                <td>' . $record['email_date'] . '</td>
+                                <td></td>
                             </tr>';
                 $no++;
             }

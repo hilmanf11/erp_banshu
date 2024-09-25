@@ -338,7 +338,11 @@ class Generate_mrp extends CI_Controller
                 $this->db->where('part_no', $filter_part_no);
             }
             $this->db->order_by('product_family', 'asc');
-            $this->db->order_by('total_need', 'asc');
+            if($filter_revision == "0"){
+                $this->db->order_by('need_1', 'asc');
+            }else{
+                $this->db->order_by('need_2', 'asc');
+            }
             $generates = $this->db->get()->result_array();
 
             $total_need = 0;
@@ -357,7 +361,7 @@ class Generate_mrp extends CI_Controller
                     $total_need += $need;
                 }
 
-                $this->db->select('product_family, SUM(total_need) as total');
+                $this->db->select('product_family, SUM(need_1) as total_1, SUM(need_2) as total_2');
                 $this->db->from('generate_mrp_finals');
                 $this->db->where('p_month', $filter_month);
                 $this->db->where('p_year', $filter_year);
@@ -366,8 +370,14 @@ class Generate_mrp extends CI_Controller
                 $this->db->group_by('product_family');
                 $mrp = $this->db->get()->row();
 
-                if(@$total_need > 0 || @$mrp->total > 0){
-                    $composition = round(($total_need / @$mrp->total) * 100);
+                if($filter_revision == "0"){
+                    $mrpTotal = @$mrp->total_1;
+                }else{
+                    $mrpTotal = @$mrp->total_2;
+                }
+
+                if(@$total_need > 0 || $mrpTotal > 0){
+                    $composition = round(($total_need / $mrpTotal) * 100);
                 }else{
                     $composition = 0;
                 }
@@ -376,6 +386,14 @@ class Generate_mrp extends CI_Controller
                 $this->db->from('safety_stock');
                 $this->db->where("start <= '$composition' and ending >= '$composition'");
                 $safety_stock = $this->db->get()->row();
+
+                // if($composition > 100){
+                //     $safety_stock_number = "A";
+                //     $safety_stock_safety = 25;
+                // }else{
+                    $safety_stock_number = @$safety_stock->number;
+                    $safety_stock_safety = @$safety_stock->safety;
+                //}
 
                 $arr[] = array(
                     "p_month" => $filter_month,
@@ -387,8 +405,8 @@ class Generate_mrp extends CI_Controller
                     "need" => $need,
                     "total" => @$mrp->total,
                     "composition" => $composition,
-                    "class" => $safety_stock->number,
-                    "safety" => $safety_stock->safety,
+                    "class" => @$safety_stock_number,
+                    "safety" => @$safety_stock_safety,
                     "safety_stock" => round($need * (@$safety_stock->safety / 100)),
                 );
 
@@ -886,6 +904,11 @@ class Generate_mrp extends CI_Controller
             $this->db->group_by('a.part_no');
             $this->db->order_by('b.number', 'asc');
             $this->db->order_by('c.class', 'asc');
+            if($filter_revision == 0){
+                $this->db->order_by('a.need_1', 'desc');
+            }else{
+                $this->db->order_by('a.need_2', 'desc');
+            }
             // $this->db->limit(10);
             $records = $this->db->get()->result_array();
 

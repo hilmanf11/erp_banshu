@@ -398,13 +398,13 @@ class Purchase_request extends CI_Controller
             $leadtime = date('Y-m-01', strtotime('+'.$data['leadtime'].' days', strtotime($ending)));
 
             //Purchase History
-            $qpo1 = $this->db->query("SELECT qty FROM purchase_orders WHERE `purchase_order_date` LIKE '%$po_date_1%' and item_id = '$item_id' and revision = '$revision'");
+            $qpo1 = $this->db->query("SELECT qty FROM purchase_orders WHERE `purchase_order_date` LIKE '%$po_date_1%' and item_id = '$item_id' and revision = '$revision' and p_month = '$filter_month' and p_year = '$filter_year'");
             $rpo1 = $qpo1->row();
 
-            $qpo2 = $this->db->query("SELECT qty FROM purchase_orders WHERE `purchase_order_date` LIKE '%$po_date_2%' and item_id = '$item_id' and revision = '$revision'");
+            $qpo2 = $this->db->query("SELECT qty FROM purchase_orders WHERE `purchase_order_date` LIKE '%$po_date_2%' and item_id = '$item_id' and revision = '$revision' and p_month = '$filter_month' and p_year = '$filter_year'");
             $rpo2 = $qpo2->row();
 
-            $qpo3 = $this->db->query("SELECT qty FROM purchase_orders WHERE `purchase_order_date` LIKE '%$po_date_3%' and item_id = '$item_id' and revision = '$revision'");
+            $qpo3 = $this->db->query("SELECT qty FROM purchase_orders WHERE `purchase_order_date` LIKE '%$po_date_3%' and item_id = '$item_id' and revision = '$revision' and p_month = '$filter_month' and p_year = '$filter_year'");
             $rpo3 = $qpo3->row();
             
             $m1 = date('Y-m-01', strtotime($leadtime));
@@ -414,13 +414,13 @@ class Purchase_request extends CI_Controller
             $m22 = "m".date('n', strtotime('+1 month', strtotime($leadtime)));
             $m33 = "m".date('n', strtotime('+2 month', strtotime($leadtime)));
 
-            $qmps1 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m1' and product_no = '$item_id' and revision = '$revision'");
+            $qmps1 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m1' and product_no = '$item_id' and revision = '$revision' and p_month = '$filter_month' and p_year = '$filter_year'");
             $rpms1 = $qmps1->row();
 
-            $qmps2 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m2' and product_no = '$item_id' and revision = '$revision'");
+            $qmps2 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m2' and product_no = '$item_id' and revision = '$revision' and p_month = '$filter_month' and p_year = '$filter_year'");
             $rpms2 = $qmps2->row();
 
-            $qmps3 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m3' and product_no = '$item_id' and revision = '$revision'");
+            $qmps3 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m3' and product_no = '$item_id' and revision = '$revision' and p_month = '$filter_month' and p_year = '$filter_year'");
             $rpms3 = $qmps3->row();
 
             $forecast = $this->forecast($item_id, $filter_month, $filter_year, @$revision);
@@ -535,7 +535,8 @@ class Purchase_request extends CI_Controller
                 "p_year" => $post['p_year'],
                 "revision" => $post['revision'],
                 "part_no" => $post['part_no'],
-                "supplier_id" => $post['supplier_id']
+                "supplier_id" => $post['supplier_id'],
+                "purchase_request_no" => $post['purchase_request_no']
             ]);
 
             if(count($records) > 0){

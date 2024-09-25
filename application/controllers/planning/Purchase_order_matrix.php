@@ -44,6 +44,8 @@ class Purchase_order_matrix extends CI_Controller
             $query = $this->db->query("SELECT * FROM mst_item_family WHERE number like '%$filter_product_family%' ORDER BY `number` asc");
             $records = $query->result_array();
 
+            $year_before = date("Y", strtotime("-1 year", strtotime($filter_year)));
+
             //Config
             $this->db->select('*');
             $this->db->from('config');
@@ -80,7 +82,7 @@ class Purchase_order_matrix extends CI_Controller
                             <th rowspan="2" style="text-align:center;" width="30">No</th>
                             <th rowspan="2" style="text-align:center;" width="100">Product Family</th>
                             <th rowspan="2" style="text-align:center;" width="50">Kind</th>
-                            <th rowspan="2" style="text-align:center;" width="50">Xbar <br>(Oct - Dec 2022)</th>
+                            <th rowspan="2" style="text-align:center;" width="50">Xbar <br>(Oct - Dec '.$year_before.')</th>
                             <th colspan="3" style="text-align:center;">Period</th>
                             <th rowspan="2" style="text-align:center;" width="50">Xbar</th>
                             <th colspan="3" style="text-align:center;">Period</th>
@@ -116,26 +118,67 @@ class Purchase_order_matrix extends CI_Controller
             foreach ($records as $record) {
                 $pfm_id = $record['number'];
 
+                $ospo3 = $this->dummy->query("SELECT SUM(z.request) as request, SUM(z.receive) as receive, SUM(z.balance) as balance FROM(
+                    SELECT b.item_id, b.poc_id, b.poc_reqdate, 
+                        COALESCE(b.request, 0) as request, 
+                        COALESCE(a.receive, 0) as receive, 
+                        (COALESCE(b.request, 0) - COALESCE(a.receive, 0)) as balance
+                    FROM (select TO_CHAR(a.poc_reqdate, 'yyyy-mm') as poc_reqdate, a.item_id, a.poc_id, sum(a.poc_reqqty) as request 
+                        from poc a JOIN mst_item b ON a.item_id = b.item_id
+                        WHERE b.pfm_id = '$pfm_id' and TO_CHAR(a.poc_reqdate, 'yyyy-mm') in ('$year_before-10','$year_before-11','$year_before-12')
+                        GROUP BY a.item_id, a.poc_id, poc_reqdate) b 
+                    LEFT JOIN (select TO_CHAR(por_date, 'yyyy-mm') as por_date, a.item_id, a.por_pocid, SUM(a.por_receiveqty) as receive 
+                        from por a JOIN mst_item b ON a.item_id = b.item_id
+                        WHERE b.pfm_id = '$pfm_id' and TO_CHAR(a.por_date, 'yyyy-mm') in ('$year_before-10','$year_before-11','$year_before-12')
+                        GROUP BY a.por_pocid, a.item_id, por_date) a ON a.item_id = b.item_id and a.por_pocid = b.poc_id
+                    WHERE (COALESCE(b.request, 0) - COALESCE(a.receive, 0)) > 0) z");
+                $ospoRow3 = $ospo3->result_array();
+
+                $year_before1 = $year_before."10";
+                $year_before2 = $year_before."11";
+                $year_before3 = $year_before."12";
+                $wo3 = $this->dummy->query("SELECT SUM(z.need) as need FROM(
+                    SELECT b.bom_com_item, a.periode, (a.qty * b.bom_qty_perassy) as need 
+                    FROM wip_trx_mpp a
+                    JOIN mst_bom b ON b.bom_par_item = a.assy_no
+                    JOIN mst_item c ON b.bom_com_item = c.item_id
+                    where a.periode in ('$year_before1','$year_before2','$year_before3') and c.pfm_id = '$pfm_id'
+                    order by b.bom_com_item, a.periode) z");
+                $woRow3 = $wo3->result_array();
+
+                $endstock3 = $this->dummy->query("SELECT coalesce(round(sum(a.ith_qty)),0) as stock
+                from ith a
+                JOIN mst_item b ON a.ith_item_id = b.item_id and b.stscode_id = '01'
+                where TO_CHAR(a.ith_date, 'yyyy-mm') in ('$year_before-10','$year_before-11','$year_before-12') and b.pfm_id = '$pfm_id'");
+                $endstockRow3 = $endstock3->result_array();
+
+                $supply3 = $this->dummy->query("SELECT coalesce(round(sum(a.ith_qty)),0) as stock
+                from ith a
+                JOIN mst_item b ON a.ith_item_id = b.item_id and b.stscode_id = '01'
+                where TO_CHAR(a.ith_date, 'yyyy-mm') in ('$year_before-10','$year_before-11','$year_before-12') and b.pfm_id = '$pfm_id'
+                and a.ith_form like '%OU%' and a.ith_form not in ('OU - Adjust Out','OU - ADJUST OUT','ADJUST OUT','OU - ADJ OUT IDM','ADJUST-OUT')");
+                $supplyRow3 = $supply3->result_array();
+
                 $htmlOspo       = '<tr>
                                         <td rowspan="6" style="text-align:center;">' . $no . '</td>
                                         <td rowspan="6">' . $record['name'] . '</td>
                                         <td>OS PO</td>
-                                        <td>0</td>';
+                                        <td style="text-align:right;">'.number_format(@$ospoRow3[0]['balance']).'</td>';
                 $htmlEndStock   = '<tr>
                                         <td>End Stock</td>
-                                        <td>0</td>';
+                                        <td style="text-align:right;">'.number_format(@$endstockRow3[0]['stock']).'</td>';
                 $htmlPo         = '<tr>
                                         <td>PO</td>
-                                        <td>0</td>';
+                                        <td style="text-align:right;">'.number_format(@$ospoRow3[0]['request']).'</td>';
                 $htmlReceipt    = '<tr>
                                         <td>Receipt</td>
-                                        <td>0</td>';
+                                        <td style="text-align:right;">'.number_format(@$ospoRow3[0]['receive']).'</td>';
                 $htmlWo         = '<tr>
                                         <td>WO</td>
-                                        <td>0</td>';
+                                        <td style="text-align:right;">'.number_format(@$woRow3[0]['need']).'</td>';
                 $htmlSupply     = '<tr>
                                         <td>Supply</td>
-                                        <td>0</td>';
+                                        <td style="text-align:right;">'.number_format(@$supplyRow3[0]['stock']).'</td>';
                 
                 $months = array(
                     '01' => 'January', 

@@ -401,11 +401,11 @@
         if (filter_month != "" && filter_year != "" && filter_revision != "") {
             $('#dg').datagrid({
                 url: '<?= base_url('planning/material_calculation_2/datatables') ?>' + url,
-                pagination: true,
+                pagination: false,
                 rownumbers: true,
                 singleSelect: true,
-                pageList: [20, 50, 100, 500, 1000],
-                pageSize: 20,
+                // pageList: [20, 50, 100, 500, 1000],
+                // pageSize: 20,
             });
 
             // $("#printout").contents().find('html').html("<center><br><br><br><b style='font-size:20px;'>Please Wait...</b></center>");

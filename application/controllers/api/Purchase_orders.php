@@ -80,13 +80,31 @@ class Purchase_orders extends CI_Controller
 
     public function readDetails(){
         if($this->input->get()){
+            $filter_month = $this->input->get('pmonth');
+            $filter_year = $this->input->get('pyear');
+            $filter_revision = $this->input->get('rev');
+            $filter_supplier = $this->input->get('supplier');
+            $filter_product_family = $this->input->get('prodfam');
             $filter_po_no = $this->input->get('pono');
+            $filter_part_no = base64_decode($this->input->get('partno'));
 
             //Select Query
             $this->db->select('a.*, b.number as supplier_no, b.name as supplier_name');
             $this->db->from('purchase_orders a');
             $this->db->join('suppliers b', "a.supplier_id = b.id", 'left');
+            // $this->db->where('a.p_month', $filter_month);
+            // $this->db->where('a.p_year', $filter_year);
+            // $this->db->where('a.revision', $filter_revision);
             $this->db->where('a.purchase_order_no', $filter_po_no);
+            if($filter_supplier != ""){
+                $this->db->where('b.number', $filter_supplier);
+            }
+            if($filter_product_family != ""){
+                $this->db->where('a.product_family', $filter_product_family);
+            }
+            if($filter_part_no != ""){
+                $this->db->where('a.item_id', $filter_part_no);
+            }
             $this->db->order_by('a.item_id');
             //Total Data
             $totalRows = $this->db->count_all_results('', false);
@@ -102,6 +120,12 @@ class Purchase_orders extends CI_Controller
                 array_push($data, $record);
             }
 
+            if($total_qty > 0){
+                $total_price = ($total_amount / $total_qty);
+            }else{
+                $total_price = 0;
+            }
+
             //Mapping Data
             $result['total'] = $totalRows;
             $result = array_merge($result, [
@@ -109,7 +133,7 @@ class Purchase_orders extends CI_Controller
                 'footer' => array([
                     "item_id" => "Grand Total",
                     "qty" => $total_qty,
-                    "price" => ($total_amount / $total_qty),
+                    "price" => $total_price,
                     "total" => $total_amount
                 ])
             ]);

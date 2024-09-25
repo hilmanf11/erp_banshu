@@ -156,7 +156,12 @@ class Delivery_schedule_days extends CI_Controller
             //Jika Hari Minggu
             $style = "background:white !important;";
             // $checkbox = "<input hidden checked class='checked' type='checkbox' value='" . $d . "' name='days[]' style='float: left; width: 20px;'/>";
-            $note = "<input type='number' style='width:100px;' name='del_".$d."' value='" . @$data[0]['del_'.$d] . "'/>";
+            $note = "<table style='100%'>
+                        <tr>
+                            <td style='background:#bcd8ff;'><small>Plan</small><br><input class='plan' onchange='planTotal(this.value, $d)' type='number' style='width:80px;' id='plan_".$d."' name='plan_".$d."' value='" . @$data[0]['plan_'.$d] . "'/></td>
+                            <td style='background:#c4ffbc;'><small>Actual</small><br><input class='del' onchange='delTotal(this.value, $d)' type='number' style='width:80px;' id='del_".$d."' name='del_".$d."' value='" . @$data[0]['del_'.$d] . "'/></td>
+                        </tr> 
+                    </table>";
 
             $html .= "  <td align=center style='" . $style . "' valign=middle>
                             <b style='font-size: 20px;'>$d</b><br>
@@ -222,35 +227,17 @@ class Delivery_schedule_days extends CI_Controller
                 $endDate = date('t M', strtotime($filter_year . "-" . $filter_month . "-01"));
 
                 $item_id = $record['part_no'];
-
-                $query_mpp = $this->db->query("SELECT b.component_id, a.*, b.qty, SUM(a.date_1 * b.qty) as plan_1, SUM(a.date_2 * b.qty) as plan_2, SUM(a.date_3 * b.qty) as plan_3, SUM(a.date_4 * b.qty) as plan_4,
-                    SUM(a.date_5 * b.qty) as plan_5, SUM(a.date_6 * b.qty) as plan_6, SUM(a.date_7 * b.qty) as plan_7, SUM(a.date_8 * b.qty) as plan_8, SUM(a.date_9 * b.qty) as plan_9, SUM(a.date_10 * b.qty) as plan_10, 
-                    SUM(a.date_11 * b.qty) as plan_11, SUM(a.date_12 * b.qty) as plan_12, SUM(a.date_13 * b.qty) as plan_13, SUM(a.date_14 * b.qty) as plan_14, SUM(a.date_15 * b.qty) as plan_15, SUM(a.date_16 * b.qty) as plan_16,
-                    SUM(a.date_17 * b.qty) as plan_17, SUM(a.date_18 * b.qty) as plan_18, SUM(a.date_19 * b.qty) as plan_19, SUM(a.date_20 * b.qty) as plan_20, SUM(a.date_21 * b.qty) as plan_21, SUM(a.date_22 * b.qty) as plan_22,
-                    SUM(a.date_23 * b.qty) as plan_23, SUM(a.date_24 * b.qty) as plan_24, SUM(a.date_25 * b.qty) as plan_25, SUM(a.date_26 * b.qty) as plan_26, SUM(a.date_27 * b.qty) as plan_27, SUM(a.date_28 * b.qty) as plan_28,
-                    SUM(a.date_29 * b.qty) as plan_29, SUM(a.date_30 * b.qty) as plan_30, SUM(a.date_31 * b.qty) as plan_31 FROM generate_mpp a
-                    JOIN mst_bom b ON a.product_no = b.item_id
-                    WHERE b.component_id = '$item_id' and a.p_month = '$filter_month' and a.p_year = '$filter_year' and a.revision = '$filter_revision'
-                    GROUP BY b.component_id");
-                $mpp = $query_mpp->result_array();
-
                 $balance = $record['qty_bf'];
                 $day = 1;
                 $arr = array();
                 while (strtotime($firstDate) <= strtotime($endDate)) {
                     $actual_qty = $record["del_".$day];
-
-                    $plan_qty = ((@$mpp[0]['plan_'.$day] >= 0) ? round(@$mpp[0]['plan_'.$day]) : 0);
-                    if($plan_qty > 0){
-                        $plan_qty_round = (ceil($plan_qty / $record['mpq']) * $record['mpq']);
-                    }else{
-                        $plan_qty_round = 0;
-                    }
-                    $balance = (($balance + @$plan_qty_round) - round(@$actual_qty));
+                    $plan_qty = $record["plan_".$day];
+                    $balance = (($balance + @$plan_qty) - round(@$actual_qty));
 
                     $arr = array_merge($arr, [
                         "del_".$day => $actual_qty,
-                        "plan_".$day => $plan_qty_round,
+                        "plan_".$day => $plan_qty,
                         "os_".$day => $balance,
                     ]);
 
@@ -320,49 +307,14 @@ class Delivery_schedule_days extends CI_Controller
         $records = $this->db->get()->result_array();
 
         foreach ($records as $record) {
-            $firstDate = date('01 M', strtotime($filter_year . "-" . $filter_month . "-01"));
-            $endDate = date('t M', strtotime($filter_year . "-" . $filter_month . "-01"));
-
             $item_id = $record['item_id'];
             $supplier_id = $record['supplier_id'];
             $qty = (int) $record['qty'];
-            // $hkw = $this->hkw($filter_month, $filter_year);
-            // $total_qty = round($qty / $hkw);
 
             $ithBf = $this->dummy->query("SELECT SUM(ith_qty) as total from ith where ith_form like '%IN - %' and ith_form NOT IN ('IN - Adjust IN', 'IN - ADJ IN IDM') and ith_item_id = '$item_id' and ith_date between '$period_bf_start' and '$period_bf_end'");
             $rowIth = $ithBf->row();
 
             $poBf = $this->api->query("SELECT SUM(qty) as total FROM purchase_orders WHERE item_id = '$item_id' and purchase_order_date between '$period_bf_start' and '$period_bf_end'");
-
-            // $no = 1;
-            // $arrDate = array();
-            // $final_qty = $qty;
-            // while (strtotime($firstDate) <= strtotime($endDate)) {
-            //     $working_date = date("Y-m-d", strtotime($firstDate));
-
-            //     $this->db->select('remarks');
-            //     $this->db->from('working_calendar');
-            //     $this->db->where('deleted_is', 0);
-            //     $this->db->where('working_date', $working_date);
-            //     $calendar = $this->db->get()->row();
-
-            //     if (@$calendar->remarks != "") {
-            //         $arrDate["del_".$no] = 0;
-            //     }else if (date("l", strtotime($working_date)) == "Sunday") {
-            //         $arrDate["del_".$no] = 0;
-            //     }else{
-            //         if($final_qty > $total_qty){
-            //             $arrDate["del_".$no] = $total_qty;
-            //         } else {
-            //             $arrDate["del_".$no] = $final_qty;
-            //         }
-
-            //         $final_qty -= $total_qty;
-            //     }
-                
-            //     $no++;
-            //     $firstDate = date("d M", strtotime("+1 day", strtotime($firstDate)));
-            // }
 
             $arr[] = array(
                 "p_month" => $filter_month,
@@ -378,7 +330,7 @@ class Delivery_schedule_days extends CI_Controller
             );
         }
 
-        $this->db->delete('delivery_schedule_days', ["p_month" => $filter_month, "p_year" => $filter_year, "revision" => $filter_revision]);
+        // $this->db->delete('delivery_schedule_days', ["p_month" => $filter_month, "p_year" => $filter_year, "revision" => $filter_revision]);
 
         $arr['total'] = @count($arr);
         die(json_encode($arr));
@@ -388,10 +340,51 @@ class Delivery_schedule_days extends CI_Controller
         if ($this->input->post()) {
             $post = $this->input->post('data');
 
-            if ($this->api->create('delivery_schedule_days', $post, "JUTA", "JUTA")) {
-                echo json_encode(array("title" => "Good Job", "message" => $post['part_no'] . " | Data Saved Successfully", "theme" => "success"));
-            } else {
-                echo json_encode(array("title" => "Error", "message" => $post['part_no'] . " | Data Unsaved", "theme" => "error"));
+            $item_id = $post['part_no'];
+            $filter_month = $post['p_month'];
+            $filter_year = $post['p_year'];
+            $filter_revision = $post['revision'];
+
+            $query_mpp = $this->db->query("SELECT b.component_id, a.*, b.qty, SUM(a.date_1 * b.qty) as plan_1, SUM(a.date_2 * b.qty) as plan_2, SUM(a.date_3 * b.qty) as plan_3, SUM(a.date_4 * b.qty) as plan_4,
+                SUM(a.date_5 * b.qty) as plan_5, SUM(a.date_6 * b.qty) as plan_6, SUM(a.date_7 * b.qty) as plan_7, SUM(a.date_8 * b.qty) as plan_8, SUM(a.date_9 * b.qty) as plan_9, SUM(a.date_10 * b.qty) as plan_10, 
+                SUM(a.date_11 * b.qty) as plan_11, SUM(a.date_12 * b.qty) as plan_12, SUM(a.date_13 * b.qty) as plan_13, SUM(a.date_14 * b.qty) as plan_14, SUM(a.date_15 * b.qty) as plan_15, SUM(a.date_16 * b.qty) as plan_16,
+                SUM(a.date_17 * b.qty) as plan_17, SUM(a.date_18 * b.qty) as plan_18, SUM(a.date_19 * b.qty) as plan_19, SUM(a.date_20 * b.qty) as plan_20, SUM(a.date_21 * b.qty) as plan_21, SUM(a.date_22 * b.qty) as plan_22,
+                SUM(a.date_23 * b.qty) as plan_23, SUM(a.date_24 * b.qty) as plan_24, SUM(a.date_25 * b.qty) as plan_25, SUM(a.date_26 * b.qty) as plan_26, SUM(a.date_27 * b.qty) as plan_27, SUM(a.date_28 * b.qty) as plan_28,
+                SUM(a.date_29 * b.qty) as plan_29, SUM(a.date_30 * b.qty) as plan_30, SUM(a.date_31 * b.qty) as plan_31 FROM generate_mpp a
+                JOIN mst_bom b ON a.product_no = b.item_id
+                WHERE b.component_id = '$item_id' and a.p_month = '$filter_month' and a.p_year = '$filter_year' and a.revision = '$filter_revision'
+                GROUP BY b.component_id");
+            $mpp = $query_mpp->result_array();
+
+            $day = 1;
+            $arrDay = array();
+            $firstDate = date('01 M', strtotime($filter_year . "-" . $filter_month . "-01"));
+            $endDate = date('t M', strtotime($filter_year . "-" . $filter_month . "-01"));
+            
+            while (strtotime($firstDate) <= strtotime($endDate)) {
+                $plan_qty = ((@$mpp[0]['plan_'.$day] >= 0) ? round(@$mpp[0]['plan_'.$day]) : 0);
+                // if($plan_qty > 0){
+                //     $plan_qty_round = (ceil($plan_qty / $record['mpq']) * $record['mpq']);
+                // }else{
+                //     $plan_qty_round = 0;
+                // }
+
+                $arrDay["plan_".$day] = $plan_qty;
+
+                $firstDate = date("d M", strtotime("+1 day", strtotime($firstDate)));
+                $day++;
+            }
+
+            $delivery_schedule_days = $this->api->read("delivery_schedule_days", [], ["p_month" => $filter_month, "p_year" => $filter_year, "revision" => $filter_revision, "part_no" => $item_id]);
+
+            if(!empty($delivery_schedule_days)){
+                echo json_encode(array("title" => "Error", "message" => $post['part_no'] . " | Duplicate", "theme" => "error"));
+            }else{
+                if ($this->api->create('delivery_schedule_days', array_merge($post, $arrDay), "JUTA", "JUTA")) {
+                    echo json_encode(array("title" => "Good Job", "message" => $post['part_no'] . " | Data Saved Successfully", "theme" => "success"));
+                } else {
+                    echo json_encode(array("title" => "Error", "message" => $post['part_no'] . " | Data Unsaved", "theme" => "error"));
+                }
             }
         }
     }
@@ -619,17 +612,6 @@ class Delivery_schedule_days extends CI_Controller
             $endDate2 = date('t M', strtotime($filter_year . "-" . $filter_month . "-01"));
             $item_id = $record['part_no'];
 
-            $query_mpp = $this->db->query("SELECT b.component_id, a.*, b.qty, SUM(a.date_1 * b.qty) as plan_1, SUM(a.date_2 * b.qty) as plan_2, SUM(a.date_3 * b.qty) as plan_3, SUM(a.date_4 * b.qty) as plan_4,
-                SUM(a.date_5 * b.qty) as plan_5, SUM(a.date_6 * b.qty) as plan_6, SUM(a.date_7 * b.qty) as plan_7, SUM(a.date_8 * b.qty) as plan_8, SUM(a.date_9 * b.qty) as plan_9, SUM(a.date_10 * b.qty) as plan_10, 
-                SUM(a.date_11 * b.qty) as plan_11, SUM(a.date_12 * b.qty) as plan_12, SUM(a.date_13 * b.qty) as plan_13, SUM(a.date_14 * b.qty) as plan_14, SUM(a.date_15 * b.qty) as plan_15, SUM(a.date_16 * b.qty) as plan_16,
-                SUM(a.date_17 * b.qty) as plan_17, SUM(a.date_18 * b.qty) as plan_18, SUM(a.date_19 * b.qty) as plan_19, SUM(a.date_20 * b.qty) as plan_20, SUM(a.date_21 * b.qty) as plan_21, SUM(a.date_22 * b.qty) as plan_22,
-                SUM(a.date_23 * b.qty) as plan_23, SUM(a.date_24 * b.qty) as plan_24, SUM(a.date_25 * b.qty) as plan_25, SUM(a.date_26 * b.qty) as plan_26, SUM(a.date_27 * b.qty) as plan_27, SUM(a.date_28 * b.qty) as plan_28,
-                SUM(a.date_29 * b.qty) as plan_29, SUM(a.date_30 * b.qty) as plan_30, SUM(a.date_31 * b.qty) as plan_31 FROM generate_mpp a
-                JOIN mst_bom b ON a.product_no = b.item_id
-                WHERE b.component_id = '$item_id' and a.p_month = '$filter_month' and a.p_year = '$filter_year' and a.revision = '$filter_revision'
-                GROUP BY b.component_id");
-            $mpp = $query_mpp->result_array();
-
             $content .= "<tr>
                             <td>" . $no . "</td>
                             <td style='mso-number-format:\@;'>" . $record['part_no'] . "</td>
@@ -648,8 +630,8 @@ class Delivery_schedule_days extends CI_Controller
             while (strtotime($firstDate2) <= strtotime($endDate2)) {
                 $working_date2 = date("Y-m-d", strtotime($firstDate2));
                 $actual_qty = $record["del_".$day];
+                $plan_qty = $record["plan_".$day];
 
-                $plan_qty = ((@$mpp[0]['plan_'.$day] >= 0) ? round(@$mpp[0]['plan_'.$day]) : 0);
                 $balance = (($balance + @$plan_qty) - round(@$actual_qty));
 
                 $this->db->select('remarks');
@@ -706,7 +688,7 @@ class Delivery_schedule_days extends CI_Controller
         </center>
         <br><br><br>
 
-        <table id="customers" border="1" style="width:450%;">
+        <table id="customers" border="1" style="width:100%;">
             <tr>
                 <th style="text-align:center;" rowspan="3" width="20">NO</th>
                 <th style="text-align:center;" width="150" rowspan="3">Part No</th>

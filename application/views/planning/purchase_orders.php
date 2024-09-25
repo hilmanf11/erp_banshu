@@ -16,21 +16,25 @@
     }
 </style>
 <table id="dg" class="easyui-datagrid" style="width:100%;" toolbar="#toolbar">
+    <thead frozen="true">
+        <tr>
+            <th field="ck" checkbox="true"></th>
+            <th data-options="field:'supplier_no',width:80,align:'center'">Vendor ID</th>
+            <th data-options="field:'supplier_name',width:250,halign:'center'">Vendor Name</th>
+        </tr>
+    </thead>
     <thead>
-    <tr>
-            <th rowspan="2" field="ck" checkbox="true"></th>
-            <th rowspan="2" data-options="field:'supplier_no',width:80,align:'center'">Vendor ID</th>
-            <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Vendor Name</th>
+        <tr>
             <th rowspan="2" data-options="field:'product_family_name',width:120,halign:'center'">Product Family</th>
             <th rowspan="2" data-options="field:'purchase_request_no',width:180,halign:'center'">PR No</th>
-            <th rowspan="2" data-options="field:'purchase_order_no',width:150,halign:'center'">PO No</th>
+            <th rowspan="2" data-options="field:'purchase_order_no',width:180,halign:'center'">PO No</th>
             <th rowspan="2" data-options="field:'purchase_order_date',width:80,halign:'center'">PO Date</th>
             <th rowspan="2" data-options="field:'total_qty',width:100,halign:'center',align:'right',formatter:numberformatPrice">Qty</th>
             <th rowspan="2" data-options="field:'currency',width:80,align:'center'">Currency</th>
             <th rowspan="2" data-options="field:'total_amount',width:120,halign:'center',align:'right',formatter:numberformatPrice">Amount</th>
             <th rowspan="2" data-options="field:'detail',width:80,halign:'center',formatter:BtnDetail">Detail</th>
             <th rowspan="2" data-options="field:'print_po',width:80,halign:'center',formatter:BtnPrint">Print PO</th>
-            <th rowspan="2" data-options="field:'print_sd',width:80,halign:'center',formatter:BtnPrintSd">Schedule<br>Delivery</th>
+            <th colspan="2" data-options="field:'Send_mail',width:150,halign:'center'">Schedule Delivery</th>
             <th rowspan="2" data-options="field:'erp',width:80,align:'center',formatter:BtnPush">Push ERP</th>
             <th rowspan="2" data-options="field:'push_date',width:150,align:'center'">Push Date</th>
             <th colspan="3" data-options="field:'Send_mail',width:100,halign:'center'">Send Mail</th>
@@ -39,8 +43,8 @@
             <th colspan="2" data-options="field:'Send_mail',width:100,halign:'center'">Created</th>
         </tr>
         <tr>
-            <!-- <th data-options="field:'contact',width:150,halign:'center'">Contact</th> -->
-            <!-- <th data-options="field:'email_to',width:200,halign:'center'">Email</th> -->
+            <th data-options="field:'create_sd',width:80,halign:'center',formatter:BtnCreateSd">Create</th>
+            <th data-options="field:'print_sd',width:80,halign:'center',formatter:BtnPrintSd">Print</th>
             <th data-options="field:'send',width:80,align:'center',formatter:BtnSend">Send</th>
             <th data-options="field:'email_status',width:80,align:'center', styler:cellStylerSend, formatter:cellFormatterSend">Status</th>
             <th data-options="field:'email_date',width:130,align:'center'">Date</th>
@@ -98,6 +102,18 @@
                     <span style="width:35%; display:inline-block;">Part No</span>
                     <input style="width:60%;" id="filter_part_no" class="easyui-combogrid">
                 </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Status</span>
+                    <select style="width:60%;" id="filter_status" class="easyui-combobox" panelHeight="auto">
+                        <option value="">All</option>
+                        <option value="Send">Send</option>
+                        <option value="Unsend">Unsend</option>
+                        <option value="Push">Push</option>
+                        <option value="Unpush">Unpush</option>
+                        <option value="Receipt">Receipt</option>
+                        <option value="Confirm">Confirm</option>
+                    </select>
+                </div>
             </div>
         </fieldset>
         <fieldset style="width: 30%; border:2px solid #d0d0d0; margin-bottom: 5px; margin-top: 5px; border-radius:4px;">
@@ -121,7 +137,7 @@
     <div style="width: 100%; display: grid; grid-template-columns: auto auto auto; grid-gap: 5px; display: flex;">        
         <fieldset style="width: 100%; border:2px solid #d0d0d0; margin-bottom: 5px; margin-top: 5px; border-radius:4px;">
             <legend><b>Form Detail</b></legend>
-            <div style="width: 30%; float: left;">
+            <div style="width: 40%; float: left;">
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Purchase Order No</span>
                     <input style="width:60%;" id="d_purchase_order_no" class="easyui-textbox" readonly>
@@ -129,6 +145,7 @@
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;"></span>
                     <a href="javascript:;" id="detailEdit" class="easyui-linkbutton" onclick="detailEdit()"><i class="fa fa-edit"></i> Edit Data</a>
+                    <a href="javascript:;" id="editSchedule" class="easyui-linkbutton" onclick="editSchedule()"><i class="fa fa-edit"></i> Edit Schedule Delivery</a>
                     <a href="javascript:;" id="pushData" class="easyui-linkbutton c5" onclick="pushData()"><i class="fa fa-database"></i> Push Data</a>
                     <a href="javascript:;" id="sendMail" class="easyui-linkbutton" onclick="sendMail()"><i class="fa fa-send"></i> Send Mail</a>
                     <a href="javascript:;" id="completeMail" class="easyui-linkbutton c1" onclick="completeMail()"><i class="fa fa-check"></i> Complete Mail</a>
@@ -262,6 +279,140 @@
     </form>
 </div>
 
+<div id="dlg_insert_schedule" class="easyui-dialog" title="Update Data" data-options="closed: true,modal:true" style="width: 800px; padding:10px; top: 20px; left:10px;">
+    <form id="frm_insert_schedule" method="post" novalidate>
+        <fieldset style="width:100%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
+            <legend><b>Form Data</b></legend>
+            <div style="width: 50%; float: left;">
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">PO No</span>
+                    <input style="width:60%;" name="po_no" id="sch_po_no" disabled class="easyui-textbox">
+                </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Supplier name</span>
+                    <input style="width:60%;" name="supplier_name" id="sch_supplier_name" disabled class="easyui-textbox">
+                </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Product Family</span>
+                    <input style="width:60%;" name="product_family" id="sch_product_family" disabled class="easyui-textbox">
+                </div>
+            </div>
+            <div style="width: 50%; float: left;">
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Item ID</span>
+                    <input style="width:60%;" name="part_no" id="sch_part_no" disabled class="easyui-textbox">
+                </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Item Name</span>
+                    <input style="width:60%;" name="part_name" id="sch_part_name" disabled class="easyui-textbox">
+                </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Qty</span>
+                    <input style="width:30%;" name="qty" id="sch_qty" readonly class="easyui-numberbox" data-options="groupSeparator:'.'">
+                </div>
+            </div>
+            <div style="width: 100%; float: left; margin-top: 20px;">
+                <fieldset style="width:32%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
+                    <legend><b><span id="p1"></span></b></legend>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">Qty</span>
+                        <input style="width:60%;" name="delivey_qty_1" id="delivey_qty_1" disabled class="easyui-numberbox" data-options="groupSeparator:'.'">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">ETA</span>
+                        <input style="width:60%;" name="delivey_date_1" id="delivey_date_1" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">ETD</span>
+                        <input style="width:60%;" name="etd_1" id="etd_1" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
+                    </div>
+                </fieldset>
+                <fieldset style="width:32%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
+                    <legend><b><span id="p2"></span></b></legend>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">Qty</span>
+                        <input style="width:60%;" name="delivey_qty_2" id="delivey_qty_2" disabled class="easyui-numberbox" data-options="groupSeparator:'.'">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">ETA</span>
+                        <input style="width:60%;" name="delivey_date_2" id="delivey_date_2" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">ETD</span>
+                        <input style="width:60%;" name="etd_2" id="etd_2" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
+                    </div>
+                </fieldset>
+                <fieldset style="width:32%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
+                    <legend><b><span id="p3"></span></b></legend>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">Qty</span>
+                        <input style="width:60%;" name="delivey_qty_3" id="delivey_qty_3" disabled class="easyui-numberbox" data-options="groupSeparator:'.'">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">ETA</span>
+                        <input style="width:60%;" name="delivey_date_3" id="delivey_date_3" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">ETD</span>
+                        <input style="width:60%;" name="etd_3" id="etd_3" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
+                    </div>
+                </fieldset>
+                <fieldset style="width:32%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
+                    <legend><b><span id="p4"></span></b></legend>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">Qty</span>
+                        <input style="width:60%;" name="delivey_qty_4" id="delivey_qty_4" disabled class="easyui-numberbox" data-options="groupSeparator:'.'">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">ETA</span>
+                        <input style="width:60%;" name="delivey_date_4" id="delivey_date_4" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">ETD</span>
+                        <input style="width:60%;" name="etd_4" id="etd_4" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
+                    </div>
+                </fieldset>
+                <fieldset style="width:32%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
+                    <legend><b><span id="p5"></span></b></legend>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">Qty</span>
+                        <input style="width:60%;" name="delivey_qty_5" id="delivey_qty_5" disabled class="easyui-numberbox" data-options="groupSeparator:'.'">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">ETA</span>
+                        <input style="width:60%;" name="delivey_date_5" id="delivey_date_5" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">ETD</span>
+                        <input style="width:60%;" name="etd_5" id="etd_5" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
+                    </div>
+                </fieldset>
+                <fieldset style="width:32%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
+                    <legend><b><span id="p6"></span></b></legend>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">Qty</span>
+                        <input style="width:60%;" name="delivey_qty_6" id="delivey_qty_6" disabled class="easyui-numberbox" data-options="groupSeparator:'.'">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">ETA</span>
+                        <input style="width:60%;" name="delivey_date_6" id="delivey_date_6" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">ETD</span>
+                        <input style="width:60%;" name="etd_6" id="etd_6" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
+                    </div>
+                </fieldset>
+            </div>
+            <div style="width: 100%; float: left;">
+                <div class="fitem">
+                    <span style="width:15%; display:inline-block;">Remarks</span>
+                    <input style="width:80%;" name="remarks" id="sch_remarks" required class="easyui-textbox">
+                </div>
+            </div>
+        </fieldset>
+    </form>
+</div>
+
 <div id="dlg_mail" class="easyui-dialog" title="Send Mail" data-options="closed: true,modal:true" style="width: 900px; height: 550px; padding:10px; top: 20px;">
     <form id="frm_mail" method="post" enctype="multipart/form-data" novalidate>
         <div class="alert alert-warning">
@@ -359,90 +510,42 @@
 <script>
     function add() {
         toastr.info("Not Ready this Function");
-        // var filter_month = $("#filter_month").combobox('getValue');
-        // var filter_year = $("#filter_year").combobox('getValue');
-        // var filter_revision = $("#filter_revision").combobox('getValue');
-        // var filter_product_family = $("#filter_product_family").combobox('getValue');
-        // var filter_part_no = $("#filter_part_no").combogrid('getValue');
-        // var filter_po = $("#filter_po").combobox('getValue');
+    }
 
-        // var check_pr = $("#check_pr").checkbox('options');
+    function editSchedule(){
+        var row = $('#dg_purchase_order').datagrid('getSelected');
+        if (row) {
+            $('#dlg_insert_schedule').dialog('open');
 
-        // // if (check_pr.checked == true) {
-        //     if (filter_month != "" && filter_year != "" && filter_revision != "") {
-        //         $.messager.prompt('Generate PO', 'Please input Password Generate, Be careful if data is generated for this period it will be deleted', function(r){
-        //             if (r == "PURCHASEORDER"){
-        //                 Swal.fire({
-        //                     title: 'Please Wait for Generating Data',
-        //                     showConfirmButton: false,
-        //                     allowOutsideClick: false,
-        //                     allowEscapeKey: false,
-        //                     didOpen: () => {
-        //                         Swal.showLoading();
-        //                     },
-        //                 });
+            $.ajax({
+                type: "get",
+                url: "<?= base_url('planning/delivery_schedules/readMonths') ?>",
+                data: "month=" + row.p_month + "&year=" + row.p_year,
+                dataType: "json",
+                success: function(monthName) {
+                    $("#p1").html(monthName[0]);
+                    $("#p2").html(monthName[1]);
+                    $("#p3").html(monthName[2]);
+                    $("#p4").html(monthName[3]);
+                    $("#p5").html(monthName[4]);
+                    $("#p6").html(monthName[5]);
+                }
+            });
 
-        //                 $.ajax({
-        //                     type: "get",
-        //                     url: "<?= base_url('planning/purchase_orders/getData') ?>",
-        //                     data: "filter_month=" + window.btoa(filter_month) +
-        //                         "&filter_year=" + window.btoa(filter_year) +
-        //                         "&filter_revision=" + window.btoa(filter_revision) +
-        //                         "&filter_po=" + window.btoa(filter_po) +
-        //                         "&filter_product_family=" + window.btoa(filter_product_family) +
-        //                         "&filter_product_no=" + window.btoa(filter_part_no),
-        //                     dataType: "json",
-        //                     success: function(rows) {
-        //                         Swal.close();
+            $.ajax({
+                type: "post",
+                url: "<?= base_url("planning/purchase_orders/get_delivery_schedules") ?>",
+                data: "po_no=" + btoa(row.purchase_order_no) + "&part_no=" + btoa(row.item_id),
+                dataType: "json",
+                success: function (response) {
+                    $('#frm_insert_schedule').form('load', response);
 
-        //                         if(rows['total'] > 0){
-        //                             requestData(rows['total'], rows);
-
-        //                             function requestData(total, json, number = 1, value = 0, success = 1, failed = 1) {
-        //                                 if (value < 100) {
-        //                                     value = Math.floor((number / total) * 100);
-        //                                     $('#p_upload').progressbar('setValue', value);
-        //                                     $('#p_start').html(number);
-        //                                     $('#p_finish').html(total);
-
-        //                                     $.post('<?= base_url('planning/purchase_orders/create') ?>', {
-        //                                         data: json[number - 1]
-        //                                     }, function(note) {
-        //                                         var result = eval('(' + note + ')');
-
-        //                                         if (result.theme == "success") {
-        //                                             requestData(total, json, number + 1, value, success + 1, failed + 0);
-        //                                         } else {
-        //                                             requestData(total, json, number + 1, value, success + 0, failed + 1);
-        //                                         }
-
-        //                                         if (value == 100) {
-        //                                             Swal.fire('Good job!', 'Process Generate Data Completed!', 'success');
-        //                                         }
-        //                                     }).fail(function(jqXHR, textStatus) {
-        //                                         if (textStatus == "error") {
-        //                                             toastr.error("Connection time out");
-
-        //                                             requestData(total, json, number, value, success + 0, failed + 1);
-        //                                         }
-        //                                     });
-        //                                 }
-        //                             }
-        //                         }else{
-        //                             toastr.warning("Data Purchase Requests Not Found");
-        //                         }
-        //                     }
-        //                 });
-        //             }
-        //         });
-
-        //         $('.messager-input').attr('type', 'password');
-        //     } else {
-        //         toastr.warning("Please Select Period & Revision", "Information");
-        //     }
-        // }else{
-        //     toastr.error("Purchase Requests Not Ready All");
-        // }
+                    url_save_schedule = '<?= base_url('planning/delivery_schedules/update') ?>?id=' + btoa(response.id);
+                }
+            });
+        } else {
+            toastr.warning("Please select one of the data in the table first!", "Information");
+        }
     }
 
     function checkConfirmPo(){
@@ -499,6 +602,7 @@
         if(push == ""){
             $("#pushData").hide();
             $("#detailEdit").show();
+            $("#editSchedule").show();
             $("#sendMail").hide();
             $("#completeMail").hide();
             $("#sendBlink").hide();
@@ -506,6 +610,7 @@
         }else if(push == "push"){
             $("#pushData").show();
             $("#detailEdit").hide();
+            $("#editSchedule").hide();
             $("#sendMail").hide();
             $("#completeMail").hide();
             $("#sendBlink").hide();
@@ -513,6 +618,7 @@
         }else{
             $("#pushData").hide();
             $("#detailEdit").hide();
+            $("#editSchedule").hide();
             $("#sendMail").show();
             $("#completeMail").show();
             $("#completeMailDate").show();
@@ -653,6 +759,74 @@
         }
     }
 
+    function createSd(purchase_order_no) {
+        $.messager.prompt('Create Schedule Delivery', 'Please input Password Generate, Be careful if data is generated for this period it will be deleted', function(r){
+            if (r == "DELIVERYSCHEDULE"){
+                Swal.fire({
+                    title: 'Please Wait for Check Data',
+                    showConfirmButton: false,
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    },
+                });
+
+                $.ajax({
+                    type: "get",
+                    url: "<?= base_url('planning/delivery_schedules/getData') ?>",
+                    data: "purchase_order_no=" + window.btoa(purchase_order_no),
+                    dataType: "json",
+                    success: function(rows) {
+                        Swal.close();
+
+                        if(rows['total'] > 0){
+                            requestData(rows['total'], rows);
+
+                            function requestData(total, json, number = 1, value = 0, success = 1, failed = 1) {
+                                if (value < 100) {
+                                    value = Math.floor((number / total) * 100);
+                                    $('#p_upload').progressbar('setValue', value);
+                                    $('#p_start').html(number);
+                                    $('#p_finish').html(total);
+
+                                    $.post('<?= base_url('planning/delivery_schedules/create') ?>', {
+                                        data: json[number - 1]
+                                    }, function(note) {
+                                        var result = eval('(' + note + ')');
+
+                                        if (result.theme == "success") {
+                                            requestData(total, json, number + 1, value, success + 1, failed + 0);
+                                        } else {
+                                            requestData(total, json, number + 1, value, success + 0, failed + 1);
+                                        }
+
+                                        if (value == 100) {
+                                            Swal.fire('Good job!', 'Process Generate Data Completed!', 'success');
+                                            $("#dg").datagrid('reload');
+                                        }
+                                    }).fail(function(jqXHR, textStatus) {
+                                        if (textStatus == "error") {
+                                            toastr.error("Connection time out");
+
+                                            requestData(total, json, number, value, success + 0, failed + 1);
+                                        }
+                                    });
+                                }
+                            }
+                        }else{
+                            toastr.warning("Data Purchase Order Not Found");
+                        }
+                    },
+                    error: function(rows) {
+                        Swal.close();
+                        Swal.fire('Failed!', 'Generate Schedule Delivery is Failed, Please Try Again!', 'error');
+                    }
+                });
+            }
+        });
+    }
+
     function sendMail(){
         // toastr.info("Not Available");
         $("#dlg_mail").dialog('open');
@@ -777,6 +951,7 @@
         var filter_po = $("#filter_po").combobox('getValue');
         var filter_part_no = $("#filter_part_no").combogrid('getValue');
         var filter_supplier = $("#filter_supplier").combogrid('getValue');
+        var filter_status = $("#filter_status").combobox('getValue');
 
         var url = "?filter_month=" + window.btoa(filter_month) +
             "&filter_year=" + window.btoa(filter_year) +
@@ -784,6 +959,7 @@
             "&filter_supplier=" + window.btoa(filter_supplier) +
             "&filter_po=" + window.btoa(filter_po) +
             "&filter_product_family=" + window.btoa(filter_product_family) +
+            "&filter_status=" + window.btoa(filter_status) +
             "&filter_part_no=" + window.btoa(filter_part_no);
 
         if (filter_month == "" || filter_year == "") {
@@ -810,6 +986,7 @@
         var filter_po = $("#filter_po").combobox('getValue');
         var filter_part_no = $("#filter_part_no").combogrid('getValue');
         var filter_supplier = $("#filter_supplier").combogrid('getValue');
+        var filter_status = $("#filter_status").combobox('getValue');
 
         var url = "?filter_month=" + window.btoa(filter_month) +
             "&filter_year=" + window.btoa(filter_year) +
@@ -817,6 +994,7 @@
             "&filter_supplier=" + window.btoa(filter_supplier) +
             "&filter_po=" + window.btoa(filter_po) +
             "&filter_product_family=" + window.btoa(filter_product_family) +
+            "&filter_status=" + window.btoa(filter_status) +
             "&filter_part_no=" + window.btoa(filter_part_no);
 
         if (filter_month == "" || filter_year == "") {
@@ -900,6 +1078,30 @@
 
                             $('#dlg_insert').dialog('close');
                             $('#dg_purchase_order').datagrid('reload');
+                        }
+                    });
+                }
+            }]
+        });
+
+        $('#dlg_insert_schedule').dialog({
+            buttons: [{
+                text: 'Save',
+                iconCls: 'icon-ok',
+                handler: function() {
+                    $('#frm_insert_schedule').form('submit', {
+                        url: url_save_schedule,
+                        onSubmit: function() {
+                            return $(this).form('validate');
+                        },
+                        success: function(result) {
+                            var result = eval('(' + result + ')');
+
+                            if (result.theme == "success") {
+                                toastr.success(result.message);
+                            } else {
+                                toastr.error(result.message);
+                            }
                         }
                     });
                 }
@@ -1150,7 +1352,10 @@
         var y = date.getFullYear();
         var m = date.getMonth() + 1;
         var d = date.getDate();
-        return y + '-' + (m < 10 ? ('0' + m) : m) + '-' + (d < 10 ? ('0' + d) : d);
+
+        if(y != "1899"){
+            return y + '-' + (m < 10 ? ('0' + m) : m) + '-' + (d < 10 ? ('0' + d) : d);
+        }
     }
 
     //Format Datepicker
@@ -1213,6 +1418,15 @@
 
     function BtnPrint(val, row) {
         return '<a class="btn btn-primary w-100" target="_blank" href="<?= base_url('planning/purchase_orders/print_po/') ?>'+btoa(row.purchase_order_no)+'" style="pointer-events: visible; opacity:1;"><i class="fa fa-print"></i> Print</a>';
+    }
+
+    function BtnCreateSd(val, row) {
+        if (row.print_sd == 0) {
+            var send = "createSd('"+row.purchase_order_no+"')";
+            return '<a class="btn btn-success w-100" style="pointer-events: visible; opacity:1;" onClick="'+send+'"><i class="fa fa-plus"></i> Create</a>';
+        } else {
+            return '-';
+        }
     }
 
     function BtnPrintSd(val, row) {

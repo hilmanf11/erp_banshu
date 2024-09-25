@@ -7,6 +7,9 @@
             <th data-options="field:'item_id',width:250,halign:'center'">Item Id</th>
             <th data-options="field:'item_name',width:250,halign:'center'">Item Name</th>
             <th data-options="field:'pfm_name',width:150,halign:'center'">Product Family</th>
+            <th data-options="field:'poc_id',width:200,halign:'center'">Purchase Order</th>
+            <th data-options="field:'poc_date',width:100,halign:'center'">PO Date</th>
+            <th data-options="field:'poc_reqdate',width:100,halign:'center'">Req Date</th>
             <!-- <th data-options="field:'um_id',width:50,halign:'center'">UoM</th> -->
             <th data-options="field:'moq',width:100,halign:'center',align:'right',formatter: numberformat">MOQ</th>
             <th data-options="field:'mpq',width:100,halign:'center',align:'right',formatter: numberformat">MPQ</th>
@@ -14,7 +17,7 @@
             <th data-options="field:'por_receiveqty',width:100,halign:'center',align:'right',formatter: numberformat">Receive Qty</th> -->
             <th data-options="field:'poc_reqqty',width:100,halign:'center',align:'right',formatter: numberformat">Request</th>
             <th data-options="field:'por_receiveqty',width:100,halign:'center',align:'right',formatter: numberformat">Receipt</th>
-            <th data-options="field:'ost',width:100,halign:'center',align:'right',formatter: numberformat">Outstanding</th>
+            <th data-options="field:'outstanding',width:100,halign:'center',align:'right',formatter: numberformat">Outstanding</th>
             <th data-options="field:'status',width:100,halign:'center',align:'center',formatter: cellFormatter,styler: cellStyler">Status</th>
             <!-- <th data-options="field:'status',width:100,align:'center',styler:cellStyler, formatter:cellFormatter">Status</th>
             <th data-options="field:'por_emp',width:100,halign:'center'">Receipt By</th> -->
@@ -98,83 +101,83 @@
                 pagination: true,
                 rownumbers: true,
                 fit: true,
-                view: detailview,
-                detailFormatter: function(index, row) {
-                    return '<div style="padding:2px;position:relative;"><table class="ddv" title="Detail Of ' + row.item_id + '"></table></div>';
-                },
-                onExpandRow: function(index, row) {
-                    var ddv = $(this).datagrid('getRowDetail', index).find('table.ddv');
-                    ddv.datagrid({
-                        url: '<?= base_url('planning/os_purchase_order/datatableDetails/') ?>' + window.btoa(row.item_id) + "/" + window.btoa(row.ven_id) + "/" + window.btoa(po_status),
-                        singleSelect: true,
-                        rownumbers: true,
-                        columns: [
-                            [{
-                                field: 'poc_id',
-                                title: 'Purchase Order',
-                                halign: 'center',
-                                width: 250
-                            }, {
-                                field: 'poc_date',
-                                title: 'PO Date',
-                                align: 'center',
-                                width: 100
-                            }, {
-                                field: 'etd',
-                                title: 'ETD',
-                                align: 'center',
-                                width: 100
-                            }, {
-                                field: 'eta',
-                                title: 'ETA',
-                                align: 'center',
-                                width: 100
-                            }, {
-                                field: 'poc_reqdate',
-                                title: 'Request Date',
-                                align: 'center',
-                                width: 100
-                            }, {
-                                field: 'poc_reqqty',
-                                title: 'Request',
-                                width: 100,
-                                halign: 'center',
-                                align: 'right',
-                                formatter: numberformat
-                            }, {
-                                field: 'por_receiveqty',
-                                title: 'Receipt',
-                                width: 100,
-                                halign: 'center',
-                                align: 'right',
-                                formatter: numberformat
-                            }, {
-                                field: 'outstanding',
-                                title: 'Outstanding',
-                                width: 100,
-                                halign: 'center',
-                                align: 'right',
-                                formatter: numberformat
-                            }, {
-                                field: 'status',
-                                title: 'Status',
-                                width: 100,
-                                align: 'right',
-                                formatter: cellFormatter,
-                                styler: cellStyler
-                            }]
-                        ],
-                        onResize: function() {
-                            $('#dg').datagrid('fixDetailRowHeight', index);
-                        },
-                        onLoadSuccess: function() {
-                            setTimeout(function() {
-                                $('#dg').datagrid('fixDetailRowHeight', index);
-                            }, 0);
-                        }
-                    });
-                    $('#dg').datagrid('fixDetailRowHeight', index);
-                }
+                // view: detailview,
+                // detailFormatter: function(index, row) {
+                //     return '<div style="padding:2px;position:relative;"><table class="ddv" title="Detail Of ' + row.item_id + '"></table></div>';
+                // },
+                // onExpandRow: function(index, row) {
+                //     var ddv = $(this).datagrid('getRowDetail', index).find('table.ddv');
+                //     ddv.datagrid({
+                //         url: '<?= base_url('planning/os_purchase_order/datatableDetails/') ?>' + window.btoa(row.item_id) + "/" + window.btoa(row.ven_id) + "/" + window.btoa(po_status),
+                //         singleSelect: true,
+                //         rownumbers: true,
+                //         columns: [
+                //             [{
+                //                 field: 'poc_id',
+                //                 title: 'Purchase Order',
+                //                 halign: 'center',
+                //                 width: 250
+                //             }, {
+                //                 field: 'poc_date',
+                //                 title: 'PO Date',
+                //                 align: 'center',
+                //                 width: 100
+                //             }, {
+                //                 field: 'etd',
+                //                 title: 'ETD',
+                //                 align: 'center',
+                //                 width: 100
+                //             }, {
+                //                 field: 'eta',
+                //                 title: 'ETA',
+                //                 align: 'center',
+                //                 width: 100
+                //             }, {
+                //                 field: 'poc_reqdate',
+                //                 title: 'Request Date',
+                //                 align: 'center',
+                //                 width: 100
+                //             }, {
+                //                 field: 'poc_reqqty',
+                //                 title: 'Request',
+                //                 width: 100,
+                //                 halign: 'center',
+                //                 align: 'right',
+                //                 formatter: numberformat
+                //             }, {
+                //                 field: 'por_receiveqty',
+                //                 title: 'Receipt',
+                //                 width: 100,
+                //                 halign: 'center',
+                //                 align: 'right',
+                //                 formatter: numberformat
+                //             }, {
+                //                 field: 'outstanding',
+                //                 title: 'Outstanding',
+                //                 width: 100,
+                //                 halign: 'center',
+                //                 align: 'right',
+                //                 formatter: numberformat
+                //             }, {
+                //                 field: 'status',
+                //                 title: 'Status',
+                //                 width: 100,
+                //                 align: 'right',
+                //                 formatter: cellFormatter,
+                //                 styler: cellStyler
+                //             }]
+                //         ],
+                //         onResize: function() {
+                //             $('#dg').datagrid('fixDetailRowHeight', index);
+                //         },
+                //         onLoadSuccess: function() {
+                //             setTimeout(function() {
+                //                 $('#dg').datagrid('fixDetailRowHeight', index);
+                //             }, 0);
+                //         }
+                //     });
+                //     $('#dg').datagrid('fixDetailRowHeight', index);
+                // }
             });
 
             $("#printout").attr('src', '<?= base_url('planning/os_purchase_order/print') ?>' + url);

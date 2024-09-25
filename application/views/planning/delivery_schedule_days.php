@@ -134,37 +134,60 @@
 </div>
 
 <!-- Insert & Update -->
-<div id="dlg_insert" class="easyui-dialog" title="Add New" data-options="closed: true,modal:true" style="width: 80%; padding:10px; top: 20px; left:10px;">
+<div id="dlg_insert" class="easyui-dialog" title="Add New" data-options="closed: true,modal:true" style="width: 99%; height: 500px; padding:10px; top: 20px; left:10px;">
     <form id="frm_insert" method="post" novalidate>
-        <fieldset style="width:100%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
-            <legend><b>Form Data</b></legend>
-            <div style="float: left; width: 30%;">
-                <div class="fitem" hidden>
-                    <span style="width:30%; display:inline-block;">ID</span>
-                    <input style="width:60%;" name="id" id="id" required="" disabled class="easyui-textbox">
+        <div style="float: left; width: 55%;">
+            <fieldset style="width:100%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
+                <legend><b>Form Data</b></legend>
+                <div style="float: left; width: 50%;">
+                    <div class="fitem" hidden>
+                        <span style="width:30%; display:inline-block;">ID</span>
+                        <input style="width:60%;" name="id" id="id" required="" disabled class="easyui-textbox">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:30%; display:inline-block;">Part No</span>
+                        <input style="width:60%;" name="part_no" id="part_no" disabled class="easyui-textbox">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:30%; display:inline-block;">Product Family</span>
+                        <input style="width:60%;" name="product_family_name" id="product_family_name" disabled class="easyui-textbox">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:30%; display:inline-block;"></span>
+                        <a href="javascript:;" class="easyui-linkbutton" onclick="saveData()"><i class="fa fa-save"></i> Save Data</a>
+                    </div>
                 </div>
-                <div class="fitem">
-                    <span style="width:30%; display:inline-block;">Part No</span>
-                    <input style="width:60%;" name="part_no" id="part_no" disabled class="easyui-textbox">
+                <div style="float: left; width: 50%;">
+                    <div class="fitem">
+                        <span style="width:30%; display:inline-block;">Supplier</span>
+                        <input style="width:60%;" name="supplier_name" id="supplier_name" disabled class="easyui-textbox">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:30%; display:inline-block;">MPQ / MOQ</span>
+                        <input style="width:30%;" name="mpq" id="mpq" disabled class="easyui-textbox">
+                        <input style="width:30%;" name="moq" id="moq" disabled class="easyui-textbox">
+                    </div>
                 </div>
-                <div class="fitem">
-                    <span style="width:30%; display:inline-block;"></span>
-                    <a href="javascript:;" class="easyui-linkbutton" onclick="saveData()"><i class="fa fa-save"></i> Save Data</a>
-                </div>
-            </div>
-            <div style="float: left; width: 30%;">
-                <div class="fitem">
-                    <span style="width:30%; display:inline-block;">Product Family</span>
-                    <input style="width:60%;" name="product_family_name" id="product_family_name" disabled class="easyui-textbox">
-                </div>
-            </div>
-            <div style="float: left; width: 30%;">
-                <div class="fitem">
-                    <span style="width:30%; display:inline-block;">Supplier</span>
-                    <input style="width:60%;" name="supplier_name" id="supplier_name" disabled class="easyui-textbox">
-                </div>
-            </div>
-        </fieldset>
+            </fieldset>
+        </div>
+        <div style="float: left; width: 15%;">
+            <fieldset style="width:100%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left; text-align: center; padding-top: 38px; padding-bottom: 38px;">
+                <legend><b>Qty PO</b></legend>
+                <h1 style="font-size: 30px !important; font-weight: bold;" id="qtyPo">0</h1>
+            </fieldset>
+        </div>
+        <div style="float: left; width: 15%;">
+            <fieldset style="width:100%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left; text-align: center; padding-top: 38px; padding-bottom: 38px;">
+                <legend><b>Total Plan</b></legend>
+                <h1 style="font-size: 30px !important; font-weight: bold;" id="totalPlan">0</h1>
+            </fieldset>
+        </div>
+        <div style="float: left; width: 15%;">
+            <fieldset style="width:100%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left; text-align: center; padding-top: 38px; padding-bottom: 38px;">
+                <legend><b>Total Actual</b></legend>
+                <h1 style="font-size: 30px !important; font-weight: bold;" id="totalActual">0</h1>
+            </fieldset>
+        </div>
         <div id="calendar">
 
         </div>
@@ -187,6 +210,50 @@
 <iframe id="printout" src="" style="width: 100%; height:90%; border: 0;" hidden></iframe>
 
 <script>
+    function planTotal(val, id){
+        if(val != ""){
+            var mpq = $("#mpq").numberbox('getValue');
+            if(parseInt(val) > 0){
+                var roundMpq = (Math.ceil(parseInt(val) / mpq) * mpq);
+            }else{
+                var roundMpq = 0;
+            }
+
+            $("#plan_" + id).val(roundMpq);
+
+            var total = 0;
+            $('.plan').each(function() {
+                total += parseInt($(this).val());
+            });
+
+            $("#totalPlan").html(total);
+        }else{
+            toastr.info("Please Input Numberic");
+        }
+    }
+
+    function delTotal(val, id){
+        if(val != ""){
+            var mpq = $("#mpq").numberbox('getValue');
+            if(parseInt(val) > 0){
+                var roundMpq = (Math.ceil(parseInt(val) / mpq) * mpq);
+            }else{
+                var roundMpq = 0;
+            }
+
+            $("#del_" + id).val(roundMpq);
+
+            var total = 0;
+            $('.del').each(function() {
+                total += parseInt($(this).val());
+            });
+
+            $("#totalActual").html(total);
+        }else{
+            toastr.info("Please Input Numberic");
+        }
+    }
+
      //Add Data
     function add() {
         var filter_month = $("#filter_month").combobox('getValue');
@@ -296,6 +363,7 @@
         if (row) {
             $('#dlg_insert').dialog('open');
             $('#frm_insert').form('load', row);
+            $('#qtyPo').html(row.qty);
             
             $.ajax({
                 type: "post",
@@ -304,6 +372,23 @@
                 dataType: "html",
                 success: function(response) {
                     $("#calendar").html(response);
+
+                    var totalPlan = 0;
+                    $('.plan').each(function() {
+                        totalPlan += parseInt($(this).val());
+                    });
+
+                    var totalActual = 0;
+                    $('.del').each(function() {
+                        totalActual += parseInt($(this).val());
+                    });
+
+                    $("#totalPlan").html(totalPlan);
+                    $("#totalActual").html(totalActual);
+
+
+                    // setInterval(planTotal, 2000);
+                    // setInterval(delTotal, 2000);
                 }
             });
 
@@ -421,7 +506,7 @@
             "&filter_item_family=" + window.btoa(filter_item_family) +
             "&filter_item_id=" + window.btoa(filter_item_id);
 
-        if (filter_month == "" || filter_year == "" || filter_revision == "" || filter_item_family == "" || filter_supplier == "") {
+        if (filter_month == "" || filter_year == "" || filter_revision == "" || filter_item_family == "" && filter_supplier == "") {
             toastr.warning("Please select Period, Revision Supplier or Product Family!", "Information");
         } else {
             $.messager.alert('Info','Please Wait to Export to Excel');
@@ -459,7 +544,9 @@
             "&filter_item_family=" + window.btoa(filter_item_family) +
             "&filter_item_id=" + window.btoa(filter_item_id);
 
-        if (filter_month != "" && filter_year != "" && filter_revision != "") {
+        if (filter_month == "" || filter_year == "" || filter_revision == "" || filter_item_family == "" && filter_supplier == "") {
+            toastr.warning("Please select Period, Revision Supplier or Product Family!", "Information");
+        }else{
             $('#dg').datagrid({
                 url: '<?= base_url('planning/delivery_schedule_days/datatables') ?>' + url,
                 pagination: true,

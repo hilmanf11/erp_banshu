@@ -67,23 +67,25 @@ class Delivery_schedules extends CI_Controller
     {
         if ($this->input->get()) {
             //Filter Data
-            $filter_month = base64_decode($this->input->get('filter_month'));
-            $filter_year = base64_decode($this->input->get('filter_year'));
-            $filter_revision = base64_decode($this->input->get('filter_revision'));
-            $filter_product_no = trim(base64_decode($this->input->get('filter_product_no')));
-            $filter_product_family = base64_decode($this->input->get('filter_product_family'));
-            $filter_po_no = base64_decode($this->input->get('filter_po_no'));
+            // $filter_month = base64_decode($this->input->get('filter_month'));
+            // $filter_year = base64_decode($this->input->get('filter_year'));
+            // $filter_revision = base64_decode($this->input->get('filter_revision'));
+            // $filter_product_no = trim(base64_decode($this->input->get('filter_product_no')));
+            // $filter_product_family = base64_decode($this->input->get('filter_product_family'));
+            // $filter_po_no = base64_decode($this->input->get('filter_po_no'));
+            $purchase_order_no = base64_decode($this->input->get('purchase_order_no'));
 
             $this->db->select('a.*, b.mpq, b.moq');
             $this->db->from('purchase_orders a');
             $this->db->join('supplier_items b', 'a.supplier_id = b.supplier_id and a.item_id = b.item_id');
             $this->db->join('mst_maker c', 'b.maker_code = c.number');
-            $this->db->where('a.p_month', $filter_month);
-            $this->db->where('a.p_year', $filter_year);
-            $this->db->where('a.revision', $filter_revision);
-            $this->db->like('a.purchase_order_no', $filter_po_no);
-            $this->db->like('a.product_family_name', $filter_product_family);
-            $this->db->like('a.item_id', $filter_product_no);
+            // $this->db->where('a.p_month', $filter_month);
+            // $this->db->where('a.p_year', $filter_year);
+            // $this->db->where('a.revision', $filter_revision);
+            // $this->db->like('a.purchase_order_no', $filter_po_no);
+            $this->db->where('a.purchase_order_no', $purchase_order_no);
+            // $this->db->like('a.product_family_name', $filter_product_family);
+            // $this->db->like('a.item_id', $filter_product_no);
             // $this->db->where('b.purchase_request >', 0);
             // $this->db->where('c.type', 'IMPORT');
             $this->db->group_by('a.item_id');
@@ -94,6 +96,10 @@ class Delivery_schedules extends CI_Controller
             $arr = array();
             foreach ($records as $generate) {
                 $item_id = $generate['item_id'];
+
+                $filter_month = $generate['p_month'];
+                $filter_year = $generate['p_year'];
+                $filter_revision = $generate['revision'];
 
                 $mrp = $this->db->query("SELECT balance_1, balance_2, balance_3, balance_4, balance_5, balance_6 
                     FROM generate_mrp_finals 
@@ -305,8 +311,44 @@ class Delivery_schedules extends CI_Controller
     {
         if ($this->input->post()) {
             $id = base64_decode($this->input->get('id'));
-
             $post = $this->input->post();
+
+            $today = date("Y-m-d", strtotime("+3 days"));
+            if(empty($post['delivey_date_1']) || $post['delivey_date_1'] > $today){
+                //
+            }else{
+                die(json_encode(array("theme" => "error", "message" => "ETA must bigger on $today")));
+            }
+
+            if(empty($post['delivey_date_2']) || $post['delivey_date_2'] > $today){
+                //
+            }else{
+                die(json_encode(array("theme" => "error", "message" => "ETA must bigger on $today")));
+            }
+
+            if(empty($post['delivey_date_3']) || $post['delivey_date_3'] > $today){
+                //
+            }else{
+                die(json_encode(array("theme" => "error", "message" => "ETA must bigger on $today")));
+            }
+
+            if(empty($post['delivey_date_4']) || $post['delivey_date_4'] > $today){
+                //
+            }else{
+                die(json_encode(array("theme" => "error", "message" => "ETA must bigger on $today")));
+            }
+
+            if(empty($post['delivey_date_5']) || $post['delivey_date_5'] > $today){
+                //
+            }else{
+                die(json_encode(array("theme" => "error", "message" => "ETA must bigger on $today")));
+            }
+
+            if(empty($post['delivey_date_6']) || $post['delivey_date_6'] > $today){
+                //
+            }else{
+                die(json_encode(array("theme" => "error", "message" => "ETA must bigger on $today")));
+            }
 
             if(($post['qty'] - ($post['delivey_qty_1'] + $post['delivey_qty_2'] + $post['delivey_qty_3'] + $post['delivey_qty_4'] + $post['delivey_qty_5'] + $post['delivey_qty_6'])) == 0){
                 $send = $this->api->update('delivery_schedules', ["id" => $id], $post);
@@ -568,7 +610,9 @@ class Delivery_schedules extends CI_Controller
         $this->db->like('a.po_no', $filter_po_no);
         $this->db->like('a.product_family', $filter_product_family);
         $this->db->like('a.part_no', $filter_part_no);
-        $this->db->order_by('a.po_no', 'ASC');
+        $this->db->order_by('b.name', 'asc');
+        $this->db->order_by('a.product_family', 'asc');
+        $this->db->order_by('a.part_no', 'asc');
         $records = $this->db->get()->result_array();
 
         $html = '<html><head><title>Print Data</title></head><style>body {font-family: Arial, Helvetica, sans-serif;}#customers {border-collapse: collapse;width: 100%;font-size: 12px;}#customers td, #customers th {border: 1px solid #ddd;padding: 2px;}#customers tr:nth-child(even){background-color: #f2f2f2;}#customers tr:hover {background-color: #ddd;}#customers th {padding-top: 2px;padding-bottom: 2px;text-align: left;color: black;}</style><body>

@@ -106,7 +106,7 @@ class Material_calculation_2 extends CI_Controller
             //Total Data
             $totalRows = $this->db->count_all_results('', false);
             //Limit 1 - 10
-            $this->db->limit($rows, $offset);
+            // $this->db->limit($rows, $offset);
             //Get Data Array
             $records = $this->db->get()->result_array();
 

@@ -51,6 +51,7 @@
                     <option value="purchase_requests">Purchase Request</option>
                     <option value="purchase_orders">Purchase Order</option>
                     <option value="purchase_order_npd">Purchase Order NPD</option>
+                    <option value="simulation_mps">Simulation MPS</option>
                 </select>
             </div>
             <div class="fitem">

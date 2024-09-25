@@ -324,6 +324,7 @@ class Generate_mpp extends CI_Controller{
 
             $mpp_final = array();
             $last_line_no = "";
+            $last_assy_no = "";
             $serial_no = 1;
             $pos_assy = 1;
             foreach ($records as $record) {
@@ -457,8 +458,8 @@ class Generate_mpp extends CI_Controller{
                                     "trx_date" => date("Y-m-d H:i:s"),
                                     "pos_assy" => sprintf("%02s", $pos_assy),
                                     "temp_woc_id" => sprintf("%02s", $pos_assy) . "W/P".$wpp.$alfabets.$woc."-".$record['line_nick'],
-                                    "status_dt" => false,
-                                    "set_wp" => false,
+                                    "status_dt" => "f",
+                                    "set_wp" => "f",
                                     "wp" => $wpp.$alfabets.$filter_month,
                                     "qty" => empty($record["date_".$no]) ? 0 : $record["date_".$no],
                                     "wp_id" => $wpp.$alfabets,
@@ -559,8 +560,8 @@ class Generate_mpp extends CI_Controller{
                                     "trx_date" => date("Y-m-d H:i:s"),
                                     "pos_assy" => sprintf("%02s", $pos_assy),
                                     "temp_woc_id" => sprintf("%02s", $pos_assy) . "W/P".$wpp.$woc."-".$record['line_nick'],
-                                    "status_dt" => false,
-                                    "set_wp" => false,
+                                    "status_dt" => "f",
+                                    "set_wp" => "f",
                                     "wp" => $wpp."/".$filter_month,
                                     "qty" => empty($record["date_".$no]) ? 0 : $record["date_".$no],
                                     "wp_id" => $wpp,
@@ -663,8 +664,8 @@ class Generate_mpp extends CI_Controller{
                                 "trx_date" => date("Y-m-d H:i:s"),
                                 "pos_assy" => sprintf("%02s", $pos_assy),
                                 "temp_woc_id" => sprintf("%02s", $pos_assy) . "W/P".$wpp.$alfabets.$woc."-".$record['line_nick'],
-                                "status_dt" => false,
-                                "set_wp" => false,
+                                "status_dt" => "f",
+                                "set_wp" => "f",
                                 "wp" => $wpp.$alfabets.$filter_month,
                                 "qty" => empty($record["date_".$no]) ? 0 : $record["date_".$no],
                                 "wp_id" => $wpp.$alfabets,
@@ -748,6 +749,7 @@ class Generate_mpp extends CI_Controller{
                     $no++;
                 }
 
+                $last_assy_no = $assy_no;
                 $last_line_no = $line_no;
                 $pos_assy++;
             }
@@ -990,7 +992,7 @@ class Generate_mpp extends CI_Controller{
     public function push_data_create(){
         if ($this->input->post()) {
             $this->dummy = $this->load->database('dummy', TRUE);
-            $this->pg2 = $this->load->database('pg2', TRUE);
+            // $this->pg2 = $this->load->database('pg2', TRUE);
 
             $post = $this->input->post('data');
 
@@ -1022,11 +1024,11 @@ class Generate_mpp extends CI_Controller{
                     if ($this->dummy->update('wip_trx_mpp', ["qty" => $post['qty'], "rev" => $post['rev']])) {
                         echo json_encode(array("title" => "Good Job", "message" => $post['assy_no'] . " | Data Update Successfully", "theme" => "success"));
 
-                        $this->pg2->where("periode", $post['periode']);
-                        $this->pg2->where("line", $post['line']);
-                        $this->pg2->where("assy_no", $post['assy_no']);
-                        $this->pg2->where("wp", $post['wp']);
-                        $this->pg2->update('wip_trx_mpp', ["qty" => $post['qty'], "rev" => $post['rev']]);
+                        // $this->pg2->where("periode", $post['periode']);
+                        // $this->pg2->where("line", $post['line']);
+                        // $this->pg2->where("assy_no", $post['assy_no']);
+                        // $this->pg2->where("wp", $post['wp']);
+                        // $this->pg2->update('wip_trx_mpp', ["qty" => $post['qty'], "rev" => $post['rev']]);
                     } else {
                         echo json_encode(array("title" => "Error", "message" => $post['assy_no'] . " | Data Unsaved", "theme" => "error"));
                     }
@@ -1034,7 +1036,7 @@ class Generate_mpp extends CI_Controller{
                     if ($this->dummy->insert('wip_trx_mpp', $post)) {
                         // $this->api->create('generate_mpp_detail', $post, "MPPD", "MPPD");
                         echo json_encode(array("title" => "Good Job", "message" => $post['assy_no'] . " | Data Saved Successfully", "theme" => "success"));
-                        $this->pg2->insert('wip_trx_mpp', $post);
+                        // $this->pg2->insert('wip_trx_mpp', $post);
                     } else {
                         echo json_encode(array("title" => "Error", "message" => $post['assy_no'] . " | Data Unsaved", "theme" => "error"));
                     }

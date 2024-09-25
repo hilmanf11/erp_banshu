@@ -184,82 +184,83 @@
 
 <script>
     function add() {
-        var filter_month = $("#filter_month").combobox('getValue');
-        var filter_year = $("#filter_year").combobox('getValue');
-        var filter_revision = $("#filter_revision").combobox('getValue');
-        var filter_product_family = $("#filter_product_family").combobox('getValue');
-        var filter_part_no = $("#filter_part_no").combogrid('getValue');
-        var filter_po_no = $("#filter_po_no").combogrid('getValue');
+        toastr.info("Not Ready this Function");
+        // var filter_month = $("#filter_month").combobox('getValue');
+        // var filter_year = $("#filter_year").combobox('getValue');
+        // var filter_revision = $("#filter_revision").combobox('getValue');
+        // var filter_product_family = $("#filter_product_family").combobox('getValue');
+        // var filter_part_no = $("#filter_part_no").combogrid('getValue');
+        // var filter_po_no = $("#filter_po_no").combogrid('getValue');
 
-        if (filter_month != "" && filter_year != "" && filter_revision != "") {
-            $.messager.confirm('Generate', 'Are you sure, you want generate this data', function(r){
-                if (r){
-                    Swal.fire({
-                        title: 'Please Wait for Generating Data',
-                        showConfirmButton: false,
-                        allowOutsideClick: false,
-                        allowEscapeKey: false,
-                        didOpen: () => {
-                            Swal.showLoading();
-                        },
-                    });
+        // if (filter_month != "" && filter_year != "" && filter_revision != "") {
+        //     $.messager.confirm('Generate', 'Are you sure, you want generate this data', function(r){
+        //         if (r){
+        //             Swal.fire({
+        //                 title: 'Please Wait for Generating Data',
+        //                 showConfirmButton: false,
+        //                 allowOutsideClick: false,
+        //                 allowEscapeKey: false,
+        //                 didOpen: () => {
+        //                     Swal.showLoading();
+        //                 },
+        //             });
 
-                    $.ajax({
-                        type: "get",
-                        url: "<?= base_url('planning/delivery_schedules/getData') ?>",
-                        data: "filter_month=" + window.btoa(filter_month) +
-                            "&filter_year=" + window.btoa(filter_year) +
-                            "&filter_revision=" + window.btoa(filter_revision) +
-                            "&filter_product_family=" + window.btoa(filter_product_family) +
-                            "&filter_product_no=" + window.btoa(filter_part_no) +
-                            "&filter_po_no=" + window.btoa(filter_po_no),
-                        dataType: "json",
-                        success: function(rows) {
-                            Swal.close();
+        //             $.ajax({
+        //                 type: "get",
+        //                 url: "<?= base_url('planning/delivery_schedules/getData') ?>",
+        //                 data: "filter_month=" + window.btoa(filter_month) +
+        //                     "&filter_year=" + window.btoa(filter_year) +
+        //                     "&filter_revision=" + window.btoa(filter_revision) +
+        //                     "&filter_product_family=" + window.btoa(filter_product_family) +
+        //                     "&filter_product_no=" + window.btoa(filter_part_no) +
+        //                     "&filter_po_no=" + window.btoa(filter_po_no),
+        //                 dataType: "json",
+        //                 success: function(rows) {
+        //                     Swal.close();
 
-                            if(rows['total'] > 0){
-                                requestData(rows['total'], rows);
+        //                     if(rows['total'] > 0){
+        //                         requestData(rows['total'], rows);
 
-                                function requestData(total, json, number = 1, value = 0, success = 1, failed = 1) {
-                                    if (value < 100) {
-                                        value = Math.floor((number / total) * 100);
-                                        $('#p_upload').progressbar('setValue', value);
-                                        $('#p_start').html(number);
-                                        $('#p_finish').html(total);
+        //                         function requestData(total, json, number = 1, value = 0, success = 1, failed = 1) {
+        //                             if (value < 100) {
+        //                                 value = Math.floor((number / total) * 100);
+        //                                 $('#p_upload').progressbar('setValue', value);
+        //                                 $('#p_start').html(number);
+        //                                 $('#p_finish').html(total);
 
-                                        $.post('<?= base_url('planning/delivery_schedules/create') ?>', {
-                                            data: json[number - 1]
-                                        }, function(note) {
-                                            var result = eval('(' + note + ')');
+        //                                 $.post('<?= base_url('planning/delivery_schedules/create') ?>', {
+        //                                     data: json[number - 1]
+        //                                 }, function(note) {
+        //                                     var result = eval('(' + note + ')');
 
-                                            if (result.theme == "success") {
-                                                requestData(total, json, number + 1, value, success + 1, failed + 0);
-                                            } else {
-                                                requestData(total, json, number + 1, value, success + 0, failed + 1);
-                                            }
+        //                                     if (result.theme == "success") {
+        //                                         requestData(total, json, number + 1, value, success + 1, failed + 0);
+        //                                     } else {
+        //                                         requestData(total, json, number + 1, value, success + 0, failed + 1);
+        //                                     }
 
-                                            if (value == 100) {
-                                                Swal.fire('Good job!', 'Process Generate Data Completed!', 'success');
-                                            }
-                                        }).fail(function(jqXHR, textStatus) {
-                                            if (textStatus == "error") {
-                                                toastr.error("Connection time out");
+        //                                     if (value == 100) {
+        //                                         Swal.fire('Good job!', 'Process Generate Data Completed!', 'success');
+        //                                     }
+        //                                 }).fail(function(jqXHR, textStatus) {
+        //                                     if (textStatus == "error") {
+        //                                         toastr.error("Connection time out");
 
-                                                requestData(total, json, number, value, success + 0, failed + 1);
-                                            }
-                                        });
-                                    }
-                                }
-                            }else{
-                                toastr.warning("Please Generate Purchase Request & Purchase Order First");
-                            }
-                        }
-                    });
-                }
-            });
-        } else {
-            toastr.warning("Please Select Period & Revision", "Information");
-        }
+        //                                         requestData(total, json, number, value, success + 0, failed + 1);
+        //                                     }
+        //                                 });
+        //                             }
+        //                         }
+        //                     }else{
+        //                         toastr.warning("Please Generate Purchase Request & Purchase Order First");
+        //                     }
+        //                 }
+        //             });
+        //         }
+        //     });
+        // } else {
+        //     toastr.warning("Please Select Period & Revision", "Information");
+        // }
     }
 
     //Edit Data
@@ -509,6 +510,12 @@
                                 width: 200,
                                 align: 'center',
                                 colspan: 3
+                            }, {
+                                field: 'remarks',
+                                title: 'Reason',
+                                width: 200,
+                                halign: 'center',
+                                rowspan: 2,
                             }, {
                                 field: '',
                                 title: 'Created',

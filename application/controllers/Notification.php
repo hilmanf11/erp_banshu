@@ -292,7 +292,7 @@ class Notification extends CI_Controller
                 $supplier = $this->api->read("suppliers", ["id" => $log['supplier_id']]);
                 $hasil[] = ($id_notification + $log + array("supplier_name" => $supplier->name));
             }elseif($record['table_name'] == "purchase_requests"){
-                $supplier = $this->api->read("suppliers", ["id" => $log['supplier_id']]);
+                $supplier = $this->api->read("suppliers", ["id" => @$log['supplier_id']]);
                 $hasil[] = ($id_notification + $log + array("supplier_name" => $supplier->name));
             }else{
                 $hasil[] = ($id_notification + $log);

@@ -151,38 +151,32 @@ class Os_purchase_order extends CI_Controller
             $trans_type = trim(base64_decode($this->input->get('trans_type')));
 
             //Select Query
-            $this->dummy->select("b.ven_id, b.item_minoq as mpq, b.item_muloq as moq, b.item_id, b.item_name, c.pfm_name, b.um_id, 
-                g.poc_reqqty,
-                g.por_receiveqty,
-                g.ost, 
-                (CASE WHEN g.ost > 0 THEN 'OPEN' ELSE 'CLOSED' END) as status");
-            $this->dummy->from('mst_item b');
+            $this->dummy->select("b.ven_id, b.item_minoq as mpq, b.item_muloq as moq, b.item_id, b.item_name, c.pfm_name, b.um_id, coalesce(e.por_receiveqty, 0) as por_receiveqty, 
+                a.poc_id, coalesce(a.poc_reqqty, 0) as poc_reqqty, (coalesce(a.poc_reqqty, 0) - coalesce(e.por_receiveqty, 0)) as outstanding, 
+                (CASE WHEN (coalesce(a.poc_reqqty, 0) - coalesce(e.por_receiveqty, 0)) > 0 THEN 'OPEN' ELSE 'CLOSED' END) as status, a.poc_date, a.poc_reqdate");
+            $this->dummy->from('(SELECT item_id, poc_id, poc_date, poc_reqdate, ven_id, SUM(poc_reqqty) as poc_reqqty from poc GROUP BY item_id, poc_id, poc_date, poc_reqdate, ven_id) a');
+            $this->dummy->join('mst_item b', "a.item_id = b.item_id");
             $this->dummy->join('r_prodfam c', 'b.pfm_id = c.pfm_id');
-            $this->dummy->join('r_vendor d', 'b.ven_id = d.ven_id');
-            $this->dummy->join("(SELECT z.item_id, SUM(z.request) as poc_reqqty, SUM(z.receive) as por_receiveqty, SUM(z.balance) as ost FROM (
-                    SELECT b.item_id, b.poc_id, b.poc_reqdate, COALESCE(b.request, 0) as request, COALESCE(a.receive, 0) as receive, (COALESCE(b.request, 0) - COALESCE(a.receive, 0)) as balance
-                    FROM (select item_id, poc_id, poc_reqdate, sum(poc_reqqty) as request from poc GROUP BY item_id, poc_id, poc_reqdate) b 
-                    LEFT JOIN (select item_id, por_pocid, SUM(por_receiveqty) as receive from por GROUP BY por_pocid, item_id) a ON a.item_id = b.item_id and a.por_pocid = b.poc_id
-                    WHERE (COALESCE(b.request, 0) - COALESCE(a.receive, 0)) > 0
-                    ORDER BY b.poc_reqdate ASC) z GROUP BY z.item_id) g", "b.item_id = g.item_id", 'left');
-            // $this->dummy->join("(SELECT item_id, ven_id, poc_id, SUM(poc_reqqty) as poc_reqqty from poc where poc_id LIKE '%$po_no%' GROUP BY item_id, ven_id, poc_id) g", "b.item_id = g.item_id and d.ven_id = g.ven_id");
-            // $this->dummy->join("(SELECT item_id, por_pocid, SUM(por_receiveqty) as por_receiveqty FROM por WHERE por_pocid LIKE '%$po_no%' GROUP BY item_id, por_pocid) f", 'b.item_id = f.item_id and g.poc_id = f.por_pocid', 'left');
-            $this->dummy->like('b.ven_id', $vendor_id);
-            $this->dummy->like('b.pfm_id', $product_family);
-            $this->dummy->like('b.item_id', $item_id);
-            // if($po_status == "Open"){
-            //     $this->dummy->where('g.ost >', 0);
-            // }elseif($po_status == "Closed"){
-            //     $this->dummy->where('g.ost =', 0);
-            // }elseif($po_status == "Over"){
-            //     $this->dummy->where('g.ost <', 0);
-            // }
-            // $this->dummy->group_by('b.item_id');
-            // $this->dummy->group_by('b.item_name');
-            // $this->dummy->group_by('c.pfm_name');
-            // $this->dummy->group_by('b.um_id');
-            // $this->dummy->group_by('b.item_minoq');
-            // $this->dummy->group_by('b.item_muloq');
+            $this->dummy->join('(SELECT item_id, por_pocid, SUM(por_receiveqty) as por_receiveqty FROM por GROUP BY item_id, por_pocid) e', 'a.poc_id = e.por_pocid and a.item_id = e.item_id', 'left');
+            if($vendor_id != ""){
+                $this->dummy->where('a.ven_id', $vendor_id);
+            }
+            if($product_family != ""){
+                $this->dummy->where('b.pfm_id', $product_family);
+            }
+            if($item_id != ""){
+                $this->dummy->where('b.item_id', $item_id);
+            }
+            if($po_no != ""){
+                $this->dummy->where('a.poc_id', $po_no);
+            }
+            if($po_status == "Open"){
+                $this->dummy->where('(coalesce(a.poc_reqqty, 0) - coalesce(e.por_receiveqty, 0)) >', 0);
+            }elseif($po_status == "Closed"){
+                $this->dummy->where('(coalesce(a.poc_reqqty, 0) - coalesce(e.por_receiveqty, 0)) =', 0);
+            }elseif($po_status == "Over"){
+                $this->dummy->where('(coalesce(a.poc_reqqty, 0) - coalesce(e.por_receiveqty, 0)) <', 0);
+            }
             $this->dummy->order_by('b.item_id', 'asc');
             //Total Data
             $totalRows = $this->dummy->count_all_results('', false);
@@ -197,6 +191,74 @@ class Os_purchase_order extends CI_Controller
             echo json_encode($result);
         }
     }
+
+    // public function datatables()
+    // {
+    //     $this->dummy = $this->load->database('dummy', TRUE);
+
+    //     if ($this->input->get()) {
+    //         $page = $this->input->post('page');
+    //         $rows = $this->input->post('rows');
+    //         //Pagination 1-10
+    //         $page   = isset($page) ? intval($page) : 1;
+    //         $rows   = isset($rows) ? intval($rows) : 10;
+    //         $offset = ($page - 1) * $rows;
+    //         $result = array();
+    //         //Filter Data
+    //         $vendor_id = base64_decode($this->input->get('vendor_id'));
+    //         $product_family = base64_decode($this->input->get('product_family'));
+    //         $item_id = base64_decode($this->input->get('item_id'));
+    //         $po_no = trim(base64_decode($this->input->get('po_no')));
+    //         $po_status = trim(base64_decode($this->input->get('po_status')));
+    //         $trans_type = trim(base64_decode($this->input->get('trans_type')));
+
+    //         //Select Query
+    //         $this->dummy->select("b.ven_id, b.item_minoq as mpq, b.item_muloq as moq, b.item_id, b.item_name, c.pfm_name, b.um_id, 
+    //             g.poc_reqqty,
+    //             g.por_receiveqty,
+    //             g.ost, 
+    //             (CASE WHEN g.ost > 0 THEN 'OPEN' ELSE 'CLOSED' END) as status");
+    //         $this->dummy->from('mst_item b');
+    //         $this->dummy->join('r_prodfam c', 'b.pfm_id = c.pfm_id');
+    //         $this->dummy->join('r_vendor d', 'b.ven_id = d.ven_id');
+    //         $this->dummy->join("(SELECT z.item_id, SUM(z.request) as poc_reqqty, SUM(z.receive) as por_receiveqty, SUM(z.balance) as ost FROM (
+    //                 SELECT b.item_id, b.poc_id, b.poc_reqdate, COALESCE(b.request, 0) as request, COALESCE(a.receive, 0) as receive, (COALESCE(b.request, 0) - COALESCE(a.receive, 0)) as balance
+    //                 FROM (select item_id, poc_id, poc_reqdate, sum(poc_reqqty) as request from poc GROUP BY item_id, poc_id, poc_reqdate) b 
+    //                 LEFT JOIN (select item_id, por_pocid, SUM(por_receiveqty) as receive from por GROUP BY por_pocid, item_id) a ON a.item_id = b.item_id and a.por_pocid = b.poc_id
+    //                 WHERE (COALESCE(b.request, 0) - COALESCE(a.receive, 0)) > 0
+    //                 ORDER BY b.poc_reqdate ASC) z GROUP BY z.item_id) g", "b.item_id = g.item_id", 'left');
+    //         // $this->dummy->join("(SELECT item_id, ven_id, poc_id, SUM(poc_reqqty) as poc_reqqty from poc where poc_id LIKE '%$po_no%' GROUP BY item_id, ven_id, poc_id) g", "b.item_id = g.item_id and d.ven_id = g.ven_id");
+    //         // $this->dummy->join("(SELECT item_id, por_pocid, SUM(por_receiveqty) as por_receiveqty FROM por WHERE por_pocid LIKE '%$po_no%' GROUP BY item_id, por_pocid) f", 'b.item_id = f.item_id and g.poc_id = f.por_pocid', 'left');
+    //         $this->dummy->like('b.ven_id', $vendor_id);
+    //         $this->dummy->like('b.pfm_id', $product_family);
+    //         $this->dummy->like('b.item_id', $item_id);
+    //         // if($po_status == "Open"){
+    //         //     $this->dummy->where('g.ost >', 0);
+    //         // }elseif($po_status == "Closed"){
+    //         //     $this->dummy->where('g.ost =', 0);
+    //         // }elseif($po_status == "Over"){
+    //         //     $this->dummy->where('g.ost <', 0);
+    //         // }
+    //         // $this->dummy->group_by('b.item_id');
+    //         // $this->dummy->group_by('b.item_name');
+    //         // $this->dummy->group_by('c.pfm_name');
+    //         // $this->dummy->group_by('b.um_id');
+    //         // $this->dummy->group_by('b.item_minoq');
+    //         // $this->dummy->group_by('b.item_muloq');
+    //         $this->dummy->order_by('b.item_id', 'asc');
+    //         //Total Data
+    //         $totalRows = $this->dummy->count_all_results('', false);
+    //         //Limit 1 - 10
+    //         $this->dummy->limit($rows, $offset);
+    //         //Get Data Array
+    //         $records = $this->dummy->get()->result_array();
+
+    //         //Mapping Data
+    //         $result['total'] = $totalRows;
+    //         $result = array_merge($result, ['rows' => $records]);
+    //         echo json_encode($result);
+    //     }
+    // }
 
     public function print($option = "")
     {
@@ -221,36 +283,32 @@ class Os_purchase_order extends CI_Controller
         $trans_type = trim(base64_decode($this->input->get('trans_type')));
 
         //Select Query
-        $this->dummy->select("d.ven_id, d.ven_name, f.por_pocreqqty, b.item_id, b.item_name, c.pfm_name, b.um_id,
-            a.por_pocid, SUM(a.por_receiveqty) as por_receiveqty, (f.por_pocreqqty - SUM(a.por_receiveqty)) as outstanding, 
-            (CASE WHEN (f.por_pocreqqty - SUM(a.por_receiveqty)) > 0 THEN 'OPEN' ELSE 'CLOSED' END) as status, e.poc_date, e.poc_reqdate");
-        $this->dummy->from('por a');
+        $this->dummy->select("b.ven_id, b.item_minoq as mpq, b.item_muloq as moq, b.item_id, b.item_name, c.pfm_name, b.um_id, coalesce(e.por_receiveqty, 0) as por_receiveqty, 
+            a.poc_id, coalesce(a.poc_reqqty, 0) as poc_reqqty, (coalesce(a.poc_reqqty, 0) - coalesce(e.por_receiveqty, 0)) as outstanding, 
+            (CASE WHEN (coalesce(a.poc_reqqty, 0) - coalesce(e.por_receiveqty, 0)) > 0 THEN 'OPEN' ELSE 'CLOSED' END) as status, a.poc_date, a.poc_reqdate");
+        $this->dummy->from('(SELECT item_id, poc_id, poc_date, poc_reqdate, ven_id, SUM(poc_reqqty) as poc_reqqty from poc GROUP BY item_id, poc_id, poc_date, poc_reqdate, ven_id) a');
         $this->dummy->join('mst_item b', "a.item_id = b.item_id");
         $this->dummy->join('r_prodfam c', 'b.pfm_id = c.pfm_id');
-        $this->dummy->join('r_vendor d', 'a.ven_id = d.ven_id');
-        $this->dummy->join('poc e', 'e.poc_id = a.por_pocid and a.item_id = e.item_id', 'left');
-        $this->dummy->join("(SELECT por_pocid, item_id, por_pocreqqty FROM por GROUP BY por_pocid, item_id, por_pocreqqty) f", 'a.por_pocid = f.por_pocid and a.item_id = f.item_id', 'left');
-        $this->dummy->like('a.ven_id', $vendor_id);
-        $this->dummy->like('b.item_id', $item_id);
-        $this->dummy->like('b.pfm_id', $product_family);
-        $this->dummy->like('a.por_pocid', $po_no);
-        if($po_status == "Open"){
-            $this->dummy->having('(f.por_pocreqqty - SUM(a.por_receiveqty)) >', 0);
-        }elseif($po_status == "Closed"){
-            $this->dummy->having('(f.por_pocreqqty - SUM(a.por_receiveqty)) =', 0);
-        }elseif($po_status == "Over"){
-            $this->dummy->having('(f.por_pocreqqty - SUM(a.por_receiveqty)) <', 0);
+        $this->dummy->join('(SELECT item_id, por_pocid, SUM(por_receiveqty) as por_receiveqty FROM por GROUP BY item_id, por_pocid) e', 'a.poc_id = e.por_pocid and a.item_id = e.item_id', 'left');
+        if($vendor_id != ""){
+            $this->dummy->where('a.ven_id', $vendor_id);
         }
-        $this->dummy->group_by('d.ven_id');
-        $this->dummy->group_by('d.ven_name');
-        $this->dummy->group_by('a.por_pocid');
-        $this->dummy->group_by('b.item_id');
-        $this->dummy->group_by('b.item_name');
-        $this->dummy->group_by('c.pfm_name');
-        $this->dummy->group_by('b.um_id');
-        $this->dummy->group_by('e.poc_date');
-        $this->dummy->group_by('e.poc_reqdate');
-        $this->dummy->group_by('f.por_pocreqqty');
+        if($product_family != ""){
+            $this->dummy->where('b.pfm_id', $product_family);
+        }
+        if($item_id != ""){
+            $this->dummy->where('b.item_id', $item_id);
+        }
+        if($po_no != ""){
+            $this->dummy->where('a.poc_id', $po_no);
+        }
+        if($po_status == "Open"){
+            $this->dummy->where('(coalesce(a.poc_reqqty, 0) - coalesce(e.por_receiveqty, 0)) >', 0);
+        }elseif($po_status == "Closed"){
+            $this->dummy->where('(coalesce(a.poc_reqqty, 0) - coalesce(e.por_receiveqty, 0)) =', 0);
+        }elseif($po_status == "Over"){
+            $this->dummy->where('(coalesce(a.poc_reqqty, 0) - coalesce(e.por_receiveqty, 0)) <', 0);
+        }
         $this->dummy->order_by('b.item_id', 'asc');
         //Get Data Array
         $records = $this->dummy->get()->result_array();
@@ -290,6 +348,7 @@ class Os_purchase_order extends CI_Controller
                 <th>Request Qty</th>
                 <th>Receive Qty</th>
                 <th>Outstanding</th>
+                <th>Status</th>
             </tr>';
 
         $no = 1;
@@ -300,12 +359,13 @@ class Os_purchase_order extends CI_Controller
                             <td>' . @$data['item_name'] . '</td>
                             <td>' . @$data['pfm_name'] . '</td>
                             <td>' . @$data['um_id'] . '</td>
-                            <td>' . @$data['por_pocid'] . '</td>
+                            <td>' . @$data['poc_id'] . '</td>
                             <td>' . @$data['poc_date'] . '</td>
                             <td>' . @$data['poc_reqdate'] . '</td>
-                            <td>' . @$data['por_pocreqqty'] . '</td>
+                            <td>' . @$data['poc_reqqty'] . '</td>
                             <td>' . @$data['por_receiveqty'] . '</td>
                             <td>' . @$data['outstanding'] . '</td>
+                            <td>' . @$data['status'] . '</td>
                         </tr>';
             $no++;
         }

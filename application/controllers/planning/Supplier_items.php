@@ -202,8 +202,7 @@ class Supplier_items extends CI_Controller
                     $send = $this->api->create('supplier_items', $post, "SPI", "supplier_items");
                     echo $send;
                 } else {
-                    $send = $this->api->update('supplier_items', ["supplier_id" => $post['supplier_id'], "item_id" => $post['item_id'], "plant" => $post['plant']], $post);
-                    echo $send;
+                    show_error("Duplicate Data");
                 }
             } else {
                 show_error(validation_errors());

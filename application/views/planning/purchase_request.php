@@ -1054,6 +1054,8 @@
                         Swal.fire('Failed!', 'Generate Purchase Requst is Failed, Please Try Again!', 'error');
                     }
                 });
+            }else{
+                toastr.error("Password not Match");
             }
         });
     }

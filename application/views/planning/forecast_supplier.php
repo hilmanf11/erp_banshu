@@ -14,12 +14,13 @@
             <th rowspan="2" data-options="field:'maker_name',width:200,halign:'center'">Maker Name</th>
             <th rowspan="2" data-options="field:'maker_type',width:80,halign:'center'">Maker Type</th>
             <!-- <th rowspan="2" data-options="field:'maker_origin',width:80,halign:'center'">Origin</th> -->
+            <th rowspan="2" data-options="field:'forecast_xbar',width:100,halign:'center', formatter:numberformat">Xbar<br>(-3 Month)</th>
             <th colspan="3" data-options="field:'Forecast',width:240,halign:'center'">FORECAST</th>
         </tr>
         <tr>
-            <th data-options="field:'forecast1',width:80,halign:'center', formatter:numberformat">M1</th>
-            <th data-options="field:'forecast2',width:80,halign:'center', formatter:numberformat">M2</th>
-            <th data-options="field:'forecast3',width:80,halign:'center', formatter:numberformat">M3</th>
+            <th data-options="field:'forecast_1',width:80,halign:'center', formatter:numberformat">M 1</th>
+            <th data-options="field:'forecast_2',width:80,halign:'center', formatter:numberformat">M 2</th>
+            <th data-options="field:'forecast_3',width:80,halign:'center', formatter:numberformat">M 3</th>
         </tr>
     </thead>
 </table>

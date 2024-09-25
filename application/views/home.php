@@ -541,6 +541,34 @@
 			});
 		}
 	}
+
+	// $(document).ready(function() {
+	// 	if (Notification.permission !== "granted")
+	// 	Notification.requestPermission();
+	// });
+		
+	// function notifikasi() {
+	// 	if (!Notification) {
+	// 		alert('Browser kamu belum mendukung web notifikasi.'); 
+	// 		return;
+	// 	}
+
+	// 	if (Notification.permission !== "granted"){
+	// 		Notification.requestPermission();
+	// 	} else {
+	// 		var notifikasi = new Notification('Askara Technology', {
+	// 			icon: 'http://43.254.126.203/erp-new/assets/image/users/astek_1717585069.png',
+	// 			body: "Belajar Javascipt itu menyenangkan",
+	// 		});
+	// 		notifikasi.onclick = function () {
+	// 			window.open("http://43.254.126.203/erp-new");      
+	// 		};
+
+	// 		setTimeout(function(){
+	// 			notifikasi.close();
+	// 		}, 10000);
+	// 	}
+	// };
 </script>
 
 </html>

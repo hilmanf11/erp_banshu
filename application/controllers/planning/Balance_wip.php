@@ -100,6 +100,7 @@ class balance_wip extends CI_Controller
                 GROUP BY z.item_id, z.item_name, z.pfm_name
                 having COALESCE(SUM(z.stock), 0) < 0 
             ");
+            
             $items = $itemq->result_array();
             $arr = array();
 

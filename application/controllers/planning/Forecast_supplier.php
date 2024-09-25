@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set("Asia/Bangkok");
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Forecast_supplier extends CI_Controller
@@ -35,6 +36,31 @@ class Forecast_supplier extends CI_Controller
         echo json_encode($datas);
     }
 
+    function forecast($item_id, $month, $year, $revision){
+        $q_forecast = $this->db->query("SELECT a.component_id, c.item_name, SUM(a.qty) as qty, 
+            (SUM(a.qty) * b.month_1) as m1, 
+            (SUM(a.qty) * b.month_2) as m2, 
+            (SUM(a.qty) * b.month_3) as m3,
+            (SUM(a.qty) * b.month_4) as m4,
+            (SUM(a.qty) * b.month_5) as m5,
+            (SUM(a.qty) * b.month_6) as m6,
+            (SUM(a.qty) * b.month_7) as m7,
+            (SUM(a.qty) * b.month_8) as m8,
+            (SUM(a.qty) * b.month_9) as m9,
+            (SUM(a.qty) * b.month_10) as m10,
+            (SUM(a.qty) * b.month_11) as m11,
+            (SUM(a.qty) * b.month_12) as m12
+            FROM mst_bom a
+            JOIN mst_forecast b ON a.item_id = b.product_no
+            JOIN mst_item_raw c ON a.component_id = c.item_id
+            WHERE b.p_month = '$month' and b.p_year = '$year' and b.revision = '$revision' 
+            and (b.month_1 > 0 or b.month_2 > 0 or b.month_3 > 0) and a.component_id = '$item_id'
+            GROUP BY a.component_id");
+        $forecast = $q_forecast->row();
+
+        return $forecast;
+    }
+
     public function datatables()
     {
         if ($this->input->post()) {
@@ -54,7 +80,18 @@ class Forecast_supplier extends CI_Controller
             $offset = ($page - 1) * $rows;
             $result = array();
             //Select Query
-            $this->db->select('a.forecast_1 as forecast1, a.forecast_2 as forecast2, a.forecast_3 as forecast3, b.number as vendor_id, b.name as vendor_name, b.type as vendor_type, b.origin as vendor_origin, c.item_id as supplier_item_id, a.item_name as item_name, c.leadtime as supplier_item_leadtime, c.mpq as supplier_item_mpq, c.moq as supplier_item_moq, d.name as maker_name, d.type as maker_type');
+            $this->db->select('a.revision, a.p_year, a.p_month, a.item_id, 
+                b.number as vendor_id, 
+                b.name as vendor_name, 
+                b.type as vendor_type, 
+                b.origin as vendor_origin, 
+                c.item_id as supplier_item_id, 
+                a.item_name as item_name, 
+                c.leadtime as supplier_item_leadtime, 
+                c.mpq as supplier_item_mpq, 
+                c.moq as supplier_item_moq, 
+                d.name as maker_name, 
+                d.type as maker_type');
             $this->db->from('purchase_orders a');
             $this->db->join('supplier_items c', "a.item_id = c.item_id AND a.supplier_id = c.supplier_id", 'left');
             $this->db->join('suppliers b', "c.supplier_id = b.id", 'left');
@@ -76,9 +113,62 @@ class Forecast_supplier extends CI_Controller
             //Get Data Array
             $records = $this->db->get()->result_array();
 
+            $finals = array();
+            foreach ($records as $record) {
+                $ending = date("Y-m-t", strtotime($record['p_year'] . "-" . $record['p_month'] . "-01"));
+                $item_id = $record['item_id'];
+                $leadtime = date('Y-m-01', strtotime('+'.$record['supplier_item_leadtime'].' days', strtotime($ending)));
+                $revision = $record['revision'];
+                $p_month = $record['p_month'];
+                $p_year = $record['p_year'];
+
+                $m1 = date('Y-m-01', strtotime($leadtime));
+                $m2 = date('Y-m-01', strtotime('+1 month', strtotime($leadtime)));
+                $m3 = date('Y-m-01', strtotime('+2 month', strtotime($leadtime)));
+                $m11 = "m".date('n', strtotime($leadtime));
+                $m22 = "m".date('n', strtotime('+1 month', strtotime($leadtime)));
+                $m33 = "m".date('n', strtotime('+2 month', strtotime($leadtime)));
+
+                $qmps1 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m1' and product_no = '$item_id' and revision = '$revision' and p_month = '$p_month' and p_year = '$p_year'");
+                $rpms1 = $qmps1->row();
+
+                $qmps2 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m2' and product_no = '$item_id' and revision = '$revision' and p_month = '$p_month' and p_year = '$p_year'");
+                $rpms2 = $qmps2->row();
+
+                $qmps3 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m3' and product_no = '$item_id' and revision = '$revision' and p_month = '$p_month' and p_year = '$p_year'");
+                $rpms3 = $qmps3->row();
+
+                $forecast = $this->forecast($item_id, $record['p_month'], $record['p_year'], @$revision);
+
+                if(@$rpms1->qty > 0){
+                    $prod1 = @$rpms1->qty;
+                }else{
+                    $prod1 = @$forecast->$m11;
+                }
+
+                if(@$rpms2->qty > 0){
+                    $prod2 = @$rpms2->qty;
+                }else{
+                    $prod2 = @$forecast->$m22;
+                }
+
+                if(@$rpms3->qty > 0){
+                    $prod3 = @$rpms3->qty;
+                }else{
+                    $prod3 = @$forecast->$m33;
+                }
+
+                $finals[] = array_merge($record, [
+                    "forecast_xbar" => round((@$prod1 + @$prod2 + @$prod3) / 3),
+                    "forecast_1" => round($prod1),
+                    "forecast_2" => round($prod2),
+                    "forecast_3" => round($prod3)
+                ]);
+            }
+
             //Mapping Data
             $result['total'] = $totalRows;
-            $result = array_merge($result, ['rows' => $records]);
+            $result = array_merge($result, ['rows' => $finals]);
             echo json_encode($result);
         }
     }
@@ -105,7 +195,7 @@ class Forecast_supplier extends CI_Controller
         $filter_po = trim(base64_decode($this->input->get('filter_po')));
 
         //Select Query
-        $this->db->select('a.forecast_1 as forecast1, a.forecast_2 as forecast2, a.forecast_3 as forecast3, b.number as vendor_id, b.name as vendor_name, b.type as vendor_type, b.origin as vendor_origin, c.item_id as supplier_item_id, a.item_name as item_name, c.leadtime as supplier_item_leadtime, c.mpq as supplier_item_mpq, c.moq as supplier_item_moq, d.name as maker_name, d.type as maker_type');
+        $this->db->select('a.revision, a.p_year, a.p_month, a.item_id, b.number as vendor_id, b.name as vendor_name, b.type as vendor_type, b.origin as vendor_origin, c.item_id as supplier_item_id, a.item_name as item_name, c.leadtime as supplier_item_leadtime, c.mpq as supplier_item_mpq, c.moq as supplier_item_moq, d.name as maker_name, d.type as maker_type');
         $this->db->from('purchase_orders a');
         $this->db->join('supplier_items c', "a.item_id = c.item_id AND a.supplier_id = c.supplier_id", 'left');
         $this->db->join('suppliers b', "c.supplier_id = b.id", 'left');
@@ -170,6 +260,7 @@ class Forecast_supplier extends CI_Controller
                 <th style="text-align:center;">MOQ</th>
                 <th style="text-align:center;">Maker Name</th>
                 <th style="text-align:center;">Maker Type</th>
+                <th style="text-align:center;">Xbar -3 Forecast</th>
                 <th style="text-align:center;">Forecast 1</th>
                 <th style="text-align:center;">Forecast 2</th>
                 <th style="text-align:center;">Forecast 3</th>
@@ -177,6 +268,49 @@ class Forecast_supplier extends CI_Controller
 
         $no = 1;
         foreach ($records as $data) {
+            $ending = date("Y-m-t", strtotime($data['p_year'] . "-" . $data['p_month'] . "-01"));
+            $item_id = $data['item_id'];
+            $leadtime = date('Y-m-01', strtotime('+'.$data['supplier_item_leadtime'].' days', strtotime($ending)));
+            $revision = $data['revision'];
+            $p_month = $data['p_month'];
+            $p_year = $data['p_year'];
+
+            $m1 = date('Y-m-01', strtotime($leadtime));
+            $m2 = date('Y-m-01', strtotime('+1 month', strtotime($leadtime)));
+            $m3 = date('Y-m-01', strtotime('+2 month', strtotime($leadtime)));
+            $m11 = "m".date('n', strtotime($leadtime));
+            $m22 = "m".date('n', strtotime('+1 month', strtotime($leadtime)));
+            $m33 = "m".date('n', strtotime('+2 month', strtotime($leadtime)));
+
+            $qmps1 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m1' and product_no = '$item_id' and revision = '$revision' and p_month = '$p_month' and p_year = '$p_year'");
+            $rpms1 = $qmps1->row();
+
+            $qmps2 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m2' and product_no = '$item_id' and revision = '$revision' and p_month = '$p_month' and p_year = '$p_year'");
+            $rpms2 = $qmps2->row();
+
+            $qmps3 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m3' and product_no = '$item_id' and revision = '$revision' and p_month = '$p_month' and p_year = '$p_year'");
+            $rpms3 = $qmps3->row();
+
+            $forecast = $this->forecast($item_id, $data['p_month'], $data['p_year'], @$revision);
+
+            if(@$rpms1->qty > 0){
+                $prod1 = @$rpms1->qty;
+            }else{
+                $prod1 = @$forecast->$m11;
+            }
+
+            if(@$rpms2->qty > 0){
+                $prod2 = @$rpms2->qty;
+            }else{
+                $prod2 = @$forecast->$m22;
+            }
+
+            if(@$rpms3->qty > 0){
+                $prod3 = @$rpms3->qty;
+            }else{
+                $prod3 = @$forecast->$m33;
+            }
+
             $html .= '  <tr>
                             <td>' . $no . '</td>
                             <td>' . $data['vendor_id'] . '</td>
@@ -190,9 +324,10 @@ class Forecast_supplier extends CI_Controller
                             <td style="mso-number-format:\@;">' . $data['supplier_item_moq'] . '</td>
                             <td>' . $data['maker_name'] . '</td>
                             <td>' . $data['maker_type'] . '</td>
-                            <td style="text-align:right;">' . $data['forecast1'] . '</td>
-                            <td style="text-align:right;">' . $data['forecast2'] . '</td>
-                            <td style="text-align:right;">' . $data['forecast3'] . '</td>
+                            <td style="text-align:right;">' . round($prod1 + $prod2 + $prod3) . '</td>
+                            <td style="text-align:right;">' . round($prod1) . '</td>
+                            <td style="text-align:right;">' . round($prod2) . '</td>
+                            <td style="text-align:right;">' . round($prod3) . '</td>
                         </tr>';
             $no++;
         }

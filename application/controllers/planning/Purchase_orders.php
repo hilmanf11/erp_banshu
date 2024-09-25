@@ -110,6 +110,23 @@ class Purchase_orders extends CI_Controller
         return $forecast;
     }
 
+    function get_delivery_schedules(){
+        if ($this->input->post()) {
+            $po_no = base64_decode($this->input->post('po_no'));
+            $part_no = base64_decode($this->input->post('part_no'));
+
+            $this->db->select('a.*, b.name as supplier_name');
+            $this->db->from('delivery_schedules a');
+            $this->db->join('suppliers b', 'a.supplier_id = b.id');
+            $this->db->where('a.po_no', $po_no);
+            $this->db->where('a.part_no', $part_no);
+            //Get Data Array
+            $records = $this->db->get()->row();
+
+            die(json_encode($records));
+        }
+    }
+
     public function checkPR()
     {
         $filter_month = base64_decode($this->input->get('filter_month'));
@@ -149,6 +166,7 @@ class Purchase_orders extends CI_Controller
             $filter_part_no = trim(base64_decode($this->input->get('filter_part_no')));
             $filter_supplier = trim(base64_decode($this->input->get('filter_supplier')));
             $filter_po = trim(base64_decode($this->input->get('filter_po')));
+            $filter_status = trim(base64_decode($this->input->get('filter_status')));
 
             $page = $this->input->post('page');
             $rows = $this->input->post('rows');
@@ -158,15 +176,33 @@ class Purchase_orders extends CI_Controller
             $offset = ($page - 1) * $rows;
             $result = array();
             //Select Query
-            $this->db->select('a.*, SUM(a.qty) as total_qty, SUM(a.total) as total_amount, COUNT(c.po_no) as print_sd, d.number as supplier_no, d.name as supplier_name, d.email as email_to, d.email_cc');
+            $this->db->select('a.*, SUM(a.qty) as total_qty, SUM(a.total) as total_amount, (CASE WHEN c.total_dn = SUM(a.qty) THEN 1 ELSE 0 END) as print_sd, d.number as supplier_no, d.name as supplier_name, d.email as email_to, d.email_cc');
             // $this->db->select('a.*, SUM(a.qty) as total_qty, (SUM(a.qty) * e.price) as total_amount, COUNT(c.po_no) as print_sd, d.number as supplier_no, d.name as supplier_name, d.email as email_to, d.email_cc');
             $this->db->from('purchase_orders a');
-            $this->db->join('(select DISTINCT po_no from delivery_schedules) c', "a.purchase_order_no = c.po_no", 'left');
+            $this->db->join('(select SUM(qty) as total_dn, po_no from delivery_schedules GROUP BY po_no) c', "a.purchase_order_no = c.po_no", 'left');
             $this->db->join('suppliers d', "a.supplier_id = d.id", 'left');
             // $this->db->join('supplier_items e', "a.supplier_id = d.id and a.item_id = e.item_id", 'left');
             // $this->db->join("(SELECT supplier_item_id, price, currency, valid_date FROM supplier_item_prices WHERE (supplier_item_id, valid_date) IN (SELECT supplier_item_id, MAX(valid_date) FROM supplier_item_prices GROUP BY supplier_item_id)) g", 'e.id = g.supplier_item_id', 'left');    
             // $this->db->join('purchase_requests e', 'a.purchase_request_no = e.purchase_request_no and a.item_id = e.part_no');
             // $this->db->where("(a.approved_to = '' or a.approved_to is null)");
+            if($filter_status == "Send"){
+                $this->db->where('a.email_status', "SENT");
+            }
+            if($filter_status == "Unsend"){
+                $this->db->where('a.email_status', null);
+            }
+            if($filter_status == "Push"){
+                $this->db->where('a.push', "OK");
+            }
+            if($filter_status == "Unpush"){
+                $this->db->where('a.push', null);
+            }
+            if($filter_status == "Receipt"){
+                $this->db->where('a.confirm', null);
+            }
+            if($filter_status == "Confirm"){
+                $this->db->where('a.confirm', "Confirm");
+            }
             $this->db->where('a.p_month', $filter_month);
             $this->db->where('a.p_year', $filter_year);
             $this->db->where('a.revision', $filter_revision);
@@ -324,6 +360,8 @@ class Purchase_orders extends CI_Controller
                 $item_id = $purchase_request['part_no'];
                 $leadtime = $purchase_request['leadtime'];
                 $revision = $purchase_request['revision'];
+                $p_month = $purchase_request['p_month'];
+                $p_year = $purchase_request['p_year'];
 
                 $m1 = date('Y-m-01', strtotime($date, strtotime($leadtime)));
                 $m2 = date('Y-m-01', strtotime($date, strtotime('+1 month', strtotime($leadtime))));
@@ -332,13 +370,13 @@ class Purchase_orders extends CI_Controller
                 $m22 = "m".date('n', strtotime($date, strtotime('+1 month', strtotime($leadtime))));
                 $m33 = "m".date('n', strtotime($date, strtotime('+2 month', strtotime($leadtime))));
 
-                $qmps1 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m1' and product_no = '$item_id' and revision = '$revision'");
+                $qmps1 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m1' and product_no = '$item_id' and revision = '$revision' and p_month = '$p_month' and p_year = '$p_year'");
                 $rpms1 = $qmps1->row();
 
-                $qmps2 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m2' and product_no = '$item_id' and revision = '$revision'");
+                $qmps2 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m2' and product_no = '$item_id' and revision = '$revision' and p_month = '$p_month' and p_year = '$p_year'");
                 $rpms2 = $qmps2->row();
 
-                $qmps3 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m3' and product_no = '$item_id' and revision = '$revision'");
+                $qmps3 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m3' and product_no = '$item_id' and revision = '$revision' and p_month = '$p_month' and p_year = '$p_year'");
                 $rpms3 = $qmps3->row();
 
                 $forecast = $this->forecast($item_id, $purchase_request['p_month'], $purchase_request['p_year'], @$revision);
@@ -940,6 +978,8 @@ class Purchase_orders extends CI_Controller
             foreach ($records as $record) {
                 $item_id = $record['item_id'];
                 $revision = $record['revision'];
+                $p_month = $record['p_month'];
+                $p_year = $record['p_year'];
                 $ending = date("Y-m-t", strtotime($record['p_year'] . "-" . $record['p_month'] . "-01"));
                 $leadtime = date('Y-m-01', strtotime('+'.$record['leadtime'].' days', strtotime($ending)));
                 
@@ -950,13 +990,13 @@ class Purchase_orders extends CI_Controller
                 $m22 = "m".date('n', strtotime('+1 month', strtotime($leadtime)));
                 $m33 = "m".date('n', strtotime('+2 month', strtotime($leadtime)));
 
-                $qmps1 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m1' and product_no = '$item_id' and revision = '$revision'");
+                $qmps1 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m1' and product_no = '$item_id' and revision = '$revision' and p_month = '$p_month' and p_year = '$p_year'");
                 $rpms1 = $qmps1->row();
 
-                $qmps2 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m2' and product_no = '$item_id' and revision = '$revision'");
+                $qmps2 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m2' and product_no = '$item_id' and revision = '$revision' and p_month = '$p_month' and p_year = '$p_year'");
                 $rpms2 = $qmps2->row();
 
-                $qmps3 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m3' and product_no = '$item_id' and revision = '$revision'");
+                $qmps3 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m3' and product_no = '$item_id' and revision = '$revision' and p_month = '$p_month' and p_year = '$p_year'");
                 $rpms3 = $qmps3->row();
 
                 $forecast = $this->forecast($item_id, $record['p_month'], $record['p_year'], @$revision);
@@ -1482,6 +1522,8 @@ class Purchase_orders extends CI_Controller
         foreach ($records as $data) {
             $item_id = $data['item_id'];
             $revision = $data['revision'];
+            $p_month = $data['p_month'];
+            $p_year = $data['p_year'];
             $ending = date("Y-m-t", strtotime($data['p_year'] . "-" . $data['p_month'] . "-01"));
             $leadtime = date('Y-m-01', strtotime('+'.$data['leadtime'].' days', strtotime($ending)));
 
@@ -1492,13 +1534,13 @@ class Purchase_orders extends CI_Controller
             $m22 = "m".date('n', strtotime('+1 month', strtotime($leadtime)));
             $m33 = "m".date('n', strtotime('+2 month', strtotime($leadtime)));
 
-            $qmps1 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m1' and product_no = '$item_id' and revision = '$revision'");
+            $qmps1 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m1' and product_no = '$item_id' and revision = '$revision' and p_month = '$p_month' and p_year = '$p_year'");
             $rpms1 = $qmps1->row();
 
-            $qmps2 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m2' and product_no = '$item_id' and revision = '$revision'");
+            $qmps2 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m2' and product_no = '$item_id' and revision = '$revision' and p_month = '$p_month' and p_year = '$p_year'");
             $rpms2 = $qmps2->row();
 
-            $qmps3 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m3' and product_no = '$item_id' and revision = '$revision'");
+            $qmps3 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m3' and product_no = '$item_id' and revision = '$revision' and p_month = '$p_month' and p_year = '$p_year'");
             $rpms3 = $qmps3->row();
 
             $forecast = $this->forecast($item_id, $data['p_month'], $data['p_year'], @$revision);
