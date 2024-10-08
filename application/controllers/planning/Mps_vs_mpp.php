@@ -25,7 +25,10 @@ class Mps_vs_mpp extends CI_Controller
         }
     }
 
+
+
     public function index()
+
     {
         if (empty($this->session->api_key)) {
             redirect('error_session');
@@ -38,7 +41,10 @@ class Mps_vs_mpp extends CI_Controller
         }
     }
 
+
+
     public function datatables()
+
     {
 
         if ($this->input->post()) {
@@ -56,7 +62,7 @@ class Mps_vs_mpp extends CI_Controller
             $offset = ($page - 1) * $rows;
             $result = array();
 
-            $this->db->select('a.p_month, a.p_year,b.name as customer,a.product_no, a.product_name, 
+            $this->db->select('a.p_month, a.p_year, COALESCE(NULLIF(b.name, ""), "LAINNYA") as customer,a.product_no, a.product_name, 
                 SUM(CASE WHEN a.revision = 0 THEN a.prod_plan ELSE 0 END) as revision_0, 
                 SUM(CASE WHEN a.revision = 1 THEN a.prod_plan ELSE 0 END) as revision_1, 
                 SUM(CASE WHEN a.revision = 2 THEN a.prod_plan ELSE 0 END) as revision_2,
@@ -64,8 +70,24 @@ class Mps_vs_mpp extends CI_Controller
                      WHEN MAX(a.revision) = 1 THEN SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END) + (SUM(CASE WHEN a.revision = 1 THEN a.prod_plan else 0 END) - SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END))
                      WHEN MAX(a.revision) = 2 THEN SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END) + (SUM(CASE WHEN a.revision = 2 THEN a.prod_plan else 0 END) - SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END))
                      else 0 END) as bal_prod_plan, 
-                (((SUM(CASE WHEN a.revision = 1 THEN a.prod_plan else 0 END) - SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END)) / (SUM(CASE WHEN a.revision = 1 THEN a.prod_plan else 0 END) + SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END))) * 100) as rev_vs_1, 
-                (((SUM(CASE WHEN a.revision = 2 THEN a.prod_plan else 0 END) - SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END)) / (SUM(CASE WHEN a.revision = 2 THEN a.prod_plan else 0 END) + SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END))) * 100) as rev_vs_2');
+                     (
+                        (
+                            SUM(CASE WHEN a.revision = 1 THEN a.prod_plan else 0 END)
+                            -
+                            SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END)
+                        )
+                        /
+                        SUM(CASE WHEN a.revision = 1 THEN a.prod_plan else 0 END)
+                    )*100 
+                    as rev_vs_1,  (
+                        (
+                            SUM(CASE WHEN a.revision = 2 THEN a.prod_plan else 0 END)
+                            -
+                            SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END)
+                        )
+                        /
+                        SUM(CASE WHEN a.revision = 2 THEN a.prod_plan else 0 END)
+                    )*100  as rev_vs_2');
 
             $this->db->select('((CASE WHEN c.date_1 = "W" THEN 0 ELSE CAST(c.date_1 AS UNSIGNED) END) +
             (CASE WHEN c.date_2 = "W" THEN 0 ELSE CAST(c.date_2 AS UNSIGNED) END) +
@@ -230,7 +252,7 @@ class Mps_vs_mpp extends CI_Controller
             $this->db->limit($rows, $offset);
             //Get Data Array
             $records = $this->db->get()->result_array();
-
+            // $result['rev_vs_1'] = $result['revision_1'] == 0 || $result['revision'] == 0 ? 0 : ($result['revision_1']/$result['revision'])*100;
 
             //Mapping Data
             $result['total'] = $totalRows;
@@ -239,6 +261,7 @@ class Mps_vs_mpp extends CI_Controller
             echo json_encode($result);
 
         }
+        //ini tutup
 
     }
 
@@ -269,7 +292,7 @@ class Mps_vs_mpp extends CI_Controller
         $months = array('01' => 'January', '02' => 'February', '03' => 'March', '04' => 'April', '05' => 'May', '06' => 'June', '07' => 'July', '08' => 'August', '09' => 'September', '10' => 'October', '11' => 'November', '12' => 'December');
         $month =$months[$filter_month];
         //Select Query
-        $this->db->select('a.p_month, a.p_year,b.name as customer,a.product_no, a.product_name, 
+        $this->db->select('a.p_month, a.p_year, COALESCE(NULLIF(b.name, ""), "LAINNYA") as customer,a.product_no, a.product_name, 
                 SUM(CASE WHEN a.revision = 0 THEN a.prod_plan ELSE 0 END) as revision_0, 
                 SUM(CASE WHEN a.revision = 1 THEN a.prod_plan ELSE 0 END) as revision_1, 
                 SUM(CASE WHEN a.revision = 2 THEN a.prod_plan ELSE 0 END) as revision_2,
@@ -277,114 +300,130 @@ class Mps_vs_mpp extends CI_Controller
                      WHEN MAX(a.revision) = 1 THEN SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END) + (SUM(CASE WHEN a.revision = 1 THEN a.prod_plan else 0 END) - SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END))
                      WHEN MAX(a.revision) = 2 THEN SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END) + (SUM(CASE WHEN a.revision = 2 THEN a.prod_plan else 0 END) - SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END))
                      else 0 END) as bal_prod_plan, 
-                (((SUM(CASE WHEN a.revision = 1 THEN a.prod_plan else 0 END) - SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END)) / (SUM(CASE WHEN a.revision = 1 THEN a.prod_plan else 0 END) + SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END))) * 100) as rev_vs_1, 
-                (((SUM(CASE WHEN a.revision = 2 THEN a.prod_plan else 0 END) - SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END)) / (SUM(CASE WHEN a.revision = 2 THEN a.prod_plan else 0 END) + SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END))) * 100) as rev_vs_2');
+                     (
+                        (
+                            SUM(CASE WHEN a.revision = 1 THEN a.prod_plan else 0 END)
+                            -
+                            SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END)
+                        )
+                        /
+                        SUM(CASE WHEN a.revision = 1 THEN a.prod_plan else 0 END)
+                    )*100 
+                    as rev_vs_1,  (
+                        (
+                            SUM(CASE WHEN a.revision = 2 THEN a.prod_plan else 0 END)
+                            -
+                            SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END)
+                        )
+                        /
+                        SUM(CASE WHEN a.revision = 2 THEN a.prod_plan else 0 END)
+                    )*100  as rev_vs_2');
+        
+        $this->db->select('((CASE WHEN c.date_1 = "W" THEN 0 ELSE CAST(c.date_1 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_2 = "W" THEN 0 ELSE CAST(c.date_2 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_3 = "W" THEN 0 ELSE CAST(c.date_3 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_4 = "W" THEN 0 ELSE CAST(c.date_4 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_5 = "W" THEN 0 ELSE CAST(c.date_5 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_6 = "W" THEN 0 ELSE CAST(c.date_6 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_7 = "W" THEN 0 ELSE CAST(c.date_7 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_8 = "W" THEN 0 ELSE CAST(c.date_8 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_9 = "W" THEN 0 ELSE CAST(c.date_9 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_10 = "W" THEN 0 ELSE CAST(c.date_10 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_11 = "W" THEN 0 ELSE CAST(c.date_11 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_12 = "W" THEN 0 ELSE CAST(c.date_12 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_13 = "W" THEN 0 ELSE CAST(c.date_13 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_14 = "W" THEN 0 ELSE CAST(c.date_14 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_15 = "W" THEN 0 ELSE CAST(c.date_15 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_16 = "W" THEN 0 ELSE CAST(c.date_16 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_17 = "W" THEN 0 ELSE CAST(c.date_17 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_18 = "W" THEN 0 ELSE CAST(c.date_18 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_19 = "W" THEN 0 ELSE CAST(c.date_19 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_20 = "W" THEN 0 ELSE CAST(c.date_20 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_21 = "W" THEN 0 ELSE CAST(c.date_21 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_22 = "W" THEN 0 ELSE CAST(c.date_22 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_23 = "W" THEN 0 ELSE CAST(c.date_23 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_24 = "W" THEN 0 ELSE CAST(c.date_24 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_25 = "W" THEN 0 ELSE CAST(c.date_25 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_26 = "W" THEN 0 ELSE CAST(c.date_26 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_27 = "W" THEN 0 ELSE CAST(c.date_27 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_28 = "W" THEN 0 ELSE CAST(c.date_28 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_29 = "W" THEN 0 ELSE CAST(c.date_29 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_30 = "W" THEN 0 ELSE CAST(c.date_30 AS UNSIGNED) END) +
+                     (CASE WHEN c.date_31 = "W" THEN 0 ELSE CAST(c.date_31 AS UNSIGNED) END)) AS total_mpp');
+                    
+        $this->db->select('((CASE WHEN MAX(a.revision) = 0 THEN SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END) + (SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END) - SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END))
+                 WHEN MAX(a.revision) = 1 THEN SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END) + (SUM(CASE WHEN a.revision = 1 THEN a.prod_plan else 0 END) - SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END))
+                 WHEN MAX(a.revision) = 2 THEN SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END) + (SUM(CASE WHEN a.revision = 2 THEN a.prod_plan else 0 END) - SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END))
+                 else 0 END) - ((CASE WHEN c.date_1 = "W" THEN 0 ELSE CAST(c.date_1 AS UNSIGNED) END) +
+                (CASE WHEN c.date_2 = "W" THEN 0 ELSE CAST(c.date_2 AS UNSIGNED) END) +
+                (CASE WHEN c.date_3 = "W" THEN 0 ELSE CAST(c.date_3 AS UNSIGNED) END) +
+                (CASE WHEN c.date_4 = "W" THEN 0 ELSE CAST(c.date_4 AS UNSIGNED) END) +
+                (CASE WHEN c.date_5 = "W" THEN 0 ELSE CAST(c.date_5 AS UNSIGNED) END) +
+                (CASE WHEN c.date_6 = "W" THEN 0 ELSE CAST(c.date_6 AS UNSIGNED) END) +
+                (CASE WHEN c.date_7 = "W" THEN 0 ELSE CAST(c.date_7 AS UNSIGNED) END) +
+                (CASE WHEN c.date_8 = "W" THEN 0 ELSE CAST(c.date_8 AS UNSIGNED) END) +
+                (CASE WHEN c.date_9 = "W" THEN 0 ELSE CAST(c.date_9 AS UNSIGNED) END) +
+                (CASE WHEN c.date_10 = "W" THEN 0 ELSE CAST(c.date_10 AS UNSIGNED) END) +
+                (CASE WHEN c.date_11 = "W" THEN 0 ELSE CAST(c.date_11 AS UNSIGNED) END) +
+                (CASE WHEN c.date_12 = "W" THEN 0 ELSE CAST(c.date_12 AS UNSIGNED) END) +
+                (CASE WHEN c.date_13 = "W" THEN 0 ELSE CAST(c.date_13 AS UNSIGNED) END) +
+                (CASE WHEN c.date_14 = "W" THEN 0 ELSE CAST(c.date_14 AS UNSIGNED) END) +
+                (CASE WHEN c.date_15 = "W" THEN 0 ELSE CAST(c.date_15 AS UNSIGNED) END) +
+                (CASE WHEN c.date_16 = "W" THEN 0 ELSE CAST(c.date_16 AS UNSIGNED) END) +
+                (CASE WHEN c.date_17 = "W" THEN 0 ELSE CAST(c.date_17 AS UNSIGNED) END) +
+                (CASE WHEN c.date_18 = "W" THEN 0 ELSE CAST(c.date_18 AS UNSIGNED) END) +
+                (CASE WHEN c.date_19 = "W" THEN 0 ELSE CAST(c.date_19 AS UNSIGNED) END) +
+                (CASE WHEN c.date_20 = "W" THEN 0 ELSE CAST(c.date_20 AS UNSIGNED) END) +
+                (CASE WHEN c.date_21 = "W" THEN 0 ELSE CAST(c.date_21 AS UNSIGNED) END) +
+                (CASE WHEN c.date_22 = "W" THEN 0 ELSE CAST(c.date_22 AS UNSIGNED) END) +
+                (CASE WHEN c.date_23 = "W" THEN 0 ELSE CAST(c.date_23 AS UNSIGNED) END) +
+                (CASE WHEN c.date_24 = "W" THEN 0 ELSE CAST(c.date_24 AS UNSIGNED) END) +
+                (CASE WHEN c.date_25 = "W" THEN 0 ELSE CAST(c.date_25 AS UNSIGNED) END) +
+                (CASE WHEN c.date_26 = "W" THEN 0 ELSE CAST(c.date_26 AS UNSIGNED) END) +
+                (CASE WHEN c.date_27 = "W" THEN 0 ELSE CAST(c.date_27 AS UNSIGNED) END) +
+                (CASE WHEN c.date_28 = "W" THEN 0 ELSE CAST(c.date_28 AS UNSIGNED) END) +
+                (CASE WHEN c.date_29 = "W" THEN 0 ELSE CAST(c.date_29 AS UNSIGNED) END) +
+                (CASE WHEN c.date_30 = "W" THEN 0 ELSE CAST(c.date_30 AS UNSIGNED) END) +
+                (CASE WHEN c.date_31 = "W" THEN 0 ELSE CAST(c.date_31 AS UNSIGNED) END))) as balance');
 
-            $this->db->select('((CASE WHEN c.date_1 = "W" THEN 0 ELSE CAST(c.date_1 AS UNSIGNED) END) +
-            (CASE WHEN c.date_2 = "W" THEN 0 ELSE CAST(c.date_2 AS UNSIGNED) END) +
-            (CASE WHEN c.date_3 = "W" THEN 0 ELSE CAST(c.date_3 AS UNSIGNED) END) +
-            (CASE WHEN c.date_4 = "W" THEN 0 ELSE CAST(c.date_4 AS UNSIGNED) END) +
-            (CASE WHEN c.date_5 = "W" THEN 0 ELSE CAST(c.date_5 AS UNSIGNED) END) +
-            (CASE WHEN c.date_6 = "W" THEN 0 ELSE CAST(c.date_6 AS UNSIGNED) END) +
-            (CASE WHEN c.date_7 = "W" THEN 0 ELSE CAST(c.date_7 AS UNSIGNED) END) +
-            (CASE WHEN c.date_8 = "W" THEN 0 ELSE CAST(c.date_8 AS UNSIGNED) END) +
-            (CASE WHEN c.date_9 = "W" THEN 0 ELSE CAST(c.date_9 AS UNSIGNED) END) +
-            (CASE WHEN c.date_10 = "W" THEN 0 ELSE CAST(c.date_10 AS UNSIGNED) END) +
-            (CASE WHEN c.date_11 = "W" THEN 0 ELSE CAST(c.date_11 AS UNSIGNED) END) +
-            (CASE WHEN c.date_12 = "W" THEN 0 ELSE CAST(c.date_12 AS UNSIGNED) END) +
-            (CASE WHEN c.date_13 = "W" THEN 0 ELSE CAST(c.date_13 AS UNSIGNED) END) +
-            (CASE WHEN c.date_14 = "W" THEN 0 ELSE CAST(c.date_14 AS UNSIGNED) END) +
-            (CASE WHEN c.date_15 = "W" THEN 0 ELSE CAST(c.date_15 AS UNSIGNED) END) +
-            (CASE WHEN c.date_16 = "W" THEN 0 ELSE CAST(c.date_16 AS UNSIGNED) END) +
-            (CASE WHEN c.date_17 = "W" THEN 0 ELSE CAST(c.date_17 AS UNSIGNED) END) +
-            (CASE WHEN c.date_18 = "W" THEN 0 ELSE CAST(c.date_18 AS UNSIGNED) END) +
-            (CASE WHEN c.date_19 = "W" THEN 0 ELSE CAST(c.date_19 AS UNSIGNED) END) +
-            (CASE WHEN c.date_20 = "W" THEN 0 ELSE CAST(c.date_20 AS UNSIGNED) END) +
-            (CASE WHEN c.date_21 = "W" THEN 0 ELSE CAST(c.date_21 AS UNSIGNED) END) +
-            (CASE WHEN c.date_22 = "W" THEN 0 ELSE CAST(c.date_22 AS UNSIGNED) END) +
-            (CASE WHEN c.date_23 = "W" THEN 0 ELSE CAST(c.date_23 AS UNSIGNED) END) +
-            (CASE WHEN c.date_24 = "W" THEN 0 ELSE CAST(c.date_24 AS UNSIGNED) END) +
-            (CASE WHEN c.date_25 = "W" THEN 0 ELSE CAST(c.date_25 AS UNSIGNED) END) +
-            (CASE WHEN c.date_26 = "W" THEN 0 ELSE CAST(c.date_26 AS UNSIGNED) END) +
-            (CASE WHEN c.date_27 = "W" THEN 0 ELSE CAST(c.date_27 AS UNSIGNED) END) +
-            (CASE WHEN c.date_28 = "W" THEN 0 ELSE CAST(c.date_28 AS UNSIGNED) END) +
-            (CASE WHEN c.date_29 = "W" THEN 0 ELSE CAST(c.date_29 AS UNSIGNED) END) +
-            (CASE WHEN c.date_30 = "W" THEN 0 ELSE CAST(c.date_30 AS UNSIGNED) END) +
-            (CASE WHEN c.date_31 = "W" THEN 0 ELSE CAST(c.date_31 AS UNSIGNED) END)) AS total_mpp');
+        $this->db->select('((
+                ((CASE WHEN c.date_1 = "W" THEN 0 ELSE CAST(c.date_1 AS UNSIGNED) END) +
+                (CASE WHEN c.date_2 = "W" THEN 0 ELSE CAST(c.date_2 AS UNSIGNED) END) +
+                (CASE WHEN c.date_3 = "W" THEN 0 ELSE CAST(c.date_3 AS UNSIGNED) END) +
+                (CASE WHEN c.date_4 = "W" THEN 0 ELSE CAST(c.date_4 AS UNSIGNED) END) +
+                (CASE WHEN c.date_5 = "W" THEN 0 ELSE CAST(c.date_5 AS UNSIGNED) END) +
+                (CASE WHEN c.date_6 = "W" THEN 0 ELSE CAST(c.date_6 AS UNSIGNED) END) +
+                (CASE WHEN c.date_7 = "W" THEN 0 ELSE CAST(c.date_7 AS UNSIGNED) END) +
+                (CASE WHEN c.date_8 = "W" THEN 0 ELSE CAST(c.date_8 AS UNSIGNED) END) +
+                (CASE WHEN c.date_9 = "W" THEN 0 ELSE CAST(c.date_9 AS UNSIGNED) END) +
+                (CASE WHEN c.date_10 = "W" THEN 0 ELSE CAST(c.date_10 AS UNSIGNED) END) +
+                (CASE WHEN c.date_11 = "W" THEN 0 ELSE CAST(c.date_11 AS UNSIGNED) END) +
+                (CASE WHEN c.date_12 = "W" THEN 0 ELSE CAST(c.date_12 AS UNSIGNED) END) +
+                (CASE WHEN c.date_13 = "W" THEN 0 ELSE CAST(c.date_13 AS UNSIGNED) END) +
+                (CASE WHEN c.date_14 = "W" THEN 0 ELSE CAST(c.date_14 AS UNSIGNED) END) +
+                (CASE WHEN c.date_15 = "W" THEN 0 ELSE CAST(c.date_15 AS UNSIGNED) END) +
+                (CASE WHEN c.date_16 = "W" THEN 0 ELSE CAST(c.date_16 AS UNSIGNED) END) +
+                (CASE WHEN c.date_17 = "W" THEN 0 ELSE CAST(c.date_17 AS UNSIGNED) END) +
+                (CASE WHEN c.date_18 = "W" THEN 0 ELSE CAST(c.date_18 AS UNSIGNED) END) +
+                (CASE WHEN c.date_19 = "W" THEN 0 ELSE CAST(c.date_19 AS UNSIGNED) END) +
+                (CASE WHEN c.date_20 = "W" THEN 0 ELSE CAST(c.date_20 AS UNSIGNED) END) +
+                (CASE WHEN c.date_21 = "W" THEN 0 ELSE CAST(c.date_21 AS UNSIGNED) END) +
+                (CASE WHEN c.date_22 = "W" THEN 0 ELSE CAST(c.date_22 AS UNSIGNED) END) +
+                (CASE WHEN c.date_23 = "W" THEN 0 ELSE CAST(c.date_23 AS UNSIGNED) END) +
+                (CASE WHEN c.date_24 = "W" THEN 0 ELSE CAST(c.date_24 AS UNSIGNED) END) +
+                (CASE WHEN c.date_25 = "W" THEN 0 ELSE CAST(c.date_25 AS UNSIGNED) END) +
+                (CASE WHEN c.date_26 = "W" THEN 0 ELSE CAST(c.date_26 AS UNSIGNED) END) +
+                (CASE WHEN c.date_27 = "W" THEN 0 ELSE CAST(c.date_27 AS UNSIGNED) END) +
+                (CASE WHEN c.date_28 = "W" THEN 0 ELSE CAST(c.date_28 AS UNSIGNED) END) +
+                (CASE WHEN c.date_29 = "W" THEN 0 ELSE CAST(c.date_29 AS UNSIGNED) END) +
+                (CASE WHEN c.date_30 = "W" THEN 0 ELSE CAST(c.date_30 AS UNSIGNED) END) +
+                (CASE WHEN c.date_31 = "W" THEN 0 ELSE CAST(c.date_31 AS UNSIGNED) END)) /
+                (CASE WHEN MAX(a.revision) = 0 THEN SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END) + (SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END) - SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END))
+                WHEN MAX(a.revision) = 1 THEN SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END) + (SUM(CASE WHEN a.revision = 1 THEN a.prod_plan else 0 END) - SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END))
+                WHEN MAX(a.revision) = 2 THEN SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END) + (SUM(CASE WHEN a.revision = 2 THEN a.prod_plan else 0 END) - SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END))
+                else 0 END)) * 100) as persen_mpp');
 
-            $this->db->select('((CASE WHEN MAX(a.revision) = 0 THEN SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END) + (SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END) - SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END))
-                    WHEN MAX(a.revision) = 1 THEN SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END) + (SUM(CASE WHEN a.revision = 1 THEN a.prod_plan else 0 END) - SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END))
-                    WHEN MAX(a.revision) = 2 THEN SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END) + (SUM(CASE WHEN a.revision = 2 THEN a.prod_plan else 0 END) - SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END))
-                    else 0 END) - ((CASE WHEN c.date_1 = "W" THEN 0 ELSE CAST(c.date_1 AS UNSIGNED) END) +
-            (CASE WHEN c.date_2 = "W" THEN 0 ELSE CAST(c.date_2 AS UNSIGNED) END) +
-            (CASE WHEN c.date_3 = "W" THEN 0 ELSE CAST(c.date_3 AS UNSIGNED) END) +
-            (CASE WHEN c.date_4 = "W" THEN 0 ELSE CAST(c.date_4 AS UNSIGNED) END) +
-            (CASE WHEN c.date_5 = "W" THEN 0 ELSE CAST(c.date_5 AS UNSIGNED) END) +
-            (CASE WHEN c.date_6 = "W" THEN 0 ELSE CAST(c.date_6 AS UNSIGNED) END) +
-            (CASE WHEN c.date_7 = "W" THEN 0 ELSE CAST(c.date_7 AS UNSIGNED) END) +
-            (CASE WHEN c.date_8 = "W" THEN 0 ELSE CAST(c.date_8 AS UNSIGNED) END) +
-            (CASE WHEN c.date_9 = "W" THEN 0 ELSE CAST(c.date_9 AS UNSIGNED) END) +
-            (CASE WHEN c.date_10 = "W" THEN 0 ELSE CAST(c.date_10 AS UNSIGNED) END) +
-            (CASE WHEN c.date_11 = "W" THEN 0 ELSE CAST(c.date_11 AS UNSIGNED) END) +
-            (CASE WHEN c.date_12 = "W" THEN 0 ELSE CAST(c.date_12 AS UNSIGNED) END) +
-            (CASE WHEN c.date_13 = "W" THEN 0 ELSE CAST(c.date_13 AS UNSIGNED) END) +
-            (CASE WHEN c.date_14 = "W" THEN 0 ELSE CAST(c.date_14 AS UNSIGNED) END) +
-            (CASE WHEN c.date_15 = "W" THEN 0 ELSE CAST(c.date_15 AS UNSIGNED) END) +
-            (CASE WHEN c.date_16 = "W" THEN 0 ELSE CAST(c.date_16 AS UNSIGNED) END) +
-            (CASE WHEN c.date_17 = "W" THEN 0 ELSE CAST(c.date_17 AS UNSIGNED) END) +
-            (CASE WHEN c.date_18 = "W" THEN 0 ELSE CAST(c.date_18 AS UNSIGNED) END) +
-            (CASE WHEN c.date_19 = "W" THEN 0 ELSE CAST(c.date_19 AS UNSIGNED) END) +
-            (CASE WHEN c.date_20 = "W" THEN 0 ELSE CAST(c.date_20 AS UNSIGNED) END) +
-            (CASE WHEN c.date_21 = "W" THEN 0 ELSE CAST(c.date_21 AS UNSIGNED) END) +
-            (CASE WHEN c.date_22 = "W" THEN 0 ELSE CAST(c.date_22 AS UNSIGNED) END) +
-            (CASE WHEN c.date_23 = "W" THEN 0 ELSE CAST(c.date_23 AS UNSIGNED) END) +
-            (CASE WHEN c.date_24 = "W" THEN 0 ELSE CAST(c.date_24 AS UNSIGNED) END) +
-            (CASE WHEN c.date_25 = "W" THEN 0 ELSE CAST(c.date_25 AS UNSIGNED) END) +
-            (CASE WHEN c.date_26 = "W" THEN 0 ELSE CAST(c.date_26 AS UNSIGNED) END) +
-            (CASE WHEN c.date_27 = "W" THEN 0 ELSE CAST(c.date_27 AS UNSIGNED) END) +
-            (CASE WHEN c.date_28 = "W" THEN 0 ELSE CAST(c.date_28 AS UNSIGNED) END) +
-            (CASE WHEN c.date_29 = "W" THEN 0 ELSE CAST(c.date_29 AS UNSIGNED) END) +
-            (CASE WHEN c.date_30 = "W" THEN 0 ELSE CAST(c.date_30 AS UNSIGNED) END) +
-            (CASE WHEN c.date_31 = "W" THEN 0 ELSE CAST(c.date_31 AS UNSIGNED) END))) as balance');
-
-            $this->db->select('((
-            ((CASE WHEN c.date_1 = "W" THEN 0 ELSE CAST(c.date_1 AS UNSIGNED) END) +
-            (CASE WHEN c.date_2 = "W" THEN 0 ELSE CAST(c.date_2 AS UNSIGNED) END) +
-            (CASE WHEN c.date_3 = "W" THEN 0 ELSE CAST(c.date_3 AS UNSIGNED) END) +
-            (CASE WHEN c.date_4 = "W" THEN 0 ELSE CAST(c.date_4 AS UNSIGNED) END) +
-            (CASE WHEN c.date_5 = "W" THEN 0 ELSE CAST(c.date_5 AS UNSIGNED) END) +
-            (CASE WHEN c.date_6 = "W" THEN 0 ELSE CAST(c.date_6 AS UNSIGNED) END) +
-            (CASE WHEN c.date_7 = "W" THEN 0 ELSE CAST(c.date_7 AS UNSIGNED) END) +
-            (CASE WHEN c.date_8 = "W" THEN 0 ELSE CAST(c.date_8 AS UNSIGNED) END) +
-            (CASE WHEN c.date_9 = "W" THEN 0 ELSE CAST(c.date_9 AS UNSIGNED) END) +
-            (CASE WHEN c.date_10 = "W" THEN 0 ELSE CAST(c.date_10 AS UNSIGNED) END) +
-            (CASE WHEN c.date_11 = "W" THEN 0 ELSE CAST(c.date_11 AS UNSIGNED) END) +
-            (CASE WHEN c.date_12 = "W" THEN 0 ELSE CAST(c.date_12 AS UNSIGNED) END) +
-            (CASE WHEN c.date_13 = "W" THEN 0 ELSE CAST(c.date_13 AS UNSIGNED) END) +
-            (CASE WHEN c.date_14 = "W" THEN 0 ELSE CAST(c.date_14 AS UNSIGNED) END) +
-            (CASE WHEN c.date_15 = "W" THEN 0 ELSE CAST(c.date_15 AS UNSIGNED) END) +
-            (CASE WHEN c.date_16 = "W" THEN 0 ELSE CAST(c.date_16 AS UNSIGNED) END) +
-            (CASE WHEN c.date_17 = "W" THEN 0 ELSE CAST(c.date_17 AS UNSIGNED) END) +
-            (CASE WHEN c.date_18 = "W" THEN 0 ELSE CAST(c.date_18 AS UNSIGNED) END) +
-            (CASE WHEN c.date_19 = "W" THEN 0 ELSE CAST(c.date_19 AS UNSIGNED) END) +
-            (CASE WHEN c.date_20 = "W" THEN 0 ELSE CAST(c.date_20 AS UNSIGNED) END) +
-            (CASE WHEN c.date_21 = "W" THEN 0 ELSE CAST(c.date_21 AS UNSIGNED) END) +
-            (CASE WHEN c.date_22 = "W" THEN 0 ELSE CAST(c.date_22 AS UNSIGNED) END) +
-            (CASE WHEN c.date_23 = "W" THEN 0 ELSE CAST(c.date_23 AS UNSIGNED) END) +
-            (CASE WHEN c.date_24 = "W" THEN 0 ELSE CAST(c.date_24 AS UNSIGNED) END) +
-            (CASE WHEN c.date_25 = "W" THEN 0 ELSE CAST(c.date_25 AS UNSIGNED) END) +
-            (CASE WHEN c.date_26 = "W" THEN 0 ELSE CAST(c.date_26 AS UNSIGNED) END) +
-            (CASE WHEN c.date_27 = "W" THEN 0 ELSE CAST(c.date_27 AS UNSIGNED) END) +
-            (CASE WHEN c.date_28 = "W" THEN 0 ELSE CAST(c.date_28 AS UNSIGNED) END) +
-            (CASE WHEN c.date_29 = "W" THEN 0 ELSE CAST(c.date_29 AS UNSIGNED) END) +
-            (CASE WHEN c.date_30 = "W" THEN 0 ELSE CAST(c.date_30 AS UNSIGNED) END) +
-            (CASE WHEN c.date_31 = "W" THEN 0 ELSE CAST(c.date_31 AS UNSIGNED) END)) /
-            (CASE WHEN MAX(a.revision) = 0 THEN SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END) + (SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END) - SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END))
-            WHEN MAX(a.revision) = 1 THEN SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END) + (SUM(CASE WHEN a.revision = 1 THEN a.prod_plan else 0 END) - SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END))
-            WHEN MAX(a.revision) = 2 THEN SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END) + (SUM(CASE WHEN a.revision = 2 THEN a.prod_plan else 0 END) - SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END))
-            else 0 END)) * 100) as persen_mpp');
-
-            $this->db->select('(100 - ((
+        $this->db->select('(100 - ((
                 ((CASE WHEN c.date_1 = "W" THEN 0 ELSE CAST(c.date_1 AS UNSIGNED) END) +
                 (CASE WHEN c.date_2 = "W" THEN 0 ELSE CAST(c.date_2 AS UNSIGNED) END) +
                 (CASE WHEN c.date_3 = "W" THEN 0 ELSE CAST(c.date_3 AS UNSIGNED) END) +
@@ -421,21 +460,24 @@ class Mps_vs_mpp extends CI_Controller
                 WHEN MAX(a.revision) = 2 THEN SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END) + (SUM(CASE WHEN a.revision = 2 THEN a.prod_plan else 0 END) - SUM(CASE WHEN a.revision = 0 THEN a.prod_plan else 0 END))
                 else 0 END)) * 100)) as persen_dev');
 
-            $this->db->from('generate_mps_detail as a');
-            $this->db->join('mst_customer as b', "a.customer_id = b.number", 'left');
-            $this->db->join('generate_mpp as c', "a.product_no = c.product_no and a.p_month = c.p_month and a.p_year = c.p_year", "left");
-            $this->db->where('a.p_month', $filter_month);
-            $this->db->where('a.p_year', $filter_year);
-            $this->db->where(empty($filter_customer_id)?'1':'a.customer_id', empty($filter_customer_id)?'1':$filter_customer_id);
-            $this->db->where(empty($filter_product_no)?'1':'a.product_no', empty($filter_product_no)?'1':$filter_product_no);
-            $this->db->where('a.ltpp_month2', "$filter_year-$filter_month-01");
-            $this->db->group_by('a.customer_id, a.product_no, a.p_month, a.p_year');  
+        $this->db->from('generate_mps_detail as a');
+        $this->db->join('mst_customer as b', "a.customer_id = b.number", 'left');
+        $this->db->join('generate_mpp as c', "a.product_no = c.product_no and a.p_month = c.p_month and a.p_year = c.p_year", "left");
+        $this->db->where('a.p_month', $filter_month);
+        $this->db->where('a.p_year', $filter_year);
+        $this->db->where(empty($filter_customer_id)?'1':'a.customer_id', empty($filter_customer_id)?'1':$filter_customer_id);
+        $this->db->where(empty($filter_product_no)?'1':'a.product_no', empty($filter_product_no)?'1':$filter_product_no);
+        $this->db->where('a.ltpp_month2', "$filter_year-$filter_month-01");
+        $this->db->group_by('a.customer_id, a.product_no, a.p_month, a.p_year');
         if ($filter_balance == 'P') {
-            $this->db->having('balance >=', 0);
+        $this->db->having('balance >=', 0);
         } elseif ($filter_balance == 'M') {
-            $this->db->having('balance <', 0);
+        $this->db->having('balance <', 0);
         }
         $this->db->order_by('balance', 'desc');
+        // $query = $this->db->get_compiled_select();
+
+// echo $query;
         $records = $this->db->get()->result_array();
 
 
@@ -480,13 +522,14 @@ class Mps_vs_mpp extends CI_Controller
                 <th rowspan="2" style="text-align:center;">Product No</th>
                 <th rowspan="2" style="text-align:center;">Product Name</th>
                 <th colspan="3" style="text-align:center;">Production Plan</th>
-                <th rowspan="2" style="text-align:center;">% Rev 0 VS Rev 1</th>
-                <th rowspan="2" style="text-align:center;">% Rev 0 VS Rev 2</th>
+                <th rowspan="2" style="text-align:center;">Rev 0 VS Rev 1</th>
+                <th rowspan="2" style="text-align:center;">Rev 0 VS Rev 2</th>
                 <th rowspan="2" style="text-align:center;">Total MPS</th>
                 <th rowspan="2" style="text-align:center;">Total MPP</th>
                 <th rowspan="2" style="text-align:center;">Balance</th>
-                <th rowspan="2" style="text-align:center;">% MPP</th>
-                <th rowspan="2" style="text-align:center;">% Dev</th>
+                <th rowspan="2" style="text-align:center;">Balance</th>
+                <th rowspan="2" style="text-align:center;">%MPP</th>                
+                <th rowspan="2" style="text-align:center;">%Dev</th>
             </tr>
             <tr>
                 <th style="text-align:center;">Rev 0</th>
@@ -498,18 +541,20 @@ class Mps_vs_mpp extends CI_Controller
         $no = 1;
 
         foreach ($records as $data) {
+           
             $html .= '  <tr>
                             <td>' . $no . '</td>
                             <td>' . $data['customer'] . '</td>
                             <td>' . $data['product_no'] . '</td>
                             <td>' . $data['product_name'] . '</td>
-                            <td style="text-align:right;">' . $data['revision_0'] . '</td>
-                            <td style="text-align:right;">' . $data['revision_1'] . '</td>
-                            <td style="text-align:right;">' . $data['revision_2'] . '</td>
-                            <td style="text-align:right;">' . numberDecimalFormat($data['rev_vs_1']) . '</td>
-                            <td style="text-align:right;">' . numberDecimalFormat($data['rev_vs_2']) . '</td>
+                            <td style="text-align:right;">' . $data['revision_0'].'</td>
+                            <td style="text-align:right;">' . $data['revision_1'].'</td>
+                            <td style="text-align:right;">' . $data['revision_2'].'</td>
+                            <td style="text-align:right;">' . number_format(floatval($data['rev_vs_1']), 2) . "%" . '</td>
+                           <td style="text-align:right;">' . number_format(floatval($data['rev_vs_2']), 2) . "%" . '</td>
                             <td style="text-align:right;">' . $data['bal_prod_plan'] . '</td>
                             <td style="text-align:right;">' . $data['total_mpp'] . '</td>
+                            <td style="text-align:right;">' . $data['balance'] . '</td>
                             <td style="text-align:right;">' . $data['balance'] . '</td>
                             <td style="text-align:right;">' . numberDecimalFormat($data['persen_mpp']) . '</td>
                             <td style="text-align:right;">' . numberDecimalFormat($data['persen_dev']) . '</td>

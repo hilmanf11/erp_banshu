@@ -177,6 +177,10 @@
     </div>
 </div>
 
+<div id="toolbar3" style="height: auto; padding:10px;">
+    <a href="javascript:;" class="easyui-linkbutton" plain="false" onclick="export_excel3()"><i class="fa fa-file"></i> &nbsp; Export Excel</a>
+</div>
+
 <div id="dlg_purchase_order" class="easyui-dialog" title="Detail Purchase Order" data-options="closed: true,modal:true" style="width: 90%; height: 550px; top: 0px; left: 0px;">
     <table id="dg_purchase_order" class="easyui-datagrid" style="width:100%;" toolbar="#toolbar2" showFooter="true">
         <thead>
@@ -201,11 +205,11 @@
     </table>
 </div>
 
-<div id="dlg_confirm" class="easyui-dialog" title="Confrim PO" data-options="closed: true,modal:true" style="width: 100%; height: 600px; top: 0px; left: 0px;">
+<div id="dlg_confirm" class="easyui-dialog" title="Confrim PO" toolbar="#toolbar3" data-options="closed: true,modal:true" style="width: 100%; height: 600px; top: 0px; left: 0px;">
     <table id="dg_confirm" class="easyui-datagrid" style="width:100%;">
         <thead>
             <tr>
-                <th data-options="field:'confirm',width:100,halign:'center',formatter:BtnConfirm">Confirm</th>
+                <!-- <th data-options="field:'confirm',width:100,halign:'center',formatter:BtnConfirm">Confirm</th> -->
                 <th data-options="field:'p_month',width:50,halign:'center'">Month</th>
                 <th data-options="field:'p_year',width:50,halign:'center'">Year</th>
                 <th data-options="field:'revision',width:50,halign:'center'">Rev</th>
@@ -213,11 +217,15 @@
                 <th data-options="field:'purchase_request_date',width:100,halign:'center'">PR Date</th>
                 <th data-options="field:'purchase_order_no',width:150,halign:'center'">PO No</th>
                 <th data-options="field:'purchase_order_date',width:100,halign:'center'">PO Date</th>
+                <th data-options="field:'part_no',width:200,halign:'center'">Part No</th>
+                <th data-options="field:'part_name',width:120,halign:'center'">Part Name</th>
                 <th data-options="field:'supplier_name',width:250,halign:'center'">Vendor Name</th>
                 <th data-options="field:'product_family',width:150,halign:'center'">Product Family</th>
                 <th data-options="field:'total_pr',width:100,halign:'center',align:'right',formatter:numberformatPrice,styler:cellStylerPrice">Total PR</th>
                 <th data-options="field:'total_po',width:100,halign:'center',align:'right',formatter:numberformatPrice,styler:cellStylerPrice">Total PO</th>
                 <th data-options="field:'total_amount',width:150,halign:'center',align:'right',formatter:numberformatPrice">Total Amount</th>
+                <th data-options="field:'reason_pr',width:350,halign:'center'">Reason PR</th>
+                <th data-options="field:'reason_po',width:350,halign:'center'">Reason PO</th>
             </tr>
         </thead>
     </table>
@@ -564,7 +572,7 @@
     }
 
     checkConfirmPo();
-    setInterval(checkConfirmPo, 10000);
+    setInterval(checkConfirmPo, 10000000);
 
     function confirmPo() {
         $("#dlg_confirm").dialog('open');
@@ -1002,6 +1010,10 @@
         } else {
             window.location.assign('<?= base_url('planning/purchase_orders/print/excel') ?>' + url);
         }
+    }
+
+    function export_excel3(){
+        $('#dg_confirm').datagrid('toExcel','Data Confirm PR to PO.xls');
     }
 
     function csv() {

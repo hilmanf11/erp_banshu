@@ -276,17 +276,19 @@ class Purchase_orders extends CI_Controller
 
     public function datatableConfirm(){
         //Select Query
-        $this->db->select('a.*, b.name as supplier_name, c.purchase_order_no, c.purchase_order_date, 
-            SUM(a.purchase_request) as total_pr, 
-            SUM(c.qty) as total_po,
-            SUM(c.total) as total_amount');
+        $this->db->select("a.p_month, a.p_year, a.revision, CONCAT('/', a.part_no) as part_no, a.part_name, a.purchase_request_no, a.purchase_request_date, a.product_family, b.name as supplier_name, c.purchase_order_no, c.purchase_order_date, 
+            a.purchase_request as total_pr, 
+            c.qty as total_po,
+            c.total as total_amount,
+            a.reason as reason_pr,
+            c.reason as reason_po");
         $this->db->from('purchase_requests a');
         $this->db->join('suppliers b', 'a.supplier_id = b.id');
         $this->db->join('purchase_orders c', 'a.part_no = c.item_id and a.supplier_id = c.supplier_id and a.purchase_request_no = c.purchase_request_no');
-        $this->db->where('a.confirm', 0);
-        $this->db->group_by('a.purchase_request_no');
+        $this->db->where('a.purchase_request != c.qty');
         $this->db->order_by('a.updated_date');
         $this->db->order_by('a.created_date');
+        
         //Total Data
         $totalRows = $this->db->count_all_results('', false);
         //Get Data Array
@@ -645,7 +647,7 @@ class Purchase_orders extends CI_Controller
                 "poc_reqdate" => date("Y-m-d"),
                 "poc_reqqty" => $post['qty'],
                 "currency" => $post['currency'],
-                "periode" => date("Ym"),
+                "periode" => $post['p_year'].$post['p_month'],
                 // "poc_remark" => $post['reason'],
             );
 

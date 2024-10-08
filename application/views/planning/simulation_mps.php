@@ -6,14 +6,16 @@
             <th rowspan="2" data-options="field:'item_name',width:200,halign:'center'">Part Name</th>
             <th rowspan="2" data-options="field:'product_family',width:150,halign:'center'">Product Family</th>
             <th rowspan="2" data-options="field:'stock_whs',width:100,halign:'center', align:'right', formatter: numberformat">Stock WHS <br> < <span id="t_cutoff"></span></th>
-            <th rowspan="2" data-options="field:'eta_total',width:80,halign:'center', align:'right', formatter: numberformat">ETA</th>
-            <th rowspan="2" data-options="field:'os_wo',width:80,halign:'center', align:'right', formatter: numberformat">OS WO</th>
-            <th rowspan="2" data-options="field:'os_supply',width:80,halign:'center', align:'right', formatter: numberformat">OS Supply</th>
-            <th rowspan="2" data-options="field:'need_1',width:80,halign:'center', align:'right', formatter: numberformat">Need<br>(Current)</th>
-            <th rowspan="2" data-options="field:'need_2',width:80,halign:'center', align:'right', formatter: numberformat">Need<br>(M + 1)</th>
-            <th rowspan="2" data-options="field:'freestock',width:80,halign:'center', align:'right', formatter: numberformat">Free Stock</th>
-            <th rowspan="2" data-options="field:'qtyperassy',width:80,halign:'center', align:'right', formatter: numberformat">Need</th>
-            <th rowspan="2" data-options="field:'balance',width:80,halign:'center', align:'right', formatter: numberformat">Balance</th>
+            <th rowspan="2" data-options="field:'os_wo',width:100,halign:'center', align:'right', formatter: numberformat">OS WO<br><span class="aug"></span></th>
+            <th rowspan="2" data-options="field:'os_supply',width:100,halign:'center', align:'right', formatter: numberformat">OS Supply<br><span class="aug"></span></th>
+            <th rowspan="2" data-options="field:'eta_total',width:100,halign:'center', align:'right', formatter: numberformat">ETA <br><span class="sep"></span></th>
+            <th rowspan="2" data-options="field:'os_supply2',width:100,halign:'center', align:'right', formatter: numberformat">Supply<br><span class="sep"></span></th>
+            <th rowspan="2" data-options="field:'need_1',width:100,halign:'center', align:'right', formatter: numberformat">Need<br><span class="sep"></span></th>
+            <th rowspan="2" data-options="field:'total_need',width:100,halign:'center', align:'right', formatter: numberformat">Total Need<br><span class="sep"></span></th>
+            <th rowspan="2" data-options="field:'qtyperassy',width:100,halign:'center', align:'right', formatter: numberformat">Need<br>(Breakdown)</th>
+            <th rowspan="2" data-options="field:'freestock',width:100,halign:'center', align:'right', formatter: numberformat">Free Stock<br><span class="sep"></span></th>
+            <th rowspan="2" data-options="field:'need_2',width:100,halign:'center', align:'right', formatter: numberformat">Need<br><span class="okt"></span></th>
+            <th rowspan="2" data-options="field:'balance',width:100,halign:'center', align:'right', formatter: numberformat">Free Stock<br><span class="okt"></span></th>
             <th rowspan="2" data-options="field:'otw',width:80,halign:'center', align:'right', formatter: numberformat">OTW</th>
             <th rowspan="2" data-options="field:'eta',width:100,halign:'center', align:'center'">ETA</th>
             <th colspan="3" data-options="field:'',width:100,halign:'center'"> Approved</th>
@@ -206,6 +208,9 @@
                 onLoadSuccess: function(row){
                     console.log(row);
                     $("#t_cutoff").html(row.rows[0].cutoff);
+                    $(".aug").html("("+row.period.t_ossupply_1+")");
+                    $(".sep").html("("+row.period.t_ossupply_2+")");
+                    $(".okt").html("("+row.period.t_ossupply_3+")");
                 }
             });
 
@@ -241,6 +246,11 @@
 
     function reload() {
         window.location.reload();
+    }
+
+    function scrollToBottom() {
+        var container = $('#p_remarks');
+        container.scrollTop(container.prop("scrollHeight"));
     }
 
     $(function() {
@@ -360,6 +370,7 @@
                                                             }
 
                                                             $("#p_remarks").append(title + "<br>");
+                                                            scrollToBottom();
                                                         }
                                                     });
                                                 }
@@ -528,7 +539,12 @@
                 minimumFractionDigits: 0
             });
 
-            return "<b>" + formatter.format(value) + "</b>";
+            if(value >= 0){
+                return "<b>" + formatter.format(value) + "</b>";
+            }else{
+                return "<b style='color:red;'>" + formatter.format(value) + "</b>";
+            }
+
         }
     }
 

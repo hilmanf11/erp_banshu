@@ -74,89 +74,10 @@ class Simulation_mps extends CI_Controller
     }
 
     public function getDataMpp($month, $year, $revision, $item_id){
-        $query = $this->db->query("SELECT z.p_month, z.p_year, z.revision, z.component_id as product_no, 
-            SUM(total_date_1) as date_1,
-            SUM(total_date_2) as date_2,
-            SUM(total_date_3) as date_3,
-            SUM(total_date_4) as date_4,
-            SUM(total_date_5) as date_5,
-            SUM(total_date_6) as date_6,
-            SUM(total_date_7) as date_7,
-            SUM(total_date_8) as date_8,
-            SUM(total_date_9) as date_9,
-            SUM(total_date_10) as date_10,
-            SUM(total_date_11) as date_11,
-            SUM(total_date_12) as date_12,
-            SUM(total_date_13) as date_13,
-            SUM(total_date_14) as date_14,
-            SUM(total_date_15) as date_15,
-            SUM(total_date_16) as date_16,
-            SUM(total_date_17) as date_17,
-            SUM(total_date_18) as date_18,
-            SUM(total_date_19) as date_19,
-            SUM(total_date_20) as date_20,
-            SUM(total_date_21) as date_21,
-            SUM(total_date_22) as date_22,
-            SUM(total_date_23) as date_23,
-            SUM(total_date_24) as date_24,
-            SUM(total_date_25) as date_25,
-            SUM(total_date_26) as date_26,
-            SUM(total_date_27) as date_27,
-            SUM(total_date_28) as date_28,
-            SUM(total_date_29) as date_29,
-            SUM(total_date_30) as date_30,
-            SUM(total_date_31) as date_31
-        FROM (
-            SELECT a.p_month, a.p_year, a.revision, a.product_no, b.component_id,
-            (a.date_1 * b.qty) as total_date_1,
-            (a.date_2 * b.qty) as total_date_2,
-            (a.date_3 * b.qty) as total_date_3,
-            (a.date_4 * b.qty) as total_date_4,
-            (a.date_5 * b.qty) as total_date_5,
-            (a.date_6 * b.qty) as total_date_6,
-            (a.date_7 * b.qty) as total_date_7,
-            (a.date_8 * b.qty) as total_date_8,
-            (a.date_9 * b.qty) as total_date_9,
-            (a.date_10 * b.qty) as total_date_10,
-            (a.date_11 * b.qty) as total_date_11,
-            (a.date_12 * b.qty) as total_date_12,
-            (a.date_13 * b.qty) as total_date_13,
-            (a.date_14 * b.qty) as total_date_14,
-            (a.date_15 * b.qty) as total_date_15,
-            (a.date_16 * b.qty) as total_date_16,
-            (a.date_17 * b.qty) as total_date_17,
-            (a.date_18 * b.qty) as total_date_18,
-            (a.date_19 * b.qty) as total_date_19,
-            (a.date_20 * b.qty) as total_date_20,
-            (a.date_21 * b.qty) as total_date_21,
-            (a.date_22 * b.qty) as total_date_22,
-            (a.date_23 * b.qty) as total_date_23,
-            (a.date_24 * b.qty) as total_date_24,
-            (a.date_25 * b.qty) as total_date_25,
-            (a.date_26 * b.qty) as total_date_26,
-            (a.date_27 * b.qty) as total_date_27,
-            (a.date_28 * b.qty) as total_date_28,
-            (a.date_29 * b.qty) as total_date_29,
-            (a.date_30 * b.qty) as total_date_30,
-            (a.date_31 * b.qty) as total_date_31
-        FROM generate_mpp a
-        JOIN mst_bom b ON a.product_no = b.item_id
-        WHERE a.p_month = '$month' and a.p_year = '$year' and a.revision = '$revision' and b.component_id = '$item_id'
-        GROUP BY a.product_no, b.component_id
-        ORDER BY a.product_no, b.component_id asc) z
-        GROUP BY z.component_id");
-        $records = $query->result_array();
+        $query = $this->db->query("SELECT need_1 FROM generate_mrp_finals WHERE p_month = '$month' and p_year = '$year' and revision = '$revision' and part_no = '$item_id'");
+        $records = $query->row();
 
-        $total = 0;
-        foreach ($records as $record) {
-            $total += ($record['date_1'] + $record['date_2'] + $record['date_3'] + $record['date_4'] + $record['date_5'] + $record['date_6'] +
-            $record['date_7'] + $record['date_8'] + $record['date_9'] + $record['date_10'] + $record['date_11'] + $record['date_12'] +
-            $record['date_13'] + $record['date_14'] + $record['date_15'] + $record['date_16'] + $record['date_17'] + $record['date_18'] + $record['date_19'] + 
-            $record['date_20'] + $record['date_21'] + $record['date_22'] + $record['date_23'] + $record['date_24'] + $record['date_25'] + $record['date_26'] +
-            $record['date_27'] + $record['date_28'] + $record['date_29'] + $record['date_30'] + $record['date_31']);
-        }
-
-        return $total;
+        return empty($records) ? 0 : $records->need_1;
     }
 
     public function getDataMrp($month, $year, $revision, $item_id){
@@ -183,6 +104,11 @@ class Simulation_mps extends CI_Controller
             $filter_item_family = base64_decode($this->input->get('filter_item_family'));
             $filter_item_id = trim(base64_decode($this->input->get('filter_item_id')));
             $filter_status = trim(base64_decode($this->input->get('filter_status')));
+
+            $period = date("Y-m-d", strtotime($filter_year."-".$filter_month."-01"));
+            $month_nx = date("F", strtotime("1 month", strtotime($period)));
+            $month = date("F", strtotime($filter_year."-".$filter_month."-01"));
+            $month_bf = date("F", strtotime("-1 month", strtotime($period)));
 
             //Select Query
             $this->db->select('a.*');
@@ -212,9 +138,15 @@ class Simulation_mps extends CI_Controller
             //Get Data Array
             $records = $this->db->get()->result_array();
 
+            $period = [
+                "t_ossupply_3" => $month_nx,
+                "t_ossupply_2" => $month,
+                "t_ossupply_1" => $month_bf,
+            ];
+
             //Mapping Data
             $result['total'] = $totalRows;
-            $result = array_merge($result, ['rows' => $records]);
+            $result = array_merge($result, ['rows' => $records, "period" => $period]);
             echo json_encode($result);
         }
     }
@@ -230,10 +162,14 @@ class Simulation_mps extends CI_Controller
             $cutoff = $post['cutoff'];
             $period_start = $post['p_year']."-".$post['p_month']."-01";
             $period_end = date("Y-m-t", strtotime($post['p_year']."-".$post['p_month']."-01"));
-            // $cutoff_start = date("Y-m-01", strtotime("-1 month", strtotime($cutoff)));
-            // $cutoff_end = date("Y-m-t", strtotime("-1 month", strtotime($cutoff)));
+            $p_month_bf = date("m", strtotime($cutoff));
             $p_month = $post['p_month'];
             $p_year = $post['p_year'];
+
+            $cutoff_be =  date('Y-m-01', strtotime($cutoff));
+            $cutoff_bf =  date('Y-m-01', strtotime("-1 month", strtotime($cutoff)));
+            $filter_start = $cutoff;
+            $filter_end = date("Y-m-t", strtotime($filter_start));
 
             // $maxRev = $this->api->query("SELECT MAX(revision) as rev FROM generate_mpp WHERE p_month = '$p_month' and p_year = '$p_year'");
             $revision = $post['revision'];
@@ -242,23 +178,64 @@ class Simulation_mps extends CI_Controller
             //Stock Warehouse
             $ith = $this->dummy->query("SELECT sum(ith_qty) as qty from ith where ith_item_id = '$item_id' and ith_date <= '$cutoff'");
             $ithRow = $ith->row();
-            
-            //ETA Qty
-            $queryEta = $this->dummy->query("SELECT SUM(por_receiveqty) as total from por where item_id = '$item_id' and por_date between '$period_start' and '$period_end'");
-            $totalEta = $queryEta->row();
 
-            $os_supply = $this->api->read("os_supply", [], ["product_no" => $item_id, "p_month" => $post['p_month'], "p_year" => $post['p_year'], "revision" => $post['revision']]);
-            $os_mpp = $this->api->read("os_mpp", [], ["product_no" => $item_id, "p_month" => $post['p_month'], "p_year" => $post['p_year'], "revision" => $post['revision']]);
-            // $balance_wip = $this->api->read("balance_wip", [], ["product_no" => $item_id, "p_month" => $post['p_month'], "p_year" => $post['p_year'], "revision" => $post['revision']]);
+            //Pengambilan OS Supply Bulan Sebelumya
+            $query_os_supply = $this->dummy->query("SELECT z.item_id, z.item_name, z.pfm_name, COALESCE(SUM(z.stock), 0) as stock from (
+                select a.temp_woc_id, a.periode, a.wp, d.item_id, d.item_name, e.pfm_name, a.qty, b.bom_qty_perassy, (a.qty * b.bom_qty_perassy) as hasil, COALESCE(SUM(c.qty_need), 0) as qty_need, SUM(c.qty_scan) as qty_scan, COALESCE((a.qty * b.bom_qty_perassy) - COALESCE(SUM(c.qty_scan), 0), 0) as stock
+                from wip_trx_mpp a
+                join mst_bom b ON a.assy_no = b.bom_par_item
+                left join (SELECT item_id, kanbanrm_woc_id, SUM(qty_need) as qty_need, SUM(qty_scan) as qty_scan FROM serial_detail_kanbanrm GROUP BY item_id, kanbanrm_woc_id, qty_need) c ON a.temp_woc_id = c.kanbanrm_woc_id and c.item_id = b.bom_com_item
+                join mst_item d on b.bom_com_item = d.item_id and d.stscode_id = '01'
+                join r_prodfam e on d.pfm_id = e.pfm_id and e.prod_group = 'Raw Material' and e.pfm_id != '05'
+                where b.bom_com_item = '$item_id' and a.wp_date between '$cutoff_bf' and '$filter_end'
+                group by a.temp_woc_id, a.periode, a.wp, a.qty, b.bom_qty_perassy, d.item_id, d.item_name, e.pfm_name) z
+                GROUP BY z.item_id, z.item_name, z.pfm_name
+                having COALESCE(SUM(z.stock), 0) > 0     
+            ");
+            $data_os_supply = $query_os_supply->row();
+            $os_supply = empty(@$data_os_supply->stock) ? 0 : @$data_os_supply->stock;
+
+            //Supply
+            $query_os_supply2 = $this->dummy->query("SELECT SUM(ith_qty) as supply from ith where ith_form like '%OU%' and ith_date between '$cutoff_be' and '$cutoff' and ith_item_id = '$item_id'");
+            $data_os_supply2 = $query_os_supply2->row();
+            $os_supply2 = empty(@$data_os_supply2->supply) ? 0 : abs(@$data_os_supply2->supply);
+
+            //Pengambilan OS MPP / OS WO Bulan Sebelumya
+            if($p_month > $p_month_bf){
+                $query_os_mpp = $this->dummy->query("SELECT b.bom_com_item, c.item_name, d.pfm_name, SUM(a.total * b.bom_qty_perassy) as total from
+                    (select assy_no, SUM(qty) as total from wip_trx_mpp WHERE wp_date between '$filter_start' and '$filter_end' GROUP BY assy_no ORDER BY SUM(qty) asc) a
+                    join mst_bom b on a.assy_no = b.bom_par_item
+                    join mst_item c on b.bom_com_item = c.item_id
+                    join r_prodfam d on c.pfm_id = d.pfm_id
+                    where b.bom_com_item = '$item_id'
+                    group by b.bom_com_item, c.item_name, d.pfm_name
+                    order by d.pfm_name asc, SUM(a.total * b.bom_qty_perassy) desc
+                ");
+                $data_os_mpp = $query_os_mpp->row();
+                
+                $os_wo = empty(@$data_os_mpp->total) ? 0 : @$data_os_mpp->total;
+            }else{
+                $os_wo = 0;
+            }
+
+            //ETA Qty
+            // $queryEta = $this->dummy->query("SELECT SUM(por_receiveqty) as total from por where item_id = '$item_id' and por_date between '$period_start' and '$period_end'");
+            $queryEta = $this->dummy->query("SELECT SUM(ith_qty) as total 
+                from ith 
+                where (ith_form in ('IN - SJP','IN - SJ R/M','IN - BPM') and ith_date between '$period_start' and '$period_end' and ith_item_id = '$item_id') 
+                or (ith_form = 'IN - TRANSFER' and whs_id = 'WHS001' and ith_date between '$period_start' and '$period_end' and ith_item_id = '$item_id')");
+            $totalEta = $queryEta->row();
             
+            // $balance_wip = $this->api->read("balance_wip", [], ["product_no" => $item_id, "p_month" => $post['p_month'], "p_year" => $post['p_year'], "revision" => $post['revision']]);
             $stock_whs = round(@$ithRow->qty);
             $etaTotal = empty(@$totalEta->total) ? 0 : @$totalEta->total;
-            $os_wo = empty(@$os_mpp->actual) ? 0 : @$os_mpp->actual;
-            $os_supply = empty(@$os_supply->actual) ? 0 : @$os_supply->actual;
+            
             // $balance_wip = empty(@$balance_wip->qty) ? 0 : @$balance_wip->qty;
             $totalNeed = $this->getDataMpp($p_month, $p_year, $revision, $item_id);
             $totalNeed2 = $this->getDataMrp($p_month, $p_year, $revision, $item_id);
-            $freestock = (($stock_whs + $etaTotal) - ($os_wo + $os_supply + $totalNeed + $totalNeed2));
+            $total_need = ($totalNeed - $os_supply2);
+            $freestock = (($stock_whs + $etaTotal) - ($os_wo + $os_supply + $total_need + $post['qtyperassy']));
+            $balance = ($freestock - $totalNeed2);
 
             $mps = $this->api->reads('simulation_mps', [], [
                 "p_month" => $post['p_month'],
@@ -279,10 +256,12 @@ class Simulation_mps extends CI_Controller
                     "eta_total" => $etaTotal,
                     "os_wo" => $os_wo,
                     "os_supply" => $os_supply,
+                    "os_supply2" => $os_supply2,
                     "need_1" => $totalNeed,
                     "need_2" => $totalNeed2,
+                    "total_need" => $total_need,
                     "freestock" => $freestock,
-                    "balance" => ($freestock - $post['qtyperassy']),
+                    "balance" => $balance,
                     "status" => "INPUT"
                 );
 
@@ -313,10 +292,12 @@ class Simulation_mps extends CI_Controller
                     "eta_total" => $etaTotal,
                     "os_wo" => $os_wo,
                     "os_supply" => $os_supply,
+                    "os_supply2" => $os_supply2,
                     "need_1" => $totalNeed,
                     "need_2" => $totalNeed2,
+                    "total_need" => $total_need,
                     "freestock" => $freestock,
-                    "balance" => ($freestock - $post['qtyperassy']),
+                    "balance" => $balance,
                     "status" => "INPUT"
                 );
 
@@ -474,9 +455,17 @@ class Simulation_mps extends CI_Controller
                 <th style="text-align:center;">Part No</th>
                 <th style="text-align:center;">Part No</th>
                 <th style="text-align:center;">Product Family</th>
-                <th style="text-align:center;">Free Stock</th>
-                <th style="text-align:center;">Need</th>
-                <th style="text-align:center;">Balance</th>
+                <th style="text-align:center;">Stock WHS<br> < '.$records[0]['cutoff'].'</th>
+                <th style="text-align:center;">OS WO<br>(M-1)</th>
+                <th style="text-align:center;">OS Supply<br>(M-1)</th>
+                <th style="text-align:center;">ETA<br>(M)</th>
+                <th style="text-align:center;">Supply<br>(M)</th>
+                <th style="text-align:center;">Need<br>(M)</th>
+                <th style="text-align:center;">Total Need<br>(M)</th>
+                <th style="text-align:center;">Need<br>Breakdown</th>
+                <th style="text-align:center;">Free Stock<br>(M)</th>
+                <th style="text-align:center;">Need<br>(M+1)</th>
+                <th style="text-align:center;">Free Stock<br>(M+1)</th>
                 <th style="text-align:center;">OTW</th>
                 <th style="text-align:center;">ETA</th>
             </tr>';
@@ -487,8 +476,16 @@ class Simulation_mps extends CI_Controller
                             <td style="mso-number-format:\@;">' . $data['item_no'] . '</td>
                             <td style="mso-number-format:\@;">' . $data['item_name'] . '</td>
                             <td>' . $data['product_family'] . '</td>
-                            <td>' . $data['freestock'] . '</td>
+                            <td>' . $data['stock_whs'] . '</td>
+                            <td>' . $data['os_wo'] . '</td>
+                            <td>' . $data['os_supply'] . '</td>
+                            <td>' . $data['eta_total'] . '</td>
+                            <td>' . $data['os_supply2'] . '</td>
+                            <td>' . $data['need_1'] . '</td>
+                            <td>' . $data['total_need'] . '</td>
                             <td>' . $data['qtyperassy'] . '</td>
+                            <td>' . $data['freestock'] . '</td>
+                            <td>' . $data['need_2'] . '</td>
                             <td>' . $data['balance'] . '</td>
                             <td>' . $data['otw'] . '</td>
                             <td>' . $data['eta'] . '</td>

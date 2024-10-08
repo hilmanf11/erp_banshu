@@ -118,26 +118,26 @@ class Purchase_order_matrix extends CI_Controller
             foreach ($records as $record) {
                 $pfm_id = $record['number'];
 
-                $ospo3 = $this->dummy->query("SELECT SUM(z.request) as request, SUM(z.receive) as receive, SUM(z.balance) as balance FROM(
-                    SELECT b.item_id, b.poc_id, b.poc_reqdate, 
-                        COALESCE(b.request, 0) as request, 
-                        COALESCE(a.receive, 0) as receive, 
-                        (COALESCE(b.request, 0) - COALESCE(a.receive, 0)) as balance
-                    FROM (select TO_CHAR(a.poc_reqdate, 'yyyy-mm') as poc_reqdate, a.item_id, a.poc_id, sum(a.poc_reqqty) as request 
-                        from poc a JOIN mst_item b ON a.item_id = b.item_id
-                        WHERE b.pfm_id = '$pfm_id' and TO_CHAR(a.poc_reqdate, 'yyyy-mm') in ('$year_before-10','$year_before-11','$year_before-12')
-                        GROUP BY a.item_id, a.poc_id, poc_reqdate) b 
-                    LEFT JOIN (select TO_CHAR(por_date, 'yyyy-mm') as por_date, a.item_id, a.por_pocid, SUM(a.por_receiveqty) as receive 
-                        from por a JOIN mst_item b ON a.item_id = b.item_id
-                        WHERE b.pfm_id = '$pfm_id' and TO_CHAR(a.por_date, 'yyyy-mm') in ('$year_before-10','$year_before-11','$year_before-12')
-                        GROUP BY a.por_pocid, a.item_id, por_date) a ON a.item_id = b.item_id and a.por_pocid = b.poc_id
-                    WHERE (COALESCE(b.request, 0) - COALESCE(a.receive, 0)) > 0) z");
+                $ospo3 = $this->dummy->query("SELECT x.pfm_id, x.receive, x.request, z.balance FROM (
+                    SELECT a.pfm_id, SUM(c.por_receiveqty) as receive, SUM(b.poc_reqqty) as request
+                    FROM mst_item a
+                    LEFT JOIN (SELECT item_id, SUM(poc_reqqty) as poc_reqqty from poc where TO_CHAR(poc_date, 'yyyy-mm') in ('$year_before-10','$year_before-11','$year_before-12') GROUP BY item_id) b ON a.item_id = b.item_id
+                    LEFT JOIN (SELECT item_id, SUM(por_receiveqty) as por_receiveqty FROM por WHERE TO_CHAR(por_date, 'yyyy-mm') in ('$year_before-10','$year_before-11','$year_before-12') GROUP BY item_id) c ON a.item_id = c.item_id
+                    WHERE a.pfm_id = '$pfm_id'
+                    GROUP BY a.pfm_id) x
+                    JOIN (
+                    SELECT a.pfm_id, SUM(CASE WHEN (b.poc_reqqty - c.por_receiveqty) < 0 THEN 0 ELSE (b.poc_reqqty - c.por_receiveqty) END) as balance
+                    FROM mst_item a
+                    LEFT JOIN (SELECT item_id, SUM(poc_reqqty) as poc_reqqty from poc where TO_CHAR(poc_date, 'yyyy-mm') = '$year_before-12' GROUP BY item_id) b ON a.item_id = b.item_id
+                    LEFT JOIN (SELECT item_id, SUM(por_receiveqty) as por_receiveqty FROM por WHERE TO_CHAR(por_date, 'yyyy-mm') = '$year_before-12' GROUP BY item_id) c ON a.item_id = c.item_id
+                    WHERE a.pfm_id = '$pfm_id'
+                    GROUP BY a.pfm_id) z ON x.pfm_id = z.pfm_id");
                 $ospoRow3 = $ospo3->result_array();
 
                 $year_before1 = $year_before."10";
                 $year_before2 = $year_before."11";
                 $year_before3 = $year_before."12";
-                $wo3 = $this->dummy->query("SELECT SUM(z.need) as need FROM(
+                $wo3 = $this->dummy->query("SELECT (SUM(z.need) / 3) as need FROM(
                     SELECT b.bom_com_item, a.periode, (a.qty * b.bom_qty_perassy) as need 
                     FROM wip_trx_mpp a
                     JOIN mst_bom b ON b.bom_par_item = a.assy_no
@@ -149,13 +149,13 @@ class Purchase_order_matrix extends CI_Controller
                 $endstock3 = $this->dummy->query("SELECT coalesce(round(sum(a.ith_qty)),0) as stock
                 from ith a
                 JOIN mst_item b ON a.ith_item_id = b.item_id and b.stscode_id = '01'
-                where TO_CHAR(a.ith_date, 'yyyy-mm') in ('$year_before-10','$year_before-11','$year_before-12') and b.pfm_id = '$pfm_id'");
+                where TO_CHAR(a.ith_date, 'yyyy-mm') <= '$year_before-12' and b.pfm_id = '$pfm_id'");
                 $endstockRow3 = $endstock3->result_array();
 
                 $supply3 = $this->dummy->query("SELECT coalesce(round(sum(a.ith_qty)),0) as stock
                 from ith a
                 JOIN mst_item b ON a.ith_item_id = b.item_id and b.stscode_id = '01'
-                where TO_CHAR(a.ith_date, 'yyyy-mm') in ('$year_before-10','$year_before-11','$year_before-12') and b.pfm_id = '$pfm_id'
+                where TO_CHAR(a.ith_date, 'yyyy-mm') in ('$year_before-10','$year_before-11','$year_before-12')  and b.pfm_id = '$pfm_id'
                 and a.ith_form like '%OU%' and a.ith_form not in ('OU - Adjust Out','OU - ADJUST OUT','ADJUST OUT','OU - ADJ OUT IDM','ADJUST-OUT')");
                 $supplyRow3 = $supply3->result_array();
 
@@ -163,22 +163,22 @@ class Purchase_order_matrix extends CI_Controller
                                         <td rowspan="6" style="text-align:center;">' . $no . '</td>
                                         <td rowspan="6">' . $record['name'] . '</td>
                                         <td>OS PO</td>
-                                        <td style="text-align:right;">'.number_format(@$ospoRow3[0]['balance']).'</td>';
+                                        <td style="text-align:right;">'.number_format((@$ospoRow3[0]['balance'] / 3)).'</td>';
                 $htmlEndStock   = '<tr>
                                         <td>End Stock</td>
                                         <td style="text-align:right;">'.number_format(@$endstockRow3[0]['stock']).'</td>';
                 $htmlPo         = '<tr>
                                         <td>PO</td>
-                                        <td style="text-align:right;">'.number_format(@$ospoRow3[0]['request']).'</td>';
+                                        <td style="text-align:right;">'.number_format(@$ospoRow3[0]['request'] / 3).'</td>';
                 $htmlReceipt    = '<tr>
                                         <td>Receipt</td>
-                                        <td style="text-align:right;">'.number_format(@$ospoRow3[0]['receive']).'</td>';
+                                        <td style="text-align:right;">'.number_format(@$ospoRow3[0]['receive'] / 3).'</td>';
                 $htmlWo         = '<tr>
                                         <td>WO</td>
                                         <td style="text-align:right;">'.number_format(@$woRow3[0]['need']).'</td>';
                 $htmlSupply     = '<tr>
                                         <td>Supply</td>
-                                        <td style="text-align:right;">'.number_format(@$supplyRow3[0]['stock']).'</td>';
+                                        <td style="text-align:right;">'.number_format(abs(@$supplyRow3[0]['stock']) / 3).'</td>';
                 
                 $months = array(
                     '01' => 'January', 
@@ -213,20 +213,20 @@ class Purchase_order_matrix extends CI_Controller
                 $xbarSupply = 0;
                 foreach ($months as $key => $value) {
                     if($value != "xbar"){
-                        $ospo = $this->dummy->query("SELECT SUM(z.request) as request, SUM(z.receive) as receive, SUM(z.balance) as balance FROM(
-                            SELECT b.item_id, b.poc_id, b.poc_reqdate, 
-                                COALESCE(b.request, 0) as request, 
-                                COALESCE(a.receive, 0) as receive, 
-                                (COALESCE(b.request, 0) - COALESCE(a.receive, 0)) as balance
-                            FROM (select TO_CHAR(a.poc_reqdate, 'yyyy-mm') as poc_reqdate, a.item_id, a.poc_id, sum(a.poc_reqqty) as request 
-                                from poc a JOIN mst_item b ON a.item_id = b.item_id
-                                WHERE b.pfm_id = '$pfm_id' and TO_CHAR(a.poc_reqdate, 'yyyy-mm') = '$filter_year-$key'
-                                GROUP BY a.item_id, a.poc_id, poc_reqdate) b 
-                            LEFT JOIN (select TO_CHAR(por_date, 'yyyy-mm') as por_date, a.item_id, a.por_pocid, SUM(a.por_receiveqty) as receive 
-                                from por a JOIN mst_item b ON a.item_id = b.item_id
-                                WHERE b.pfm_id = '$pfm_id' and TO_CHAR(a.por_date, 'yyyy-mm') = '$filter_year-$key'
-                                GROUP BY a.por_pocid, a.item_id, por_date) a ON a.item_id = b.item_id and a.por_pocid = b.poc_id
-                            WHERE (COALESCE(b.request, 0) - COALESCE(a.receive, 0)) > 0) z");
+                        $ospo = $this->dummy->query("SELECT x.pfm_id, x.receive, x.request, z.balance FROM (
+                            SELECT a.pfm_id, SUM(c.por_receiveqty) as receive, SUM(b.poc_reqqty) as request
+                            FROM mst_item a
+                            LEFT JOIN (SELECT item_id, SUM(poc_reqqty) as poc_reqqty from poc where TO_CHAR(poc_date, 'yyyy-mm') = '$filter_year-$key' GROUP BY item_id) b ON a.item_id = b.item_id
+                            LEFT JOIN (SELECT item_id, SUM(por_receiveqty) as por_receiveqty FROM por WHERE TO_CHAR(por_date, 'yyyy-mm') = '$filter_year-$key' GROUP BY item_id) c ON a.item_id = c.item_id
+                            WHERE a.pfm_id = '$pfm_id'
+                            GROUP BY a.pfm_id) x
+                            JOIN (
+                            SELECT a.pfm_id, SUM(CASE WHEN (b.poc_reqqty - c.por_receiveqty) < 0 THEN 0 ELSE (b.poc_reqqty - c.por_receiveqty) END) as balance
+                            FROM mst_item a
+                            LEFT JOIN (SELECT item_id, SUM(poc_reqqty) as poc_reqqty from poc where TO_CHAR(poc_date, 'yyyy-mm') <= '$filter_year-$key' GROUP BY item_id) b ON a.item_id = b.item_id
+                            LEFT JOIN (SELECT item_id, SUM(por_receiveqty) as por_receiveqty FROM por WHERE TO_CHAR(por_date, 'yyyy-mm') <= '$filter_year-$key' GROUP BY item_id) c ON a.item_id = c.item_id
+                            WHERE a.pfm_id = '$pfm_id'
+                            GROUP BY a.pfm_id) z ON x.pfm_id = z.pfm_id");
                         $ospoRow = $ospo->result_array();
 
                         $wo = $this->dummy->query("SELECT SUM(z.need) as need FROM(
@@ -241,7 +241,7 @@ class Purchase_order_matrix extends CI_Controller
                         $endstock = $this->dummy->query("SELECT coalesce(round(sum(a.ith_qty)),0) as stock
                         from ith a
                         JOIN mst_item b ON a.ith_item_id = b.item_id and b.stscode_id = '01'
-                        where TO_CHAR(a.ith_date, 'yyyy-mm') = '$filter_year-$key' and b.pfm_id = '$pfm_id'");
+                        where TO_CHAR(a.ith_date, 'yyyy-mm') <= '$filter_year-$key' and b.pfm_id = '$pfm_id'");
                         $endstockRow = $endstock->result_array();
 
                         $supply = $this->dummy->query("SELECT coalesce(round(sum(a.ith_qty)),0) as stock
@@ -302,21 +302,9 @@ class Purchase_order_matrix extends CI_Controller
                     }
 
                     if($value != "xbar"){
-                        if(@$supplyRow[0]['stock'] < 0){
-                            $color = "background:#ffbcbc;";
-                        }else{
-                            $color = "";
-                        }
-
-                        $htmlSupply_1 .= '<td style="text-align:right;'.$color.'">'.number_format(@$supplyRow[0]['stock']).'</td>';
+                        $htmlSupply_1 .= '<td style="text-align:right;">'.number_format(abs(@$supplyRow[0]['stock'])).'</td>';
                     }else{
-                        if(@$xbarSupply < 0){
-                            $color = "background:#ffbcbc;";
-                        }else{
-                            $color = "";
-                        }
-
-                        $htmlSupply_1 .= '<td style="text-align:right;'.$color.'">'.number_format(@$xbarSupply / 3).'</td>';
+                        $htmlSupply_1 .= '<td style="text-align:right;">'.number_format(abs(@$xbarSupply / 3)).'</td>';
                     }
 
                     if($value == "xbar"){

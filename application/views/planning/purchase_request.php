@@ -1061,22 +1061,22 @@
     }
 
     function checkConfirmPo(){
-        $.ajax({
-            type: "post",
-            url: '<?= base_url('planning/purchase_request/datatableConfirm') ?>',
-            dataType: "json",
-            success: function (response) {
-                if(response.total > 0){
-                    $("#confirmPo").show();
-                }else{
+        // $.ajax({
+        //     type: "post",
+        //     url: '<?= base_url('planning/purchase_request/datatableConfirm') ?>',
+        //     dataType: "json",
+        //     success: function (response) {
+        //         if(response.total > 0){
+        //             $("#confirmPo").show();
+        //         }else{
                     $("#confirmPo").hide();
-                }
-            }
-        });
+        //         }
+        //     }
+        // });
     }
 
-    checkConfirmPo();
-    setInterval(checkConfirmPo, 10000);
+    // checkConfirmPo();
+    // setInterval(checkConfirmPo, 10000);
 
     function confirmPo() {
         $("#dlg_confirm").dialog('open');

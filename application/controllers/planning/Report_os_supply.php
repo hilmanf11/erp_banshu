@@ -187,7 +187,7 @@ class Report_os_supply extends CI_Controller
             $filter_part_no = base64_decode($this->input->get('filter_part_no'));
 
             $period_start = date("Y-m-d", strtotime($filter_year."-".$filter_month."-01"));
-            $period_finish = date("Y-m-d", strtotime("+31 day", strtotime($filter_year."-".$filter_month."-01")));
+            $period_finish = date("Y-m-d", strtotime("1 month", strtotime($filter_year."-".$filter_month."-01")));
 
             $header = "";
             $content = "";
@@ -313,25 +313,42 @@ class Report_os_supply extends CI_Controller
                 $rowCurrentNeed = $queryCurrentNeed->row();
                 $current_need = empty(@$rowCurrentNeed->need) ? 0 : @$rowCurrentNeed->need;
 
-                //CURRENT SUPPLY
+                //CURRENT WP
                 $cutoff_form =  date('Y-m-01', strtotime("-1 month", strtotime($filter_year."-".$filter_month."-01")));
                 $cutoff_to =  date('Y-m-t', strtotime("-1 month", strtotime($filter_year."-".$filter_month."-01")));
-                $queryCurrentSupply = $this->dummy->query("SELECT z.item_id, z.item_name, z.pfm_name, max(z.wp) as wp, COALESCE(SUM(z.hasil), 0) as supply, COALESCE(SUM(z.stock), 0) as os_supply from (
-                    select a.temp_woc_id, a.periode, a.wp, d.item_id, d.item_name, e.pfm_name, a.qty, b.bom_qty_perassy, (a.qty * b.bom_qty_perassy) as hasil, COALESCE(SUM(c.qty_need), 0) as qty_need, SUM(c.qty_scan) as qty_scan, COALESCE((a.qty * b.bom_qty_perassy) - COALESCE(SUM(c.qty_scan), 0), 0) as stock
+                // $queryCurrentSupply = $this->dummy->query("SELECT z.item_id, z.item_name, z.pfm_name, max(z.wp) as wp, COALESCE(SUM(z.hasil), 0) as supply, COALESCE(SUM(z.stock), 0) as os_supply from (
+                //     select a.temp_woc_id, a.periode, a.wp, d.item_id, d.item_name, e.pfm_name, a.qty, b.bom_qty_perassy, (a.qty * b.bom_qty_perassy) as hasil, COALESCE(SUM(c.qty_need), 0) as qty_need, SUM(c.qty_scan) as qty_scan, COALESCE((a.qty * b.bom_qty_perassy) - COALESCE(SUM(c.qty_scan), 0), 0) as stock
+                //     from wip_trx_mpp a
+                //     join mst_bom b ON a.assy_no = b.bom_par_item
+                //     left join (SELECT item_id, kanbanrm_woc_id, SUM(qty_need) as qty_need, SUM(qty_scan) as qty_scan FROM serial_detail_kanbanrm GROUP BY item_id, kanbanrm_woc_id, qty_need) c ON a.temp_woc_id = c.kanbanrm_woc_id and c.item_id = b.bom_com_item
+                //     join mst_item d on b.bom_com_item = d.item_id and d.stscode_id = '01'
+                //     join r_prodfam e on d.pfm_id = e.pfm_id and e.prod_group = 'Raw Material' and e.pfm_id != '05'
+                //     where b.bom_com_item = '$item_id' and a.wp_date between '$cutoff_form' and '$cutoff_to'
+                //     group by a.temp_woc_id, a.periode, a.wp, a.qty, b.bom_qty_perassy, d.item_id, d.item_name, e.pfm_name) z
+                //     GROUP BY z.item_id, z.item_name, z.pfm_name
+                //     having COALESCE(SUM(z.stock), 0) > 0     
+                // ");
+                $queryCurrentWp = $this->dummy->query("SELECT z.item_id, z.item_name, z.pfm_name, max(z.wp) as wp from (
+                    select a.temp_woc_id, a.periode, a.wp, d.item_id, d.item_name, e.pfm_name
                     from wip_trx_mpp a
                     join mst_bom b ON a.assy_no = b.bom_par_item
-                    left join (SELECT item_id, kanbanrm_woc_id, SUM(qty_need) as qty_need, SUM(qty_scan) as qty_scan FROM serial_detail_kanbanrm GROUP BY item_id, kanbanrm_woc_id, qty_need) c ON a.temp_woc_id = c.kanbanrm_woc_id and c.item_id = b.bom_com_item
                     join mst_item d on b.bom_com_item = d.item_id and d.stscode_id = '01'
-                    join r_prodfam e on d.pfm_id = e.pfm_id and e.prod_group = 'Raw Material' and e.pfm_id != '05'
+                        join r_prodfam e on d.pfm_id = e.pfm_id and e.prod_group = 'Raw Material' and e.pfm_id != '05'
                     where b.bom_com_item = '$item_id' and a.wp_date between '$cutoff_form' and '$cutoff_to'
                     group by a.temp_woc_id, a.periode, a.wp, a.qty, b.bom_qty_perassy, d.item_id, d.item_name, e.pfm_name) z
-                    GROUP BY z.item_id, z.item_name, z.pfm_name
-                    having COALESCE(SUM(z.stock), 0) > 0     
+                    GROUP BY z.item_id, z.item_name, z.pfm_name 
+                ");
+                $rowCurrentWp = $queryCurrentWp->row();
+                $current_wp = empty(@$rowCurrentWp->wp) ? "-" : "WP ".@$rowCurrentWp->wp;
+
+                $queryCurrentSupply = $this->dummy->query("SELECT ith_item_id, coalesce(round(sum(ith_qty)),0) as stock
+                    from ith
+                    where ith_date between '$cutoff_form' and '$cutoff_to' and ith_item_id = '$item_id'
+                    and ith_form like '%OU%' and ith_form not in ('OU - Adjust Out','OU - ADJUST OUT','ADJUST OUT','OU - ADJ OUT IDM','ADJUST-OUT')
+                    GROUP by ith_item_id
                 ");
                 $rowCurrentSupply = $queryCurrentSupply->row();
-                $current_supply = empty(@$rowCurrentSupply->supply) ? 0 : round(@$rowCurrentSupply->supply);
-                $current_os_supply = empty(@$rowCurrentSupply->os_supply) ? 0 : round(@$rowCurrentSupply->os_supply);
-                $current_wp = empty(@$rowCurrentSupply->wp) ? "-" : "WP ".@$rowCurrentSupply->wp;
+                $current_supply = empty(@$rowCurrentSupply->stock) ? 0 : abs(@$rowCurrentSupply->stock);
 
                 //CURRENT WP
                 $wpFormat2 = date('Y-m-d');
@@ -340,16 +357,32 @@ class Report_os_supply extends CI_Controller
 
                 $cutoff_form =  date('Y-m-01', strtotime($filter_year."-".$filter_month."-01"));
                 $cutoff_to =  date('Y-m-t', strtotime($filter_year."-".$filter_month."-01"));
-                $querySupply = $this->dummy->query("SELECT z.wp, ROUND(SUM(z.hasil)) as supply, ROUND(SUM(z.stock)) as os_supply from (
-                    select a.wp, d.item_id, SUM(a.qty * b.bom_qty_perassy) as hasil, COALESCE(SUM(c.qty_need), 0) as qty_need, SUM(c.qty_scan) as qty_scan, COALESCE((a.qty * b.bom_qty_perassy) - COALESCE(SUM(c.qty_scan), 0), 0) as stock
+                // $querySupply = $this->dummy->query("SELECT z.wp, ROUND(SUM(z.hasil)) as supply, ROUND(SUM(z.stock)) as os_supply from (
+                //     select a.wp, d.item_id, SUM(a.qty * b.bom_qty_perassy) as hasil, COALESCE(SUM(c.qty_need), 0) as qty_need, SUM(c.qty_scan) as qty_scan, COALESCE((a.qty * b.bom_qty_perassy) - COALESCE(SUM(c.qty_scan), 0), 0) as stock
+                //     from wip_trx_mpp a
+                //     join mst_bom b ON a.assy_no = b.bom_par_item
+                //     left join (SELECT item_id, kanbanrm_woc_id, SUM(qty_need) as qty_need, SUM(qty_scan) as qty_scan FROM serial_detail_kanbanrm GROUP BY item_id, kanbanrm_woc_id, qty_need) c ON a.temp_woc_id = c.kanbanrm_woc_id and c.item_id = b.bom_com_item
+                //     join mst_item d on b.bom_com_item = d.item_id and d.stscode_id = '01'
+                //     join r_prodfam e on d.pfm_id = e.pfm_id and e.prod_group = 'Raw Material' and e.pfm_id != '05'
+                //     where b.bom_com_item = '$item_id' and a.wp_date between '$cutoff_form' and '$cutoff_to'
+                //     group by a.wp, d.item_id, a.qty, b.bom_qty_perassy
+                //     order by wp desc) z GROUP BY z.wp ORDER BY z.wp asc
+                // ");
+
+                $querySupply = $this->dummy->query("SELECT z.wp, z.stock as supply from (
+                    select a.temp_woc_id, a.periode, a.wp, d.item_id, d.item_name, e.pfm_name, coalesce(f.stock, 0) as stock
                     from wip_trx_mpp a
                     join mst_bom b ON a.assy_no = b.bom_par_item
-                    left join (SELECT item_id, kanbanrm_woc_id, SUM(qty_need) as qty_need, SUM(qty_scan) as qty_scan FROM serial_detail_kanbanrm GROUP BY item_id, kanbanrm_woc_id, qty_need) c ON a.temp_woc_id = c.kanbanrm_woc_id and c.item_id = b.bom_com_item
                     join mst_item d on b.bom_com_item = d.item_id and d.stscode_id = '01'
                     join r_prodfam e on d.pfm_id = e.pfm_id and e.prod_group = 'Raw Material' and e.pfm_id != '05'
+                    left join (SELECT ith_item_id, ith_date, coalesce(round(sum(ith_qty)),0) as stock
+                        from ith
+                        where ith_form like '%OU%' and ith_form not in ('OU - Adjust Out','OU - ADJUST OUT','ADJUST OUT','OU - ADJ OUT IDM','ADJUST-OUT')
+                        GROUP by ith_item_id, ith_date) f ON d.item_id = f.ith_item_id and a.wp_date = f.ith_date
                     where b.bom_com_item = '$item_id' and a.wp_date between '$cutoff_form' and '$cutoff_to'
-                    group by a.wp, d.item_id, a.qty, b.bom_qty_perassy
-                    order by wp desc) z GROUP BY z.wp ORDER BY z.wp asc
+                    group by a.temp_woc_id, a.periode, a.wp, d.item_id, d.item_name, e.pfm_name, f.stock) z
+                    GROUP BY z.wp, z.stock
+                    ORDER BY z.wp
                 ");
                 $dataSupply = $querySupply->result_array();
                 $wp = $this->getWp($filter_year, $filter_month);
@@ -359,15 +392,15 @@ class Report_os_supply extends CI_Controller
                 $nowWp = "";
                 $dataArr = [];
                 foreach ($dataSupply as $rowSupply) {
-                    $dataArr[$rowSupply['wp']] = $rowSupply['supply'];
-                    $nowSupply += $rowSupply['supply'];
-                    $nowSupplyOs += $rowSupply['os_supply'];
+                    $dataArr[$rowSupply['wp']] = abs($rowSupply['supply']);
+                    $nowSupply += abs($rowSupply['supply']);
+                    $nowSupplyOs += ($record['need'] - abs($rowSupply['supply']));
                     $nowWp = $rowSupply['wp'];
                 }
 
                 $tgl = 1;
                 $period_start2 = date("Y-m-d", strtotime($filter_year."-".$filter_month."-01"));
-                $period_finish2 = date("Y-m-d", strtotime("+31 day", strtotime($filter_year."-".$filter_month."-01")));
+                $period_finish2 = date("Y-m-d", strtotime("1 month", strtotime($filter_year."-".$filter_month."-01")));
                 $content = "";
                 while (strtotime($period_start2) < strtotime($period_finish2)) {
                     $monthName = date('d, D', strtotime($period_start2));
@@ -399,7 +432,7 @@ class Report_os_supply extends CI_Controller
                             <td>' . $record['item_name'] . '</td>
                             <td>' . $current_need . '</td>
                             <td>' . $current_supply . '</td>
-                            <td>' . $current_os_supply . '</td>
+                            <td>' . ($current_need - $current_supply) . '</td>
                             <td>' . $current_wp . '</td>
                             <td>' . $record['need'] . '</td>
                             <td>' . $nowSupply . '</td>

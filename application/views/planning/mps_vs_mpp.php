@@ -5,19 +5,20 @@
             <th rowspan="2" data-options="field:'customer',width:250,halign:'center'">Customer</th>
             <th rowspan="2" data-options="field:'product_no',width:150,halign:'center'">Product No</th>
             <th rowspan="2" data-options="field:'product_name',width:200,halign:'center'">Product Name</th>
-            <th colspan="3" data-options="field:'revision',width:120,halign:'center',align:'center', formatter: numberformat">Production Plan</th>
-            <th rowspan="2" data-options="field:'rev_vs_1',width:120,halign:'center',align:'center', formatter: numberdecimalformat">% Rev 0 VS Rev 1</th>
-            <th rowspan="2" data-options="field:'rev_vs_2',width:120,halign:'center',align:'center', formatter: numberdecimalformat">% Rev 0 VS Rev 2</th>
-            <th rowspan="2" data-options="field:'bal_prod_plan',width:100,halign:'center',align:'right', formatter: numberformat">Total MPS</th>
-            <th rowspan="2" data-options="field:'total_mpp',width:80,halign:'center',align:'right', formatter: numberformat">Total MPP</th>
-            <th rowspan="2" data-options="field:'balance',width:80,halign:'center',align:'right',formatter: numberformat">Balance</th>
+            <th colspan="3" data-options="field:'revision',width:120,halign:'center',align:'center', formatter: numberformat, styler: cellStyler">Production Plan</th>
+            <th rowspan="2" data-options="field:'rev_vs_1',width:120,halign:'center',align:'center', formatter: numberdecimalformat, styler: cellStylerPercentage">Rev 0 VS Rev 1(%)</th>
+            <th rowspan="2" data-options="field:'rev_vs_2',width:120,halign:'center',align:'center', formatter: numberdecimalformat, styler: cellStylerPercentage">Rev 0 VS Rev 2(%)</th>
+            <th rowspan="2" data-options="field:'bal_prod_plan',width:100,halign:'center',align:'right', formatter: numberformat, styler: cellStyler">Total MPS</th>
+            <th rowspan="2" data-options="field:'total_mpp',width:80,halign:'center',align:'right', formatter: numberformat, styler: cellStyler">Total MPP</th>
+            <th rowspan="2" data-options="field:'balance',width:80,halign:'center',align:'right',formatter: numberformat, styler: cellStyler">Balance</th>
+            <th rowspan="2" data-options="field:'balance',width:80,halign:'center',align:'right',formatter: numberformat, styler: cellStyler">Balance</th>
             <th rowspan="2" data-options="field:'persen_mpp',width:80,halign:'center',align:'right',formatter: numberdecimalformat">% MPP</th>
             <th rowspan="2" data-options="field:'persen_dev',width:80,halign:'center',align:'right',formatter: numberdecimalformat">% Dev</th>
         </tr>
         <tr>
-            <th data-options="field:'revision_0',width:120,halign:'center',align:'right', formatter: numberformat">Rev 0</th>
-            <th data-options="field:'revision_1',width:120,halign:'center',align:'right', formatter: numberformat">Rev 1</th>
-            <th data-options="field:'revision_2',width:120,halign:'center',align:'right', formatter: numberformat">Rev 2</th>
+            <th data-options="field:'revision_0',width:120,halign:'center',align:'right', formatter: numberformat, styler: cellStyler">Rev 0</th>
+            <th data-options="field:'revision_1',width:120,halign:'center',align:'right', formatter: numberformat, styler: cellStyler">Rev 1</th>
+            <th data-options="field:'revision_2',width:120,halign:'center',align:'right', formatter: numberformat, styler: cellStyler">Rev 2</th>
 
         </tr>
     </thead>
@@ -157,21 +158,39 @@
         });
 
         if (value < 0) {
-            return '<span style="color: red;">' + "<b>" + formatter.format(value) + "</b>" + '</span>';
+            return '<span style="color: yellow;">' + "<b>" + formatter.format(value) + "</b>" + '</span>';
         } else {
             return '<span style="color: black;">' + "<b>" + formatter.format(value) + "</b>" + '</span>';
         }
     }
 
-    function numberdecimalformat(value) {
+    function cellStyler(value, row, index) {
+        if (value < 0) {
+            return 'background-color:red;color:yellow;';  // Red background and yellow text for negative values
+        }
+        return '';  // No background for non-negative values
+    }
+
+    function cellStylerPercentage(value, row, index) { //pake ini
+        if (value > 20) {
+        return 'background-color:red;';  // Red background and white text
+    } else if (value < 0) {
+        return 'background-color:red; color:yellow';  // Red background and white text for negative values
+    }
+    return '';   // No background for non-negative values
+    }
+
+    function numberdecimalformat(value) {   
         if(value===null){
             value = 0
         }
         
         if (value < 0) {
-            return '<span style="color: red;">' + "<b>" + parseFloat(value).toFixed(2) + "</b>" + '</span>';
-        } else {
-            return '<span style="color: black;">' + "<b>" + parseFloat(value).toFixed(2) + "</b>" + '</span>';
+            return '<span style="color: yellow;">' + "<b>" + parseFloat(value).toFixed(2) + "%</b>" + '</span>';
+        } else if (value > 20){
+            return '<span style="color: white;">' + "<b>" + parseFloat(value).toFixed(2) + "%</b>" + '</span>';
+        }else {
+            return '<span style="color: black;">' + "<b>" + parseFloat(value).toFixed(2) + "%</b>" + '</span>';
         }
     }
 

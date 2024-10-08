@@ -266,7 +266,7 @@ class balance_wip extends CI_Controller
 
             if($post['product_no'] != ""){
                 if (count($balance_wip) > 0) {
-                    $send   = $this->api->update('balance_wip', [
+                    $send = $this->api->update('balance_wip', [
                         "p_month" => $post['p_month'],
                         "p_year" => $post['p_year'],
                         "revision" => $post['revision'],
@@ -275,7 +275,19 @@ class balance_wip extends CI_Controller
 
                     echo json_encode(array("title" => "Good Job", "message" => "Product No " . $post['product_no'] . " Updated Successfully", "theme" => "success"));
                 } else {
-                    echo json_encode(array("title" => "Error", "message" => "Product No " . $post['product_no'] . " Not Generate", "theme" => "error"));
+                    $postFinal = array(
+                        "p_month" => $p_month,
+                        "p_year" => $p_year,
+                        "revision" => $revision,
+                        "product_no" => trim($post['product_no']),
+                        "product_name" => $post['product_name'],
+                        "product_family" => @$balance_wip[0]->product_family,
+                        "qty" => $post['qty'],
+                        "status" => "GENERATE"
+                    );
+
+                    $send = $this->api->create('balance_wip', $postFinal, "RMS", "balance_wip");
+                    echo json_encode(array("title" => "Good Job", "message" => "Product No " . $post['product_no'] . " Saved Successfully", "theme" => "success"));
                 }
             }else{
                 echo json_encode(array("title" => "Error", "message" => "Product No " . $post['product_no'] . " Saved Failed", "theme" => "error"));
