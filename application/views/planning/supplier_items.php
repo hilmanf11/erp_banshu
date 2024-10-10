@@ -19,8 +19,8 @@
             <th rowspan="2" data-options="field:'maker_name',width:150,halign:'center'">Maker</th>
             <th rowspan="2" data-options="field:'maker_type',width:100,halign:'center'">Maker Type</th>
             <th rowspan="2" data-options="field:'maker_origin',width:150,halign:'center'">Maker Origin</th>
-            <th rowspan="2" data-options="field:'landed_cost',width:100,halign:'center'">Landed Cost</th>
-            <th rowspan="2" data-options="field:'import_duty',width:100,halign:'center'">Import Duty</th>
+            <!-- <th rowspan="2" data-options="field:'landed_cost',width:100,halign:'center'">Landed Cost</th>
+            <th rowspan="2" data-options="field:'import_duty',width:100,halign:'center'">Import Duty</th> -->
             <th rowspan="2" data-options="field:'mpq',width:80,halign:'center',align:'right',formatter:numberformatComa">MPQ</th>
             <th rowspan="2" data-options="field:'moq',width:80,halign:'center',align:'right',formatter:numberformatComa">MOQ</th>
             <th rowspan="2" data-options="field:'uom',width:80,align:'center'">UoM</th>
@@ -320,7 +320,6 @@
 <!-- PDF -->
 <iframe id="printout" src="<?= base_url('planning/supplier_items/print') ?>" style="width: 100%;" hidden></iframe>
 <script>
-
     //ADD DATA
     function add() {
         $('#dlg_insert').dialog('open');
@@ -540,7 +539,7 @@
     }
 
     function cellStylerApproval(value, row, index) {
-        if(row.approved_to == "" || row.approved_to == null){
+        if (row.approved_to == "" || row.approved_to == null) {
             return 'background: #53D636; color:white;';
         } else {
             return 'background: #FF5F5F; color:white;';
@@ -548,7 +547,7 @@
     }
 
     function cellFormatterApproval(val, row) {
-        if(row.approved_to == "" || row.approved_to == null){
+        if (row.approved_to == "" || row.approved_to == null) {
             return 'Approved';
         } else {
             return 'Checking';
@@ -556,13 +555,13 @@
     };
 
     function BtnDetail(val, row) {
-        var details = "details('"+row.id+"')";
-        return '<a class="btn btn-primary w-100" style="pointer-events: visible; opacity:1;" onClick="'+details+'"><i class="fa fa-eye"></i> View</a>';
+        var details = "details('" + row.id + "')";
+        return '<a class="btn btn-primary w-100" style="pointer-events: visible; opacity:1;" onClick="' + details + '"><i class="fa fa-eye"></i> View</a>';
     }
-    
+
     function BtnPrice(val, row) {
-        var details = "addPrice('"+row.id+"')";
-        return '<a class="btn btn-success w-100" style="pointer-events: visible; opacity:1;" onClick="'+details+'"><i class="fa fa-money"></i> Add</a>';
+        var details = "addPrice('" + row.id + "')";
+        return '<a class="btn btn-success w-100" style="pointer-events: visible; opacity:1;" onClick="' + details + '"><i class="fa fa-money"></i> Add</a>';
     }
 
     function details(id) {
@@ -574,7 +573,7 @@
             remoteFilter: true,
             rownumbers: true,
             singleSelect: false,
-            fit:true,
+            fit: true,
         });
     }
 
@@ -588,7 +587,7 @@
             remoteFilter: true,
             rownumbers: true,
             singleSelect: false,
-            fit:true,
+            fit: true,
             view: detailview,
             detailFormatter: function(index, row) {
                 return '<div style="padding:2px;position:relative;"><table class="ddv" title="Detail Of ' + row.supplier_item_id + '"></table></div>';
@@ -606,22 +605,22 @@
                             title: 'Update By',
                             halign: 'center',
                             width: 100
-                        },{
+                        }, {
                             field: 'created_date',
                             title: 'Update Date',
                             halign: 'Update',
                             width: 150
-                        },{
+                        }, {
                             field: 'start_date',
                             title: 'Start Date',
                             halign: 'center',
                             width: 100
-                        },{
+                        }, {
                             field: 'valid_date',
                             title: 'Valid Date',
                             halign: 'center',
                             width: 100
-                        },{
+                        }, {
                             field: 'price',
                             title: 'Price',
                             halign: 'center',
@@ -636,7 +635,7 @@
                             title: 'Remarks',
                             width: 200,
                             halign: 'center',
-                        },]
+                        }, ]
                     ],
                     onResize: function() {
                         $('#dg_price').datagrid('fixDetailRowHeight', index);
@@ -832,15 +831,15 @@
                     field: 'number',
                     title: 'Code',
                     width: 100
-                },{
+                }, {
                     field: 'name',
                     title: 'Name',
                     width: 200
-                },{
+                }, {
                     field: 'type',
                     title: 'Type',
                     width: 100
-                },{
+                }, {
                     field: 'origin',
                     title: 'Origin',
                     width: 100
@@ -867,7 +866,7 @@
                     field: 'number',
                     title: 'Code',
                     width: 100
-                },{
+                }, {
                     field: 'name',
                     title: 'Name',
                     width: 200
@@ -922,15 +921,15 @@
                     field: 'number',
                     title: 'Code',
                     width: 100
-                },{
+                }, {
                     field: 'name',
                     title: 'Name',
                     width: 200
-                },{
+                }, {
                     field: 'type',
                     title: 'Type',
                     width: 100
-                },{
+                }, {
                     field: 'origin',
                     title: 'Origin',
                     width: 100
@@ -1018,7 +1017,7 @@
                     field: 'number',
                     title: 'Code',
                     width: 100
-                },{
+                }, {
                     field: 'name',
                     title: 'Name',
                     width: 200
@@ -1086,7 +1085,7 @@
                             width: 200
                         }, ]
                     ],
-                    onSelect: function(val, row){
+                    onSelect: function(val, row) {
                         $("#item_name").textbox('setValue', row.item_name);
                     }
                 });

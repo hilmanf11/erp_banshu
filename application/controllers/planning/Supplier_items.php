@@ -544,8 +544,8 @@ class Supplier_items extends CI_Controller
                     <th>Maker</th>
                     <th>Maker Type</th>
                     <th>Maker Origin</th>
-                    <th>Landed Cost</th>
-                    <th>Import Duty</th>
+                    <!-- <th>Landed Cost</th>
+                    <th>Import Duty</th> -->
                     <th>MPQ</th>
                     <th>MOQ</th>
                     <th>Price</th>
@@ -571,8 +571,8 @@ class Supplier_items extends CI_Controller
                         <td>' . $data['maker_name'] . '</td>
                         <td>' . $data['maker_type'] . '</td>
                         <td>' . $data['maker_origin'] . '</td>
-                        <td>' . $data['landed_cost'] . '</td>
-                        <td>' . $data['import_duty'] . '</td>
+                        <!-- <td>' . $data['landed_cost'] . '</td>
+                        <td>' . $data['import_duty'] . '</td> -->
                         <td>' . $data['mpq'] . '</td>
                         <td>' . $data['mpq'] . '</td>
                         <td>' . $data['price'] . '</td>
