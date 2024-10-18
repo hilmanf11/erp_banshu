@@ -151,12 +151,13 @@ class Os_purchase_order extends CI_Controller
             $trans_type = trim(base64_decode($this->input->get('trans_type')));
 
             //Select Query
-            $this->dummy->select("b.ven_id, b.item_minoq as mpq, b.item_muloq as moq, b.item_id, b.item_name, c.pfm_name, b.um_id, coalesce(e.por_receiveqty, 0) as por_receiveqty, 
+            $this->dummy->select("b.ven_id, d.ven_name, b.item_minoq as mpq, b.item_muloq as moq, b.item_id, b.item_name, c.pfm_name, b.um_id, coalesce(e.por_receiveqty, 0) as por_receiveqty, 
                 a.poc_id, coalesce(a.poc_reqqty, 0) as poc_reqqty, (coalesce(a.poc_reqqty, 0) - coalesce(e.por_receiveqty, 0)) as outstanding, 
                 (CASE WHEN (coalesce(a.poc_reqqty, 0) - coalesce(e.por_receiveqty, 0)) > 0 THEN 'OPEN' ELSE 'CLOSED' END) as status, a.poc_date, a.poc_reqdate");
             $this->dummy->from('(SELECT item_id, poc_id, poc_date, poc_reqdate, ven_id, SUM(poc_reqqty) as poc_reqqty from poc GROUP BY item_id, poc_id, poc_date, poc_reqdate, ven_id) a');
             $this->dummy->join('mst_item b', "a.item_id = b.item_id");
             $this->dummy->join('r_prodfam c', 'b.pfm_id = c.pfm_id');
+            $this->dummy->join('r_vendor d', 'a.ven_id = d.ven_id');
             $this->dummy->join('(SELECT item_id, por_pocid, SUM(por_receiveqty) as por_receiveqty FROM por GROUP BY item_id, por_pocid) e', 'a.poc_id = e.por_pocid and a.item_id = e.item_id', 'left');
             if($vendor_id != ""){
                 $this->dummy->where('a.ven_id', $vendor_id);
@@ -259,6 +260,54 @@ class Os_purchase_order extends CI_Controller
     //         echo json_encode($result);
     //     }
     // }
+
+    public function csv()
+    {
+        $this->dummy = $this->load->database('dummy', TRUE);
+
+        header("Content-type: text/csv; charset=utf-8");
+        header("Content-Disposition: attachment; filename=os_purchase_orders_" . time() . ".csv");
+        $output = fopen("php://output", "w");
+        fputcsv($output, array(
+            "Item No", "Item Name", "Product Family", "Supplier", "Purchase Order", "PO Date", "Req Date", "MOQ", "MPQ", "Request", "Receipt", "Outstanding", "Status"
+        ));
+
+        //Select Query
+        $this->dummy->select("b.ven_id, d.ven_name, b.item_minoq as mpq, b.item_muloq as moq, b.item_id, b.item_name, c.pfm_name, b.um_id, coalesce(e.por_receiveqty, 0) as por_receiveqty, 
+            a.poc_id, coalesce(a.poc_reqqty, 0) as poc_reqqty, (coalesce(a.poc_reqqty, 0) - coalesce(e.por_receiveqty, 0)) as outstanding, 
+            (CASE WHEN (coalesce(a.poc_reqqty, 0) - coalesce(e.por_receiveqty, 0)) > 0 THEN 'OPEN' ELSE 'CLOSED' END) as status, a.poc_date, a.poc_reqdate");
+        $this->dummy->from('(SELECT item_id, poc_id, poc_date, poc_reqdate, ven_id, SUM(poc_reqqty) as poc_reqqty from poc GROUP BY item_id, poc_id, poc_date, poc_reqdate, ven_id) a');
+        $this->dummy->join('mst_item b', "a.item_id = b.item_id");
+        $this->dummy->join('r_prodfam c', 'b.pfm_id = c.pfm_id');
+        $this->dummy->join('r_vendor d', 'a.ven_id = d.ven_id');
+        $this->dummy->join('(SELECT item_id, por_pocid, SUM(por_receiveqty) as por_receiveqty FROM por GROUP BY item_id, por_pocid) e', 'a.poc_id = e.por_pocid and a.item_id = e.item_id', 'left');
+        $this->dummy->order_by('a.poc_date', 'asc');
+        $this->dummy->order_by('b.item_id', 'asc');
+        $records = $this->dummy->get()->result_array();
+
+        $no = 1;
+        foreach ($records as $data) {
+            $data = array(
+                "'".$data['item_id'],
+                $data['item_name'],
+                $data['pfm_name'],
+                $data['ven_name'],
+                $data['poc_id'],
+                $data['poc_date'],
+                $data['poc_reqdate'],
+                $data['mpq'],
+                $data['moq'],
+                $data['poc_reqqty'],
+                $data['por_receiveqty'],
+                $data['outstanding'],
+                $data['status'],
+            );
+
+            fputcsv($output, $data);
+
+            $no++;
+        }
+    }
 
     public function print($option = "")
     {

@@ -85,6 +85,11 @@ class Purchase_orders extends CI_Controller
         echo json_encode($datas);
     }
 
+    function readPono(){
+        $datas = $this->api->query("SELECT distinct a.purchase_order_no, b.number FROM purchase_orders a JOIN suppliers b ON a.supplier_id = b.id ORDER BY a.purchase_order_no ASC");
+        echo json_encode($datas);
+    }
+
     function forecast($item_id, $month, $year, $revision){
         $q_forecast = $this->db->query("SELECT a.component_id, c.item_name, SUM(a.qty) as qty, 
             (SUM(a.qty) * b.month_1) as m1, 
@@ -205,7 +210,9 @@ class Purchase_orders extends CI_Controller
             }
             $this->db->where('a.p_month', $filter_month);
             $this->db->where('a.p_year', $filter_year);
-            $this->db->where('a.revision', $filter_revision);
+            if($filter_revision != ""){
+                $this->db->where('a.revision', $filter_revision);
+            }
             $this->db->like('a.product_family_name', $filter_product_family);
             $this->db->like('a.item_id', $filter_part_no);
             $this->db->like('a.supplier_id', $filter_supplier);
@@ -1443,7 +1450,9 @@ class Purchase_orders extends CI_Controller
         $this->db->join('suppliers c', 'a.supplier_id = c.id');
         $this->db->like('a.p_month', $filter_month);
         $this->db->like('a.p_year', $filter_year);
-        $this->db->like('a.revision', $filter_revision);
+        if($filter_revision != ""){
+            $this->db->like('a.revision', $filter_revision);
+        }
         if($filter_product_family != ""){
             $this->db->where('a.product_family_name', $filter_product_family);
         }
@@ -1500,6 +1509,7 @@ class Purchase_orders extends CI_Controller
                 <th width="20" style="text-align:center;">No</th>
                 <th style="text-align:center;">PO No</th>
                 <th style="text-align:center;">PO Date</th>
+                <th style="text-align:center;">Revision</th>
                 <th style="text-align:center;">Part No</th>
                 <th style="text-align:center;">Part Name</th>
                 <th style="text-align:center;">Part Supplier</th>
@@ -1569,6 +1579,7 @@ class Purchase_orders extends CI_Controller
                             <td>' . $no . '</td>
                             <td>' . $data['purchase_order_no'] . '</td>
                             <td>' . $data['purchase_order_date'] . '</td>
+                            <td style="text-align:center;">' . $data['revision'] . '</td>
                             <td style="mso-number-format:\@;">' . $data['item_id'] . '</td>
                             <td style="mso-number-format:\@;">' . $data['item_supplier'] . '</td>
                             <td>' . $data['item_name'] . '</td>

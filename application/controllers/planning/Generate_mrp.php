@@ -57,8 +57,8 @@ class Generate_mrp extends CI_Controller
             $where = "and pfm_id = '$pfm_id'";
         }
 
-        $this->pg = $this->load->database('pg', TRUE);
-        $query = $this->pg->query("SELECT * FROM mst_item WHERE item_id LIKE '%$post%' and stscode_id = '01' and pfm_id not in ('06','05') $where ORDER BY pfm_id, item_id ASC");
+        $this->dummy = $this->load->database('pg', TRUE);
+        $query = $this->dummy->query("SELECT * FROM mst_item WHERE item_id LIKE '%$post%' and stscode_id = '01' and pfm_id not in ('06') $where ORDER BY pfm_id, item_id ASC");
         $records = $query->result_array();
 
         echo json_encode($records);
@@ -887,7 +887,7 @@ class Generate_mrp extends CI_Controller
             $need_2 = date("m/Y",  strtotime("-2 month", strtotime($filter_year."-".$filter_month."-01")));
             $need_3 = date("m/Y",  strtotime("-3 month", strtotime($filter_year."-".$filter_month."-01")));
 
-            $this->db->select('a.*, c.class, c.composition, c.safety_stock, c.safety, f.name as maker_name, f.type as maker_type');
+            $this->db->select('a.*, e.spq, c.class, c.composition, c.safety_stock, c.safety, f.name as maker_name, f.type as maker_type');
             $this->db->from('generate_mrp_finals a');
             $this->db->join('mst_item_family b', 'a.product_family = b.name', 'left');
             $this->db->join('generate_mrp_abcclass c', 'a.part_no = c.part_no and a.p_month = c.p_month and a.p_year = c.p_year and a.revision = c.revision', 'left');
@@ -961,6 +961,7 @@ class Generate_mrp extends CI_Controller
                         <th rowspan="2" style="text-align:center;">MAKER TYPE</th>
                         <th rowspan="2" style="text-align:center;">CLASS<br>A/B/C</th>
                         <th rowspan="2" style="text-align:center;">PO L/T</th>
+                        <th rowspan="2" style="text-align:center;">SPQ</th>
                         <th rowspan="2" style="text-align:center;">MPQ</th>
                         <th rowspan="2" style="text-align:center;">MOQ</th>
                         <th colspan="3" style="text-align:center;">WORKORDER</th>
@@ -1016,11 +1017,11 @@ class Generate_mrp extends CI_Controller
 
                         if(round($record['total_need'] + $record['safety_stock']) > 0 && $record['moq'] > 0){
                             $final = ($record['total_need'] + $record['safety_stock']);
-                            if($final > $record['moq']){
-                                $mrp_result = (ceil($final / $record['mpq']) * $record['mpq']);
-                            }else{
+                            // if($final > $record['moq']){
+                            //     $mrp_result = (ceil($final / $record['moq']) * $record['moq']);
+                            // }else{
                                 $mrp_result = (ceil($final / $record['moq']) * $record['moq']);
-                            }
+                            // }
                         }else{
                             $mrp_result = 0;
                         }
@@ -1034,6 +1035,7 @@ class Generate_mrp extends CI_Controller
                                         <td>".$record['maker_type']."</td>
                                         <td>".$record['class']."</td>
                                         <td>".$record['leadtime']."</td>
+                                        <td>".$record['spq']."</td>
                                         <td>".$record['mpq']."</td>
                                         <td>".$record['moq']."</td>
                                         <td style='text-align:right;'>".round($record['issued_1'])."</td>

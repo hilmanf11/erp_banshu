@@ -255,6 +255,7 @@ class Supplier_items extends CI_Controller
                     "item_supplier" => $read->item_supplier,
                     "maker_code" => $read->maker_code,
                     "maker_type" => $read->maker_type,
+                    "spq" => $read->spq,
                     "mpq" => $read->mpq,
                     "moq" => $read->moq,
                     "price" => $read->price,
@@ -343,18 +344,19 @@ class Supplier_items extends CI_Controller
                 'item_id' => $data->val($i, 3),
                 'supplier_number' => $data->val($i, 4),
                 'coo_name' => $data->val($i, 5),
-                'mpq' => $data->val($i, 6),
-                'moq' => $data->val($i, 7),
-                'currency' => $data->val($i, 8),
-                'price' => $data->val($i, 9),
-                'maker_code' => $data->val($i, 10),
-                'maker_type' => $data->val($i, 11),
-                'share_order' => $data->val($i, 12),
-                'valid_date' => $data->val($i, 13),
-                'leadtime' => $data->val($i, 14),
-                'landed_cost' => $data->val($i, 15),
-                'import_duty' => $data->val($i, 16),
-                'remarks' => $data->val($i, 17),
+                'spq' => $data->val($i, 6),
+                'mpq' => $data->val($i, 7),
+                'moq' => $data->val($i, 8),
+                'currency' => $data->val($i, 9),
+                'price' => $data->val($i, 10),
+                'maker_code' => $data->val($i, 11),
+                'maker_type' => $data->val($i, 12),
+                'share_order' => $data->val($i, 13),
+                'valid_date' => $data->val($i, 14),
+                'leadtime' => $data->val($i, 15),
+                'landed_cost' => $data->val($i, 16),
+                'import_duty' => $data->val($i, 17),
+                'remarks' => $data->val($i, 18),
             );
         }
         $datas['total'] = count($datas);
@@ -415,6 +417,7 @@ class Supplier_items extends CI_Controller
                     "plant" => $data['plant'],
                     "maker_code" => $data['maker_code'],
                     "maker_type" => $data['maker_code'],
+                    "spq" => $data['spq'],
                     "mpq" => $data['mpq'],
                     "moq" => $data['moq'],
                     "price" => $data['price'],
@@ -437,6 +440,7 @@ class Supplier_items extends CI_Controller
                     "plant" => $data['plant'],
                     "maker_code" => $data['maker_code'],
                     "maker_type" => $data['maker_code'],
+                    "spq" => $data['spq'],
                     "mpq" => $data['mpq'],
                     "moq" => $data['moq'],
                     "price" => $data['price'],
@@ -544,8 +548,7 @@ class Supplier_items extends CI_Controller
                     <th>Maker</th>
                     <th>Maker Type</th>
                     <th>Maker Origin</th>
-                    <!-- <th>Landed Cost</th>
-                    <th>Import Duty</th> -->
+                    <th>SPQ</th>
                     <th>MPQ</th>
                     <th>MOQ</th>
                     <th>Price</th>
@@ -573,6 +576,7 @@ class Supplier_items extends CI_Controller
                         <td>' . $data['maker_origin'] . '</td>
                         <!-- <td>' . $data['landed_cost'] . '</td>
                         <td>' . $data['import_duty'] . '</td> -->
+                        <td>' . $data['spq'] . '</td>
                         <td>' . $data['mpq'] . '</td>
                         <td>' . $data['mpq'] . '</td>
                         <td>' . $data['price'] . '</td>

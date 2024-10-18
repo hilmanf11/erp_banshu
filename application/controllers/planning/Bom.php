@@ -263,6 +263,7 @@ class Bom extends CI_Controller
                 <th>Product No</th>
                 <th>Part No</th>
                 <th>Qty</th>
+                <th>Maker</th>
             </tr>';
         $no = 1;
         foreach ($records as $data) {
@@ -270,7 +271,8 @@ class Bom extends CI_Controller
                     <td>' . $no . '</td>
                     <td>' . $data['item_id'] . '</td>
                     <td>' . $data['component_id'] . '</td>
-                    <td>' . $data['qty'] . '</td>';
+                    <td>' . $data['qty'] . '</td>
+                    <td>' . $data['maker'] . '</td>';
             $no++;
         }
         $html .= '</table></body></html>';

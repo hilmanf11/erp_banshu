@@ -12,8 +12,8 @@
             <th rowspan="2" data-options="field:'total_mpp',width:80,halign:'center',align:'right', formatter: numberformat, styler: cellStyler">Total MPP</th>
             <th rowspan="2" data-options="field:'balance',width:80,halign:'center',align:'right',formatter: numberformat, styler: cellStyler">Balance</th>
             <th rowspan="2" data-options="field:'balance',width:80,halign:'center',align:'right',formatter: numberformat, styler: cellStyler">Balance</th>
-            <th rowspan="2" data-options="field:'persen_mpp',width:80,halign:'center',align:'right',formatter: numberdecimalformat">% MPP</th>
-            <th rowspan="2" data-options="field:'persen_dev',width:80,halign:'center',align:'right',formatter: numberdecimalformat">% Dev</th>
+            <th rowspan="2" data-options="field:'persen_mpp',width:80,halign:'center',align:'right',formatter: numberdecimalformat,styler: cellStylerPercentage">% MPP</th>
+            <th rowspan="2" data-options="field:'persen_dev',width:80,halign:'center',align:'right',formatter: numberdecimalformat,styler: cellStylerPercentage">% Dev</th>
         </tr>
         <tr>
             <th data-options="field:'revision_0',width:120,halign:'center',align:'right', formatter: numberformat, styler: cellStyler">Rev 0</th>

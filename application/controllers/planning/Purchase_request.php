@@ -237,11 +237,11 @@ class Purchase_request extends CI_Controller
                 
                 if(round($generate['total_need'] + $generate['safety_stock']) > 0 && $generate['moq'] > 0){
                     $final = ($generate['total_need'] + $generate['safety_stock']);
-                    if($final > $generate['moq']){
-                        $purchase_order = (ceil($final / $generate['mpq']) * $generate['mpq']);
-                    }else{
+                    // if($final > $generate['moq']){
+                    //     $purchase_order = (ceil($final / $generate['mpq']) * $generate['mpq']);
+                    // }else{
                         $purchase_order = (ceil($final / $generate['moq']) * $generate['moq']);
-                    }
+                    // }
                 }else{
                     $purchase_order = 0;
                 }

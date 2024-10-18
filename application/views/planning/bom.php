@@ -389,6 +389,11 @@
                             width: 100,
                             halign: 'center',
                             align: 'right',
+                        },{
+                            field: 'maker',
+                            title: 'Maker',
+                            width: 150,
+                            halign: 'center',
                         },]
                     ],
                     onResize: function() {

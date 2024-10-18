@@ -48,8 +48,8 @@ class Os_supply extends CI_Controller
     }
 
     public function readProductFamily(){
-        $this->pg = $this->load->database('pg', TRUE);
-        $query = $this->pg->query("SELECT * FROM r_prodfam WHERE prod_group = 'Raw Material' and pfm_id != '05' ORDER BY pfm_id ASC");
+        $this->dummy = $this->load->database('pg', TRUE);
+        $query = $this->dummy->query("SELECT * FROM r_prodfam WHERE prod_group = 'Raw Material' and pfm_id != '06' ORDER BY pfm_id ASC");
         $records = $query->result_array();
 
         echo json_encode($records);
@@ -58,8 +58,8 @@ class Os_supply extends CI_Controller
     public function readProducts($pfm_id)
     {
         $post = isset($_POST['q']) ? $_POST['q'] : "";
-        $this->pg = $this->load->database('pg', TRUE);
-        $query = $this->pg->query("SELECT * FROM mst_item WHERE pfm_id = '$pfm_id' and stscode_id = '01' and item_id LIKE '%$post%' ORDER BY item_id ASC");
+        $this->dummy = $this->load->database('pg', TRUE);
+        $query = $this->dummy->query("SELECT * FROM mst_item WHERE pfm_id = '$pfm_id' and stscode_id = '01' and item_id LIKE '%$post%' ORDER BY item_id ASC");
         $records = $query->result_array();
 
         echo json_encode($records);
@@ -310,7 +310,7 @@ class Os_supply extends CI_Controller
 
     public function print($option = "")
     {
-        $this->pg = $this->load->database('pg', TRUE);
+        $this->dummy = $this->load->database('dummy', TRUE);
         if ($option == "excel") {
             $format  = date("Ymd");
             header("Content-type: application/vnd-ms-excel");
@@ -332,7 +332,7 @@ class Os_supply extends CI_Controller
         // $cutoff =  date('Y-m-01', strtotime('-1 month', strtotime($filter_cutoff)));
         $cutoff =  date('Y-m-01', strtotime($filter_cutoff));
 
-        $itemq = $this->pg->query("SELECT z.item_id, z.item_name, z.pfm_name, COALESCE(SUM(z.hasil) + SUM(z.stock), 0) as stock from (
+        $itemq = $this->dummy->query("SELECT z.item_id, z.item_name, z.pfm_name, COALESCE(SUM(z.hasil) + SUM(z.stock), 0) as stock from (
             select a.temp_woc_id, a.periode, a.wp, d.item_id, d.item_name, e.pfm_name, a.qty, b.bom_qty_perassy, (a.qty * b.bom_qty_perassy) as hasil, COALESCE(SUM(c.qty_need), 0) as qty_need, SUM(c.qty_scan) as qty_scan, COALESCE(SUM(c.qty_need) - SUM(c.qty_scan), 0) as stock
             from wip_trx_mpp a
             join mst_bom b ON a.assy_no = b.bom_par_item

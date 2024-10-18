@@ -48,8 +48,8 @@ class Os_mpp extends CI_Controller
     }
 
     public function readProductFamily(){
-        $this->pg = $this->load->database('pg', TRUE);
-        $query = $this->pg->query("SELECT * FROM r_prodfam WHERE prod_group = 'Raw Material' and pfm_id != '05' ORDER BY pfm_id ASC");
+        $this->dummy = $this->load->database('dummy', TRUE);
+        $query = $this->dummy->query("SELECT * FROM r_prodfam WHERE prod_group = 'Raw Material' and pfm_id != '06' ORDER BY pfm_id ASC");
         $records = $query->result_array();
 
         echo json_encode($records);
@@ -58,8 +58,8 @@ class Os_mpp extends CI_Controller
     public function readProducts($pfm_id)
     {
         $post = isset($_POST['q']) ? $_POST['q'] : "";
-        $this->pg = $this->load->database('pg', TRUE);
-        $query = $this->pg->query("SELECT * FROM mst_item WHERE pfm_id = '$pfm_id' and stscode_id = '01' and item_id LIKE '%$post%' ORDER BY item_id ASC");
+        $this->dummy = $this->load->database('pg', TRUE);
+        $query = $this->dummy->query("SELECT * FROM mst_item WHERE pfm_id = '$pfm_id' and stscode_id = '01' and item_id LIKE '%$post%' ORDER BY item_id ASC");
         $records = $query->result_array();
 
         echo json_encode($records);
@@ -67,7 +67,7 @@ class Os_mpp extends CI_Controller
 
     public function datatables()
     {
-        $this->pg = $this->load->database('pg', TRUE);
+        $this->dummy = $this->load->database('dummy', TRUE);
         if ($this->input->get()) {
             //Filter Data
             $filter_month = base64_decode($this->input->get('filter_month'));
@@ -83,7 +83,7 @@ class Os_mpp extends CI_Controller
             // $qmpp = $this->pg->query("SELECT * FROM wip_trx_mpp WHERE wp_date BETWEEN '$filter_start' and '$filter_end'");
             // $dmpp = $qmpp->result_array();
 
-            $itemq = $this->pg->query("SELECT b.bom_com_item, c.item_name, d.pfm_name, SUM(a.total * b.bom_qty_perassy) as total from
+            $itemq = $this->dummy->query("SELECT b.bom_com_item, c.item_name, d.pfm_name, SUM(a.total * b.bom_qty_perassy) as total from
                 (select assy_no, SUM(qty) as total from wip_trx_mpp WHERE wp_date between '$filter_start' and '$filter_end' GROUP BY assy_no ORDER BY SUM(qty) asc) a
                 join mst_bom b on a.assy_no = b.bom_par_item
                 join mst_item c on b.bom_com_item = c.item_id
@@ -300,7 +300,7 @@ class Os_mpp extends CI_Controller
 
     public function print($option = "")
     {
-        $this->pg = $this->load->database('pg', TRUE);
+        $this->dummy = $this->load->database('dummy', TRUE);
         if ($option == "excel") {
             $format  = date("Ymd");
             header("Content-type: application/vnd-ms-excel");
@@ -322,7 +322,7 @@ class Os_mpp extends CI_Controller
         $filter_start = date("Y-m-d", strtotime($filter_cutoff . "+1 days"));
         $filter_end = date("Y-m-t", strtotime($filter_cutoff));
 
-        $itemq = $this->pg->query("SELECT b.bom_com_item, c.item_name, d.pfm_name, SUM(a.total * b.bom_qty_perassy) as total from
+        $itemq = $this->dummy->query("SELECT b.bom_com_item, c.item_name, d.pfm_name, SUM(a.total * b.bom_qty_perassy) as total from
                 (select assy_no, SUM(qty) as total from wip_trx_mpp WHERE wp_date between '$filter_start' and '$filter_end' GROUP BY assy_no ORDER BY SUM(qty) asc) a
                 join mst_bom b on a.assy_no = b.bom_par_item
                 join mst_item c on b.bom_com_item = c.item_id

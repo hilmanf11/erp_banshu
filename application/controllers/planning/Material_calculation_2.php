@@ -119,7 +119,7 @@ class Material_calculation_2 extends CI_Controller
                 $ith = $this->dummy->query("SELECT sum(ith_qty) as qty from ith where ith_item_id = '$item_id' and ith_date <= '$filter_date'");
                 $ithRow = $ith->row();
 
-                $queryEta = $this->dummy->query("SELECT SUM(por_receiveqty) as total from por where item_id = '$item_id' and por_date between '$period_start' and '$period_end'");
+                $queryEta = $this->dummy->query("SELECT SUM(por_receiveqty) as total from por where item_id = '$item_id' and por_docno not like '%PEMUTIHAN%' and por_date between '$period_start' and '$period_end'");
                 $totalEta = $queryEta->row();
                 $etaTotal = empty(@$totalEta->total) ? 0 : @$totalEta->total;
 
@@ -132,7 +132,7 @@ class Material_calculation_2 extends CI_Controller
                     $working_date = date("Y-m-d", strtotime($firstDate));
                     
                     //ETA
-                    $delivery_schedule = $this->dummy->query("SELECT SUM(por_receiveqty) as total from por where item_id = '$item_id' and por_date = '$working_date'");
+                    $delivery_schedule = $this->dummy->query("SELECT SUM(por_receiveqty) as total from por where item_id = '$item_id' and por_docno not like '%PEMUTIHAN%' and por_date = '$working_date'");
                     $totalRow = $delivery_schedule->row();
                     $etaqty = empty(@$totalRow->total) ? 0 : @$totalRow->total;
                     
@@ -497,7 +497,7 @@ class Material_calculation_2 extends CI_Controller
             $ith = $this->dummy->query("SELECT sum(ith_qty) as qty from ith where ith_item_id = '$item_id' and ith_date <= '$filter_date'");
             $ithRow = $ith->row();
 
-            $queryEta = $this->dummy->query("SELECT SUM(por_receiveqty) as total from por where item_id = '$item_id' and por_date between '$period_start' and '$period_end'");
+            $queryEta = $this->dummy->query("SELECT SUM(por_receiveqty) as total from por where item_id = '$item_id' and por_docno not like '%PEMUTIHAN%' and por_date between '$period_start' and '$period_end'");
             $totalEta = $queryEta->row();
             $etaTotal = empty(@$totalEta->total) ? 0 : @$totalEta->total;
 
@@ -536,7 +536,7 @@ class Material_calculation_2 extends CI_Controller
                 // $delivery_schedule = $this->api->read("delivery_schedules", [], ["part_no" => $item_id, "p_month" => $filter_month, "p_year" => $filter_year, "revision" => $filter_revision, "delivey_date_1" => $working_date2]);
                 // $qty_delivery_schedule = empty($delivery_schedule->delivey_qty_1) ? 0 : $delivery_schedule->delivey_qty_1;
 
-                $delivery_schedule = $this->dummy->query("SELECT SUM(por_receiveqty) as total from por where item_id = '$item_id' and por_date = '$working_date2'");
+                $delivery_schedule = $this->dummy->query("SELECT SUM(por_receiveqty) as total from por where item_id = '$item_id' and por_docno not like '%PEMUTIHAN%' and por_date = '$working_date2'");
                 $totalRow = $delivery_schedule->row();
                 $qty_delivery_schedule = empty(@$totalRow->total) ? 0 : @$totalRow->total;
                 

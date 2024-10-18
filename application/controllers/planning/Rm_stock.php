@@ -48,8 +48,8 @@ class Rm_stock extends CI_Controller
     }
 
     public function readProductFamily(){
-        $this->pg = $this->load->database('pg', TRUE);
-        $query = $this->pg->query("SELECT * FROM r_prodfam WHERE prod_group = 'Raw Material' and pfm_id != '05' ORDER BY pfm_id ASC");
+        $this->dummy = $this->load->database('dummy', TRUE);
+        $query = $this->dummy->query("SELECT * FROM r_prodfam WHERE prod_group = 'Raw Material' and pfm_id != '06' ORDER BY pfm_id ASC");
         $records = $query->result_array();
 
         echo json_encode($records);
@@ -58,8 +58,8 @@ class Rm_stock extends CI_Controller
     public function readProducts($pfm_id)
     {
         $post = isset($_POST['q']) ? $_POST['q'] : "";
-        $this->pg = $this->load->database('pg', TRUE);
-        $query = $this->pg->query("SELECT * FROM mst_item WHERE pfm_id = '$pfm_id' and stscode_id = '01' and item_id LIKE '%$post%' ORDER BY item_id ASC");
+        $this->dummy = $this->load->database('dummy', TRUE);
+        $query = $this->dummy->query("SELECT * FROM mst_item WHERE pfm_id = '$pfm_id' and stscode_id = '01' and item_id LIKE '%$post%' ORDER BY item_id ASC");
         $records = $query->result_array();
 
         echo json_encode($records);
@@ -67,7 +67,7 @@ class Rm_stock extends CI_Controller
 
     public function datatables()
     {
-        $this->pg = $this->load->database('pg', TRUE);
+        $this->dummy = $this->load->database('dummy', TRUE);
         if ($this->input->get()) {
             //Filter Data
             $filter_month = base64_decode($this->input->get('filter_month'));
@@ -80,7 +80,7 @@ class Rm_stock extends CI_Controller
             // $cutoff =  date('Y-m-d', strtotime('-1 day', strtotime($filter_cutoff)));
             $cutoff = $filter_cutoff;
 
-            $itemq = $this->pg->query("SELECT b.item_id, b.item_name, c.pfm_name, coalesce(round(sum(a.ith_qty)),0) as stock
+            $itemq = $this->dummy->query("SELECT b.item_id, b.item_name, c.pfm_name, coalesce(round(sum(a.ith_qty)),0) as stock
                 from ith a
                 JOIN mst_item b ON a.ith_item_id = b.item_id and b.stscode_id = '01'
                 JOIN r_prodfam c ON b.pfm_id = c.pfm_id and c.prod_group = 'Raw Material' and c.pfm_id != '05'
@@ -294,7 +294,7 @@ class Rm_stock extends CI_Controller
 
     public function print($option = "")
     {
-        $this->pg = $this->load->database('pg', TRUE);
+        $this->dummy = $this->load->database('pg', TRUE);
         if ($option == "excel") {
             $format  = date("Ymd");
             header("Content-type: application/vnd-ms-excel");
@@ -316,7 +316,7 @@ class Rm_stock extends CI_Controller
         // $cutoff =  date('Y-m-d', strtotime('-1 day', strtotime($filter_cutoff)));
         $cutoff = $filter_cutoff;
 
-        $itemq = $this->pg->query("SELECT b.item_id, b.item_name, c.pfm_name, coalesce(round(sum(a.ith_qty)),0) as stock
+        $itemq = $this->dummy->query("SELECT b.item_id, b.item_name, c.pfm_name, coalesce(round(sum(a.ith_qty)),0) as stock
             from ith a
             JOIN mst_item b ON a.ith_item_id = b.item_id and b.stscode_id = '01'
             JOIN r_prodfam c ON b.pfm_id = c.pfm_id and c.prod_group = 'Raw Material' and c.pfm_id != '05'

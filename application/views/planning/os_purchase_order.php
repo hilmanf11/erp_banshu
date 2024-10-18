@@ -7,6 +7,7 @@
             <th data-options="field:'item_id',width:250,halign:'center'">Item Id</th>
             <th data-options="field:'item_name',width:250,halign:'center'">Item Name</th>
             <th data-options="field:'pfm_name',width:150,halign:'center'">Product Family</th>
+            <th data-options="field:'ven_name',width:250,halign:'center'">Supplier</th>
             <th data-options="field:'poc_id',width:200,halign:'center'">Purchase Order</th>
             <th data-options="field:'poc_date',width:100,halign:'center'">PO Date</th>
             <th data-options="field:'poc_reqdate',width:100,halign:'center'">Req Date</th>
@@ -71,6 +72,7 @@
         </div>
     </fieldset>
     <?= $button ?>
+    <a href="javascript:;" class="easyui-linkbutton" plain="true" onclick="csv()"><i class="fa fa-file"></i> Export to CSV</a>
 </div>
 
 <!-- PDF -->
@@ -208,6 +210,15 @@
         }else{
             window.location.assign('<?= base_url('planning/os_purchase_order/print/excel') ?>' + url);
         }
+    }
+
+    function csv() {
+        $.messager.prompt('Export CSV', 'Please input Password "CSV" for Export Data CSV', function(r){
+            if (r == "CSV"){
+                $.messager.alert('Info','Please Wait Export to CSV');
+                window.location.assign('<?= base_url('planning/os_purchase_order/csv') ?>');
+            }
+        });
     }
 
     function reload() {

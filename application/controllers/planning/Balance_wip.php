@@ -48,8 +48,8 @@ class balance_wip extends CI_Controller
     }
 
     public function readProductFamily(){
-        $this->pg = $this->load->database('pg', TRUE);
-        $query = $this->pg->query("SELECT * FROM r_prodfam WHERE prod_group = 'Raw Material' and pfm_id != '05' ORDER BY pfm_id ASC");
+        $this->dummy = $this->load->database('dummy', TRUE);
+        $query = $this->dummy->query("SELECT * FROM r_prodfam WHERE prod_group = 'Raw Material' and pfm_id != '06' ORDER BY pfm_id ASC");
         $records = $query->result_array();
 
         echo json_encode($records);
@@ -58,8 +58,8 @@ class balance_wip extends CI_Controller
     public function readProducts($pfm_id)
     {
         $post = isset($_POST['q']) ? $_POST['q'] : "";
-        $this->pg = $this->load->database('pg', TRUE);
-        $query = $this->pg->query("SELECT * FROM mst_item WHERE pfm_id = '$pfm_id' and stscode_id = '01' and item_id LIKE '%$post%' ORDER BY item_id ASC");
+        $this->dummy = $this->load->database('dummy', TRUE);
+        $query = $this->dummy->query("SELECT * FROM mst_item WHERE pfm_id = '$pfm_id' and stscode_id = '01' and item_id LIKE '%$post%' ORDER BY item_id ASC");
         $records = $query->result_array();
 
         echo json_encode($records);
@@ -326,7 +326,7 @@ class balance_wip extends CI_Controller
 
     public function print($option = "")
     {
-        $this->pg = $this->load->database('pg', TRUE);
+        $this->dummy = $this->load->database('dummy', TRUE);
         if ($option == "excel") {
             $format  = date("Ymd");
             header("Content-type: application/vnd-ms-excel");
@@ -347,7 +347,7 @@ class balance_wip extends CI_Controller
 
         $cutoff =  date('Y-m-01', strtotime('-1 month', strtotime($filter_cutoff)));
 
-        $itemq = $this->pg->query("SELECT b.item_id, c.item_name, d.pfm_name, COALESCE(SUM(b.qty_scan) - SUM(b.qty_need), 0) as stock
+        $itemq = $this->dummy->query("SELECT b.item_id, c.item_name, d.pfm_name, COALESCE(SUM(b.qty_scan) - SUM(b.qty_need), 0) as stock
             from wip_trx_mpp a 
             join serial_detail_kanbanrm b ON a.temp_woc_id = b.kanbanrm_woc_id
             join mst_item c on b.item_id = c.item_id and c.stscode_id = '01'

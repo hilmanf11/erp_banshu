@@ -237,6 +237,7 @@ class Delivery_schedules extends CI_Controller
             $filter_product_family = base64_decode($this->input->get('filter_product_family'));
             $filter_part_no = trim(base64_decode($this->input->get('filter_part_no')));
             $filter_po_no = trim(base64_decode($this->input->get('filter_po_no')));
+            $filter_supplier = trim(base64_decode($this->input->get('filter_supplier')));
 
             $page = $this->input->post('page');
             $rows = $this->input->post('rows');
@@ -251,7 +252,12 @@ class Delivery_schedules extends CI_Controller
             $this->db->join('suppliers b', 'a.supplier_id = b.id');
             $this->db->where('a.p_month', $filter_month);
             $this->db->where('a.p_year', $filter_year);
-            $this->db->where('a.revision', $filter_revision);
+            if($filter_revision != ""){
+                $this->db->where('a.revision', $filter_revision);
+            }
+            if($filter_supplier != ""){
+                $this->db->like('b.id', $filter_supplier);
+            }
             if($filter_po_no != ""){
                 $this->db->like('a.po_no', $filter_po_no);
             }
@@ -387,6 +393,7 @@ class Delivery_schedules extends CI_Controller
         $filter_product_family = base64_decode($this->input->get('filter_product_family'));
         $filter_part_no = trim(base64_decode($this->input->get('filter_part_no')));
         $filter_po_no = trim(base64_decode($this->input->get('filter_po_no')));
+        $filter_supplier = trim(base64_decode($this->input->get('filter_supplier')));
 
         //Select Query
         $this->db->select('a.*, b.name as supplier_name');
@@ -394,10 +401,11 @@ class Delivery_schedules extends CI_Controller
         $this->db->join('suppliers b', 'a.supplier_id = b.id');
         $this->db->where('a.p_month', $filter_month);
         $this->db->where('a.p_year', $filter_year);
-        $this->db->where('a.revision', $filter_revision);
+        $this->db->like('a.revision', $filter_revision);
         $this->db->like('a.product_family', $filter_product_family);
         $this->db->like('a.part_no', $filter_part_no);
         $this->db->like('a.po_no', $filter_po_no);
+        $this->db->like('a.supplier_id', $filter_supplier);
         $this->db->order_by('b.name');
         $this->db->order_by('a.part_no');
         $records = $this->db->get()->result_array();
@@ -592,6 +600,7 @@ class Delivery_schedules extends CI_Controller
         $filter_product_family = base64_decode($this->input->get('filter_product_family'));
         $filter_part_no = trim(base64_decode($this->input->get('filter_part_no')));
         $filter_po_no = trim(base64_decode($this->input->get('filter_po_no')));
+        $filter_supplier = trim(base64_decode($this->input->get('filter_supplier')));
 
         $period_1 = date("F Y", strtotime($filter_year."-".$filter_month."-01"));
         $period_2 = date("F Y",  strtotime("1 month", strtotime($filter_year."-".$filter_month."-01")));
@@ -606,10 +615,11 @@ class Delivery_schedules extends CI_Controller
         $this->db->join('suppliers b', 'a.supplier_id = b.id');
         $this->db->where('a.p_month', $filter_month);
         $this->db->where('a.p_year', $filter_year);
-        $this->db->where('a.revision', $filter_revision);
+        $this->db->like('a.revision', $filter_revision);
         $this->db->like('a.po_no', $filter_po_no);
         $this->db->like('a.product_family', $filter_product_family);
         $this->db->like('a.part_no', $filter_part_no);
+        $this->db->like('a.supplier_id', $filter_supplier);
         $this->db->order_by('b.name', 'asc');
         $this->db->order_by('a.product_family', 'asc');
         $this->db->order_by('a.part_no', 'asc');

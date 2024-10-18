@@ -29,6 +29,7 @@
             <th rowspan="2" data-options="field:'purchase_request_no',width:180,halign:'center'">PR No</th>
             <th rowspan="2" data-options="field:'purchase_order_no',width:180,halign:'center'">PO No</th>
             <th rowspan="2" data-options="field:'purchase_order_date',width:80,halign:'center'">PO Date</th>
+            <th rowspan="2" data-options="field:'revision',width:80,align:'center'">Revision</th>
             <th rowspan="2" data-options="field:'total_qty',width:100,halign:'center',align:'right',formatter:numberformatPrice">Qty</th>
             <th rowspan="2" data-options="field:'currency',width:80,align:'center'">Currency</th>
             <th rowspan="2" data-options="field:'total_amount',width:120,halign:'center',align:'right',formatter:numberformatPrice">Amount</th>

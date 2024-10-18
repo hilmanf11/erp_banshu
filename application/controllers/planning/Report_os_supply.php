@@ -282,6 +282,7 @@ class Report_os_supply extends CI_Controller
                             <th rowspan="2" style="text-align:center;">Part Name</th>
                             <th colspan="4" style="text-align:center;">Recap Last Month</th>
                             <th colspan="3" style="text-align:center;">Recap Current Month</th>
+                            <th rowspan="2" style="text-align:center;">Balance<br>WIP</th>
                             <th rowspan="2" style="text-align:center;">Curent<br>WP</th>
                             <th rowspan="2" style="text-align:center;">Last<br>Supply</th>
                             '.$header.'
@@ -426,6 +427,12 @@ class Report_os_supply extends CI_Controller
                     $tgl++;
                 }
 
+                if(($nowSupply - $record['need']) > 0){
+                    $balance_wip = ($nowSupply - $record['need']);
+                }else{
+                    $balance_wip = 0;
+                }
+
                 $html .= '<tr>
                             <td style="text-align:center;">' . $no . '</td>
                             <td>' . $record['item_id'] . '</td>
@@ -437,6 +444,7 @@ class Report_os_supply extends CI_Controller
                             <td>' . $record['need'] . '</td>
                             <td>' . $nowSupply . '</td>
                             <td>' . $nowSupplyOs . '</td>
+                            <td>' . $balance_wip . '</td>
                             <td>' . $wpp2 . '</td>
                             <td>' . $nowWp. '</td>
                             '.$content.'

@@ -1,6 +1,6 @@
 <table id="dg" class="easyui-datagrid" style="width:100%;" toolbar="#toolbar"></table>
 
-<div id="toolbar" style="height: 195px; padding:10px;">
+<div id="toolbar" style="height: 235px; padding:10px;">
     <div style="width: 100%; display: grid; grid-template-columns: auto auto auto; grid-gap: 5px; display: flex;">
         <fieldset style="width: 60%; border:2px solid #d0d0d0; margin-bottom: 5px; margin-top: 5px; border-radius:4px;">
             <legend><b>Filter Data</b></legend>
@@ -20,6 +20,10 @@
                         <option value="4">4</option>
                         <option value="5">5</option>
                     </select>
+                </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Supplier</span>
+                    <input style="width:60%;" id="filter_supplier" class="easyui-combogrid">
                 </div>
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;"></span>
@@ -370,12 +374,14 @@
         var filter_product_family = $("#filter_product_family").combobox('getValue');
         var filter_part_no = $("#filter_part_no").combogrid('getValue');
         var filter_po_no = $("#filter_po_no").combogrid('getValue');
+        var filter_supplier = $("#filter_supplier").combogrid('getValue');
 
         var url = "?filter_month=" + window.btoa(filter_month) +
             "&filter_year=" + window.btoa(filter_year) +
             "&filter_revision=" + window.btoa(filter_revision) +
             "&filter_product_family=" + window.btoa(filter_product_family) +
             "&filter_po_no=" + window.btoa(filter_po_no) +
+            "&filter_supplier=" + window.btoa(filter_supplier) +
             "&filter_part_no=" + window.btoa(filter_part_no);
 
         if (filter_month == "" || filter_year == "" || filter_revision == "") {
@@ -684,12 +690,14 @@
         var filter_product_family = $("#filter_product_family").combobox('getValue');
         var filter_part_no = $("#filter_part_no").combogrid('getValue');
         var filter_po_no = $("#filter_po_no").combogrid('getValue');
+        var filter_supplier = $("#filter_supplier").combogrid('getValue');
 
         var url = "?filter_month=" + window.btoa(filter_month) +
             "&filter_year=" + window.btoa(filter_year) +
             "&filter_revision=" + window.btoa(filter_revision) +
             "&filter_product_family=" + window.btoa(filter_product_family) +
             "&filter_po_no=" + window.btoa(filter_po_no) +
+            "&filter_supplier=" + window.btoa(filter_supplier) +
             "&filter_part_no=" + window.btoa(filter_part_no);
 
         if (filter_month == "" || filter_year == "" || filter_revision == "") {
@@ -823,6 +831,33 @@
                     ]
                 });
             }
+        });
+
+        $('#filter_supplier').combogrid({
+            url: '<?= base_url('planning/purchase_orders/readSupplier') ?>',
+            panelWidth: 400,
+            idField: 'id',
+            textField: 'name',
+            mode: 'remote',
+            fitColumns: true,
+            prompt: "Select Supplier",
+            icons: [{
+                iconCls: 'icon-clear',
+                handler: function(e) {
+                    $(e.data.target).combogrid('clear').combogrid('textbox').focus();
+                }
+            }],
+            columns: [
+                [{
+                    field: 'number',
+                    title: 'ID',
+                    width: 80
+                }, {
+                    field: 'name',
+                    title: 'Name',
+                    width: 250
+                }]
+            ]
         });
 
         $('#filter_product_family').combobox({

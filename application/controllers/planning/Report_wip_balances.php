@@ -60,7 +60,7 @@ class Report_wip_balances extends CI_Controller
                 $period_start = date("Y-m-d", strtotime("+1 day", strtotime($period_start)));
             }
 
-            $query = $this->db->query("SELECT * FROM mst_item_raw WHERE pfm_id = '$filter_product_family'");
+            $query = $this->db->query("SELECT * FROM mst_item_raw WHERE pfm_id = '$filter_product_family' limit 10");
             $records = $query->result_array();
 
             //Config

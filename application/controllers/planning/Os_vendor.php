@@ -38,8 +38,8 @@ class Os_vendor extends CI_Controller
     }
 
     public function readProductFamily(){
-        $this->pg = $this->load->database('pg', TRUE);
-        $query = $this->pg->query("SELECT * FROM r_prodfam WHERE prod_group = 'Raw Material' and pfm_id != '05' ORDER BY pfm_id ASC");
+        $this->dummy = $this->load->database('dummy', TRUE);
+        $query = $this->dummy->query("SELECT * FROM r_prodfam WHERE prod_group = 'Raw Material' and pfm_id != '06' ORDER BY pfm_id ASC");
         $records = $query->result_array();
 
         echo json_encode($records);
@@ -48,8 +48,8 @@ class Os_vendor extends CI_Controller
     public function readProducts($pfm_id)
     {
         $post = isset($_POST['q']) ? $_POST['q'] : "";
-        $this->pg = $this->load->database('pg', TRUE);
-        $query = $this->pg->query("SELECT * FROM mst_item WHERE pfm_id = '$pfm_id' and item_id LIKE '%$post%' ORDER BY item_id ASC");
+        $this->dummy = $this->load->database('dummy', TRUE);
+        $query = $this->dummy->query("SELECT * FROM mst_item WHERE pfm_id = '$pfm_id' and item_id LIKE '%$post%' ORDER BY item_id ASC");
         $records = $query->result_array();
 
         echo json_encode($records);
@@ -57,7 +57,7 @@ class Os_vendor extends CI_Controller
 
     public function datatables()
     {
-        $this->pg = $this->load->database('pg', TRUE);
+        $this->dummy = $this->load->database('dummy', TRUE);
         if ($this->input->get()) {
             //Filter Data
             $filter_month = base64_decode($this->input->get('filter_month'));
@@ -69,22 +69,22 @@ class Os_vendor extends CI_Controller
 
             $cutoff =  date('Y-m-d', strtotime('-1 day', strtotime($filter_cutoff)));
 
-            $this->pg->select("b.item_id, b.item_name, c.pfm_name, 
+            $this->dummy->select("b.item_id, b.item_name, c.pfm_name, 
             (CASE WHEN (d.poc_reqqty - a.por_receiveqty) < 0 THEN 0 ELSE (d.poc_reqqty - a.por_receiveqty) END) as stock");
-            $this->pg->from("(SELECT item_id, SUM(por_receiveqty) as por_receiveqty FROM por WHERE por_date <= '$filter_cutoff' GROUP BY item_id) a");
-            $this->pg->join('mst_item b', "a.item_id = b.item_id and b.stscode_id = '01'");
-            $this->pg->join('r_prodfam c', "b.pfm_id = c.pfm_id and c.prod_group = 'Raw Material' and c.pfm_id != '05'");
-            $this->pg->join("(SELECT item_id, SUM(poc_reqqty) as poc_reqqty from poc where poc_date <= '$filter_cutoff' GROUP BY item_id) d", "b.item_id = d.item_id");
-            $this->pg->like('b.pfm_id', $filter_product_family);
-            $this->pg->like('b.item_id', $filter_product_no);
-            $this->pg->group_by('b.item_id');
-            $this->pg->group_by('b.item_name');
-            $this->pg->group_by('c.pfm_name');
-            $this->pg->group_by('a.por_receiveqty');
-            $this->pg->group_by('d.poc_reqqty');
-            $this->pg->order_by('c.pfm_name', 'asc');
-            $this->pg->order_by('(d.poc_reqqty  - a.por_receiveqty)', 'asc');
-            $items = $this->pg->get()->result_array();
+            $this->dummy->from("(SELECT item_id, SUM(por_receiveqty) as por_receiveqty FROM por WHERE por_date <= '$filter_cutoff' GROUP BY item_id) a");
+            $this->dummy->join('mst_item b', "a.item_id = b.item_id and b.stscode_id = '01'");
+            $this->dummy->join('r_prodfam c', "b.pfm_id = c.pfm_id and c.prod_group = 'Raw Material' and c.pfm_id != '05'");
+            $this->dummy->join("(SELECT item_id, SUM(poc_reqqty) as poc_reqqty from poc where poc_date <= '$filter_cutoff' GROUP BY item_id) d", "b.item_id = d.item_id");
+            $this->dummy->like('b.pfm_id', $filter_product_family);
+            $this->dummy->like('b.item_id', $filter_product_no);
+            $this->dummy->group_by('b.item_id');
+            $this->dummy->group_by('b.item_name');
+            $this->dummy->group_by('c.pfm_name');
+            $this->dummy->group_by('a.por_receiveqty');
+            $this->dummy->group_by('d.poc_reqqty');
+            $this->dummy->order_by('c.pfm_name', 'asc');
+            $this->dummy->order_by('(d.poc_reqqty  - a.por_receiveqty)', 'asc');
+            $items = $this->dummy->get()->result_array();
 
             $arr = array();
             foreach ($items as $item) {
@@ -315,7 +315,7 @@ class Os_vendor extends CI_Controller
 
     public function print($option = "")
     {
-        $this->pg = $this->load->database('pg', TRUE);
+        $this->dummy = $this->load->database('dummy', TRUE);
         if ($option == "excel") {
             $format  = date("Ymd");
             header("Content-type: application/vnd-ms-excel");
@@ -336,23 +336,23 @@ class Os_vendor extends CI_Controller
 
         $cutoff =  date('Y-m-d', strtotime('-1 day', strtotime($filter_cutoff)));
 
-        $this->pg->select("b.item_id, b.item_name, c.pfm_name, 
+        $this->dummy->select("b.item_id, b.item_name, c.pfm_name, 
         (CASE WHEN (d.poc_reqqty - a.por_receiveqty) < 0 THEN 0 ELSE (d.poc_reqqty - a.por_receiveqty) END) as stock");
-        $this->pg->from("(SELECT item_id, SUM(por_receiveqty) as por_receiveqty FROM por WHERE por_date <= '$filter_cutoff' GROUP BY item_id) a");
-        $this->pg->join('mst_item b', "a.item_id = b.item_id and b.stscode_id = '01'");
-        $this->pg->join('r_prodfam c', "b.pfm_id = c.pfm_id and c.prod_group = 'Raw Material' and c.pfm_id != '05'");
-        // $this->pg->join("(SELECT DISTINCT por_pocid, item_id, por_pocreqqty FROM por WHERE por_date <= '$filter_cutoff' ORDER by item_id asc) d", "b.item_id = d.item_id");
-        $this->pg->join("(SELECT item_id, SUM(poc_reqqty) as poc_reqqty from poc where poc_date <= '$filter_cutoff' GROUP BY item_id) d", "b.item_id = d.item_id");
-        $this->pg->like('b.pfm_id', $filter_product_family);
-        $this->pg->like('b.item_id', $filter_product_no);
-        $this->pg->group_by('b.item_id');
-        $this->pg->group_by('b.item_name');
-        $this->pg->group_by('c.pfm_name');
-        $this->pg->group_by('a.por_receiveqty');
-        $this->pg->group_by('d.poc_reqqty');
-        $this->pg->order_by('c.pfm_name', 'asc');
-        $this->pg->order_by('(d.poc_reqqty  - a.por_receiveqty)', 'asc');
-        $items = $this->pg->get()->result_array();
+        $this->dummy->from("(SELECT item_id, SUM(por_receiveqty) as por_receiveqty FROM por WHERE por_date <= '$filter_cutoff' GROUP BY item_id) a");
+        $this->dummy->join('mst_item b', "a.item_id = b.item_id and b.stscode_id = '01'");
+        $this->dummy->join('r_prodfam c', "b.pfm_id = c.pfm_id and c.prod_group = 'Raw Material' and c.pfm_id != '05'");
+        // $this->dummy->join("(SELECT DISTINCT por_pocid, item_id, por_pocreqqty FROM por WHERE por_date <= '$filter_cutoff' ORDER by item_id asc) d", "b.item_id = d.item_id");
+        $this->dummy->join("(SELECT item_id, SUM(poc_reqqty) as poc_reqqty from poc where poc_date <= '$filter_cutoff' GROUP BY item_id) d", "b.item_id = d.item_id");
+        $this->dummy->like('b.pfm_id', $filter_product_family);
+        $this->dummy->like('b.item_id', $filter_product_no);
+        $this->dummy->group_by('b.item_id');
+        $this->dummy->group_by('b.item_name');
+        $this->dummy->group_by('c.pfm_name');
+        $this->dummy->group_by('a.por_receiveqty');
+        $this->dummy->group_by('d.poc_reqqty');
+        $this->dummy->order_by('c.pfm_name', 'asc');
+        $this->dummy->order_by('(d.poc_reqqty  - a.por_receiveqty)', 'asc');
+        $items = $this->dummy->get()->result_array();
 
         $records = array();
         foreach ($items as $item) {

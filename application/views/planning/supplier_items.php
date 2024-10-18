@@ -21,6 +21,7 @@
             <th rowspan="2" data-options="field:'maker_origin',width:150,halign:'center'">Maker Origin</th>
             <!-- <th rowspan="2" data-options="field:'landed_cost',width:100,halign:'center'">Landed Cost</th>
             <th rowspan="2" data-options="field:'import_duty',width:100,halign:'center'">Import Duty</th> -->
+            <th rowspan="2" data-options="field:'spq',width:80,halign:'center',align:'right',formatter:numberformatComa">SPQ</th>
             <th rowspan="2" data-options="field:'mpq',width:80,halign:'center',align:'right',formatter:numberformatComa">MPQ</th>
             <th rowspan="2" data-options="field:'moq',width:80,halign:'center',align:'right',formatter:numberformatComa">MOQ</th>
             <th rowspan="2" data-options="field:'uom',width:80,align:'center'">UoM</th>
@@ -188,6 +189,10 @@
                     <input style="width:60%;" name="maker_code" id="maker_code" required class="easyui-combogrid">
                 </div>
                 <div class="fitem">
+                    <span style="width:35%; display:inline-block;">SPQ</span>
+                    <input style="width:60%;" name="spq" class="easyui-numberbox" data-options="precision:2">
+                </div>
+                <div class="fitem">
                     <span style="width:35%; display:inline-block;">MPQ</span>
                     <input style="width:60%;" name="mpq" class="easyui-numberbox" data-options="precision:2">
                 </div>
@@ -215,16 +220,16 @@
                     <span style="width:35%; display:inline-block;">Leadtime</span>
                     <input style="width:60%;" name="leadtime" required="" class="easyui-numberbox">
                 </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Share Order</span>
-                    <input style="width:60%;" name="share_order" required="" class="easyui-numberbox">
-                </div>
             </div>
             <div style="width: 33%; float: left;">
                 <!-- <div class="fitem">
                     <span style="width:35%; display:inline-block;">Currency</span>
                     <input style="width:60%;" name="currency" required class="easyui-textbox">
                 </div> -->
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Share Order</span>
+                    <input style="width:60%;" name="share_order" required="" class="easyui-numberbox">
+                </div>
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Safety Stock (%)</span>
                     <input style="width:60%;" name="safety_stock" required="" class="easyui-numberbox" data-options="precision:2">
@@ -266,6 +271,7 @@
                 <th data-options="field:'maker_origin',width:150,halign:'center'">Maker Origin</th>
                 <!-- <th data-options="field:'landed_cost',width:100,halign:'center'">Landed Cost</th>
                 <th data-options="field:'import_duty',width:100,halign:'center'">Import Duty</th> -->
+                <th data-options="field:'spq',width:80,halign:'center',align:'right',formatter:numberformatComa">SPQ</th>
                 <th data-options="field:'mpq',width:80,halign:'center',align:'right',formatter:numberformatComa">MPQ</th>
                 <th data-options="field:'moq',width:80,halign:'center',align:'right',formatter:numberformatComa">MOQ</th>
                 <th data-options="field:'uom',width:80,align:'center'">UoM</th>
