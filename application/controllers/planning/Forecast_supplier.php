@@ -195,7 +195,18 @@ class Forecast_supplier extends CI_Controller
         $filter_po = trim(base64_decode($this->input->get('filter_po')));
 
         //Select Query
-        $this->db->select('a.revision, a.p_year, a.p_month, a.item_id, b.number as vendor_id, b.name as vendor_name, b.type as vendor_type, b.origin as vendor_origin, c.item_id as supplier_item_id, a.item_name as item_name, c.leadtime as supplier_item_leadtime, c.mpq as supplier_item_mpq, c.moq as supplier_item_moq, d.name as maker_name, d.type as maker_type');
+        $this->db->select('a.revision, a.p_year, a.p_month, a.item_id, 
+            b.number as vendor_id, 
+            b.name as vendor_name, 
+            b.type as vendor_type, 
+            b.origin as vendor_origin, 
+            c.item_id as supplier_item_id, 
+            a.item_name as item_name, 
+            c.leadtime as supplier_item_leadtime, 
+            c.mpq as supplier_item_mpq, 
+            c.moq as supplier_item_moq, 
+            d.name as maker_name, 
+            d.type as maker_type');
         $this->db->from('purchase_orders a');
         $this->db->join('supplier_items c', "a.item_id = c.item_id AND a.supplier_id = c.supplier_id", 'left');
         $this->db->join('suppliers b', "c.supplier_id = b.id", 'left');

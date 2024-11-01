@@ -1444,10 +1444,12 @@ class Purchase_orders extends CI_Controller
         $filter_po = trim(base64_decode($this->input->get('filter_po')));
 
         //Select Query
-        $this->db->select('a.*, b.item_supplier, c.number as supplier_no, c.name as supplier_name');
+        $this->db->select('a.*, b.item_supplier, c.number as supplier_no, c.name as supplier_name, d.maker_code, e.name as maker_name');
         $this->db->from('purchase_orders a');
         $this->db->join('mst_item_raw b', 'a.item_id = b.item_id');
         $this->db->join('suppliers c', 'a.supplier_id = c.id');
+        $this->db->join('supplier_items d', 'a.supplier_id = d.supplier_id and a.item_id = d.item_id');
+        $this->db->join('mst_maker e', 'd.maker_code = e.number', 'left');
         $this->db->like('a.p_month', $filter_month);
         $this->db->like('a.p_year', $filter_year);
         if($filter_revision != ""){
@@ -1516,6 +1518,8 @@ class Purchase_orders extends CI_Controller
                 <th style="text-align:center;">Product Family</th>
                 <th style="text-align:center;">Supplier No</th>
                 <th style="text-align:center;">Supplier Name</th>
+                <th style="text-align:center;">Maker Code</th>
+                <th style="text-align:center;">Maker Name</th>
                 <th style="text-align:center;">Qty</th>
                 <th style="text-align:center;">Price</th>
                 <th style="text-align:center;">Total</th>
@@ -1586,6 +1590,8 @@ class Purchase_orders extends CI_Controller
                             <td>' . $data['product_family_name'] . '</td>
                             <td>' . $data['supplier_no'] . '</td>
                             <td>' . $data['supplier_name'] . '</td>
+                            <td>' . $data['maker_code'] . '</td>
+                            <td>' . $data['maker_name'] . '</td>
                             <td style="text-align:right;">' . $data['qty'] . '</td>
                             <td style="text-align:right;">' . $data['price'] . '</td>
                             <td style="text-align:right;">' . $data['total'] . '</td>
