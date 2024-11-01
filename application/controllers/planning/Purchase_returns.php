@@ -106,7 +106,7 @@ class purchase_returns extends CI_Controller
             $records = $this->db->get()->result_array();
             foreach ($records as $record) {
                 $arr[] = array(
-                    "id" => $record['id'],
+                    "id" => "h".$record['id'],
                     "return_no" => $record['return_no'],
                     "return_date" => $record['return_date'],
                     "return_name" => $record['return_name'],
@@ -119,6 +119,7 @@ class purchase_returns extends CI_Controller
             $result = array_merge($result, ['rows' => @$arr]);
             echo json_encode($result);
         } else {
+            $id = substr($id, 1);
             $return = $this->api->read("purchase_returns", [], ["id" => $id]);
 
             $this->db->select('a.*,
