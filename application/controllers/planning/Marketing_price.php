@@ -602,8 +602,8 @@ class Marketing_price extends CI_Controller
             }
 
             $assurance_price = $data['price'] * @$assurance->percentage;
-            $transportation_price = $data['price'] * @$transportation->percentage;
-            $import_duty_price = $data['price'] * @$import_duty->percentage;
+            $transportation_price = $data['price'] * (@$transportation->percentage / 100);
+            $import_duty_price = $data['price'] * (@$import_duty->percentage / 100);
             $total_price = $data['price'] + $assurance_price + $transportation_price + $import_duty_price;
             $html .= '<tr>
                         <td>' . $no . '</td>
