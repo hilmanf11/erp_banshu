@@ -125,6 +125,7 @@ class Marketing_price extends CI_Controller
             $total_price = $record['price'] + $assurance_price + $transportation_price + $import_duty_price;
             $arr[] = array(
                 "plant" => $record['plant'],
+                "supplier_number" => $record['supplier_number'],
                 "supplier_name" => $record['supplier_name'],
                 "item_supplier" => $record['item_supplier'],
                 "item_id" => $record['item_id'],
