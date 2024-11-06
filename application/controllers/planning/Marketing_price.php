@@ -101,6 +101,8 @@ class Marketing_price extends CI_Controller
         }
         if ($filter_share_order != "") {
             $this->db->where('a.share_order', $filter_share_order);
+        } else {
+            $this->db->where("a.share_order > 0");
         }
         if ($filter_check == "false") {
             $this->db->order_by('b.name', 'ASC');
