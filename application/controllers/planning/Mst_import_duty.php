@@ -26,7 +26,7 @@ class Mst_import_duty extends CI_Controller
 
         //Validasi Form
 
-        $this->form_validation->set_rules('item_supplier', 'Item Supplier', 'required|min_length[1]|max_length[30]');
+        $this->form_validation->set_rules('item_id', 'Item Supplier', 'required|min_length[1]|max_length[30]');
     }
 
 
@@ -80,7 +80,7 @@ class Mst_import_duty extends CI_Controller
     public function readPartVendor()
     {
         $post = isset($_POST['q']) ? $_POST['q'] : "";
-        $send = $this->api->query("SELECT DISTINCT item_supplier FROM supplier_items WHERE item_supplier != '' ORDER BY item_supplier ASC");
+        $send = $this->api->query("SELECT DISTINCT item_id FROM supplier_items WHERE item_id != '' ORDER BY item_id ASC");
         echo json_encode($send);
     }
 
@@ -169,7 +169,7 @@ class Mst_import_duty extends CI_Controller
             if ($this->form_validation->run() == TRUE) {
 
                 $post   = $this->input->post();
-                $mst_import_duty = $this->api->read('mst_import_duty', [], ["supplier_id" => $post['supplier_id'], "item_supplier" => $post['item_supplier'], "plant" => $post['plant']]);
+                $mst_import_duty = $this->api->read('mst_import_duty', [], ["supplier_id" => $post['supplier_id'], "item_id" => $post['item_id'], "plant" => $post['plant']]);
                 if (!$mst_import_duty) {
                     $send   = $this->api->create('mst_import_duty', $post);
                     echo $send;
@@ -198,7 +198,7 @@ class Mst_import_duty extends CI_Controller
 
             $post = $this->input->post();
 
-            $mst_import_duty = $this->api->read('mst_import_duty', [], ["supplier_id" => $post['supplier_id'], "item_supplier" => $post['item_supplier'], "plant" => $post['plant']]);
+            $mst_import_duty = $this->api->read('mst_import_duty', [], ["supplier_id" => $post['supplier_id'], "item_id" => $post['item_id'], "plant" => $post['plant']]);
             if (!empty(@$mst_import_duty->id)) {
                 $send = $this->api->update('mst_import_duty', ["id" => $id], $post);
                 echo $send;
@@ -254,7 +254,7 @@ class Mst_import_duty extends CI_Controller
             $datas[] = array(
                 'plant' => $data->val($i, 2),
                 'supplier_number' => $data->val($i, 3),
-                'item_supplier' => $data->val($i, 4),
+                'item_id' => $data->val($i, 4),
                 'percentage' => $data->val($i, 5),
 
             );
@@ -282,28 +282,28 @@ class Mst_import_duty extends CI_Controller
             //Cek Process Number
             $plant = $this->api->read('plants', [], ["number" => $data['plant']]);
             $supplier = $this->api->read('suppliers', [], ["number" => $data['supplier_number']]);
-            $vendor_contract = $this->api->read('supplier_items', [], ["item_supplier" => $data['item_supplier'], "supplier_id" => @$supplier->id, "plant" => $data['plant']]);
-            $mst_import_duty = $this->api->read('mst_import_duty', [], ["item_supplier" => @$vendor_contract->item_supplier, "supplier_id" => @$supplier->id, "plant" => $data['plant']]);
-            if (empty($vendor_contract->item_supplier)) {
-                echo json_encode(array("title" => "Not Found", "message" => "Part No " . $data['item_supplier'] . " Not Found", "theme" => "error"));
+            $vendor_contract = $this->api->read('supplier_items', [], ["item_id" => $data['item_id'], "supplier_id" => @$supplier->id, "plant" => $data['plant']]);
+            $mst_import_duty = $this->api->read('mst_import_duty', [], ["item_id" => @$vendor_contract->item_id, "supplier_id" => @$supplier->id, "plant" => $data['plant']]);
+            if (empty($vendor_contract->item_id)) {
+                echo json_encode(array("title" => "Not Found", "message" => "Part No " . $data['item_id'] . " Not Found", "theme" => "error"));
             } elseif (empty($supplier->number)) {
                 echo json_encode(array("title" => "Not Found", "message" => "Vendor " . $data['supplier_number'] . " Not Found", "theme" => "error"));
             } elseif (empty($plant->number)) {
                 echo json_encode(array("title" => "Not Found", "message" => "Plant " . $data['plant'] . " Not Found", "theme" => "error"));
-            } elseif (!empty($mst_import_duty->item_supplier)) {
+            } elseif (!empty($mst_import_duty->item_id)) {
                 $postFinal = array(
                     "plant" => $data['plant'],
-                    "item_supplier" => $vendor_contract->item_supplier,
+                    "item_id" => $vendor_contract->item_id,
                     "supplier_id" => $supplier->id,
                     "percentage" => $data['percentage']
                 );
 
-                $send = $this->api->update('mst_import_duty', ["item_supplier" => @$vendor_contract->item_supplier, "supplier_id" => @$supplier->id, "plant" => $data['plant']], $postFinal);
+                $send = $this->api->update('mst_import_duty', ["item_id" => @$vendor_contract->item_id, "supplier_id" => @$supplier->id, "plant" => $data['plant']], $postFinal);
                 echo $send;
             } else {
                 $postFinal = array(
                     "plant" => $data['plant'],
-                    "item_supplier" => $vendor_contract->item_supplier,
+                    "item_id" => $vendor_contract->item_id,
                     "supplier_id" => $supplier->id,
                     "percentage" => $data['percentage']
                 );
@@ -420,7 +420,7 @@ class Mst_import_duty extends CI_Controller
                             <td>' . $data['plant'] . '</td>
 
                             <td>' . $data['supplier_name'] . '</td>
-                            <td style="mso-number-format:\@">' . $data['item_supplier'] . '</td>
+                            <td style="mso-number-format:\@">' . $data['item_id'] . '</td>
                             <td align="right">' . number_format($data['percentage'], 2) . '</td>
 
                         </tr>';

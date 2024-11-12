@@ -4,7 +4,7 @@
             <th rowspan="2" field="ck" checkbox="true"></th>
             <th rowspan="2" data-options="field:'plant',width:50,halign:'center'">Plant</th>
             <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Vendor Name</th>
-            <th rowspan="2" data-options="field:'item_supplier',width:200,halign:'center'">Part Vendor</th>
+            <th rowspan="2" data-options="field:'item_id',width:200,halign:'center'">Part No</th>
             <th rowspan="2" data-options="field:'percentage',width:120,halign:'center',align:'right',formatter:numberformatComa">Import Duty (%)</th>
             <th colspan="2" data-options="field:'',width:100,halign:'center'"> Created</th>
             <th colspan="2" data-options="field:'',width:100,halign:'center'"> Updated</th>
@@ -35,8 +35,8 @@
                 <input style="width:60%;" name="supplier_id" id="supplier_id" required="" class="easyui-combogrid">
             </div>
             <div class="fitem">
-                <span style="width:35%; display:inline-block;">Part Vendor</span>
-                <input style="width:60%;" name="item_supplier" id="item_supplier" required="" class="easyui-combogrid">
+                <span style="width:35%; display:inline-block;">Part No</span>
+                <input style="width:60%;" name="item_id" id="item_id" required="" class="easyui-combogrid">
             </div>
             <div class="fitem">
                 <span style="width:35%; display:inline-block;">Percentage</span>
@@ -291,17 +291,17 @@
             }
         });
 
-        $('#item_supplier').combogrid({
-            url: '<?= base_url('planning/mst_import_duty/readPartVendor') ?>',
+        $('#item_id').combogrid({
+            url: '<?= base_url('planning/supplier_items/readItems') ?>',
             panelWidth: 420,
-            idField: 'item_supplier',
-            textField: 'item_supplier',
+            idField: 'item_id',
+            textField: 'item_id',
             mode: 'remote',
             fitColumns: true,
             prompt: "Choose Part",
             columns: [
                 [{
-                    field: 'item_supplier',
+                    field: 'item_id',
                     title: 'Part Vendor',
                     width: 100
                 }]

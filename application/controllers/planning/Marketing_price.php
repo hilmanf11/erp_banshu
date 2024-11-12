@@ -125,7 +125,7 @@ class Marketing_price extends CI_Controller
                 $transportation = $this->api->read('mst_transportation', [], ["type" => 'LOCAL']);
             }
 
-            $mst_import_duty = $this->api->read('mst_import_duty', [], ["plant" => $record['plant'], "supplier_id" => $record['supplier_id'], "item_supplier" => $record['item_supplier']]);
+            $mst_import_duty = $this->api->read('mst_import_duty', [], ["plant" => $record['plant'], "supplier_id" => $record['supplier_id'], "item_id" => $record['item_id']]);
             if (!empty(@$mst_import_duty->percentage)) {
                 $import_duty_price = $record['price'] * (@$mst_import_duty->percentage / 100);
             } else {
