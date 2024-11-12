@@ -112,16 +112,20 @@ class Marketing_price extends CI_Controller
             if ($record['type'] == 'IMPORT') {
                 $assurance = $this->api->read('mst_assurance', [], ["type" => 'IMPORT']);
                 $transportation = $this->api->read('mst_transportation', [], ["type" => 'IMPORT']);
-                $import_duty = $this->api->read('mst_import_duty', [], ["type" => 'IMPORT']);
             } else {
                 $assurance = $this->api->read('mst_assurance', [], ["type" => 'LOCAL']);
                 $transportation = $this->api->read('mst_transportation', [], ["type" => 'LOCAL']);
-                $import_duty = $this->api->read('mst_import_duty', [], ["type" => 'LOCAL']);
+            }
+
+            $mst_import_duty = $this->api->read('mst_import_duty', [], ["plant" => $record['plant'], "supplier_id" => $record['supplier_id'], "item_supplier" => $record['item_supplier']]);
+            if (!empty(@$mst_import_duty->percentage)) {
+                $import_duty_price = $record['price'] * (@$mst_import_duty->percentage / 100);
+            } else {
+                $import_duty_price = 0;
             }
 
             $assurance_price = $record['price'] * @$assurance->percentage;
             $transportation_price = $record['price'] * (@$transportation->percentage / 100);
-            $import_duty_price = $record['price'] * (@$import_duty->percentage / 100);
             $total_price = $record['price'] + $assurance_price + $transportation_price + $import_duty_price;
             $arr[] = array(
                 "plant" => $record['plant'],
@@ -145,6 +149,7 @@ class Marketing_price extends CI_Controller
                 "assurance_price" => $assurance_price,
                 "transportation_price" => $transportation_price,
                 "import_duty_price" => $import_duty_price,
+                "import_duty_percentage" => @$mst_import_duty->percentage,
                 "total_price" => $total_price,
             );
         }

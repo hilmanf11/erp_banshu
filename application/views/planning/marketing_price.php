@@ -22,6 +22,7 @@
             <th data-options="field:'currency',width:80,align:'center'">Currency</th>
             <th data-options="field:'assurance_price',width:100,halign:'center',align:'right',formatter:numberformat">Insurance</th>
             <th data-options="field:'transportation_price',width:100,halign:'center',align:'right',formatter:numberformat">Transportation</th>
+            <th data-options="field:'import_duty_percentage',width:100,halign:'center',align:'right',formatter:numberformatComa">Import Duty %</th>
             <th data-options="field:'import_duty_price',width:100,halign:'center',align:'right',formatter:numberformat">Import Duty</th>
             <th data-options="field:'total_price',width:100,halign:'center',align:'right',formatter:numberformat">Total Price</th>
 

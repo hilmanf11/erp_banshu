@@ -2,8 +2,10 @@
     <thead>
         <tr>
             <th rowspan="2" field="ck" checkbox="true"></th>
-            <th rowspan="2" data-options="field:'type',width:100,halign:'center'">Type</th>
-            <th rowspan="2" data-options="field:'percentage',width:100,halign:'center', align:'right'">Percentage</th>
+            <th rowspan="2" data-options="field:'plant',width:50,halign:'center'">Plant</th>
+            <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Vendor Name</th>
+            <th rowspan="2" data-options="field:'item_supplier',width:200,halign:'center'">Part Vendor</th>
+            <th rowspan="2" data-options="field:'percentage',width:120,halign:'center',align:'right',formatter:numberformatComa">Import Duty (%)</th>
             <th colspan="2" data-options="field:'',width:100,halign:'center'"> Created</th>
             <th colspan="2" data-options="field:'',width:100,halign:'center'"> Updated</th>
         </tr>
@@ -25,15 +27,20 @@
         <fieldset style="width:100%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
             <legend><b>Form Data</b></legend>
             <div class="fitem">
-                <span style="width:35%; display:inline-block;">Type</span>
-                <select style="width:60%;" name="type" id="type" required="true" class="easyui-combobox" panelHeight="auto">
-                    <option value="IMPORT">IMPORT</option>
-                    <option value="LOCAL">LOCAL</option>
-                </select>
+                <span style="width:35%; display:inline-block;">Plant</span>
+                <input style="width:60%;" name="plant" id="plant" required="" class="easyui-combogrid">
+            </div>
+            <div class="fitem">
+                <span style="width:35%; display:inline-block;">Vendor</span>
+                <input style="width:60%;" name="supplier_id" id="supplier_id" required="" class="easyui-combogrid">
+            </div>
+            <div class="fitem">
+                <span style="width:35%; display:inline-block;">Part Vendor</span>
+                <input style="width:60%;" name="item_supplier" id="item_supplier" required="" class="easyui-combogrid">
             </div>
             <div class="fitem">
                 <span style="width:35%; display:inline-block;">Percentage</span>
-                <input style="width:60%;" name="percentage" id="percentage" required="true" class="easyui-numberbox" data-options="precision:4">
+                <input style="width:60%;" name="percentage" id="percentage" required="true" class="easyui-numberbox" data-options="precision:2">
             </div>
         </fieldset>
     </form>
@@ -229,7 +236,91 @@
                 }
             }]
         });
+
+        $('#plant').combogrid({
+            url: '<?php echo base_url('planning/plants/reads'); ?>',
+            panelWidth: 350,
+            idField: 'number',
+            textField: 'name',
+            mode: 'remote',
+            fitColumns: true,
+            prompt: "Select Plant",
+            columns: [
+                [{
+                    field: 'number',
+                    title: 'Code',
+                    width: 100
+                }, {
+                    field: 'name',
+                    title: 'Name',
+                    width: 200
+                }]
+            ]
+        });
+
+        //Get Part
+        $('#supplier_id').combogrid({
+            url: '<?= base_url('planning/suppliers/reads') ?>',
+            panelWidth: 700,
+            idField: 'id',
+            textField: 'name',
+            mode: 'remote',
+            fitColumns: true,
+            prompt: "Choose Vendor",
+            columns: [
+                [{
+                    field: 'number',
+                    title: 'Vendor No',
+                    width: 80
+                }, {
+                    field: 'name',
+                    title: 'Vendor Name',
+                    width: 250
+                }, {
+                    field: 'type',
+                    title: 'Type',
+                    width: 100
+                }, {
+                    field: 'origin',
+                    title: 'Origin',
+                    width: 150
+                }, ]
+            ],
+            onSelect: function(val, row) {
+                $("#currency").textbox("setValue", row.currency);
+            }
+        });
+
+        $('#item_supplier').combogrid({
+            url: '<?= base_url('planning/mst_import_duty/readPartVendor') ?>',
+            panelWidth: 420,
+            idField: 'item_supplier',
+            textField: 'item_supplier',
+            mode: 'remote',
+            fitColumns: true,
+            prompt: "Choose Part",
+            columns: [
+                [{
+                    field: 'item_supplier',
+                    title: 'Part Vendor',
+                    width: 100
+                }]
+            ],
+            onSelect: function(val, row) {
+                $("#item_name").textbox('setValue', row.item_name);
+            }
+        });
+
     });
+
+    function numberformatComa(value, row) {
+        if (value != null) {
+            const formatter = new Intl.NumberFormat('id-ID', {
+                minimumFractionDigits: 2
+            });
+            return "<b>" + formatter.format(value) + "</b>";
+        }
+    }
 
     //Format Datepicker
     function myformatter(date) {
