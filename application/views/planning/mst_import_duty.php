@@ -5,6 +5,8 @@
             <th rowspan="2" data-options="field:'plant',width:50,halign:'center'">Plant</th>
             <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Vendor Name</th>
             <th rowspan="2" data-options="field:'item_id',width:200,halign:'center'">Part No</th>
+            <th rowspan="2" data-options="field:'item_name',width:200,halign:'center'">Part Name</th>
+            <th rowspan="2" data-options="field:'item_family_name',width:200,halign:'center'">Product Family</th>
             <th rowspan="2" data-options="field:'percentage',width:120,halign:'center',align:'right',formatter:numberformatComa">Import Duty (%)</th>
             <th colspan="2" data-options="field:'',width:100,halign:'center'"> Created</th>
             <th colspan="2" data-options="field:'',width:100,halign:'center'"> Updated</th>
