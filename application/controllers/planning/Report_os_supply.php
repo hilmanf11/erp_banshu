@@ -170,6 +170,19 @@ class Report_os_supply extends CI_Controller
         return $wpp;
     }
 
+    public function pagenasion($option = "") {
+        // Sample dynamic content for pagination
+        $html = '<div style="text-align:center;">';
+        $html .= '<button onclick="prevPage()">Previous</button>';
+        $html .= '<span> Page 1 of 10 </span>';
+        $html .= '<button onclick="nextPage()">Next</button>';
+        $html .= '</div>';
+    
+        echo $html;
+    }
+    
+
+
     public function print($option = "")
     {
         if ($option == "excel") {
@@ -202,103 +215,128 @@ class Report_os_supply extends CI_Controller
                 }else{
                     $style = "";
                 }
-
                 $header .= '<th colspan="3" style="text-align:center;'.$style.'">'.$monthName.' (WP '.$wp[$wpFormat].')</th>';
                 $content .= '<th style="text-align:center;'.$style.'">Need</th><th style="text-align:center;'.$style.'">Supply</th><th style="text-align:center;'.$style.'">Bal</th>';
-
                 $period_start = date("Y-m-d", strtotime("+1 day", strtotime($period_start)));
             }
+            $rows_per_page = 10; // Number of rows per page
+            $total_rows_query = $this->db->query("SELECT COUNT(*) as total FROM mst_bom a
+                JOIN mst_item_raw b ON a.component_id = b.item_id
+                JOIN generate_mpp c ON a.item_id = c.product_no
+                WHERE c.p_month = '$filter_month' and c.p_year = '$filter_year' and b.pfm_id = '$filter_product_family' and a.component_id like '%$filter_part_no%'");
+            $total_rows = $total_rows_query->row()->total;
+            $total_pages = ceil($total_rows / $rows_per_page);
+            $current_page = $this->input->get('page') ? intval($this->input->get('page')) : 1; // Get current page from URL
+            $offset = ($current_page - 1) * $rows_per_page; 
 
             $query = $this->db->query("SELECT b.item_id, b.item_name, a.qty as qpa, 
-                SUM(c.date_1) as date_1,
-                SUM(c.date_2) as date_2,
-                SUM(c.date_3) as date_3,
-                SUM(c.date_4) as date_4,
-                SUM(c.date_5) as date_5,
-                SUM(c.date_6) as date_6,
-                SUM(c.date_7) as date_7,
-                SUM(c.date_8) as date_8,
-                SUM(c.date_9) as date_9,
-                SUM(c.date_10) as date_10,
-                SUM(c.date_11) as date_11,
-                SUM(c.date_12) as date_12,
-                SUM(c.date_13) as date_13,
-                SUM(c.date_14) as date_14,
-                SUM(c.date_15) as date_15,
-                SUM(c.date_16) as date_16,
-                SUM(c.date_17) as date_17,
-                SUM(c.date_18) as date_18,
-                SUM(c.date_19) as date_19,
-                SUM(c.date_20) as date_20,
-                SUM(c.date_21) as date_21,
-                SUM(c.date_22) as date_22,
-                SUM(c.date_23) as date_23,
-                SUM(c.date_24) as date_24,
-                SUM(c.date_25) as date_25,
-                SUM(c.date_26) as date_26,
-                SUM(c.date_27) as date_27,
-                SUM(c.date_28) as date_28,
-                SUM(c.date_29) as date_29,
-                SUM(c.date_30) as date_30,
-                SUM(c.date_31) as date_31,
-                ROUND(SUM(c.prod_plan * a.qty), 0) as need
-            FROM mst_bom a
-            JOIN mst_item_raw b ON a.component_id = b.item_id
-            JOIN generate_mpp c ON a.item_id = c.product_no
-            WHERE c.p_month = '$filter_month' and c.p_year = '$filter_year' and b.pfm_id = '$filter_product_family' and a.component_id like '%$filter_part_no%'
-            GROUP BY a.component_id");
-            $records = $query->result_array();
-
-            //Config
-            $this->db->select('*');
+            SUM(c.date_1) as date_01,
+            SUM(c.date_2) as date_02,
+            SUM(c.date_3) as date_03,
+            SUM(c.date_4) as date_04,
+            SUM(c.date_5) as date_05,
+            ROUND(SUM(c.prod_plan * a.qty), 0) as need
+        FROM mst_bom a
+        JOIN mst_item_raw b ON a.component_id = b.item_id
+        JOIN generate_mpp c ON a.item_id = c.product_no
+        WHERE c.p_month = '$filter_month' and c.p_year = '$filter_year' and b.pfm_id = '$filter_product_family' and a.component_id like '%$filter_part_no%'
+        GROUP BY a.component_id
+        LIMIT $rows_per_page OFFSET $offset");
+        $records = $query->result_array();
+            $this->db   ->select('*');
             $this->db->from('config');
             $config = $this->db->get()->row();
-
-            $html = '<html><head><title>Print Data</title></head><style>body {font-family: Arial, Helvetica, sans-serif;}#customers {border-collapse: collapse;width: 280%;font-size: 10px;}#customers td, #customers th {border: 1px solid #ddd;padding: 2px;}#customers tr:nth-child(even){background-color: #f2f2f2;}#customers tr:hover {background-color: #ddd;}#customers th {padding-top: 2px;padding-bottom: 2px;text-align: left;color: black;}</style>
-                    <style> .str{ mso-number-format:\@; } </style>
-                    <body>
-                    <center>
-                        <div style="float: left; font-size: 12px; text-align: left;">
-                            <table style="width: 100%;">
-                                <tr>
-                                    <td width="50" style="font-size: 12px; vertical-align: top; text-align: center; vertical-align:jus margin-right:10px;">
-                                        <img src="' . base_url('assets/image/config/' . $config->logo) . '" width="30">
+            //Config
+            $html = '<html>
+            <head>
+                <title>Print Data</title>
+                <style>
+                    body { 
+                        font-family: Arial, Helvetica, sans-serif; 
+                    }
+                    #customers {
+                        border-collapse: collapse;
+                        width: 280%;
+                        font-size: 10px;
+                    }
+                    #customers td, #customers th {
+                        border: 1px solid #ddd;
+                        padding: 2px;
+                    }
+                    #customers tr:nth-child(even) {
+                        background-color: #f2f2f2;
+                    }
+                    #customers tr:hover {
+                        background-color: #ddd;
+                    }
+                    #customers th {
+                        padding-top: 2px;
+                        padding-bottom: 2px;
+                        text-align: left;
+                        color: black;
+                    }
+            
+                    .str {
+                        mso-number-format: \@;
+                    }
+            
+                    @media print {
+   #customers {
+        transform: scale(0.3); /* Scale down the table content */
+        transform-origin: top left; /* Ensure it scales from the top left */
+        width: 50%; /* Slightly increase the width if needed */
+    }
+                        @page {
+                            size: landscape; /* Set orientation to landscape */
+                        }
+                            
+                    }
+                </style>
+            </head>
+            <body>
+                <center>
+                    <div style="float: left; font-size: 12px; text-align: left;">
+                        <table style="width: 100%;">
+                            <tr>
+                                <td width="50" style="font-size: 12px; vertical-align: top; text-align: center; vertical-align:jus margin-right:10px;">
+                                    <img src="' . base_url('assets/image/config/' . $config->logo) . '" width="30">
                                     </td>
-                                    <td style="font-size: 14px; text-align: left; margin:2px;">
-                                        <b>' . $config->name . '</b><br>
-                                        <small>REPORT OS SUPPLY</small><br><br>
-                                        Print Date ' . date("d M Y H:m:s") . ' <br>
-                                        Print By ' . $this->session->username . '<br><br>
-                                    </td>
-                                </tr>
-                            </table>
-                        </div>
-                    </center>
-                    <br><br><br>
-                    <table id="customers" border="1">
-                        <tr>
-                            <th rowspan="2" width="30">No</th>
-                            <th rowspan="2" style="text-align:center;">Part No</th>
-                            <th rowspan="2" style="text-align:center;">Part Name</th>
-                            <th colspan="4" style="text-align:center;">Recap Last Month</th>
-                            <th colspan="3" style="text-align:center;">Recap Current Month</th>
-                            <th rowspan="2" style="text-align:center;">Balance<br>WIP</th>
-                            <th rowspan="2" style="text-align:center;">Curent<br>WP</th>
-                            <th rowspan="2" style="text-align:center;">Last<br>Supply</th>
-                            '.$header.'
-                        </tr>
-                        <tr>
-                            <th style="text-align:center;">Need</th>
-                            <th style="text-align:center;">Supply</th>
-                            <th style="text-align:center;">OS</th>
-                            <th style="text-align:center;">Last<br>Supply</th>
-                            <th style="text-align:center;">Need</th>
-                            <th style="text-align:center;">Supply</th>
-                            <th style="text-align:center;">OS</th>
-                            '.$content.'
-                        </tr>';
+                                <td style="font-size: 14px; text-align: left; margin:2px;">
+                                    <b>' . $config->name . '</b><br>
+                                    <small>REPORT OS SUPPLY</small><br><br>
+                                    Print Date ' . date("d M Y H:m:s") . ' <br>
+                                    Print By ' . $this->session->username . '<br><br>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </center>
+                <br><br><br>
+                <table id="customers" border="1">
+                    <tr>
+                        <th rowspan="2" width="30">No</th>
+                        <th rowspan="2" style="text-align:center;">Part No</th>
+                        <th rowspan="2" style="text-align:center;">Part Name</th>
+                        <th colspan="4" style="text-align:center;">Recap Last Month</th>
+                        <th colspan="3" style="text-align:center;">Recap Current Month</th>
+                        <th rowspan="2" style="text-align:center;">Balance<br>WIP</th>
+                        <th rowspan="2" style="text-align:center;">Curent<br>WP</th>
+                        <th rowspan="2" style="text-align:center;">Last<br>Supply</th>
+                        ' . $header . '
+                    </tr>
+                    <tr>
+                        <th style="text-align:center;">Need</th>
+                        <th style="text-align:center;">Supply</th>
+                        <th style="text-align:center;">OS</th>
+                        <th style="text-align:center;">Last<br>Supply</th>
+                        <th style="text-align:center;">Need</th>
+                        <th style="text-align:center;">Supply</th>
+                        <th style="text-align:center;">OS</th>
+                        ' . $content . '
+                    </tr>';
             $no = 1;
             $content = "";
+            
             foreach ($records as $record) {
                 $item_id = $record['item_id'];
                 
@@ -317,18 +355,7 @@ class Report_os_supply extends CI_Controller
                 //CURRENT WP
                 $cutoff_form =  date('Y-m-01', strtotime("-1 month", strtotime($filter_year."-".$filter_month."-01")));
                 $cutoff_to =  date('Y-m-t', strtotime("-1 month", strtotime($filter_year."-".$filter_month."-01")));
-                // $queryCurrentSupply = $this->dummy->query("SELECT z.item_id, z.item_name, z.pfm_name, max(z.wp) as wp, COALESCE(SUM(z.hasil), 0) as supply, COALESCE(SUM(z.stock), 0) as os_supply from (
-                //     select a.temp_woc_id, a.periode, a.wp, d.item_id, d.item_name, e.pfm_name, a.qty, b.bom_qty_perassy, (a.qty * b.bom_qty_perassy) as hasil, COALESCE(SUM(c.qty_need), 0) as qty_need, SUM(c.qty_scan) as qty_scan, COALESCE((a.qty * b.bom_qty_perassy) - COALESCE(SUM(c.qty_scan), 0), 0) as stock
-                //     from wip_trx_mpp a
-                //     join mst_bom b ON a.assy_no = b.bom_par_item
-                //     left join (SELECT item_id, kanbanrm_woc_id, SUM(qty_need) as qty_need, SUM(qty_scan) as qty_scan FROM serial_detail_kanbanrm GROUP BY item_id, kanbanrm_woc_id, qty_need) c ON a.temp_woc_id = c.kanbanrm_woc_id and c.item_id = b.bom_com_item
-                //     join mst_item d on b.bom_com_item = d.item_id and d.stscode_id = '01'
-                //     join r_prodfam e on d.pfm_id = e.pfm_id and e.prod_group = 'Raw Material' and e.pfm_id != '05'
-                //     where b.bom_com_item = '$item_id' and a.wp_date between '$cutoff_form' and '$cutoff_to'
-                //     group by a.temp_woc_id, a.periode, a.wp, a.qty, b.bom_qty_perassy, d.item_id, d.item_name, e.pfm_name) z
-                //     GROUP BY z.item_id, z.item_name, z.pfm_name
-                //     having COALESCE(SUM(z.stock), 0) > 0     
-                // ");
+              
                 $queryCurrentWp = $this->dummy->query("SELECT z.item_id, z.item_name, z.pfm_name, max(z.wp) as wp from (
                     select a.temp_woc_id, a.periode, a.wp, d.item_id, d.item_name, e.pfm_name
                     from wip_trx_mpp a
@@ -358,22 +385,16 @@ class Report_os_supply extends CI_Controller
 
                 $cutoff_form =  date('Y-m-01', strtotime($filter_year."-".$filter_month."-01"));
                 $cutoff_to =  date('Y-m-t', strtotime($filter_year."-".$filter_month."-01"));
-                // $querySupply = $this->dummy->query("SELECT z.wp, ROUND(SUM(z.hasil)) as supply, ROUND(SUM(z.stock)) as os_supply from (
-                //     select a.wp, d.item_id, SUM(a.qty * b.bom_qty_perassy) as hasil, COALESCE(SUM(c.qty_need), 0) as qty_need, SUM(c.qty_scan) as qty_scan, COALESCE((a.qty * b.bom_qty_perassy) - COALESCE(SUM(c.qty_scan), 0), 0) as stock
-                //     from wip_trx_mpp a
-                //     join mst_bom b ON a.assy_no = b.bom_par_item
-                //     left join (SELECT item_id, kanbanrm_woc_id, SUM(qty_need) as qty_need, SUM(qty_scan) as qty_scan FROM serial_detail_kanbanrm GROUP BY item_id, kanbanrm_woc_id, qty_need) c ON a.temp_woc_id = c.kanbanrm_woc_id and c.item_id = b.bom_com_item
-                //     join mst_item d on b.bom_com_item = d.item_id and d.stscode_id = '01'
-                //     join r_prodfam e on d.pfm_id = e.pfm_id and e.prod_group = 'Raw Material' and e.pfm_id != '05'
-                //     where b.bom_com_item = '$item_id' and a.wp_date between '$cutoff_form' and '$cutoff_to'
-                //     group by a.wp, d.item_id, a.qty, b.bom_qty_perassy
-                //     order by wp desc) z GROUP BY z.wp ORDER BY z.wp asc
-                // ");
-
+          
+            $queryoutqty = $this->dummy->query("
+            select outqty from serial_barcode_outgoing where itemid = '$item_id' order by outscan desc limit 1
+            ");
+            $rowCurrentoutqty = $queryoutqty->row();
+            $current_outqty = empty(@$rowCurrentoutqty->outqty) ? 0 : abs(@$rowCurrentoutqty->outqty);
                 $querySupply = $this->dummy->query("SELECT z.wp, z.stock as supply from (
                     select a.temp_woc_id, a.periode, a.wp, d.item_id, d.item_name, e.pfm_name, coalesce(f.stock, 0) as stock
                     from wip_trx_mpp a
-                    join mst_bom b ON a.assy_no = b.bom_par_item
+                    join mst_bom b  ON a.assy_no = b.bom_par_item
                     join mst_item d on b.bom_com_item = d.item_id and d.stscode_id = '01'
                     join r_prodfam e on d.pfm_id = e.pfm_id and e.prod_group = 'Raw Material' and e.pfm_id != '05'
                     left join (SELECT ith_item_id, ith_date, coalesce(round(sum(ith_qty)),0) as stock
@@ -395,55 +416,107 @@ class Report_os_supply extends CI_Controller
                 foreach ($dataSupply as $rowSupply) {
                     $dataArr[$rowSupply['wp']] = abs($rowSupply['supply']);
                     $nowSupply += abs($rowSupply['supply']);
-                    $nowSupplyOs += ($record['need'] - abs($rowSupply['supply']));
+                    $nowSupplyOs += $rowSupply['supply'] - $record['need'];
                     $nowWp = $rowSupply['wp'];
                 }
 
-                $tgl = 1;
-                $period_start2 = date("Y-m-d", strtotime($filter_year."-".$filter_month."-01"));
-                $period_finish2 = date("Y-m-d", strtotime("1 month", strtotime($filter_year."-".$filter_month."-01")));
-                $content = "";
-                while (strtotime($period_start2) < strtotime($period_finish2)) {
-                    $monthName = date('d, D', strtotime($period_start2));
-                    $wpFormat = date('Y-m-d', strtotime($period_start2));
+                    $tgl = 1;
+    $period_start2 = date("Y-m-d", strtotime($filter_year . "-" . $filter_month . "-01"));
+    $period_finish2 = date("Y-m-d", strtotime("1 month", strtotime($filter_year . "-" . $filter_month . "-01")));
+    $content = "";
+    $hold = [];
+    while (strtotime($period_start2) < strtotime($period_finish2)) {
+        $monthName = date('d, D', strtotime($period_start2));
+        $wpFormat = date('Y-m-d', strtotime($period_start2));
 
-                    $wpp = sprintf("%02s", $wp[$wpFormat])."/".$filter_month;
+        $wpp = sprintf("%02s", $wp[$wpFormat]) . "/" . $filter_month;
+        $wpFormat = date('Y-m-d', strtotime($period_start2));
+        $periodefilter = $filter_year.$filter_month;
+        $querySupplyKanban = $this->dummy->query("
+      select sum(a.qty) as supply from wip_trx_mpp a inner join mst_bom b ON a.assy_no = b.bom_par_item
+	where b.bom_com_item = '$item_id' and a.periode = '$periodefilter' and wp = '$wpp'
+    ");
+    
+    // Fetch the supply value
+    $rowloopSupply = $querySupplyKanban->row();
+    $currentloopsupply = empty($rowloopSupply->supply) ? 0 : abs($rowloopSupply->supply);
 
-                    $supply = empty($dataArr[$wpp]) ? 0 : round($dataArr[$wpp]);
+        $supply = empty($dataArr[$wpp]) ? 0 : round($dataArr[$wpp]);
 
-                    if(date("w", strtotime($period_start2)) == "0" || date("w", strtotime($period_start2)) == "6"){
-                        $style = "background: #efbaba;";
-                    }else{
-                        $style = "";
-                    }
+        if (date("w", strtotime($period_start2)) == "0" || date("w", strtotime($period_start2)) == "6") {
+            $style = "background: #efbaba;";
+        } else {
+            $style = "";
+        }
 
-                    if(@$record['date_'.$tgl] == "W" || @$record['date_'.$tgl] == ""){ $need = 0; }else{ $need = @$record['date_'.$tgl]; }
+        $need = (@$record['date_' . $tgl] == "W" || @$record['date_' . $tgl] == "") ? 0 : @$record['date_' . $tgl];
+       
+        $currentDay = date('d', strtotime($period_start2));
+        $fieldName = 'date_' . $currentDay; // Generates "date_01", "date_02", etc.
+        
+        // Access the value dynamically from the $record array
+        $dateloop = isset($record[$fieldName]) ? $record[$fieldName] : 0;
+        // $dateqty_trx = date("Y-m-d", strtotime($filter_year . "-" . $filter_month . date('d', strtotime($period_start2)));
+        $dateqty_trx = date("Y-m-d", strtotime($filter_year . "-" . $filter_month . "-" . date('d', strtotime($period_start2))));
+        $queryQty_trx = $this->dummy->query("
+            SELECT DISTINCT SUM(qty) AS qty_trx
+            FROM public.wip_trx_mpp a
+            join mst_bom b ON a.assy_no = b.bom_par_item
+where b.bom_com_item = '$item_id' and  date(trx_date) = '$dateqty_trx';
+        ");
+                $dataqueryQty_trx = $queryQty_trx->result_array();
+                $datasqty_trx = isset($dataqueryQty_trx[0]['qty_trx']) ? $dataqueryQty_trx[0]['qty_trx'] : 0; // Default to 0 if no value found
+                $oslastmonth = $current_supply - $current_need;
+                $osbalance = $nowSupply - $record['need'];
+            $baldayone = $oslastmonth + ($currentloopsupply - $dateloop);
+        
+        if (date('d', strtotime($period_start2)) == "01") {
+            $hold[] = $baldayone;
+            
+            $bgColor = $baldayone < 0 ? 'background-color:red;' : '';
+            $content .= '
+                <td style="text-align:center;"><b>' . $dateloop . '</b></td>
+                <td style="text-align:center;"><b>' . $currentloopsupply . '</b></td>
+            <td style="text-align:center;' . $style . $bgColor . '"><b>' . $baldayone . '</b></td>';
+    } else {
+        if(date('d', strtotime($period_start2)) == "02"){
+            $indexid = 0;
+            $valueAtTgl = isset($hold[0]) ? $hold[0] : 0;
+            $fixwp = $valueAtTgl + ($currentloopsupply - $dateloop);
+            $hold[] = $fixwp;
+         }else{
+            $indexid = $tgl - 2;
+            $valueAtTgl = isset($hold[$indexid]) ? $hold[$indexid] : 0;
+         
+            $fixwp = $valueAtTgl + ($currentloopsupply - $dateloop);
+            $hold[] = $fixwp;
+        }
+        $bgColor = $fixwp < 0 ? 'background-color:red;' : '';
 
-                    $content .= '<td style="text-align:center;'.$style.'">'.$need.'</td>
-                                <td style="text-align:center;'.$style.'">'.$supply.'</td>
-                                <td style="text-align:center;'.$style.'">'.($need - $supply).'</td>';
 
-                    $period_start2 = date("Y-m-d", strtotime("+1 day", strtotime($period_start2)));
-                    $tgl++;
-                }
+     
+        $content .= '
+            <td style="text-align:center;"><b>' . $dateloop . '</b></td>
+                <td style="text-align:center;"><b>' . $currentloopsupply . '</b></td>
+            <td style="text-align:center;' . $style . $bgColor . '">' . $fixwp . '</td>';
+    }
 
-                if(($nowSupply - $record['need']) > 0){
-                    $balance_wip = ($nowSupply - $record['need']);
-                }else{
-                    $balance_wip = 0;
-                }
-
+    $period_start2 = date("Y-m-d", strtotime("+1 day", strtotime($period_start2)));
+    $tgl++;
+}  
+       
+            $balance_wip = $oslastmonth - $osbalance;
                 $html .= '<tr>
                             <td style="text-align:center;">' . $no . '</td>
                             <td>' . $record['item_id'] . '</td>
                             <td>' . $record['item_name'] . '</td>
                             <td>' . $current_need . '</td>
                             <td>' . $current_supply . '</td>
-                            <td>' . ($current_need - $current_supply) . '</td>
+                            <td>' . $oslastmonth . '</td>
                             <td>' . $current_wp . '</td>
                             <td>' . $record['need'] . '</td>
                             <td>' . $nowSupply . '</td>
-                            <td>' . $nowSupplyOs . '</td>
+                            <td>' . $osbalance . '</td>
                             <td>' . $balance_wip . '</td>
                             <td>' . $wpp2 . '</td>
                             <td>' . $nowWp. '</td>
@@ -451,10 +524,20 @@ class Report_os_supply extends CI_Controller
                         </tr>';
                 $no++;
             }
+            //oslastmontsh
+            // $balance_wip
             $html .= '</table>';
         }
-
+       
+        // $html .= '<div style="text-align: center; margin-top: 20px;">';
+        // for ($i = 1; $i <= $total_pages; $i++) {
+        //     $style = ($i == $current_page) ? 'background-color: red; color: white; font-weight: bold;' : '';
+        //     $html .= '<button onclick="navigatePage()" style="' . $style . '">' . $i . '</button> ';
+        // }
+        // $html .= '</div>';
         $html .= '</body></html>';
+      
         echo $html;
+        
     }
 }

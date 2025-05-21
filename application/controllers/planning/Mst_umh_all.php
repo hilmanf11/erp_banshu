@@ -248,7 +248,7 @@ class Mst_umh_all extends CI_Controller
         }
     }
 
-    public function print($option = "")
+   public function print($option = "")
     {
         if ($option == "excel") {
             $format  = date("Ymd");
@@ -334,7 +334,7 @@ class Mst_umh_all extends CI_Controller
             $html .= '<th style="text-align:center;" colspan="' . $main['total'] . '"> ' . $main['name'] . '</th>';
         }
 
-        $html .= '<th style="text-align:center;" rowspan="3">Total HAVCP</th>
+        $html .= '<th style="text-align:center;" rowspan="3">Total HAVCP </th>
                 </tr><tr>';
 
         foreach ($processSubNumber as $sub) {
@@ -357,7 +357,7 @@ class Mst_umh_all extends CI_Controller
             $customer_name = $record['customer_name'];
             $product_no = $record['product_no'];
 
-            $this->db->select('*, SUM(cycle_time) as total_umh_havcp');
+            $this->db->select('id, created_by, created_date, updated_by, updated_date, approved, approved_to, approved_by, approved_date, approved_data, deleted_is, line_no, line_name, customer_id, customer_name, product_no, circuit_no, process_main_number, process_sub_number, process_number, status_is, SUM(cycle_time) as total_umh_havcp, COALESCE(remarks, "0") as remarks');
             $this->db->from('mst_umh_havcp');
             $this->db->where('deleted_is', 0);
             $this->db->where('line_no', $line_no);
@@ -365,7 +365,13 @@ class Mst_umh_all extends CI_Controller
             $this->db->group_by('product_no');
             $this->db->order_by('product_no', 'asc');
             $havcp = $this->db->get()->row();
-
+            // var_dump("line_no: $line_no, customer_id: $customer_id, customer_name: $customer_name, product_no: $product_no");
+            // var_dump("fell: " . $record['remarks']);
+            if ($havcp === null) {
+                $havcp = (object) ['total_umh_havcp' => 0]; // Default to 0 if no result
+            }
+            
+            // var_dump("damn676: $havcp->total_umh_havcp");
             $arr = array(
                 "line_no" => $line_no,
                 "customer_id" => $customer_id,
@@ -374,7 +380,7 @@ class Mst_umh_all extends CI_Controller
                 "remarks" => $record['remarks'],
                 "total_umh" => round($record['total_umh'] + $havcp->total_umh_havcp, 3),
             );
-
+            // var_dump("damn676xxxxxx");
             //Process Number
             $this->db->select('c.number, (SUM(coalesce(d.cycle_time,0))) as cycle_time');
             $this->db->from('mst_process_main a');
@@ -399,7 +405,7 @@ class Mst_umh_all extends CI_Controller
             $this->db->group_by('c.number');
             $this->db->order_by('b.flag', 'asc');
             $processNumber2 = $this->db->get()->result_array();
-
+          
             $arrProcess = array();
             foreach ($processNumber as $process) {
                 $arrProcess += array(
@@ -407,12 +413,36 @@ class Mst_umh_all extends CI_Controller
                 );
             }
 
-            $arrProcess2 = array();
-            foreach ($processNumber2 as $process2) {
-                $arrProcess2 += array(
-                    $process2['number'] => $process2['cycle_time']
-                );
+            if (empty($processNumber2)) {
+                // Array default yang ingin Anda gunakan
+                $defaultNumbers = [
+                    'ASM001', 'ASM002', 'ASM003', 'ASM004', 'ASM005', 
+                    'ASM006', 'ASM007', 'ASM008', 'ASM009', 'ASM010','ASM011', 'ASM023', 
+                    'CHK001', 'CHK002', 'CLP001', 'CLP002', 'CVL001', 
+                    'HSG001', 'HSG002', 'HSG003', 'HSG004', 'HSG005', 
+                    'HSG006', 'HSG007', 'HSG008','HSG009', 'HSG010', 'HSG011','PSC001',
+                    'PSC002', 'PSC003', 'PSC004',
+                    'PCK001', 'SAS001','SAS002',
+                    'SAS003','SAS004','SET001','SET002','TBK001','TBK002','TET001','VIS001','VIS002'
+                ];
+
+                // Membuat array dengan cycle_time default
+                foreach ($defaultNumbers as $number) {
+                    $processNumber2[] = [
+                        'number' => $number,
+                        'cycle_time' => '0.000',
+                    ];
+                }
             }
+            
+            // Proses pengolahan data seperti biasa
+            $arrProcess2 = [];
+            foreach ($processNumber2 as $process2) {
+                $arrProcess2 += [
+                    $process2['number'] => $process2['cycle_time'],
+                ];
+            }
+            
             $arrFinal[] = array_merge(array_merge($arr, $arrProcess), $arrProcess2);
         }
 
@@ -422,8 +452,22 @@ class Mst_umh_all extends CI_Controller
                         <td style="mso-number-format:\@;">' . $final['product_no'] . '</td>';
             foreach ($processNumber as $proses) {
                 $number = $proses['number'];
-                $html .= '<td style="text-align:center;"> ' . @$final["$number"] . '</td>';
+                $html .= '<td style="text-align:center;">'. @$final["$number"] . '</td>';
             }
+
+            if (!empty($processNumber2)) {
+                foreach ($processNumber2 as $proses2) {
+                    // var_dump('damn50505');
+                    
+                    $number = $proses2['number'];
+                    $html .= '<td style="text-align:center;"> ' . @$final["$number"] . '</td>';
+                }
+            } else {
+                // var_dump('processNumber2 is empty');
+                $html .= '<td style="text-align:center;">' . @$final["$number"] . '</td>';
+  
+            }
+            
             $html .= '  <td style="text-align:center;">' . $final['total_umh'] . '</td>
                         </tr>';
             $no++;
@@ -431,5 +475,5 @@ class Mst_umh_all extends CI_Controller
 
         $html .= '</table></body></html>';
         echo $html;
-    }
+    }   
 }

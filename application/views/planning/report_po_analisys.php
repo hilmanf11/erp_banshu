@@ -23,7 +23,16 @@
                     <span style="width:35%; display:inline-block;">Part No</span>
                     <input style="width:60%;" id="filter_part_no" class="easyui-combogrid">
                 </div>
-            </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Revision</span>
+                    <input style="width:60%;" id="filter_revision" class="easyui-combobox">
+                    <!-- <select style="width:60%;" id="filter_revision" class="easyui-combobox" panelHeight="auto">
+                        <option value="0">0</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                    
+                    </select> -->
+                </div>
         </fieldset>
         <?= $button ?>
     </div>
@@ -33,7 +42,7 @@
     <iframe id="printout" src="" style="width: 100%; height: 95%; border: 0;"></iframe>
 </div>
 
-<script>
+<script>print
     function reload() {
         window.location.reload();
     }
@@ -42,17 +51,44 @@
         $("#printout").get(0).contentWindow.print();
     }
 
+    var filter_month;
+    var filter_year;
+    var filter_revision;
+    var filter_product_family;
+    var filter_part_no;
+    
     function filter() {
-        var filter_month = $("#filter_month").combobox('getValue');
-        var filter_year = $("#filter_year").combobox('getValue');
-        var filter_product_family = $("#filter_product_family").combobox('getValue');
-        var filter_part_no = $("#filter_part_no").combogrid('getValue');
+         filter_month = $("#filter_month").combobox('getValue');
+         filter_year = $("#filter_year").combobox('getValue');
+         filter_revision = $("#filter_revision").combobox('getValue');
+          
+        console.log('teh44',filter_revision);
+         filter_product_family = $("#filter_product_family").combobox('getValue');
+         filter_part_no = $("#filter_part_no").combogrid('getValue');
 
         if (filter_month == "" || filter_year == "") {
             toastr.warning("Please Choose Period");
         } else {
-            var url = "?filter_month=" + btoa(filter_month) + "&filter_year=" + btoa(filter_year) + "&filter_product_family=" + btoa(filter_product_family) + "&filter_part_no=" + btoa(filter_part_no);
+            var url = "?page=1&filter_month=" + btoa(filter_month) + "&filter_revision=" + btoa(filter_revision) + "&filter_year=" + btoa(filter_year) + "&filter_product_family=" + btoa(filter_product_family) + "&filter_part_no=" + btoa(filter_part_no) + "&filter_revision=" + window.btoa(filter_revision);
 
+            $("#printout").contents().find('html').html("<center><br><br><br><b style='font-size:20px;'>Please Wait...</b></center>");
+            $("#printout").attr('src', '<?= base_url('planning/report_po_analisys/print') ?>' + url);
+        }
+    }
+
+    function setPage(page) {
+         filter_month = $("#filter_month").combobox('getValue');
+         filter_year = $("#filter_year").combobox('getValue');
+         filter_revision = $("#filter_revision").combobox('getValue');
+        
+         filter_product_family = $("#filter_product_family").combobox('getValue');
+         filter_part_no = $("#filter_part_no").combogrid('getValue');
+
+        if (filter_month == "" || filter_year == "") {
+            toastr.warning("Please Choose Period");
+        } else {
+            var url = "?page="+page+"&filter_month=" + btoa(filter_month) + "&filter_revision=" + btoa(filter_revision) + "&filter_year=" + btoa(filter_year) + "&filter_product_family=" + btoa(filter_product_family) + "&filter_part_no=" + btoa(filter_part_no) + "&filter_revision=" + window.btoa(filter_revision);
+            console.log(url);
             $("#printout").contents().find('html').html("<center><br><br><br><b style='font-size:20px;'>Please Wait...</b></center>");
             $("#printout").attr('src', '<?= base_url('planning/report_po_analisys/print') ?>' + url);
         }
@@ -63,11 +99,11 @@
         var filter_year = $("#filter_year").combobox('getValue');
         var filter_product_family = $("#filter_product_family").combobox('getValue');
         var filter_part_no = $("#filter_part_no").combogrid('getValue');
-
+        var filter_revision = $("#filter_revision").combobox('getValue');
         if (filter_month == "" || filter_year == "") {
             toastr.warning("Please Choose Period");
         } else {
-            var url = "?filter_month=" + btoa(filter_month) + "&filter_year=" + btoa(filter_year) + "&filter_product_family=" + btoa(filter_product_family) + "&filter_part_no=" + btoa(filter_part_no);
+            var url = "?filter_month=" + btoa(filter_month) + "&filter_year=" + btoa(filter_year) + "&filter_product_family=" + btoa(filter_product_family) + "&filter_part_no=" + btoa(filter_part_no) + "&filter_revision=" + window.btoa(filter_revision);
 
             window.location.assign('<?= base_url('planning/report_po_analisys/print/excel') ?>' + url);
         }
@@ -88,6 +124,20 @@
             textField: 'name',
             prompt: 'Year',
         });
+
+    $('#filter_revision').combobox({
+        url: '<?php echo base_url('planning/mst_data/readRevisions'); ?>',
+        valueField: 'id',
+        textField: 'name',
+        prompt: 'Select Revision', // This sets the prompt
+        icons: [{
+            iconCls: 'icon-clear',
+            handler: function(e) {
+                // Clears the combobox and focuses the textbox
+                $(e.data.target).combobox('clear').combobox('textbox').focus();
+            }
+        }],
+    });
 
         $('#filter_product_family').combobox({
             url: '<?php echo base_url('planning/mst_item/readFamily'); ?>',

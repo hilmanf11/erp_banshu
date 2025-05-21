@@ -68,7 +68,7 @@ class Forecast_supplier extends CI_Controller
             $filter_year = base64_decode($this->input->get('filter_year'));
             $filter_revision = base64_decode($this->input->get('filter_revision'));
             $filter_product_family = base64_decode($this->input->get('filter_product_family'));
-            $filter_part_no = trim(base64_decode($this->input->get('filter_part_no')));
+            $item_id = trim(base64_decode($this->input->get('item_id')));
             $filter_supplier = trim(base64_decode($this->input->get('filter_supplier')));
             $filter_po = trim(base64_decode($this->input->get('filter_po')));
 
@@ -79,40 +79,46 @@ class Forecast_supplier extends CI_Controller
             $rows   = isset($rows) ? intval($rows) : 10;
             $offset = ($page - 1) * $rows;
             $result = array();
+
+            // echo 'Decoded filter_part_no: ' . $filter_part_no . "<br>";
+            // echo "Filter Month: " . $filter_month . "<br>";
+// echo "Filter Year: " . $filter_year . "<br>";
+// echo "Filter Revision: " . $filter_revision . "<br>";
+// echo "Filter Product Family: " . $filter_product_family . "<br>";
+// echo "Filter Part No: " . $filter_part_no . "<br>";
+// echo "Filter Supplier: " . $filter_supplier . "<br>";
+// echo "Filter PO: " . $filter_po . "<br>";
+
             //Select Query
-            $this->db->select('a.revision, a.p_year, a.p_month, a.item_id, 
-                b.number as vendor_id, 
-                b.name as vendor_name, 
-                b.type as vendor_type, 
-                b.origin as vendor_origin, 
-                c.item_id as supplier_item_id, 
-                a.item_name as item_name, 
-                c.leadtime as supplier_item_leadtime, 
-                c.mpq as supplier_item_mpq, 
-                c.moq as supplier_item_moq, 
-                d.name as maker_name, 
-                d.type as maker_type');
-            $this->db->from('purchase_orders a');
-            $this->db->join('supplier_items c', "a.item_id = c.item_id AND a.supplier_id = c.supplier_id", 'left');
-            $this->db->join('suppliers b', "c.supplier_id = b.id", 'left');
-            $this->db->join('mst_maker d', "c.maker_code = d.number", 'left');
-            $this->db->where('a.p_month', $filter_month);
+            $this->db->select('a.revision, a.p_year, a.p_month, a.product_no as item_id, 
+            b.number as vendor_id, b.name as vendor_name, 
+            b.type as vendor_type, b.origin as vendor_origin, 
+            c.item_id as supplier_item_id, a.product_name as product_name, 
+            c.leadtime as supplier_item_leadtime, c.mpq as supplier_item_mpq, 
+            c.moq as supplier_item_moq, d.name as maker_name, d.type as maker_type');
+    $this->db->from('generate_mrp a');
+    $this->db->join('supplier_items c', 'a.product_no = c.item_id', 'left');
+    $this->db->join('suppliers b', 'c.supplier_id = b.id', 'left');
+    $this->db->join('mst_maker d', 'c.maker_code = d.number', 'left');
+        $this->db->where('a.p_month', $filter_month);
             $this->db->where('a.p_year', $filter_year);
-            $this->db->where('a.revision', $filter_revision);
-            $this->db->where('c.share_order >',0);
-            $this->db->like('a.product_family_name', $filter_product_family);
-            $this->db->like('a.item_id', $filter_part_no);
-            $this->db->like('a.supplier_id', $filter_supplier);
-            $this->db->like('a.purchase_order_no', $filter_po);
-            $this->db->order_by('b.name', 'asc');
-            $this->db->order_by('a.product_family_name', 'asc');
+    $this->db->where('a.revision', '');
+    $this->db->where('c.share_order >', 0);
+    $this->db->like('a.product_family', $filter_product_family); // For LIKE '%Terminal%'
+    $this->db->like('a.product_no', $item_id); // For LIKE '%+2236793-3%'
+    $this->db->like('c.supplier_id', $filter_supplier); // This condition may be redundant as '%%' is equivalent to no filtering.
+    $this->db->order_by('b.name', 'asc');
+    $this->db->order_by('a.product_family', 'asc');
             //Total Data
             $totalRows = $this->db->count_all_results('', false);
             //Limit 1 - 10
             $this->db->limit($rows, $offset);
             //Get Data Array
+            
+            // echo $this->db->get_compiled_select();
             $records = $this->db->get()->result_array();
-
+            
+            // die();
             $finals = array();
             foreach ($records as $record) {
                 $ending = date("Y-m-t", strtotime($record['p_year'] . "-" . $record['p_month'] . "-01"));
@@ -190,37 +196,51 @@ class Forecast_supplier extends CI_Controller
         $filter_year = base64_decode($this->input->get('filter_year'));
         $filter_revision = base64_decode($this->input->get('filter_revision'));
         $filter_product_family = trim(base64_decode($this->input->get('filter_product_family')));
-        $filter_part_no = trim(base64_decode($this->input->get('filter_part_no')));
+        $item_id = trim(base64_decode($this->input->get('item_id')));
         $filter_supplier = trim(base64_decode($this->input->get('filter_supplier')));
         $filter_po = trim(base64_decode($this->input->get('filter_po')));
 
         //Select Query
-        $this->db->select('a.revision, a.p_year, a.p_month, a.item_id, 
-            b.number as vendor_id, 
-            b.name as vendor_name, 
-            b.type as vendor_type, 
-            b.origin as vendor_origin, 
-            c.item_id as supplier_item_id, 
-            a.item_name as item_name, 
-            c.leadtime as supplier_item_leadtime, 
-            c.mpq as supplier_item_mpq, 
-            c.moq as supplier_item_moq, 
-            d.name as maker_name, 
-            d.type as maker_type');
-        $this->db->from('purchase_orders a');
-        $this->db->join('supplier_items c', "a.item_id = c.item_id AND a.supplier_id = c.supplier_id", 'left');
-        $this->db->join('suppliers b', "c.supplier_id = b.id", 'left');
-        $this->db->join('mst_maker d', "c.maker_code = d.number", 'left');
-        $this->db->where('a.p_month', $filter_month);
+       
+        $this->db->select('a.revision, a.p_year, a.p_month, a.product_no as item_id, 
+        b.number as vendor_id, b.name as vendor_name, 
+        b.type as vendor_type, b.origin as vendor_origin, 
+        c.item_id as supplier_item_id, a.product_name as product_name, 
+        c.leadtime as supplier_item_leadtime, c.mpq as supplier_item_mpq, 
+        c.moq as supplier_item_moq, d.name as maker_name, d.type as maker_type');
+$this->db->from('generate_mrp a');
+$this->db->join('supplier_items c', 'a.product_no = c.item_id', 'left');
+$this->db->join('suppliers b', 'c.supplier_id = b.id', 'left');
+$this->db->join('mst_maker d', 'c.maker_code = d.number', 'left');
+    $this->db->where('a.p_month', $filter_month);
         $this->db->where('a.p_year', $filter_year);
-        $this->db->where('a.revision', $filter_revision);
-        $this->db->where('c.share_order >',0);
-        $this->db->like('a.product_family_name', $filter_product_family);
-        $this->db->like('a.item_id', $filter_part_no);
-        $this->db->like('a.supplier_id', $filter_supplier);
-        $this->db->like('a.purchase_order_no', $filter_po);
-        $this->db->order_by('b.name', 'asc');
-        $this->db->order_by('a.product_family_name', 'asc');
+$this->db->where('a.revision', '');
+$this->db->where('c.share_order >', 0);
+$this->db->like('a.product_family', $filter_product_family); // For LIKE '%Terminal%'
+$this->db->like('a.product_no', $item_id); // For LIKE '%+2236793-3%'
+$this->db->like('c.supplier_id', $filter_supplier); // This condition may be redundant as '%%' is equivalent to no filtering.
+$this->db->order_by('b.name', 'asc');
+$this->db->order_by('a.product_family', 'asc');
+
+        // $this->db->select('a.revision, a.p_year, a.p_month, a.item_id, b.number as vendor_id, b.name as vendor_name, b.type as vendor_type, b.origin as vendor_origin, c.item_id as supplier_item_id, a.item_name as item_name, c.leadtime as supplier_item_leadtime, c.mpq as supplier_item_mpq, c.moq as supplier_item_moq, d.name as maker_name, d.type as maker_type');
+        // $this->db->from('purchase_orders a');
+        // $this->db->join('supplier_items c', "a.item_id = c.item_id AND a.supplier_id = c.supplier_id", 'left');
+        // $this->db->join('suppliers b', "c.supplier_id = b.id", 'left');
+        // $this->db->join('mst_maker d', "c.maker_code = d.number", 'left');
+        // $this->db->where('a.p_month', $filter_month);
+        // $this->db->where('a.p_year', $filter_year);
+        // $this->db->where('a.revision', $filter_revision);
+        // $this->db->where('c.share_order >',0);
+        // $this->db->like('a.product_family_name', $filter_product_family);
+        // $this->db->like('a.item_id', $item_id);
+        // $this->db->like('a.supplier_id', $filter_supplier);
+        // $this->db->like('a.purchase_order_no', $filter_po);
+        // $this->db->order_by('b.name', 'asc');
+        // $this->db->order_by('a.product_family_name', 'asc');
+
+//         $query = $this->db->get_compiled_select();
+// echo $query;
+
         $records = $this->db->get()->result_array();
 
         $html = '<html><head><title>Print Data</title></head><style>body {font-family: Arial, Helvetica, sans-serif;}#customers {border-collapse: collapse;width: 100%;font-size: 12px;}#customers td, #customers th {border: 1px solid #ddd;padding: 2px;}#customers tr:nth-child(even){background-color: #f2f2f2;}#customers tr:hover {background-color: #ddd;}#customers th {padding-top: 2px;padding-bottom: 2px;text-align: left;color: black;}</style><body>
@@ -261,7 +281,7 @@ class Forecast_supplier extends CI_Controller
             <tr>
                 <th width="20" style="text-align:center;">No</th>
                 <th style="text-align:center;">Vendor ID</th>
-                <th style="text-align:center;">Vendor Name</th>
+                <th style="text-align:center;">Vendor Name AJAJ</th>
                 <th style="text-align:center;">Vendor Type</th>
                 <th style="text-align:center;">Origin</th>
                 <th style="text-align:center;">Item ID</th>
@@ -322,15 +342,15 @@ class Forecast_supplier extends CI_Controller
                 $prod3 = @$forecast->$m33;
             }
 
-            $html .= '  <tr>
-                            <td>' . $no . '</td>
-                            <td>' . $data['vendor_id'] . '</td>
-                            <td>' . $data['vendor_name'] . '</td>
-                            <td>' . $data['vendor_type'] . '</td>
-                            <td>' . $data['vendor_origin'] . '</td>
-                            <td>' . $data['supplier_item_id'] . '</td>
-                            <td>' . $data['item_name'] . '</td>
-                            <td>' . $data['supplier_item_leadtime'] . '</td>
+            $html .= ' <tr>
+                            <td>TESS</td>
+                            <td>tesssss</td>
+                            <td>tessss</td>
+                            <td>tessss</td>
+                            <td>tessss</td>
+                            <td>tessss</td>
+                            <td>tessss</td>
+                            <td>tessss</td>
                             <td style="mso-number-format:\@;">' . $data['supplier_item_mpq'] . '</td>
                             <td style="mso-number-format:\@;">' . $data['supplier_item_moq'] . '</td>
                             <td>' . $data['maker_name'] . '</td>
