@@ -10,7 +10,7 @@ class Os_supply extends CI_Controller
         $this->load->helper(array('form', 'url'));
         $this->load->library('form_validation');
         $this->load->library('session');
-        $this->load->model('api');
+        $this->load->model('crud');
 
         //Validasi Form
         $this->form_validation->set_rules('product_no', 'Product No', 'required|min_length[2]|max_length[50]|is_unique[fg_stock.product_no]');
@@ -18,7 +18,7 @@ class Os_supply extends CI_Controller
 
     public function index()
     {
-        if (empty($this->session->api_key)) {
+        if (empty($this->session->username)) {
             redirect('error_session');
         } elseif ($this->checkuserAccess($this->id_menu()) > 0) {
             $data['button'] = $this->getbutton($this->id_menu());
@@ -33,7 +33,7 @@ class Os_supply extends CI_Controller
     {
         if ($this->input->get()) {
             $number = $this->input->get('number');
-            $processSub = $this->api->reads('os_supply', [], ["number" => $number]);
+            $processSub = $this->crud->reads('os_supply', [], ["number" => $number]);
 
             echo json_encode($processSub);
         }
@@ -43,26 +43,8 @@ class Os_supply extends CI_Controller
         $month = $this->input->get("month");
         $year = $this->input->get("year");
 
-        $data = $this->api->query("SELECT DISTINCT revision FROM os_supply WHERE p_month = '$month' and p_year='$year' ORDER BY revision ASC");
+        $data = $this->crud->query("SELECT DISTINCT revision FROM os_supply WHERE p_month = '$month' and p_year='$year' ORDER BY revision ASC");
         echo json_encode($data);
-    }
-
-    public function readProductFamily(){
-        $this->dummy = $this->load->database('pg', TRUE);
-        $query = $this->dummy->query("SELECT * FROM r_prodfam WHERE prod_group = 'Raw Material' and pfm_id != '06' ORDER BY pfm_id ASC");
-        $records = $query->result_array();
-
-        echo json_encode($records);
-    }
-
-    public function readProducts($pfm_id)
-    {
-        $post = isset($_POST['q']) ? $_POST['q'] : "";
-        $this->dummy = $this->load->database('pg', TRUE);
-        $query = $this->dummy->query("SELECT * FROM mst_item WHERE pfm_id = '$pfm_id' and stscode_id = '01' and item_id LIKE '%$post%' ORDER BY item_id ASC");
-        $records = $query->result_array();
-
-        echo json_encode($records);
     }
 
     public function datatables()
@@ -77,18 +59,6 @@ class Os_supply extends CI_Controller
             $filter_product_family = trim(base64_decode($this->input->get('filter_product_family')));
             $filter_product_no = trim(base64_decode($this->input->get('filter_product_no')));
             $cutoff =  date('Y-m-01', strtotime("-1 month", strtotime($filter_cutoff)));
-
-            // $itemq = $this->dummy->query("SELECT z.item_id, z.item_name, z.pfm_name, COALESCE(SUM(z.hasil) + SUM(z.stock), 0) as stock from (
-            //     select a.temp_woc_id, a.periode, a.wp, d.item_id, d.item_name, e.pfm_name, a.qty, b.bom_qty_perassy, (a.qty * b.bom_qty_perassy) as hasil, COALESCE(SUM(c.qty_need), 0) as qty_need, SUM(c.qty_scan) as qty_scan, COALESCE(SUM(c.qty_need) - SUM(c.qty_scan), 0) as stock
-            //     from wip_trx_mpp a
-            //     join mst_bom b ON a.assy_no = b.bom_par_item
-            //     left join (SELECT item_id, kanbanrm_woc_id, qty_need, SUM(qty_scan) as qty_scan FROM serial_detail_kanbanrm GROUP BY item_id, kanbanrm_woc_id, qty_need) c ON a.temp_woc_id = c.kanbanrm_woc_id and c.item_id = b.bom_com_item
-            //     join mst_item d on b.bom_com_item = d.item_id and d.stscode_id = '01'
-            //     join r_prodfam e on d.pfm_id = e.pfm_id and e.prod_group = 'Raw Material' and e.pfm_id != '05'
-            //     where b.bom_com_item like '%$filter_product_no%' and e.pfm_id LIKE '%$filter_product_family%' and a.wp_date between '$cutoff' and '$filter_cutoff'
-            //     group by a.temp_woc_id, a.periode, a.wp, a.qty, b.bom_qty_perassy, d.item_id, d.item_name, e.pfm_name) z WHERE z.qty_need <= 0
-            //     GROUP BY z.item_id, z.item_name, z.pfm_name                
-            // ");
 
             $itemq = $this->dummy->query("SELECT z.item_id, z.item_name, z.pfm_name, COALESCE(SUM(z.stock), 0) as stock from (
                 select a.temp_woc_id, a.periode, a.wp, d.item_id, d.item_name, e.pfm_name, a.qty, b.bom_qty_perassy, (a.qty * b.bom_qty_perassy) as hasil, COALESCE(SUM(c.qty_need), 0) as qty_need, SUM(c.qty_scan) as qty_scan, COALESCE((a.qty * b.bom_qty_perassy) - COALESCE(SUM(c.qty_scan), 0), 0) as stock
@@ -111,8 +81,9 @@ class Os_supply extends CI_Controller
                 $pfm_name = $item['pfm_name'];
                 $qty = abs($item['stock']);
 
-                $os_supply = $this->api->read('os_supply', [], [
-                    "product_no" => $item_id,
+                $item_rm = $this->crud->read("item_rm", [], ["number" => $item_id]);
+                $os_supply = $this->crud->read('os_supply', [], [
+                    "item_rm_id" => @$item_rm->id,
                     "p_month" => $filter_month,
                     "p_year" => $filter_year,
                     "revision" => $filter_revision
@@ -165,31 +136,44 @@ class Os_supply extends CI_Controller
     {
         if ($this->input->post()) {
             $post = $this->input->post('data');
+            $item_id = $post['product_no'];
 
-            $os_supply = $this->api->reads('os_supply', [], [
-                "p_month" => $post['p_month'],
-                "p_year" => $post['p_year'],
-                "revision" => $post['revision'],
-                "product_no" => trim($post['product_no'])
-            ]);
+            $item_rm = $this->crud->read("item_rm", [], ["number" => $item_id]);
+            if(!empty($item_rm->id)){
+                $os_supply = $this->crud->reads('os_supply', [], [
+                    "p_month" => $post['p_month'],
+                    "p_year" => $post['p_year'],
+                    "revision" => $post['revision'],
+                    "item_rm_id" => @$item_rm->id
+                ]);
+    
+                $postFinal = array(
+                    "p_month" => $post['p_month'],
+                    "p_year" => $post['p_year'],
+                    "revision" => $post['revision'],
+                    "cutoff" => $post['cutoff'],
+                    "item_rm_id" => @$item_rm->id,
+                    "qty" => $post['qty'],
+                    "actual" => $post['actual'],
+                    "status" => $post['status'],
+                );
 
-            if($post['product_no'] != ""){
                 if (count($os_supply) > 0) {
-                    $send   = $this->api->update('os_supply', [
+                    $send   = $this->crud->update('os_supply', [
                         "p_month" => $post['p_month'],
                         "p_year" => $post['p_year'],
                         "revision" => $post['revision'],
-                        "product_no" => trim($post['product_no'])
-                    ], $post);
+                        "item_rm_id" => $item_rm->id
+                    ], $postFinal);
 
-                    echo json_encode(array("title" => "Good Job", "message" => "Product No " . $post['product_no'] . " Updated Successfully", "theme" => "success"));
+                    echo json_encode(array("title" => "Good Job", "message" => "Part No " . $post['product_no'] . " Updated Successfully", "theme" => "success"));
                 } else {
-                    $send   = $this->api->create('os_supply', $post, "RMS", "os_supply");
+                    $send   = $this->crud->create('os_supply', $postFinal);
 
-                    echo json_encode(array("title" => "Good Job", "message" => "Product No " . $post['product_no'] . " Saved Successfully", "theme" => "success"));
+                    echo json_encode(array("title" => "Good Job", "message" => "Part No " . $post['product_no'] . " Saved Successfully", "theme" => "success"));
                 }
             }else{
-                echo json_encode(array("title" => "Error", "message" => "Product No " . $post['product_no'] . " Cannot Saved", "theme" => "error"));
+                echo json_encode(array("title" => "Error", "message" => "Part No " . $post['product_no'] . " Cannot Saved! because this part not available in master item RM", "theme" => "error"));
             }
         } else {
             show_error("Cannot Process your request");
@@ -199,7 +183,7 @@ class Os_supply extends CI_Controller
     public function delete()
     {
         $data = $this->input->post();
-        $send = $this->api->delete('os_supply', $data);
+        $send = $this->crud->delete('os_supply', $data);
         echo $send;
     }
 
@@ -242,39 +226,43 @@ class Os_supply extends CI_Controller
             $revision = $post['revision'];
             $cutoff = $post['cutoff'];
 
-            $os_supply = $this->api->reads('os_supply', [], [
-                "p_month" => $post['p_month'],
-                "p_year" => $post['p_year'],
-                "revision" => $post['revision'],
-                "product_no" => trim($post['product_no'])
-            ]);
+            $item_id = $post['product_no'];
 
-            $postFinal = array(
-                "p_month" => $p_month,
-                "p_year" => $p_year,
-                "revision" => $revision,
-                "product_no" => trim($post['product_no']),
-                "product_name" => $post['item_name'],
-                "product_family" => @$os_supply[0]->product_family,
-                "actual" => $post['qty'],
-                "status" => $post['status']
-            );
+            $item_rm = $this->crud->read("item_rm", [], ["number" => $item_id]);
+            if(!empty($item_rm->id)){
 
-            if($post['product_no'] != ""){
+                $os_supply = $this->crud->reads('os_supply', [], [
+                    "p_month" => $post['p_month'],
+                    "p_year" => $post['p_year'],
+                    "revision" => $post['revision'],
+                    "item_rm_id" => $item_rm->id
+                ]);
+
+                $postFinal = array(
+                    "p_month" => $p_month,
+                    "p_year" => $p_year,
+                    "revision" => $revision,
+                    "item_rm_id" => $item_rm->id,
+                    "product_name" => $post['item_name'],
+                    "product_family" => @$os_supply[0]->product_family,
+                    "actual" => $post['qty'],
+                    "status" => $post['status']
+                );
+
                 if (count($os_supply) > 0) {
-                    $send   = $this->api->update('os_supply', [
+                    $send   = $this->crud->update('os_supply', [
                         "p_month" => $post['p_month'],
                         "p_year" => $post['p_year'],
                         "revision" => $post['revision'],
-                        "product_no" => trim($post['product_no'])
+                        "item_rm_id" => $item_rm->id
                     ], $postFinal);
 
-                    echo json_encode(array("title" => "Good Job", "message" => "Product No " . $post['product_no'] . " Updated Successfully", "theme" => "success"));
+                    echo json_encode(array("title" => "Good Job", "message" => "Part No " . $post['product_no'] . " Updated Successfully", "theme" => "success"));
                 } else {
-                    echo json_encode(array("title" => "Error", "message" => "Product No " . $post['product_no'] . " Not Generate", "theme" => "error"));
+                    echo json_encode(array("title" => "Error", "message" => "Part No " . $post['product_no'] . " Not Generate", "theme" => "error"));
                 }
             }else{
-                echo json_encode(array("title" => "Error", "message" => "Product No " . $post['product_no'] . " Saved Failed", "theme" => "error"));
+                echo json_encode(array("title" => "Error", "message" => "Part No " . $post['product_no'] . " Cannot Saved! because this part not available in master item RM", "theme" => "error"));
             }
         }
     }
@@ -352,8 +340,9 @@ class Os_supply extends CI_Controller
             $pfm_name = $item['pfm_name'];
             $qty = abs($item['stock']);
 
-            $os_supply = $this->api->read('os_supply', [], [
-                "product_no" => $item_id,
+            $item_rm = $this->crud->read("item_rm", [], ["number" => $item_id]);
+            $os_supply = $this->crud->read('os_supply', [], [
+                "item_rm_id" => @$item_rm->id,
                 "p_month" => $filter_month,
                 "p_year" => $filter_year,
                 "revision" => $filter_revision
@@ -415,8 +404,8 @@ class Os_supply extends CI_Controller
         <table id="customers" border="1">
             <tr>
                 <th width="20">No</th>
-                <th>Product No</th>
-                <th>Product Name</th>
+                <th>Part No</th>
+                <th>Part Name</th>
                 <th>Product Family</th>
                 <th>Stock</th>
                 <th>Actual</th>

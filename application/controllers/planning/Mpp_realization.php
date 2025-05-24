@@ -10,7 +10,7 @@ class Mpp_realization extends CI_Controller
         $this->load->helper(array('form', 'url'));
         $this->load->library('form_validation');
         $this->load->library('session');
-        $this->load->model('api');
+        $this->load->model('crud');
         //$this->load->model('banshu');
         //$this->pg = $this->load->database('pg', TRUE);
 
@@ -20,7 +20,7 @@ class Mpp_realization extends CI_Controller
 
     public function index()
     {
-        if (empty($this->session->api_key)) {
+        if (empty($this->session->username)) {
             redirect('error_session');
         } elseif ($this->checkuserAccess($this->id_menu()) > 0) {
             $data['button'] = $this->getbutton($this->id_menu());
@@ -33,6 +33,7 @@ class Mpp_realization extends CI_Controller
 
     public function print($option = "")
     {
+        error_reporting(0);
         if ($option == "excel") {
             $format  = date("Ymd");
             header("Content-type: application/vnd-ms-excel");
@@ -45,27 +46,28 @@ class Mpp_realization extends CI_Controller
         $config = $this->db->get()->row();
 
         //Database Server MRP
-        $this->dummy = $this->load->database('dummy', TRUE);
+        // $this->dummy = $this->load->database('dummy', TRUE);
 
         //Filter Data
         $filter_month = base64_decode($this->input->get('filter_month'));
         $filter_year = base64_decode($this->input->get('filter_year'));
-        $filter_line_no = base64_decode($this->input->get('filter_line_no'));
+        $filter_customer = base64_decode($this->input->get('filter_customer'));
         $filter_product_no = base64_decode($this->input->get('filter_product_no'));
         $filter_revision = base64_decode($this->input->get('filter_revision'));
 
         $firstDate = date('01 M', strtotime($filter_year . "-" . $filter_month . "-01"));
         $endDate = date('t M', strtotime($filter_year . "-" . $filter_month . "-01"));
 
-        $this->db->select("a.*");
+        $this->db->select("a.*, c.number as item_fg_number, c.name as item_fg_name, c.number_customer, b.name as customer_name");
         $this->db->from('generate_mpp a');
-        $this->db->join('mst_line b', 'a.line_no = b.line_no');
+        $this->db->join('customers b', 'a.customer_id = b.id');
+        $this->db->join('item_fg c', 'a.item_fg_id = c.id');
         $this->db->where('a.p_month', $filter_month);
         $this->db->where('a.p_year', $filter_year);
         $this->db->where('a.revision', $filter_revision);
-        $this->db->like('a.line_no', $filter_line_no);
-        $this->db->like('a.product_no', $filter_product_no);
-        $this->db->group_by('a.product_no');
+        $this->db->like('a.customer_id', $filter_customer);
+        $this->db->like('a.item_fg_id', $filter_product_no);
+        $this->db->group_by('a.item_fg_id');
         $records = $this->db->get()->result_array();
 
         //Setting Header
@@ -80,7 +82,7 @@ class Mpp_realization extends CI_Controller
         $no = 1;
 
         while (strtotime($firstDate) <= strtotime($endDate)) {
-            if (date('w', strtotime($firstDate)) !== '0' && date('w', strtotime($firstDate)) !== '6') {
+            if (date('w', strtotime($firstDate)) !== '0') {
                 $styles = "";
                 $wp_content = "W/P";
                 $cut_no += 1;
@@ -93,9 +95,9 @@ class Mpp_realization extends CI_Controller
             }
 
             //Setting Header
-            $wp .= '<th width="30" style="text-align:center; ' . $styles . '">' . $wp_content . '</th>';
-            $cut .= '<th width="30" style="text-align:center; ' . $styles . '">' . $cut_content . '</th>';
-            $date .= '<th width="30" style="text-align:center; ' . $styles . '">' . $firstDate . '</th>';
+            $wp .= '<th width="50" style="text-align:center; ' . $styles . '">' . $wp_content . '</th>';
+            $cut .= '<th width="50" style="text-align:center; ' . $styles . '">' . $cut_content . '</th>';
+            $date .= '<th width="50" style="text-align:center; ' . $styles . '">' . $firstDate . '</th>';
 
             $firstDate = date("d M", strtotime("+1 day", strtotime($firstDate)));
         }
@@ -112,19 +114,20 @@ class Mpp_realization extends CI_Controller
             $endDate2 = date('t M', strtotime($filter_year . "-" . $filter_month . "-01"));
             $period = $filter_year . $filter_month;
 
-            $this->dummy->select('item_id, wp, SUM(qty) as qty');
-            $this->dummy->from("serial_barcode_packing");
-            $this->dummy->where("mpp_periode", $period);
-            $this->dummy->where("item_id", $record['product_no']);
-            $this->dummy->where("sts_in", true);
-            $this->dummy->group_by("wp, item_id");
-            $this->dummy->order_by("wp", "asc");
-            $packings = $this->dummy->get()->result_array();
+            // $this->dummy->select('item_id, wp, SUM(qty) as qty');
+            // $this->dummy->from("serial_barcode_packing");
+            // $this->dummy->where("mpp_periode", $period);
+            // $this->dummy->where("item_id", $record['product_no']);
+            // $this->dummy->where("sts_in", true);
+            // $this->dummy->group_by("wp, item_id");
+            // $this->dummy->order_by("wp", "asc");
+            // $packings = $this->dummy->get()->result_array();
 
             $content .= "<tr>
                          <td rowspan='3'>" . $no . "</td>
-                         <td rowspan='3'>" . $record['product_no'] . "</td>
-                         <td rowspan='3'>" . $record['product_name'] . "</td>
+                         <td rowspan='3'>" . $record['item_fg_number'] . "</td>
+                         <td rowspan='3'>" . $record['number_customer'] . "</td>
+                         <td rowspan='3'>" . $record['item_fg_name'] . "</td>
                          <td rowspan='3'>" . $record['circuit_no'] . "</td>
                          <td rowspan='3'>" . $record['prod_plan'] . "</td>
                          <td>PLAN QTY</td>";
@@ -174,11 +177,11 @@ class Mpp_realization extends CI_Controller
                 <table style="width: 100%;">
                     <tr>
                         <td width="50" style="font-size: 12px; vertical-align: top; text-align: center; vertical-align:jus margin-right:10px;">
-                            <img src="' . base_url('assets/image/config/' . $config->logo) . '" width="30">
+                            <img src="' . $config->logo . '" width="30">
                         </td>
                         <td style="font-size: 14px; text-align: left; margin:2px;">
                             <b>' . $config->name . '</b><br>
-                            <small>MPP REALIZATION</small>
+                            <small>' . $config->description . '</small>
                         </td>
                     </tr>
                 </table>
@@ -188,13 +191,16 @@ class Mpp_realization extends CI_Controller
                 Print By ' . $this->session->username . '  
             </div>
         </center>
-        <br><br><br>
+        <br><br>
+        <center><h2 style="margin:0;">MPP REALIZATION</h2><p style="margin:0;">Period '.$filter_year.'/'.$filter_month.' Revision '.$filter_revision.'</p></center>
+        <br>
 
-        <table id="customers" border="1" style="width:150%;">
+        <table id="customers" border="1" style="width:120%;">
             <tr>
                 <th style="text-align:center;" rowspan="4" width="20">NO</th>
-                <th style="text-align:center;" width="200" rowspan="4">PRODUCT NO</th>
-                <th style="text-align:center;" width="150" rowspan="4">PRODUCT NAME</th>
+                <th style="text-align:center;" width="200" rowspan="4">PRODUCT EBWS</th>
+                <th style="text-align:center;" width="200" rowspan="4">PRODUCT CUSTOMER</th>
+                <th style="text-align:center;" width="150" rowspan="4">DESCRIPTION</th>
                 <th style="text-align:center;" width="50" rowspan="4">CCT</th>
                 <th style="text-align:center;" width="50" rowspan="4">PRODPLAN</th>
                 <th style="text-align:center;" width="50" rowspan="4">DESC</th>

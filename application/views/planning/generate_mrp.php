@@ -14,6 +14,10 @@
                         <input style="width:60%;" name="filter_revision" id="filter_revision" class="easyui-combobox" data-options="prompt:'Revision'" panelHeight="auto">
                     </div>
                     <div class="fitem">
+                        <span style="width:35%; display:inline-block;">Cut Off</span>
+                        <input style="width:60%;" id="filter_cutoff" class="easyui-datebox" value="<?= date("Y-m-25") ?>" required data-options="formatter:myformatter,parser:myparser, editable:false">
+                    </div>
+                    <div class="fitem">
                         <span style="width:35%; display:inline-block;">Product Family</span>
                         <input style="width:60%;" id="filter_product_family" class="easyui-combobox">
                     </div>
@@ -43,13 +47,14 @@
                         <td style="padding:10px;"><input value="on" readonly="true" class="easyui-checkbox" id="check_rm"> &nbsp; Stock Raw Material</td>
                     </tr>
                     <tr>
-                        <!-- <td style="padding:10px;"><input value="on" readonly="true" class="easyui-checkbox" id="check_rm"> &nbsp; Stock Raw Material</td> -->
                         <td style="padding:10px;"><input value="on" class="easyui-checkbox" id="check_bypass"> &nbsp; By Pass Breakdown</td>
+                        <td style="padding:10px;"></td>
                     </tr>
                 </table>
             </fieldset>
             <fieldset style="width: 29%; border:2px solid #d0d0d0; margin-bottom: 5px; margin-top: 5px; border-radius:4px;">
                 <legend><b>Generating Process</b></legend>
+
                 <b>Breakdown MPS & BOM | Part No : <span id="txt_assy_no"></span></b>
                 <div id="p_upload" class="easyui-progressbar" style="width:100%;"></div>
                 <center><b id="p_start">0</b> Of <b id="p_finish">0</b></center>
@@ -64,14 +69,96 @@
             </fieldset>
         </div>
         <?= $button ?>
+        <a href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true" onclick="formula()"><i class="fa fa-info"></i> Help</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true" onclick="exceptions()"><i class="fa fa-file"></i> Exception Report</a>
     </div>
+</div>
+
+<div id="toolbar">
+    <a href="javascript:;" class="easyui-linkbutton" data-options="plain:true" onclick="excel_exception()"><i class="fa fa-file"></i> Export Excel</a>
+</div>
+
+<!-- EXCEPTION REPORT -->
+<div id="dlg_exception" class="easyui-dialog" title="Exception Report" data-options="closed: true,modal:true" style="width: 80%; height: 550px; top: 20px;">
+    <table id="dg_exception" class="easyui-datagrid" style="width:100%;" toolbar="#toolbar">
+        <thead>
+            <tr>
+                <th data-options="field:'item_rm_id',width:120,halign:'center'">Part No EBWS</th>
+                <th data-options="field:'item_rm_number',width:250,halign:'center'">Part No Supplier</th>
+                <th data-options="field:'item_rm_name',width:250,halign:'center'">Description</th>
+                <th data-options="field:'mpq',width:80,align:'center', styler:numberStyle">MPQ</th>
+                <th data-options="field:'moq',width:80,align:'center', styler:numberStyle">MOQ</th>
+                <th data-options="field:'leadtime',width:80,align:'center', styler:numberStyle">Leadtime <br>(Days)</th>
+                <th data-options="field:'share_order',width:80,align:'center', styler:numberStyle">Share Order %</th>
+                <th data-options="field:'hsn_code',width:100,align:'center', styler:hsnStyle">HSN</th>
+            </tr>
+        </thead>
+    </table>
 </div>
 
 <div id="p" class="easyui-panel" title="Print Preview" style="width:100%;" data-options="fit:true">
     <iframe id="printout" src="" style="width: 100%; height:95%; border: 0;"></iframe>
 </div>
 <script>
-    function generateDataMrp(filter_month, filter_year, filter_revision, filter_product_family, filter_part_no){
+    function formula(){
+        Swal.fire({
+            width: 800,
+            html: `<div style="text-align:left;">
+                        <center><b style="font-size:16px !important;">MRP COMPONENT PARAMETER</b><hr></center>
+                        <ul>
+                            <li><b>Breakdown LTTP & BOM</b> is taken from (Generate LTTP x Bom)</li>
+                            <li><b>WHS</b> is taken from Ending Stock in Store of Cut off</li>
+                            <li><b>WIP</b> is taken from Generate MPP - Issued If result Minus</li>
+                            <li><b>OS SUPPLIER</b> is taken from Purchase Order - Gate Entry of Cut Off</li>
+                            <li><b>TOTAL STOCK</b> is taken from (WHS + WIP + OS SUPPLIER)</li>
+                            <li><b>OS SUPPLY</b> Generate MPP - Issued If result Plus</li>
+                        </ul>
+                        <center><b style="font-size:16px !important;">FORMULA</b><hr></center>
+                        <ul>
+                            <li><b>NEED M1 to M6</b> is taken from Generate LTTP (Prodplan) * BOM (Qpa) according to every month</li>
+                            <li><b>BAL M1</b> is taken from (TOTAL STOCK - OS WO + NEED M1)</li>
+                            <li><b>BAL M2</b> is taken from (BAL M1 - NEED M2)</li>
+                            <li><b>BAL M3</b> is taken from (BAL M2 - NEED M3)</li>
+                            <li><b>BAL M4</b> is taken from (BAL M3 - NEED M4)</li>
+                            <li><b>BAL M5</b> is taken from (BAL M4 - NEED M5)</li>
+                            <li><b>BAL M6</b> is taken from (BAL M5 - NEED M6)</li>
+                            <li><b>SAFETY STOCK</b> is taken from (Supplier Items (safety stock) * TOTAL NEED)</li>
+                            <li><b>TOTAL NEED</b> Calculate Leadtime if Supplier (type) = "LOCAL" then Current Month from BAL else Next Month from BAL + SAFETY STOCK</li>
+                            <li><b>MRP RESULT</b> is taken from Round Up from TOTAL NEED</li>
+                        </ul>
+                    </div>`,
+        });
+    }
+
+    function exceptions(){
+        var filter_month = $("#filter_month").combobox('getValue');
+        var filter_year = $("#filter_year").combobox('getValue');
+        var filter_revision = $("#filter_revision").combobox('getValue');
+
+        if(filter_month == "" || filter_year == "" || filter_revision == ""){
+            toastr.warning("Please Choose Filter Date and Revision!");
+            return false;
+        }
+
+        $('#dlg_exception').dialog('open');
+        $('#dg_exception').datagrid('loading');
+        
+        $.ajax({
+            url: "<?= base_url('planning/generate_mrp/datatableException') ?>",
+            type: 'POST',
+            data: {
+                filter_month: filter_month,
+                filter_year: filter_year,
+                filter_revision: filter_revision
+            },
+            dataType: 'json',
+            success: function(result) {
+                $('#dg_exception').datagrid('loadData', result).datagrid('loaded');
+            }
+        });
+    }
+
+    function generateDataMrp(filter_month, filter_year, filter_revision, filter_product_family, filter_part_no, filter_cutoff){
         Swal.fire({
             title: 'Please Wait for Calculating MRP',
             showConfirmButton: false,
@@ -89,7 +176,8 @@
                 "&filter_year=" + window.btoa(filter_year) +
                 "&filter_revision=" + window.btoa(filter_revision) +
                 "&filter_product_family=" + window.btoa(filter_product_family) +
-                "&filter_part_no=" + window.btoa(filter_part_no),
+                "&filter_part_no=" + window.btoa(filter_part_no) +
+                "&filter_cutoff=" + window.btoa(filter_cutoff),
             dataType: "json",
             success: function(rows4) {
                 Swal.close();
@@ -135,7 +223,8 @@
                                 "&filter_year=" + window.btoa(filter_year) +
                                 "&filter_revision=" + window.btoa(filter_revision) +
                                 "&filter_product_family=" + window.btoa(filter_product_family) +
-                                "&filter_part_no=" + window.btoa(filter_part_no),
+                                "&filter_part_no=" + window.btoa(filter_part_no) +
+                                "&filter_cutoff=" + window.btoa(filter_cutoff),
                             dataType: "json",
                             success: function(rows2) {
                                 Swal.close();
@@ -176,7 +265,7 @@
             }
         });
     }
-
+    
     //Add Data
     function add() {
         var filter_month = $("#filter_month").combobox('getValue');
@@ -184,6 +273,7 @@
         var filter_revision = $("#filter_revision").combobox('getValue');
         var filter_product_family = $("#filter_product_family").combobox('getValue');
         var filter_part_no = $("#filter_part_no").combogrid('getValue');
+        var filter_cutoff = $("#filter_cutoff").datebox('getValue');
 
         var check_mps = $("#check_mps").checkbox('options');
         var check_ospo = $("#check_ospo").checkbox('options');
@@ -197,91 +287,119 @@
             check_ospo.checked == true && 
             check_wip.checked == true && 
             check_mpp.checked == true && 
-            check_rm.checked == true && 
-            check_supply.checked) {
+            check_rm.checked == true &&
+            check_supply.checked && 
+            filter_cutoff != "") {
 
             $.messager.prompt('Generate MRP', 'Please input Password Generate', function(r){
                 if (r == "GENERATEMRP"){
-                    if(check_bypass.checked == false){
-                        Swal.fire({
-                            title: 'Please Wait for Generating Data',
-                            showConfirmButton: false,
-                            allowOutsideClick: false,
-                            allowEscapeKey: false,
-                            didOpen: () => {
-                                Swal.showLoading();
-                            },
-                        });
-                        
-                        $.ajax({
-                            type: "get",
-                            url: "<?= base_url('planning/generate_mrp/getDataMps') ?>",
-                            data: "filter_month=" + window.btoa(filter_month) +
-                                "&filter_year=" + window.btoa(filter_year) +
-                                "&filter_revision=" + window.btoa(filter_revision) +
-                                "&filter_product_family=" + window.btoa(filter_product_family) +
-                                "&filter_part_no=" + window.btoa(filter_part_no),
-                            dataType: "json",
-                            success: function(rows) {
-                                Swal.close();
+                    // $.ajax({
+                    //     type: "get",
+                    //     url: "<?= base_url('planning/generate_mrp/checkBom') ?>",
+                    //     data: "filter_month=" + window.btoa(filter_month) +
+                    //         "&filter_year=" + window.btoa(filter_year) +
+                    //         "&filter_revision=" + window.btoa(filter_revision) +
+                    //         "&filter_product_family=" + window.btoa(filter_product_family) +
+                    //         "&filter_part_no=" + window.btoa(filter_part_no),
+                    //     dataType: "json",
+                    //     success: function(check) {
+                    //         if(check.status == "OK"){
+                                if(check_bypass.checked == false){
+                                    Swal.fire({
+                                        title: 'Please Wait for Generating Data',
+                                        showConfirmButton: false,
+                                        allowOutsideClick: false,
+                                        allowEscapeKey: false,
+                                        didOpen: () => {
+                                            Swal.showLoading();
+                                        },
+                                    });
 
-                                if(rows['total'] > 0){
-                                    requestData(rows['total'], rows);
+                                    
+                                    $.ajax({
+                                        type: "get",
+                                        url: "<?= base_url('planning/generate_mrp/getDataMps') ?>",
+                                        data: "filter_month=" + window.btoa(filter_month) +
+                                            "&filter_year=" + window.btoa(filter_year) +
+                                            "&filter_revision=" + window.btoa(filter_revision) +
+                                            "&filter_product_family=" + window.btoa(filter_product_family) +
+                                            "&filter_part_no=" + window.btoa(filter_part_no),
+                                        dataType: "json",
+                                        success: function(rows) {
+                                            Swal.close();
 
-                                    function requestData(total, json, number = 1, value = 0, success = 1, failed = 1) {
-                                        if (value < 100) {
-                                            value = Math.floor((number / total) * 100);
-                                            $('#p_upload').progressbar('setValue', value);
-                                            $('#p_start').html(number);
-                                            $('#p_finish').html(total);
-                                            $('#txt_assy_no').html(json[number - 1].product_no);
+                                            if(rows['total'] > 0){
+                                                requestData(rows['total'], rows);
 
-                                            $.post('<?= base_url('planning/generate_mrp/create') ?>', {
-                                                data: json[number - 1]
-                                            }, function(note) {
-                                                var result = eval('(' + note + ')');
+                                                function requestData(total, json, number = 1, value = 0, success = 1, failed = 1) {
+                                                    if (value < 100) {
+                                                        value = Math.floor((number / total) * 100);
+                                                        $('#p_upload').progressbar('setValue', value);
+                                                        $('#p_start').html(number);
+                                                        $('#p_finish').html(total);
+                                                        $('#txt_assy_no').html(json[number - 1].product_no);
 
-                                                if (result.theme == "success") {
-                                                    requestData(total, json, number + 1, value, success + 1, failed + 0);
-                                                } else {
-                                                    requestData(total, json, number + 1, value, success + 0, failed + 1);
+                                                        $.post('<?= base_url('planning/generate_mrp/create') ?>', {
+                                                            data: json[number - 1]
+                                                        }, function(note) {
+                                                            var result = eval('(' + note + ')');
+
+                                                            if (result.theme == "success") {
+                                                                requestData(total, json, number + 1, value, success + 1, failed + 0);
+                                                            } else {
+                                                                requestData(total, json, number + 1, value, success + 0, failed + 1);
+                                                            }
+                                                        }).fail(function(jqXHR, textStatus) {
+                                                            if (textStatus == "error") {
+                                                                toastr.error("Connection time out");
+
+                                                                requestData(total, json, number, value, success + 0, failed + 1);
+                                                            }
+                                                        });
+                                                    } else {
+                                                        generateDataMrp(filter_month, filter_year, filter_revision, filter_product_family, filter_part_no, filter_cutoff);
+                                                    }
                                                 }
-                                            }).fail(function(jqXHR, textStatus) {
-                                                if (textStatus == "error") {
-                                                    toastr.error("Connection time out");
-
-                                                    requestData(total, json, number, value, success + 0, failed + 1);
-                                                }
-                                            });
-                                        } else {
-                                            generateDataMrp(filter_month, filter_year, filter_revision, filter_product_family, filter_part_no);
+                                            }else{
+                                                toastr.warning("Data MPS Not Found");
+                                            }
                                         }
-                                    }
+                                    });
+                                    
                                 }else{
-                                    toastr.warning("Data MPS Not Found");
+                                    generateDataMrp(filter_month, filter_year, filter_revision, filter_product_family, filter_part_no, filter_cutoff);
                                 }
-                            }
-                        });
-                    }else{
-                        generateDataMrp(filter_month, filter_year, filter_revision, filter_product_family, filter_part_no);
-                    }
+                    //         }else{
+                    //             Swal.close();
+                    //             Swal.fire({
+                    //                 title: "Data in Bill of Material not ready in Supplier Items",
+                    //                 icon: "error",
+                    //                 confirmButtonText: 'Download',
+                    //                 showCancelButton: true,
+                    //                 allowOutsideClick: false,
+                    //             }).then((result) => {
+                    //                 if (result.isConfirmed) {
+                    //                     window.location.assign('<?= base_url('planning/generate_mrp/downloadBom') ?>');
+                    //                 }
+                    //             });
+                    //         }
+                    //     }
+                    // });
                 }
             });
-
-            $('.messager-input').attr('type', 'password');
         } else {
             toastr.warning("MRP Component Parameter Not Complete ", "Information");
         }
     }
 
-    function componentCheck(filter_month, filter_year, filter_revision) {
-
+    function componentCheck(filter_month, filter_year) {
         $.ajax({
             type: "get",
             url: "<?= base_url('planning/generate_mrp/checkMps') ?>",
             data: "filter_month=" + window.btoa(filter_month) +
-                "&filter_year=" + window.btoa(filter_year) +
-                "&filter_revision=" + window.btoa(filter_revision),
+                "&filter_year=" + window.btoa(filter_year),
+                // "&filter_revision=" + window.btoa(filter_revision) +
+                // "&filter_cutoff=" + window.btoa(filter_cutoff),
             dataType: "json",
             success: function(mps) {
                 if (mps.theme == "success") {
@@ -300,8 +418,9 @@
             type: "get",
             url: "<?= base_url('planning/generate_mrp/checkOspo') ?>",
             data: "filter_month=" + window.btoa(filter_month) +
-                "&filter_year=" + window.btoa(filter_year) +
-                "&filter_revision=" + window.btoa(filter_revision),
+                "&filter_year=" + window.btoa(filter_year),
+                // "&filter_revision=" + window.btoa(filter_revision) +
+                // "&filter_cutoff=" + window.btoa(filter_cutoff),
             dataType: "json",
             success: function(ospo) {
                 if (ospo.theme == "success") {
@@ -320,8 +439,9 @@
             type: "get",
             url: "<?= base_url('planning/generate_mrp/checkWip') ?>",
             data: "filter_month=" + window.btoa(filter_month) +
-                "&filter_year=" + window.btoa(filter_year) +
-                "&filter_revision=" + window.btoa(filter_revision),
+                "&filter_year=" + window.btoa(filter_year),
+                // "&filter_revision=" + window.btoa(filter_revision) +
+                // "&filter_cutoff=" + window.btoa(filter_cutoff),
             dataType: "json",
             success: function(wip) {
                 if (wip.theme == "success") {
@@ -340,8 +460,9 @@
             type: "get",
             url: "<?= base_url('planning/generate_mrp/checkRm') ?>",
             data: "filter_month=" + window.btoa(filter_month) +
-                "&filter_year=" + window.btoa(filter_year) +
-                "&filter_revision=" + window.btoa(filter_revision),
+                "&filter_year=" + window.btoa(filter_year),
+                // "&filter_revision=" + window.btoa(filter_revision) +
+                // "&filter_cutoff=" + window.btoa(filter_cutoff),
             dataType: "json",
             success: function(rm) {
                 if (rm.theme == "success") {
@@ -360,8 +481,9 @@
             type: "get",
             url: "<?= base_url('planning/generate_mrp/checkMpp') ?>",
             data: "filter_month=" + window.btoa(filter_month) +
-                "&filter_year=" + window.btoa(filter_year) +
-                "&filter_revision=" + window.btoa(filter_revision),
+                "&filter_year=" + window.btoa(filter_year),
+                // "&filter_revision=" + window.btoa(filter_revision) +
+                // "&filter_cutoff=" + window.btoa(filter_cutoff),
             dataType: "json",
             success: function(mpp) {
                 if (mpp.theme == "success") {
@@ -380,8 +502,9 @@
             type: "get",
             url: "<?= base_url('planning/generate_mrp/checkSupply') ?>",
             data: "filter_month=" + window.btoa(filter_month) +
-                "&filter_year=" + window.btoa(filter_year) +
-                "&filter_revision=" + window.btoa(filter_revision),
+                "&filter_year=" + window.btoa(filter_year),
+                // "&filter_revision=" + window.btoa(filter_revision) +
+                // "&filter_cutoff=" + window.btoa(filter_cutoff),
             dataType: "json",
             success: function(supply) {
                 if (supply.theme == "success") {
@@ -390,7 +513,7 @@
                     });
                 } else {
                     $('#check_supply').checkbox({
-                        checked: false
+                        check_supply: false
                     });
                 }
             }
@@ -442,12 +565,26 @@
         }
     }
 
+    function excel_exception() {
+        $('#dg_exception').datagrid('toExcel', 'report_exceptions.xls');
+    }
+
     function reload() {
         window.location.reload();
     }
 
     $(function() {
     	$("#add").html("Generate");
+
+        $('#dg_exception').datagrid({
+            pagination: true,
+            clientPaging: true,
+            rownumbers: true,
+            fit: true,
+            pageList: [20, 50, 100, 500, 1000],
+            pageSize: 20,
+        }).datagrid('enableFilter');
+
         $('#filter_month').combobox({
             url: '<?php echo base_url('planning/mst_data/readMonths'); ?>',
             valueField: 'id',
@@ -459,14 +596,28 @@
                     $(e.data.target).combobox('clear').combobox('textbox').focus();
                 }
             }],
-            // onSelect: function(month){
-            //     var filter_year = $("#filter_year").combobox('getValue');
-            //     var filter_revision = $("#filter_revision").combobox('getValue');
+            onSelect: function(month){
+                $("#filter_cutoff").datebox('clear');
+                var filter_year = $("#filter_year").combobox('getValue');
+                
+                componentCheck(month.id, filter_year);
 
-            //     if(filter_year != "" && filter_revision != ""){
-            //         componentCheck(month.id, filter_year, filter_revision);
-            //     }
-            // }
+                $('#filter_revision').combobox({
+                    url: '<?php echo base_url('planning/generate_mrp/readRevisions?filter_month='); ?>' + btoa(month.id) + "&filter_year=" + btoa(filter_year),
+                    valueField: 'revision',
+                    textField: 'revision',
+                    prompt: 'Select Revision',
+                    formatter: function(val){
+                        return "Revision " + val.revision; 
+                    },
+                    icons: [{
+                        iconCls: 'icon-clear',
+                        handler: function(e) {
+                            $(e.data.target).combobox('clear').combobox('textbox').focus();
+                        }
+                    }],
+                });
+            }
         });
 
         $('#filter_year').combobox({
@@ -480,68 +631,46 @@
                     $(e.data.target).combobox('clear').combobox('textbox').focus();
                 }
             }],
-            // onSelect: function(year){
-            //     var filter_month = $("#filter_month").combobox('getValue');
-            //     var filter_revision = $("#filter_revision").combobox('getValue');
+            onSelect: function(year){
+                $("#filter_cutoff").datebox('clear');
+                var filter_month = $("#filter_month").combobox('getValue');
+                
+                componentCheck(filter_month, year.id);
 
-            //     if(filter_month != "" && filter_revision != ""){
-            //         componentCheck(filter_month, year.name, filter_revision);
-            //     }
-            // }
+                $('#filter_revision').combobox({
+                    url: '<?php echo base_url('planning/generate_mrp/readRevisions?filter_month='); ?>' + btoa(filter_month) + "&filter_year=" + btoa(year.id),
+                    valueField: 'revision',
+                    textField: 'revision',
+                    prompt: 'Select Revision',
+                    formatter: function(val){
+                        return "Revision " + val.revision; 
+                    },
+                    icons: [{
+                        iconCls: 'icon-clear',
+                        handler: function(e) {
+                            $(e.data.target).combobox('clear').combobox('textbox').focus();
+                        }
+                    }],
+                });
+            }
         });
 
-        $('#filter_revision').combobox({
-            url: '<?php echo base_url('planning/mst_data/readRevisions'); ?>',
-            valueField: 'id',
-            textField: 'name',
-            prompt: 'Select Revision',
-            icons: [{
-                iconCls: 'icon-clear',
-                handler: function(e) {
-                    $(e.data.target).combobox('clear').combobox('textbox').focus();
-                }
-            }],
-            onSelect: function(rev){
+        $('#filter_cutoff').datebox({
+            onChange: function(cutoff){
                 var filter_month = $("#filter_month").combobox('getValue');
                 var filter_year = $("#filter_year").combobox('getValue');
+                var filter_revision = $("#filter_revision").combobox('getValue');
 
                 if(filter_month != "" && filter_year != ""){
-                    componentCheck(filter_month, filter_year, rev.id);
+                    componentCheck(filter_month, filter_year, filter_revision, cutoff);
                 }
             }
         });
 
-        $('#filter_product_no').combogrid({
-            url: '<?= base_url('planning/generate_mrp/readProducts') ?>',
-            panelWidth: 400,
-            idField: 'item_id',
-            textField: 'item_id',
-            mode: 'remote',
-            fitColumns: true,
-            prompt: "Select Product No",
-            icons: [{
-                iconCls: 'icon-clear',
-                handler: function(e) {
-                    $(e.data.target).combogrid('clear').combogrid('textbox').focus();
-                }
-            }],
-            columns: [
-                [{
-                    field: 'item_id',
-                    title: 'Product No',
-                    width: 200
-                }, {
-                    field: 'item_name',
-                    title: 'Product Name',
-                    width: 200
-                }]
-            ]
-        });
-
         $('#filter_product_family').combobox({
-            url: '<?php echo base_url('planning/generate_mrp/readProductFamily'); ?>',
-            valueField: 'pfm_name',
-            textField: 'pfm_name',
+            url: '<?php echo base_url('master/item_familys/readss/C01'); ?>',
+            valueField: 'id',
+            textField: 'name',
             prompt: 'Select Product Family',
             icons: [{
                 iconCls: 'icon-clear',
@@ -551,10 +680,10 @@
             }],
             onSelect: function(row){
                 $('#filter_part_no').combogrid({
-                    url: '<?= base_url('planning/generate_mrp/readParts/') ?>' + row.pfm_id,
-                    panelWidth: 400,
-                    idField: 'item_id',
-                    textField: 'item_id',
+                    url: '<?= base_url('master/item_rm/reads/') ?>' + row.id,
+                    panelWidth: 550,
+                    idField: 'id',
+                    textField: 'number',
                     mode: 'remote',
                     fitColumns: true,
                     prompt: "Select Part No",
@@ -566,12 +695,16 @@
                     }],
                     columns: [
                         [{
-                            field: 'item_id',
-                            title: 'Part No',
+                            field: 'id',
+                            title: 'Part No EBWS',
+                            width: 150
+                        },{
+                            field: 'number',
+                            title: 'Part No Supplier',
                             width: 200
                         }, {
-                            field: 'item_name',
-                            title: 'Part Name',
+                            field: 'name',
+                            title: 'Description',
                             width: 200
                         }]
                     ]
@@ -599,6 +732,22 @@
             return new Date(y, m - 1, d);
         } else {
             return new Date();
+        }
+    }
+
+    function numberStyle(value, row, index) {
+        if (value == 0) {
+            return 'background-color:#FFC8C8;';
+        } else {
+            return 'background-color:#C8FFCC;';
+        }
+    }
+
+    function hsnStyle(value, row, index) {
+        if (value == "-") {
+            return 'background-color:#FFC8C8;';
+        } else {
+            return 'background-color:#C8FFCC;';
         }
     }
 </script>

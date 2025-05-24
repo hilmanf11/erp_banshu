@@ -2,9 +2,9 @@
     <thead>
         <tr>
             <th rowspan="2" field="ck" checkbox="true"></th>
-            <th rowspan="2" data-options="field:'product_no',width:200,halign:'center'">Product No</th>
-            <th rowspan="2" data-options="field:'product_name',width:250,halign:'center'">Product Name</th>
-            <th rowspan="2" data-options="field:'product_family',width:200,halign:'center'">Product Family</th>
+            <th rowspan="2" data-options="field:'product_no',width:200,halign:'center'">Part No</th>
+            <th rowspan="2" data-options="field:'product_name',width:250,halign:'center'">Part Name</th>
+            <th rowspan="2" data-options="field:'product_family',width:120,halign:'center'">Product Family</th>
             <th rowspan="2" data-options="field:'qty',width:100,halign:'center',align:'right', formatter:numberformat">OS Supply</th>
             <th rowspan="2" data-options="field:'actual',width:100,halign:'center',align:'right',editor:'numberbox', formatter:numberformat">Actual</th>
             <th rowspan="2" data-options="field:'status',width:100,align:'center', styler:cellStyler">Status</th>
@@ -13,9 +13,9 @@
         </tr>
         <tr>
             <th data-options="field:'created_by',width:100,halign:'center'">By</th>
-            <th data-options="field:'created_date',width:100,halign:'center'">Date</th>
+            <th data-options="field:'created_date',width:150,halign:'center'">Date</th>
             <th data-options="field:'updated_by',width:100,halign:'center'">By</th>
-            <th data-options="field:'updated_date',width:100,halign:'center'">Date</th>
+            <th data-options="field:'updated_date',width:150,halign:'center'">Date</th>
         </tr>
     </thead>
 </table>
@@ -49,7 +49,7 @@
                     <input style="width:60%;" id="filter_product_family" class="easyui-combobox">
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Product No</span>
+                    <span style="width:35%; display:inline-block;">Part No</span>
                     <input style="width:60%;" id="filter_product_no" class="easyui-combogrid">
                 </div>
             </div>
@@ -452,7 +452,7 @@
         });
 
         $('#filter_product_family').combobox({
-            url: '<?php echo base_url('planning/os_supply/readProductFamily'); ?>',
+            url: '<?php echo base_url('planning/mst_data/readProductFamily'); ?>',
             valueField: 'pfm_id',
             textField: 'pfm_name',
             prompt: 'Select Product Family',
@@ -464,13 +464,13 @@
             }],
             onSelect: function(row){
                 $('#filter_product_no').combogrid({
-                    url: '<?= base_url('planning/os_supply/readProducts/') ?>' + row.pfm_id,
+                    url: '<?= base_url('planning/mst_data/readProducts/') ?>' + row.pfm_id,
                     panelWidth: 400,
                     idField: 'item_id',
                     textField: 'item_id',
                     mode: 'remote',
                     fitColumns: true,
-                    prompt: "Select Product No",
+                    prompt: "Select Part No",
                     icons: [{
                         iconCls: 'icon-clear',
                         handler: function(e) {
@@ -480,11 +480,11 @@
                     columns: [
                         [{
                             field: 'item_id',
-                            title: 'Item ID',
+                            title: 'Part No',
                             width: 200
                         }, {
                             field: 'item_name',
-                            title: 'Item Name',
+                            title: 'Part Name',
                             width: 200
                         }]
                     ]

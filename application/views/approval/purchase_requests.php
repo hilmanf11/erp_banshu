@@ -1,5 +1,32 @@
 <!-- TABLE DATAGRID -->
-<table id="dg" class="easyui-datagrid" style="width:99.5%;" toolbar="#toolbar"></table>
+<table id="dg" class="easyui-datagrid" style="width:99.5%;" toolbar="#toolbar" data-options="
+    url: '<?= base_url('approvals/approvalPurchaseRequests/'.base64_encode($approved_to).'/'.base64_encode($approved_by)) ?>',
+    pagination: false,
+    clientPaging: false,
+    rownumbers: true,
+    fit: true">
+    <thead>
+        <tr>
+            <th field="ck" checkbox="true"></th>
+            <th data-options="field:'request_no',width:150,halign:'center'">PR No</th>
+            <th data-options="field:'request_date',width:120,halign:'center'">PR Date</th>
+            <th data-options="field:'item_rm_id',width:150,halign:'center'">Part No EBWS</th>
+            <th data-options="field:'item_rm_number',width:150,halign:'center'">Part No Supplier</th>
+            <th data-options="field:'item_rm_name',width:150,halign:'center'">Description</th>
+            <th data-options="field:'item_family_name',width:150,halign:'center'">Product Family</th>
+            <th data-options="field:'uom',width:80,halign:'center'">Uom</th>
+            <th data-options="field:'supplier_name',width:250,halign:'center'">Supplier</th>
+            <th data-options="field:'qty',width:80,halign:'center',align:'right',formatter: numberformat">Qty</th>
+            <th data-options="field:'currency',width:80,halign:'center'">Currency</th>
+            <th data-options="field:'price',width:100,halign:'center',align:'right',formatter: numberformatPrice2">Price</th>
+            <th data-options="field:'total',width:100,halign:'center',align:'right',formatter: numberformatPrice4">Total</th>
+            <th data-options="field:'attachment',width:80,align:'center',formatter: btnDetails">Attachment</th>
+            <th data-options="field:'remarks',width:150,halign:'center'">Remarks</th>
+            <th data-options="field:'created_by',width:120,halign:'center'">Create By</th>
+            <th data-options="field:'created_date',width:150,halign:'center'">Create Date</th>
+        </tr>
+    </thead>
+</table>
 
 <!-- TOOLBAR DATAGRID -->
 <div id="toolbar" style="height: 35px;">
@@ -10,6 +37,10 @@
 </div>
 
 <script>
+    $(function() {
+        $('#dg').datagrid('enableFilter');
+    });
+
     //RELOAD
     function reload() {
         window.location.reload();
@@ -157,126 +188,34 @@
 	}
 
     function numberformat(value, row) {
-		const formatter = new Intl.NumberFormat('id-ID');
+		const formatter = new Intl.NumberFormat('ja-JP');
 
 		return "<b>" + formatter.format(value) + "</b>";
 	}
 
-    function Itemid(value, row) {
-		return "'" + value;
-	}
-
-	function numberformatPrice(value, row){
-        const formatter = new Intl.NumberFormat('id-ID', {
+	function numberformatPrice2(value, row){
+        const formatter = new Intl.NumberFormat('ja-JP', {
             minimumFractionDigits: 2
         });
 
         return "<b>" + formatter.format(value) + "</b>";
     }
 
-    $(function() {
-        //SETTING DATAGRID EASYUI
-        $('#dg').datagrid({
-            url: '<?= base_url('approvals/approvalPurchaseRequests/') ?>' + "<?= base64_encode($approved_to) ?>" + "/" + "<?= base64_encode($created_by) ?>" + "/" + "<?= base64_encode($approved_by) ?>",
-            pagination: false,
-            singleSelect: false,
-            clientPaging: false,
-            remoteFilter: true,
-            rownumbers: true,
-            fit: true,
-            columns: [
-                [{
-					field: 'ck',
-					checkbox: "true",
-				}, {
-					field: 'p_month',
-					width: 50,
-					align: 'center',
-					title: "Month",
-				},{
-					field: 'p_year',
-					width: 50,
-					align: 'center',
-					title: "Year",
-				},{
-					field: 'revision',
-					width: 50,
-					align: 'center',
-					title: "Revision",
-				},{
-					field: 'purchase_request_no',
-					width: 180,
-					halign: 'center',
-					title: "PR No",
-				},{
-					field: 'supplier_name',
-					width: 250,
-					halign: 'center',
-					title: "Vendor",
-				},{
-					field: 'part_no',
-					width: 200,
-					halign: 'center',
-					title: "Item No",
-					formatter: Itemid,
-				}, {
-					field: 'part_name',
-					width: 100,
-					halign: 'center',
-					title: "Item Name",
-				}, {
-					field: 'product_family',
-					width: 150,
-					halign: 'center',
-					title: "Product Family",
-				}, {
-					field: 'share_order',
-					width: 80,
-					halign: 'center',
-					title: "Share Order",
-				}, {
-					field: 'mpq',
-					width: 80,
-					halign: 'center',
-					title: "MPQ",
-				}, {
-					field: 'moq',
-					width: 80,
-					halign: 'center',
-					title: "MOQ",
-				}, {
-					field: 'leadtime',
-					width: 80,
-					halign: 'center',
-					title: "Leadtime"
-				}, {
-					field: 'total_need',
-					width: 100,
-					align: 'right',
-					halign: 'center',
-					title: "Total Need",
-					formatter: numberformat,
-				}, {
-					field: 'purchase_order',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "MRP Result",
-					formatter: numberformat,
-				}, {
-					field: 'purchase_request',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "Purchase Request",
-					formatter: numberformat,
-				}, {
-					field: 'reason',
-					width: 200,
-					halign: 'center',
-					title: "Reason",
-				}]
-            ],
-        }).datagrid('enableFilter');
-    });
+    function numberformatPrice4(value, row){
+        const formatter = new Intl.NumberFormat('ja-JP', {
+            minimumFractionDigits: 4
+        });
+
+        return "<b>" + formatter.format(value) + "</b>";
+    }
+
+    function btnDetails(val, row, index) {
+        var attachment = row.attachment;
+        
+        if (attachment != null && attachment != "") {
+            return '<a class="btn btn-primary w-100" target="_blank" href="<?= base_url('assets/documents/purchase_requests/') ?>'+row.attachment+'" style="pointer-events: visible; opacity:1;"><i class="fa fa-eye"></i> View</a>';
+        } else {
+            return '-';
+        }
+    }
 </script>

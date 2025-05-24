@@ -1,6 +1,6 @@
-<div id="f" class="easyui-panel" style="width:100%; background: #F4F4F4; padding:10px;">
+<div id="f" class="easyui-panel" style="width:100%; background: #F4F4F4; padding: 10px;">
     <div style="width: 100%; display: grid; grid-template-columns: auto auto auto; grid-gap: 5px; display: flex;">
-        <fieldset style="width: 45%; border:2px solid #d0d0d0; margin-bottom: 5px; margin-top: 5px; border-radius:4px;">
+        <fieldset style="width: 35%; border:2px solid #d0d0d0; margin-bottom: 5px; margin-top: 5px; border-radius:4px;">
             <legend><b>Form Filter Data</b></legend>
             <div class="fitem">
                 <span style="width:35%; display:inline-block;">Period</span>
@@ -12,32 +12,22 @@
                 <input style="width:60%;" name="filter_revision" id="filter_revision" value="<?= "0" ?>" class="easyui-combobox" data-options="prompt:'Revision'" panelHeight="auto">
             </div>
             <div class="fitem">
-                <span style="width:35%; display:inline-block;">Customer Name</span>
-                <input style="width:60%;" id="filter_line_no" class="easyui-combobox">
+                <span style="width:35%; display:inline-block;">Cut Off</span>
+                <input style="width:60%;" id="filter_cutoff" class="easyui-datebox" value="<?= date("Y-m-d") ?>" required data-options="formatter:myformatter,parser:myparser, editable:false">
             </div>
-            <div class="fitem" hidden>
+            <div class="fitem">
                 <span style="width:35%; display:inline-block;">Customer</span>
-                <input style="width:60%;" id="filter_customer_id" class="easyui-combobox">
+                <input style="width:60%;" id="filter_customer" class="easyui-combobox">
             </div>
             <div class="fitem">
                 <span style="width:35%; display:inline-block;">Product No</span>
-                <input style="width:60%;" name="filter_product_no" id="filter_product_no" class="easyui-combogrid">
-            </div>
-            <div class="fitem">
-                <span style="width:35%; display:inline-block;">Criteria</span>
-                <select style="width:60%;" id="filter_criteria" class="easyui-combobox" data-options="prompt:'Select Criteria'" panelHeight="auto">
-                    <option value="all">Select All</option>
-                    <option value="fast">Fast</option>
-                    <option value="medium">Medium</option>
-                    <option value="slow">Slow</option>
-                </select>
+                <input style="width:60%;" name="filter_item_fg" id="filter_item_fg" class="easyui-combogrid">
             </div>
             <div class="fitem">
                 <span style="width:35%; display:inline-block;"></span>
                 <a href="javascript:;" class="easyui-linkbutton" onclick="filter()"><i class="fa fa-search"></i> Filter Data</a>
-                <a href="javascript:;" class="easyui-linkbutton c2" onclick="formula()"><i class="fa fa-list"></i> Formula</a>
+                <a href="javascript:;" class="easyui-linkbutton" onclick="formula()"><i class="fa fa-list"></i> Formula</a>
                 <a href="javascript:;" class="easyui-linkbutton c1" id="push_data" onclick="push_data()"><i class="fa fa-database"></i> Push Data</a>
-                <a href="javascript:;" class="easyui-linkbutton c6" id="push_revision" onclick="push_revision()"><i class="fa fa-copy"></i> Copy Rev</a>
             </div>
         </fieldset>
         <fieldset style="width: 15%; border:2px solid #d0d0d0; margin-bottom: 5px; margin-top: 5px; border-radius:4px;">
@@ -51,14 +41,14 @@
             <div style="margin:12px;">
                 <input class="easyui-checkbox" id="check_wip" value="on" readonly="true"> &nbsp; Stock WIP
             </div>
-            <!--<div style="margin:12px;">-->
-            <!--    <input class="easyui-checkbox" id="check_so" value="on" readonly="true"> &nbsp; Sales Order-->
-            <!--</div>-->
+            <div style="margin:12px;">
+                <input class="easyui-checkbox" id="check_so" value="on" readonly="true"> &nbsp; Sales Order
+            </div>
             <div style="margin:12px;">
                 <input class="easyui-checkbox" id="check_ost_so" value="on" readonly="true"> &nbsp; OST Sales Order
             </div>
             <div style="margin:12px;">
-                <input class="easyui-checkbox" id="check_ost_mpp" value="on" readonly="true"> &nbsp; OST MPP
+                <input class="easyui-checkbox" id="check_ost_mpp" value="on" readonly="true"> &nbsp; OST Workorder
             </div>
         </fieldset>
         <fieldset style="width: 15%; border:2px solid #d0d0d0; margin-bottom: 5px; margin-top: 5px; border-radius:4px;">
@@ -67,13 +57,13 @@
 
             </div>
         </fieldset>
-        <fieldset style="width: 25%; border:2px solid #d0d0d0; margin-bottom: 5px; margin-top: 5px; border-radius:4px;">
+        <fieldset style="width: 33%; border:2px solid #d0d0d0; margin-bottom: 5px; margin-top: 5px; border-radius:4px;">
             <legend><b>Process Generate Data</b></legend>
             <a href="javascript:;" style="float: left; color:green;" class="easyui-linkbutton" plain="true"><i class="fa fa-check"></i> SUCCESS : <b id="p_success">0</b></a>
             <a href="javascript:;" style="float: right; color:red;" class="easyui-linkbutton" plain="true" onclick="downloadFailed()"><i class="fa fa-times"></i> FAILED : <b id="p_failed">0</b></a>
             <div id="p_upload" class="easyui-progressbar" style="width:100%; margin-top: 10px;"></div>
             <center><b id="p_start">0</b> Of <b id="p_finish">0</b></center>
-            <div id="p_remarks" class="easyui-panel" style="width:100%; height:160px; padding:10px; margin-top: 10px; overflow: auto;">
+            <div id="p_remarks" class="easyui-panel" style="width:100%; height:120px; padding:10px; margin-top: 10px; overflow: auto;">
                 <ul id="remarks">
 
                 </ul>
@@ -83,34 +73,167 @@
     <?= $button ?>
 </div>
 
-<div id="dlg-formula" class="easyui-dialog" title="Formula" style="width: 600px; padding:10px; top: 20px;" data-options="closed: true, modal:false">
-    <ul>
-        <li>TOTAL STOCK = <b>(WIP + FG + OST MPP)</b></li>
-        <li>BALANCE AWAL = <b>(TOTAL STOCK - OST SO)</b></li>
-        <li>ITO = <b>(BALANCE AWAL / DELIVERY RATE)</b></li>
-        <li>DELIVERY RATE = <b>(FC / HKW)</b></li>
-        <li>SAFETY STOCK = <b>((LEADTIME + FG SS) / HKW(next month) x FC(next month))</b></li>
-        <li>PROD PLAN = <b>(FC + SAFETY STOCK - BALANCE AWAL)</b></li>
-    </ul>
-
-    <i>*) Next month everything is the same</i>
-</div>
-
 <div id="p" class="easyui-panel" title="Print Preview" style="width:100%;">
-    <iframe id="printout" src="" style="width: 100%; height: 450px; border: 0;"></iframe>
+    <iframe id="printout" src="" style="width: 100%; height: 550px; border: 0;"></iframe>
 </div>
+
 <script>
-    function formula() {
-        $("#dlg-formula").dialog('open');
+    function formula(){
+        Swal.fire({
+            width: 600,
+            html: `<div style="text-align:left;">
+                    <center><b style="font-size:16px !important;">COMPONENT CHECK</b><hr></center>
+                    <ul>
+                        <li><b>Forecast</b> is taken from <b>Order Management > Forecasting > Forecast Customer</b></li>
+                        <li><b>Stock Finish Good</b> is taken from <b>Stock FG Based on Cutoff</b></li>
+                        <li><b>Stock WIP</b> is taken from <b>Production Schedule - RFG (start from M-1 to Cutoff)</b></li>
+                        <li><b>Sales Order</b> is taken from <b>Sales Orders on Cutoff</b></li>
+                        <li><b>OST Sales Order</b> is taken from <b>Sales Orders in Previous Month</b></li>
+                        <li><b>OST MPP</b> is taken from <b>MPP Qty - Production Schedule Based on Cutoff</b></li>
+                    </ul>
+                    <center><b style="font-size:16px !important;">FORMULA</b><hr></center>
+                    <ul>
+                        <li>TOTAL STOCK = <b>(WIP + FG + OST MPP)</b></li>
+                        <li>BEGIN BALANCE = <b>(TOTAL STOCK - OST SO)</b></li>
+                        <li>BEGIN BALANCE NEXT MONTH = <b>((PRODPLAN + BEGIN BALANCE) - (FC or SO))</b></li>
+                        <li>ITO = <b>(BEGIN BALANCE / DELIVERY RATE)</b></li>
+                        <li>DELIVERY RATE = <b>((FC or SO) / HKW)</b></li>
+                        <li>SAFETY STOCK = taken from Item Finish Good <b>% Safety Stock</b></li>
+                        <li>PROD PLAN = <b>((FC or SO) + SAFETY STOCK - BEGIN BALANCE)</b></li>
+                    </ul>
+
+                    <i>*) Next month everything is the same</i>
+                    </div>`,
+        });
+    }
+
+    //Add Data
+    function add() {
+        var filter_month = $("#filter_month").combobox('getValue');
+        var filter_year = $("#filter_year").textbox('getValue');
+        var filter_revision = $("#filter_revision").combobox('getValue');
+        var filter_cutoff = $("#filter_cutoff").datebox('getValue');
+        var filter_customer = $("#filter_customer").combobox('getValue');
+        var filter_item_fg = $("#filter_item_fg").combogrid('getValue');
+        var check_forecast = $("#check_forecast").checkbox('options');
+        var check_fg = $("#check_fg").checkbox('options');
+        var check_wip = $("#check_wip").checkbox('options');
+        var check_ost_so = $("#check_ost_so").checkbox('options');
+        var check_ost_mpp = $("#check_ost_mpp").checkbox('options');
+        var check_so = $("#check_so").checkbox('options');
+
+        if (check_forecast.checked == true && check_fg.checked == true && check_wip.checked == true && check_ost_so.checked == true && check_ost_mpp.checked == true == check_so.checked == true) {
+            $.messager.prompt('Generate MPS', 'Please input Password Generate', function(r) {
+                if (r == "GENERATEMPS") {
+                    // Swal.fire({
+                    //     title: 'Please Wait for Push Data',
+                    //     showConfirmButton: false,
+                    //     allowOutsideClick: false,
+                    //     allowEscapeKey: false,
+                    //     didOpen: () => {
+                    //         Swal.showLoading();
+                    //     },
+                    // });
+                    Swal.fire({
+                        title: 'Please Wait 5 - 10 Minutes for Generating Data',
+                        showConfirmButton: false,
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        },
+                    });
+
+                    $.ajax({
+                        type: "get",
+                        url: "<?= base_url('planning/generate_mps/getdata') ?>",
+                        data: "filter_month=" + window.btoa(filter_month) +
+                            "&filter_year=" + window.btoa(filter_year) +
+                            "&filter_revision=" + window.btoa(filter_revision) +
+                            "&filter_cutoff=" + window.btoa(filter_cutoff) +
+                            "&filter_customer=" + window.btoa(filter_customer) +
+                            "&filter_item_fg=" + window.btoa(filter_item_fg),
+                        dataType: "json",
+                        success: function(rows) {
+                            Swal.close();
+                            requestData(rows['total'], rows);
+
+                            function requestData(total, json, number = 1, value = 0, success = 1, failed = 1) {
+                                if (value < 100) {
+                                    value = Math.floor((number / total) * 100);
+                                    $('#p_upload').progressbar('setValue', value);
+                                    $('#p_start').html(number);
+                                    $('#p_finish').html(total);
+
+                                    $.post('<?= base_url('planning/generate_mps/create') ?>', {
+                                        data: json[number - 1]
+                                    }, function(note) {
+                                        var result = eval('(' + note + ')');
+                                        if (result.theme == "success") {
+                                            Swal.close();
+                                            $('#p_success').html(success);
+                                            var title = "<b style='color: green;'>" + result.title + "</b> | " + result.message;
+                                            requestData(total, json, number + 1, value, success + 1, failed + 0);
+                                        } else {
+                                            $('#p_failed').html(failed);
+                                            var title = "<b style='color: red;'>" + result.title + "</b> | " + result.message;
+
+                                            //Json Failed
+                                            $.ajax({
+                                                type: "POST",
+                                                async: true,
+                                                url: "<?= base_url('planning/generate_mps/uploadcreateFailed') ?>",
+                                                data: {
+                                                    data: json[number - 1],
+                                                    message: result.message
+                                                },
+                                                cache: false
+                                            });
+
+                                            requestData(total, json, number + 1, value, success + 0, failed + 1);
+                                        }
+
+                                        if (value == 100) {
+                                            Swal.fire('Good job!', 'Process Save Data Completed!', 'success');
+                                        }
+
+                                        $("#p_remarks").append(title + "<br>");
+                                    }).fail(function(jqXHR, textStatus) {
+                                        if (textStatus == "error") {
+                                            Swal.fire({
+                                                title: 'Connection Time Out, Check Your Connection',
+                                                showConfirmButton: false,
+                                                allowOutsideClick: false,
+                                                allowEscapeKey: false,
+                                                didOpen: () => {
+                                                    Swal.showLoading();
+                                                },
+                                            });
+
+                                            requestData(total, json, number, value, success + 0, failed + 0);
+                                        }
+                                    });
+                                }
+                            }
+                        },
+                        error: function(){
+                            Swal.fire('Failed!', 'Process Calculating Data is Failed, Please Try Again!', 'error');
+                        }
+                    });
+                }
+            });
+        } else {
+            toastr.warning("Component Check Not Complete ", "Information");
+        }
     }
 
     function push_data(){
         var filter_month = $("#filter_month").combobox('getValue');
         var filter_year = $("#filter_year").textbox('getValue');
         var filter_revision = $("#filter_revision").combobox('getValue');
-        var filter_line_no = $("#filter_line_no").combobox('getValue');
-        var filter_customer_id = $("#filter_customer_id").combobox('getValue');
-        var filter_product_no = $("#filter_product_no").combogrid('getValue');
+        var filter_cutoff = $("#filter_cutoff").datebox('getValue');
+        var filter_customer = $("#filter_customer").combobox('getValue');
+        var filter_item_fg = $("#filter_item_fg").combogrid('getValue');
 
         $.messager.prompt('Push Data MPS', 'Please input Password Push Data', function(r){
             if (r == "PUSHDATAMPS"){
@@ -129,7 +252,8 @@
                     url: "<?= base_url('planning/generate_mps/push_data_check') ?>",
                     data: "filter_month=" + window.btoa(filter_month) +
                         "&filter_year=" + window.btoa(filter_year) +
-                        "&filter_revision=" + window.btoa(filter_revision),
+                        "&filter_revision=" + window.btoa(filter_revision) +
+                        "&filter_cutoff=" + window.btoa(filter_cutoff),
                     dataType: "json",
                     success: function(check) {
                         if(check.theme == "error"){
@@ -152,9 +276,8 @@
                                         data: "filter_month=" + window.btoa(filter_month) +
                                             "&filter_year=" + window.btoa(filter_year) +
                                             "&filter_revision=" + window.btoa(filter_revision) +
-                                            "&filter_line_no=" + window.btoa(filter_line_no) +
-                                            "&filter_product_no=" + window.btoa(filter_product_no) +
-                                            "&filter_customer_id=" + window.btoa(filter_customer_id),
+                                            "&filter_item_fg=" + window.btoa(filter_item_fg) +
+                                            "&filter_customer=" + window.btoa(filter_customer),
                                         dataType: "json",
                                         success: function(rows) {
                                             Swal.close();
@@ -227,224 +350,7 @@
             }
         });
     }
-
-    //Add Data
-    function add() {
-        var filter_month = $("#filter_month").combobox('getValue');
-        var filter_year = $("#filter_year").textbox('getValue');
-        var filter_revision = $("#filter_revision").combobox('getValue');
-        var filter_line_no = $("#filter_line_no").combobox('getValue');
-        var filter_customer_id = $("#filter_customer_id").combobox('getValue');
-        var filter_product_no = $("#filter_product_no").combogrid('getValue');
-        var filter_criteria = $("#filter_criteria").combobox('getValue');
-        var check_forecast = $("#check_forecast").checkbox('options');
-        var check_fg = $("#check_fg").checkbox('options');
-        var check_wip = $("#check_wip").checkbox('options');
-        var check_ost_so = $("#check_ost_so").checkbox('options');
-        var check_ost_mpp = $("#check_ost_mpp").checkbox('options');
-        // var check_so = $("#check_so").checkbox('options');
-
-        if (check_forecast.checked == true && check_fg.checked == true && check_wip.checked == true && check_ost_so.checked == true && check_ost_mpp.checked == true) {
-            $.messager.prompt('Generate MPS', 'Please input Password Generate', function(r){
-                if (r == "GENERATEMPS"){
-                    Swal.fire({
-                        title: 'Please Wait for Push Data',
-                        showConfirmButton: false,
-                        allowOutsideClick: false,
-                        allowEscapeKey: false,
-                        didOpen: () => {
-                            Swal.showLoading();
-                        },
-                    });
-                    Swal.fire({
-                        title: 'Please Wait 5 - 10 Minutes for Generating Data',
-                        showConfirmButton: false,
-                        allowOutsideClick: false,
-                        allowEscapeKey: false,
-                        didOpen: () => {
-                            Swal.showLoading();
-                        },
-                    });
-
-                    $.ajax({
-                        type: "get",
-                        url: "<?= base_url('planning/generate_mps/getdata') ?>",
-                        data: "filter_month=" + window.btoa(filter_month) +
-                            "&filter_year=" + window.btoa(filter_year) +
-                            "&filter_revision=" + window.btoa(filter_revision) +
-                            "&filter_line_no=" + window.btoa(filter_line_no) +
-                            "&filter_product_no=" + window.btoa(filter_product_no) +
-                            "&filter_customer_id=" + window.btoa(filter_customer_id),
-                        dataType: "json",
-                        success: function(rows) {
-                            Swal.close();
-                            requestData(rows['total'], rows);
-
-                            function requestData(total, json, number = 1, value = 0, success = 1, failed = 1) {
-                                if (value < 100) {
-                                    value = Math.floor((number / total) * 100);
-                                    $('#p_upload').progressbar('setValue', value);
-                                    $('#p_start').html(number);
-                                    $('#p_finish').html(total);
-
-                                    $.post('<?= base_url('planning/generate_mps/create') ?>', {
-                                        data: json[number - 1]
-                                    }, function(note) {
-                                        var result = eval('(' + note + ')');
-                                        if (result.theme == "success") {
-                                            Swal.close();
-                                            $('#p_success').html(success);
-                                            var title = "<b style='color: green;'>" + result.title + "</b> | " + result.message;
-                                            requestData(total, json, number + 1, value, success + 1, failed + 0);
-                                        } else {
-                                            $('#p_failed').html(failed);
-                                            var title = "<b style='color: red;'>" + result.title + "</b> | " + result.message;
-
-                                            //Json Failed
-                                            $.ajax({
-                                                type: "POST",
-                                                async: true,
-                                                url: "<?= base_url('planning/generate_mps/uploadcreateFailed') ?>",
-                                                data: {
-                                                    data: json[number - 1],
-                                                    message: result.message
-                                                },
-                                                cache: false
-                                            });
-
-                                            requestData(total, json, number + 1, value, success + 0, failed + 1);
-                                        }
-
-                                        if (value == 100) {
-                                            Swal.fire('Good job!', 'Process Save Data Completed!', 'success');
-                                        }
-
-                                        $("#p_remarks").append(title + "<br>");
-                                    }).fail(function(jqXHR, textStatus) {
-                                        if (textStatus == "error") {
-                                            Swal.fire({
-                                                title: 'Connection Time Out, Check Your Connection',
-                                                showConfirmButton: false,
-                                                allowOutsideClick: false,
-                                                allowEscapeKey: false,
-                                                didOpen: () => {
-                                                    Swal.showLoading();
-                                                },
-                                            });
-
-                                            requestData(total, json, number, value, success + 0, failed + 0);
-                                        }
-                                    });
-                                }
-                            }
-                        }
-                    });
-                }
-            });
-        } else {
-            toastr.warning("Component Check Not Complete ", "Information");
-        }
-    }
-
-    function push_revision(){
-        var filter_month = $("#filter_month").combobox('getValue');
-        var filter_year = $("#filter_year").textbox('getValue');
-        var filter_revision = $("#filter_revision").combobox('getValue');
-        var filter_line_no = $("#filter_line_no").combobox('getValue');
-        var filter_customer_id = $("#filter_customer_id").combobox('getValue');
-        var filter_product_no = $("#filter_product_no").combogrid('getValue');
-        var filter_criteria = $("#filter_criteria").combobox('getValue');
-        // var check_so = $("#check_so").checkbox('options');
-
-        $.messager.prompt('COPY REV', 'Please input "YES" for Generate', function(r){
-            if (r == "YES"){
-                Swal.fire({
-                    title: 'Please Wait for Generate Data',
-                    showConfirmButton: false,
-                    allowOutsideClick: false,
-                    allowEscapeKey: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    },
-                });
-
-                $.ajax({
-                    type: "get",
-                    url: "<?= base_url('planning/generate_mps/getdatacopy') ?>",
-                    data: "filter_month=" + window.btoa(filter_month) +
-                        "&filter_year=" + window.btoa(filter_year) +
-                        "&filter_revision=" + window.btoa(filter_revision) +
-                        "&filter_line_no=" + window.btoa(filter_line_no) +
-                        "&filter_product_no=" + window.btoa(filter_product_no) +
-                        "&filter_customer_id=" + window.btoa(filter_customer_id),
-                    dataType: "json",
-                    success: function(rows) {
-                        Swal.close();
-                        requestData(rows['total'], rows);
-
-                        function requestData(total, json, number = 1, value = 0, success = 1, failed = 1) {
-                            if (value < 100) {
-                                value = Math.floor((number / total) * 100);
-                                $('#p_upload').progressbar('setValue', value);
-                                $('#p_start').html(number);
-                                $('#p_finish').html(total);
-
-                                $.post('<?= base_url('planning/generate_mps/create') ?>', {
-                                    data: json[number - 1]
-                                }, function(note) {
-                                    var result = eval('(' + note + ')');
-                                    if (result.theme == "success") {
-                                        Swal.close();
-                                        $('#p_success').html(success);
-                                        var title = "<b style='color: green;'>" + result.title + "</b> | " + result.message;
-                                        requestData(total, json, number + 1, value, success + 1, failed + 0);
-                                    } else {
-                                        $('#p_failed').html(failed);
-                                        var title = "<b style='color: red;'>" + result.title + "</b> | " + result.message;
-
-                                        //Json Failed
-                                        $.ajax({
-                                            type: "POST",
-                                            async: true,
-                                            url: "<?= base_url('planning/generate_mps/uploadcreateFailed') ?>",
-                                            data: {
-                                                data: json[number - 1],
-                                                message: result.message
-                                            },
-                                            cache: false
-                                        });
-
-                                        requestData(total, json, number + 1, value, success + 0, failed + 1);
-                                    }
-
-                                    if (value == 100) {
-                                        Swal.fire('Good job!', 'Process Save Data Completed!', 'success');
-                                    }
-
-                                    $("#p_remarks").append(title + "<br>");
-                                }).fail(function(jqXHR, textStatus) {
-                                    if (textStatus == "error") {
-                                        Swal.fire({
-                                            title: 'Connection Time Out, Check Your Connection',
-                                            showConfirmButton: false,
-                                            allowOutsideClick: false,
-                                            allowEscapeKey: false,
-                                            didOpen: () => {
-                                                Swal.showLoading();
-                                            },
-                                        });
-
-                                        requestData(total, json, number, value, success + 0, failed + 0);
-                                    }
-                                });
-                            }
-                        }
-                    }
-                });
-            }
-        });
-    }
-
+    
     function downloadFailed() {
         window.open('<?= base_url('planning/generate_mps/uploadDownloadFailed') ?>', '_blank');
     }
@@ -452,19 +358,17 @@
     function filter() {
         var filter_month = $("#filter_month").combobox('getValue');
         var filter_year = $("#filter_year").textbox('getValue');
+        var filter_cutoff = $("#filter_cutoff").datebox('getValue');
         var filter_revision = $("#filter_revision").combobox('getValue');
-        var filter_line_no = $("#filter_line_no").combobox('getValue');
-        var filter_customer_id = $("#filter_customer_id").combobox('getValue');
-        var filter_product_no = $("#filter_product_no").combogrid('getValue');
-        var filter_criteria = $("#filter_criteria").combobox('getValue');
+        var filter_customer = $("#filter_customer").combobox('getValue');
+        var filter_item_fg = $("#filter_item_fg").combogrid('getValue');
 
         var url = "?filter_month=" + window.btoa(filter_month) +
             "&filter_year=" + window.btoa(filter_year) +
             "&filter_revision=" + window.btoa(filter_revision) +
-            "&filter_line_no=" + window.btoa(filter_line_no) +
-            "&filter_customer_id=" + window.btoa(filter_customer_id) +
-            "&filter_product_no=" + window.btoa(filter_product_no) +
-            "&filter_criteria=" + window.btoa(filter_criteria);
+            "&filter_cutoff=" + window.btoa(filter_cutoff) +
+            "&filter_customer=" + window.btoa(filter_customer) +
+            "&filter_item_fg=" + window.btoa(filter_item_fg);
 
         if (filter_month == "" || filter_year == "") {
             toastr.warning("Please select Period!", "Information");
@@ -531,25 +435,25 @@
             }
         });
 
-        // $.ajax({
-        //     type: "get",
-        //     url: "<?= base_url('planning/generate_mps/checkOs') ?>",
-        //     data: "filter_month=" + window.btoa(filter_month) +
-        //         "&filter_year=" + window.btoa(filter_year) +
-        //         "&filter_revision=" + window.btoa(filter_revision),
-        //     dataType: "json",
-        //     success: function(ost_so) {
-        //         if (ost_so.theme == "success") {
-        //             $('#check_so').checkbox({
-        //                 checked: true
-        //             });
-        //         } else {
-        //             $('#check_so').checkbox({
-        //                 checked: false
-        //             });
-        //         }
-        //     }
-        // });
+        $.ajax({
+            type: "get",
+            url: "<?= base_url('planning/generate_mps/checkOs') ?>",
+            data: "filter_month=" + window.btoa(filter_month) +
+                "&filter_year=" + window.btoa(filter_year) +
+                "&filter_revision=" + window.btoa(filter_revision),
+            dataType: "json",
+            success: function(ost_so) {
+                if (ost_so.theme == "success") {
+                    $('#check_so').checkbox({
+                        checked: true
+                    });
+                } else {
+                    $('#check_so').checkbox({
+                        checked: false
+                    });
+                }
+            }
+        });
 
         $.ajax({
             type: "get",
@@ -559,15 +463,15 @@
                 "&filter_revision=" + window.btoa(filter_revision),
             dataType: "json",
             success: function(ost_so) {
-                if (ost_so.theme == "success") {
+                // if (ost_so.theme == "success") {
                     $('#check_ost_so').checkbox({
                         checked: true
                     });
-                } else {
-                    $('#check_ost_so').checkbox({
-                        checked: false
-                    });
-                }
+                // } else {
+                //     $('#check_ost_so').checkbox({
+                //         checked: false
+                //     });
+                // }
             }
         });
 
@@ -634,18 +538,14 @@
         var filter_month = $("#filter_month").combobox('getValue');
         var filter_year = $("#filter_year").textbox('getValue');
         var filter_revision = $("#filter_revision").combobox('getValue');
-        var filter_line_no = $("#filter_line_no").combobox('getValue');
-        var filter_customer_id = $("#filter_customer_id").combobox('getValue');
-        var filter_product_no = $("#filter_product_no").combogrid('getValue');
-        var filter_criteria = $("#filter_criteria").combobox('getValue');
+        var filter_customer = $("#filter_customer").combobox('getValue');
+        var filter_item_fg = $("#filter_item_fg").combogrid('getValue');
 
         var url = "?filter_month=" + window.btoa(filter_month) +
             "&filter_year=" + window.btoa(filter_year) +
             "&filter_revision=" + window.btoa(filter_revision) +
-            "&filter_line_no=" + window.btoa(filter_line_no) +
-            "&filter_customer_id=" + window.btoa(filter_customer_id) +
-            "&filter_product_no=" + window.btoa(filter_product_no) +
-            "&filter_criteria=" + window.btoa(filter_criteria);
+            "&filter_customer=" + window.btoa(filter_customer) +
+            "&filter_item_fg=" + window.btoa(filter_item_fg);
 
         if (filter_month == "" || filter_year == "") {
             toastr.warning("Please select Period!", "Information");
@@ -663,6 +563,7 @@
         var month = $("#filter_month").combobox('getValue');
         var year = $("#filter_year").combobox('getValue');
         var revision = $("#filter_revision").combobox('getValue');
+
         componentCheck(month, year, revision);
         calendarCheck(month, year, revision);
         revisionSelected(month, year);
@@ -673,10 +574,10 @@
         });
 
         $('#filter_month').combobox({
-            url: '<?php echo base_url('planning/mst_data/readMonths'); ?>',
+            url: '<?php echo base_url('planning/generate_mps/readMonths'); ?>',
             valueField: 'id',
             textField: 'name',
-            prompt: 'Select Month',
+            prompt: 'Choose Month',
             icons: [{
                 iconCls: 'icon-clear',
                 handler: function(e) {
@@ -701,10 +602,10 @@
         });
 
         $('#filter_year').combobox({
-            url: '<?php echo base_url('planning/mst_data/readYears'); ?>',
+            url: '<?php echo base_url('planning/generate_mps/readYears'); ?>',
             valueField: 'id',
             textField: 'name',
-            prompt: 'Select Year',
+            prompt: 'Choose Year',
             icons: [{
                 iconCls: 'icon-clear',
                 handler: function(e) {
@@ -729,10 +630,10 @@
         });
 
         $('#filter_revision').combobox({
-            url: '<?php echo base_url('planning/mst_data/readRevisions'); ?>',
+            url: '<?php echo base_url('planning/generate_mps/readRevisions'); ?>',
             valueField: 'id',
             textField: 'name',
-            prompt: 'Select Revision',
+            prompt: 'Choose Revision',
             icons: [{
                 iconCls: 'icon-clear',
                 handler: function(e) {
@@ -750,40 +651,59 @@
             }
         });
 
-        $('#filter_line_no').combobox({
-            url: '<?php echo base_url('planning/mst_line/reads'); ?>',
-            valueField: 'line_no',
-            textField: 'remarks',
-            prompt: 'Select Customer Name',
+        $('#filter_customer').combobox({
+            url: '<?php echo base_url('master/customers/reads'); ?>',
+            valueField: 'id',
+            textField: 'name',
+            prompt: 'Choose Customer',
             icons: [{
                 iconCls: 'icon-clear',
                 handler: function(e) {
                     $(e.data.target).combobox('clear').combobox('textbox').focus();
                 }
             }],
+            onSelect: function(customer) {
+                $('#filter_item_fg').combogrid({
+                    url: '<?= base_url('master/customer_items/reads/') ?>' + btoa(customer.id),
+                    panelWidth: 600,
+                    idField: 'id',
+                    textField: 'number',
+                    mode: 'remote',
+                    fitColumns: true,
+                    prompt: "Choose Product No",
+                    icons: [{
+                        iconCls: 'icon-clear',
+                        handler: function(e) {
+                            $(e.data.target).combogrid('clear').combogrid('textbox').focus();
+                        }
+                    }],
+                    columns: [
+                        [{
+                            field: 'number',
+                            title: 'Product EBWS',
+                            width: 150
+                        },{
+                            field: 'number_customer',
+                            title: 'Product Customer',
+                            width: 200
+                        }, {
+                            field: 'name',
+                            title: 'Description',
+                            width: 200
+                        }]
+                    ]
+                });
+            }
         });
 
-        $('#filter_customer_id').combobox({
-            url: '<?php echo base_url('planning/mst_data/readCustomers'); ?>',
-            valueField: 'cust_id',
-            textField: 'cust_name',
-            prompt: 'Select Customer',
-            icons: [{
-                iconCls: 'icon-clear',
-                handler: function(e) {
-                    $(e.data.target).combobox('clear').combobox('textbox').focus();
-                }
-            }]
-        });
-
-        $('#filter_product_no').combogrid({
-            url: '<?= base_url('planning/mst_data/readProducts') ?>',
-            panelWidth: 400,
-            idField: 'item_id',
-            textField: 'item_id',
+        $('#filter_item_fg').combogrid({
+            url: '<?= base_url('master/customer_items/reads') ?>',
+            panelWidth: 600,
+            idField: 'id',
+            textField: 'number',
             mode: 'remote',
             fitColumns: true,
-            prompt: "Select Product No",
+            prompt: "Choose Product No",
             icons: [{
                 iconCls: 'icon-clear',
                 handler: function(e) {
@@ -792,12 +712,16 @@
             }],
             columns: [
                 [{
-                    field: 'item_id',
-                    title: 'Item ID',
+                    field: 'number',
+                    title: 'Product EBWS',
+                    width: 150
+                },{
+                    field: 'number_customer',
+                    title: 'Product Customer',
                     width: 200
                 }, {
-                    field: 'item_name',
-                    title: 'Item Name',
+                    field: 'name',
+                    title: 'Description',
                     width: 200
                 }]
             ]

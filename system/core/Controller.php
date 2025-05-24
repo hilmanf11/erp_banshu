@@ -110,8 +110,8 @@ class CI_Controller
 	//Ambil Data untuk button access
 	public function getbutton($menu)
 	{
-		$api_key = $this->session->api_key;
-		$query  = $this->db->query("SELECT a.* FROM user_setting a JOIN user b ON a.id_user = b.username WHERE a.id_menu='$menu' and b.api_key='$api_key'");
+		$username = $this->session->username;
+		$query  = $this->db->query("SELECT a.* FROM setting_users a JOIN users b ON a.users_id = b.username WHERE a.menus_id='$menu' and b.username='$username'");
 		$data   = $query->row();
 
 		$html   = '';
@@ -147,9 +147,9 @@ class CI_Controller
 		if ($id_menu != "") {
 			$username = $this->session->username;
 			$this->db->select('v_view');
-			$this->db->from('user_setting');
-			$this->db->where('id_user', $username);
-			$this->db->where('id_menu', $id_menu);
+			$this->db->from('setting_users');
+			$this->db->where('users_id', $username);
+			$this->db->where('menus_id', $id_menu);
 			$checkuserAccess = $this->db->get()->result_array();
 			return @$checkuserAccess[0]['v_view'];
 		} else {

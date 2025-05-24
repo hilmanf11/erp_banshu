@@ -11,14 +11,14 @@ class Dashboard extends CI_Controller
         $this->load->helper(array('form', 'url'));
         $this->load->library('form_validation');
         $this->load->library('session');
-        $this->load->model('api');
+        $this->load->model('crud');
     }
 
     public function index()
     {
         if ($this->session->username != "") {
-            $data['config'] = $this->api->read('config');
-            $data['users'] = $this->api->reads('user', [], ["actived_is" => 0, "deleted_is" => 0], "", "name", "asc");
+            $data['config'] = $this->crud->read('config');
+            $data['users'] = $this->crud->reads('users', [], ["actived" => 0, "deleted" => 0], "", "name", "asc");
             $data['session_name'] = $this->session->name;
 
             if (date("H:i:s") >= "05:00:00" and date("H:i:s") <= "11:00:00") {

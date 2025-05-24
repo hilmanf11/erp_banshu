@@ -1,443 +1,519 @@
 <!-- TABLE DATAGRID -->
-<table id="dg" class="easyui-datagrid" style="width:99.5%;" toolbar="#toolbar"></table>
+<table id="dg" class="easyui-datagrid" style="width:99.5%;" toolbar="#toolbar" data-options="
+    pagination: false,
+    clientPaging: false,
+    rownumbers: true,
+    fit: true">
+    <thead>
+        <tr>
+            <th field="ck" checkbox="true"></th>
+            <th data-options="field:'detail',width:80,halign:'center',formatter:BtnDetail">Details</th>
+            <th data-options="field:'period',width:80,align:'center'">Period</th>
+            <th data-options="field:'revision',width:80,align:'center'">Revision</th>
+            <th data-options="field:'supplier_id',width:100,halign:'center'">Supplier ID</th>
+            <th data-options="field:'supplier_po',width:150,halign:'center'">Supplier PO</th>
+            <th data-options="field:'supplier_name',width:300,halign:'center'">Supplier Name</th>
+            <th data-options="field:'type',width:120,halign:'center'">Supplier Type</th>
+            <th data-options="field:'state',width:120,halign:'center'">State</th>
+            <th data-options="field:'currency',width:80,align:'center'">Currency</th>
+            <th data-options="field:'total_qty',width:100,align:'right',halign:'center',formatter:numberformat">Total Qty</th>
+            <th data-options="field:'total_amount',width:120,align:'right',halign:'center',formatter:numberformatPrice">Total Amount</th>
+            <!-- <th data-options="field:'remarks1',width:200,halign:'center'">Remarks Approval 1</th>
+            <th data-options="field:'remarks2',width:200,halign:'center'">Remarks Approval 2</th>
+            <th data-options="field:'remarks3',width:200,halign:'center'">Remarks Approval 3</th> -->
+        </tr>
+    </thead>
+</table>
 
 <!-- TOOLBAR DATAGRID -->
 <div id="toolbar" style="height: 35px;">
-    <a href="javascript:void(0)" id="approveall" class="easyui-linkbutton" data-options="plain:true" onclick="approveall()"><i class="fa fa-check"></i> Approve ALL</a>
-    <a href="javascript:void(0)" id="disapproveall" class="easyui-linkbutton" data-options="plain:true" onclick="disapproveall()"><i class="fa fa-times"></i> Disapprove ALL</a>
-    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true" onclick="export_excel()"><i class="fa fa-file"></i> Export Excel</a>
+    <a href="javascript:void(0)" id="approveacheck" class="easyui-linkbutton" data-options="plain:true" onclick="approveAll()"><i class="fa fa-check"></i> Approve All</a>
+    <a href="javascript:void(0)" id="approveacheck" class="easyui-linkbutton" data-options="plain:true" onclick="disapproveAll()"><i class="fa fa-times"></i> Disapprove All</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true" onclick="export_excel()"><i class="fa fa-file"></i> Export Excel Summary</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true" onclick="export_excel2()"><i class="fa fa-file"></i> Export Excel Details</a>
     <a href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true" onclick="reload()"><i class="fa fa-refresh"></i> Reload</a>
+
+    <div style="float: right;">
+        Period : 
+        <input style="width: 150px;" id="filter_month" value="<?= date("m") ?>" class="easyui-combobox" data-options="prompt:'Month'">
+        <input style="width: 80px;" id="filter_year" value="<?= date("Y") ?>" class="easyui-combobox" data-options="prompt:'Year'">
+        <input style="width: 80px;" id="filter_revision" class="easyui-combobox" data-options="prompt:'Rev'" panelHeight="auto">
+        <a href="javascript:;" class="easyui-linkbutton" onclick="filter()"><i class="fa fa-search"></i> Filter Data</a>
+    </div>
+</div>
+
+<!-- TOOLBAR DATAGRID -->
+<div id="toolbar2" style="height: 35px;">
+    <a href="javascript:void(0)" id="approveacheck" class="easyui-linkbutton" data-options="plain:true" onclick="approve()"><i class="fa fa-check"></i> Approve</a>
+	<a href="javascript:void(0)" id="approveacheck" class="easyui-linkbutton" data-options="plain:true" onclick="disapprove()"><i class="fa fa-times"></i> Disapprove</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true" onclick="export_excel1()"><i class="fa fa-file"></i> Export Excel</a>
+</div>
+
+<div id="dlg_details" class="easyui-window" title="Detail Data" data-options="closed: true, modal:true, closed: true, minimizable:false, collapsible:false" style="width: 800px; height: 500px; top: 50px;">
+    <table id="dg_details" class="easyui-datagrid" style="width:100%;" toolbar="#toolbar2">
+        <thead frozen="true">
+            <tr>
+                <th field="ck" checkbox="true"></th>
+                <th data-options="field:'period',width:80,halign:'center'">Period</th>
+                <th data-options="field:'item_rm_id',width:100,halign:'center'">Part No EBWS</th>
+                <th data-options="field:'item_rm_number',width:200,halign:'center'">Part No Supplier</th>
+            </tr>
+        </thead>
+        <thead>
+            <tr>
+                <th data-options="field:'item_rm_name',width:250,halign:'center'">Description</th>
+                <th data-options="field:'product_family',width:120,halign:'center'">Product Family</th>
+                <th data-options="field:'class',width:80,halign:'center'">ABC <br> Class</th>
+                <th data-options="field:'leadtime',width:80,halign:'center'">Leadtime</th>
+                <th data-options="field:'mpq',width:80,halign:'center'">MPQ</th>
+                <th data-options="field:'moq',width:80,halign:'center'">MOQ</th>
+                <th data-options="field:'qty_rm',width:80,halign:'center',align:'right',formatter: numberformat">WHS</th>
+                <th data-options="field:'qty_wip',width:80,halign:'center',align:'right',formatter: numberformat">WIP</th>
+                <th data-options="field:'qty_vendor',width:80,halign:'center',align:'right',formatter: numberformat">OS PO</th>
+                <th data-options="field:'qty_supply',width:80,halign:'center',align:'right',formatter: numberformat">OS Supply</th>
+                <th data-options="field:'qty_wo',width:80,halign:'center',align:'right',formatter: numberformat">OS WO</th>
+                <th data-options="field:'balance_1',width:120,halign:'center',align:'right',formatter: numberformat">BALANCE 1</th>
+                <th data-options="field:'balance_2',width:120,halign:'center',align:'right',formatter: numberformat">BALANCE 2</th>
+                <th data-options="field:'balance_3',width:120,halign:'center',align:'right',formatter: numberformat">BALANCE 3</th>
+                <th data-options="field:'balance_4',width:120,halign:'center',align:'right',formatter: numberformat">BALANCE 4</th>
+                <th data-options="field:'balance_5',width:120,halign:'center',align:'right',formatter: numberformat">BALANCE 5</th>
+                <th data-options="field:'balance_6',width:120,halign:'center',align:'right',formatter: numberformat">BALANCE 6</th>
+                <th data-options="field:'share_order',width:80,halign:'center',align:'right',formatter: numberformat">Share Order<br>(%)</th>
+                <th data-options="field:'safety_stock_persen',width:80,halign:'center',align:'right',formatter: numberformat">Safety Stock<br>(%)</th>
+                <th data-options="field:'safety_stock',width:80,halign:'center',align:'right',formatter: numberformat">Safety Stock</th>
+                <th data-options="field:'share_order_qty',width:120,halign:'center',align:'right',formatter: numberformat">Share Order</th>
+                <th data-options="field:'total_need',width:120,halign:'center',align:'right',formatter: numberformat">Total Need</th>
+                <th data-options="field:'mrp_result',width:120,halign:'center',align:'right',formatter: numberformat">MRP Result</th>
+                <th data-options="field:'currency',width:80,halign:'center',align:'center'">Currency</th>
+                <th data-options="field:'price',width:100,halign:'center',align:'right',formatter: numberformatPrice2">Price</th>
+                <th data-options="field:'total_amount',width:120,halign:'center',align:'right',formatter: numberformatPrice">Total Amount</th>
+                <th data-options="field:'created_by',width:120,halign:'center'">Create By</th>
+                <th data-options="field:'created_date',width:150,halign:'center'">Create Date</th>
+            </tr>
+        </thead>
+    </table>
 </div>
 
 <script>
+    $(function() {
+        $('#dg').datagrid('enableFilter');
+
+        $('#filter_month').combobox({
+            url: '<?php echo base_url('planning/mst_data/readMonths'); ?>',
+            valueField: 'id',
+            textField: 'name',
+            prompt: 'Select Month',
+            onSelect: function(month){
+                var filter_year = $("#filter_year").combobox('getValue');
+
+                $('#filter_revision').combobox({
+                    url: '<?php echo base_url('planning/generate_mrp/readRevisions?filter_month='); ?>' + btoa(month.id) + "&filter_year=" + btoa(filter_year),
+                    valueField: 'revision',
+                    textField: 'revision',
+                    prompt: 'Rev',
+                    formatter: function(val){
+                        return "Revision " + val.revision; 
+                    },
+                    onLoadSuccess: function(row){
+                        $('#filter_revision').combobox('setValue', row[0].revision);
+                    }
+                });
+            }
+        });
+
+        $('#filter_year').combobox({
+            url: '<?php echo base_url('planning/mst_data/readYears'); ?>',
+            valueField: 'id',
+            textField: 'name',
+            prompt: 'Select Year',
+            onSelect: function(year){
+                var filter_month = $("#filter_month").combobox('getValue');
+
+                $('#filter_revision').combobox({
+                    url: '<?php echo base_url('planning/generate_mrp/readRevisions?filter_month='); ?>' + btoa(filter_month) + "&filter_year=" + btoa(year.id),
+                    valueField: 'revision',
+                    textField: 'revision',
+                    prompt: 'Rev',
+                    formatter: function(val){
+                        return "Revision " + val.revision; 
+                    },
+                    onLoadSuccess: function(row){
+                        $('#filter_revision').combobox('setValue', "<?= $revision ?>");
+                        filter();
+                    }
+                });
+            }
+        });
+    });
+
+    function filter() {
+        var filter_month = $("#filter_month").combobox('getValue');
+        var filter_year = $("#filter_year").combobox('getValue');
+        var filter_revision = $("#filter_revision").combobox('getValue');
+
+        $('#dg').datagrid('loading');
+
+        $.ajax({
+            url: '<?= base_url('approvals/approvalGenerateMrpFinals/'.base64_encode($approved_to).'/'.base64_encode($approved_by)) ?>',
+            type: 'POST',
+            data: {
+                filter_month: filter_month,
+                filter_year: filter_year,
+                filter_revision: filter_revision
+            },
+            dataType: 'json',
+            success: function(result) {
+                $('#dg').datagrid('loadData', result).datagrid('loaded');
+            }
+        });
+    }
+
     //RELOAD
     function reload() {
         window.location.reload();
     }
 
     function export_excel() {
-		$('#dg').datagrid('toExcel', "approval_<?= $table ?>.xls");
+		$('#dg').datagrid('toExcel', "approval_<?= $table ?>_summary.xls");
 	}
 
-    function approveall() {
-		$.messager.confirm('Warning', 'Are you sure you want to approve all data?', function(r) {
-			if (r) {
-				$.post('<?= base_url('approvals/approveall') ?>', {
-					table_name: "<?= $table ?>",
-					approved_to: "<?= $approved_to ?>",
-					created_by: "<?= $created_by ?>",
-					approved_by: "<?= $approved_by ?>",
-				}, function(result) {
-					var result = eval('(' + result + ')');
-					if (result.theme == "success") {
-						toastr.success(result.message, result.title);
-						$("#dg").datagrid("reload");
-					} else {
-						toastr.error(result.message, result.title);
-					}
-				});
-			}
-		});
+    function export_excel2() {
+        var filter_month = $("#filter_month").combobox('getValue');
+        var filter_year = $("#filter_year").combobox('getValue');
+        var filter_revision = $("#filter_revision").combobox('getValue');
+
+		window.location.assign('<?= base_url('planning/generate_mrp/print/excel/' . base64_encode($approved_to) . '/' . base64_encode($approved_by)) ?>?filter_month=' + btoa(filter_month) + "&filter_year=" + btoa(filter_year) + "&filter_revision=" + btoa(filter_revision));
 	}
 
-	function disapproveall() {
-		$.messager.confirm('Warning', 'Are you sure you want to disapprove all data?', function(r) {
-			if (r) {
-				Swal.fire({
-					title: 'Please Wait for Process Disapprove',
-					showConfirmButton: false,
-					allowOutsideClick: false,
-					allowEscapeKey: false,
-					didOpen: () => {
-						Swal.showLoading();
-					},
-				});
-
-				$.post('<?= base_url('approvals/disapproveall') ?>', {
-					table_name: "<?= $table ?>",
-					approved_to: "<?= $approved_to ?>",
-					created_by: "<?= $created_by ?>",
-					approved_by: "<?= $approved_by ?>",
-				}, function(result) {
-					var result = eval('(' + result + ')');
-					Swal.close();
-
-					if (result.theme == "success") {
-						toastr.success(result.message, result.title);
-						$("#dg").datagrid("reload");
-					} else {
-						toastr.error(result.message, result.title);
-					}
-				});
-			}
-		});
+    function export_excel1() {
+		$('#dg_details').datagrid('toExcel', "approval_<?= $table ?>_details.xls");
 	}
 
-	function approve(id, tablename) {
-		$.messager.confirm('Warning', 'Are you sure you want to approve this data?', function(r) {
-			if (r) {
-				$.post('<?= base_url('approvals/approve') ?>', {
-					id: id,
-					tablename: tablename
-				}, function(result) {
-					var result = eval('(' + result + ')');
-					if (result.theme == "success") {
-						toastr.success(result.message, result.title);
-						$("#dg").datagrid("reload");
-					} else {
-						toastr.error(result.message, result.title);
-					}
-				});
-			}
-		});
+    function approveAll() {
+		var rows = $('#dg').datagrid('getSelections');
+        if (rows.length > 0) {
+            $.messager.prompt('Remarks', 'Please input your Remarks!!', function(message){
+                if (message){
+                    Swal.fire({
+                        title: 'Please Wait...',
+                        showConfirmButton: false,
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        },
+                    });
+
+                    requestApprove(rows.length, rows);
+                    function requestApprove(total, json, number = 1, value = 0) {
+                        if (value < 100) {
+                            var row = json[number-1];
+                            value = Math.floor((number / total) * 100);
+
+                            $.ajax({
+                                method: 'post',
+                                url: '<?= base_url('approvals/approveAll') ?>',
+                                data: {
+                                    supplier_id: row.supplier_id,
+                                    period: row.period,
+                                    revision: row.revision,
+                                    tablename: "<?= $table ?>",
+                                    message: message
+                                },
+                                success: function(result) {
+                                    var result = eval('(' + result + ')');
+                                    requestApprove(total, json, number + 1, value);
+
+                                    if (number == total) {
+                                        Swal.close();
+                                        Swal.fire(
+                                            'Approve Completed',
+                                            'Approve Data has been completed, You cannot restore data that has been approved',
+                                            'success'
+                                        );
+                                    }
+                                },
+                                error: function(jqXHR, textStatus, errorThrown) {
+                                    toastr.error(jqXHR.statusText);
+                                },
+                            });
+
+                            $('#dg').datagrid('reload');
+                        }
+                    }
+                }
+            });
+        } else {
+            toastr.info("Please select one of the data in the table first");
+        }
 	}
 
-	function disapprove(id, tablename) {
-		$.messager.confirm('Warning', 'Are you sure you want to disapprove this data?', function(r) {
-			if (r) {
-				$.post('<?= base_url('approvals/disapprove') ?>', {
-					id: id,
-					tablename: tablename
-				}, function(result) {
-					var result = eval('(' + result + ')');
+	function approve() {
+		var rows = $('#dg_details').datagrid('getSelections');
+        if (rows.length > 0) {
+            $("#dlg_details").window('close');
 
-					if (result.theme == "success") {
-						toastr.success(result.message, result.title);
-						$("#dg").datagrid("reload");
-					} else {
-						toastr.error(result.message, result.title);
-					}
-				});
-			}
-		});
+            $.messager.prompt('Remarks', 'Please input your Remarks!!', function(message){
+                if (message){
+                    Swal.fire({
+                        title: 'Please Wait...',
+                        showConfirmButton: false,
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        },
+                    });
+
+                    requestApprove(rows.length, rows);
+                    function requestApprove(total, json, number = 1, value = 0) {
+                        if (value < 100) {
+                            var row = json[number-1];
+                            value = Math.floor((number / total) * 100);
+
+                            $.ajax({
+                                method: 'post',
+                                url: '<?= base_url('approvals/approve') ?>',
+                                data: {
+                                    id: row.id,
+                                    tablename: "<?= $table ?>",
+                                    message: message
+                                },
+                                success: function(result) {
+                                    var result = eval('(' + result + ')');
+                                    requestApprove(total, json, number + 1, value);
+
+                                    if (number == total) {
+                                        $('#dg_details').datagrid('reload');
+                                        $('#dg').datagrid('reload');
+                                        Swal.close();
+                                        Swal.fire(
+                                            'Approve Completed',
+                                            'Approve Data has been completed, You cannot restore data that has been approved',
+                                            'success'
+                                        );
+                                    }
+                                },
+                                error: function(jqXHR, textStatus, errorThrown) {
+                                    toastr.error(jqXHR.statusText);
+                                },
+                            });
+                        }
+                    }
+                }
+            });
+        } else {
+            toastr.info("Please select one of the data in the table first");
+        }
+	}
+
+    function disapproveAll() {
+		var rows = $('#dg').datagrid('getSelections');
+        if (rows.length > 0) {
+            Swal.fire({
+                title: 'Dispprove Data',
+                text: "Are you sure? You want to Dispprove this data!",
+                icon: 'warning',
+                showCancelButton: true,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                confirmButtonText: 'Yes, Dispprove it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.messager.prompt('Reason', 'Please input your reason!!', function(message){
+                        if (message){
+                            Swal.fire({
+                                title: 'Please Wait...',
+                                showConfirmButton: false,
+                                allowOutsideClick: false,
+                                allowEscapeKey: false,
+                                didOpen: () => {
+                                    Swal.showLoading();
+                                },
+                            });
+
+                            requestApprove(rows.length, rows);
+                            function requestApprove(total, json, number = 1, value = 0) {
+                                if (value < 100) {
+                                    var row = json[number-1];
+                                    value = Math.floor((number / total) * 100);
+
+                                    $.ajax({
+                                        method: 'post',
+                                        url: '<?= base_url('approvals/disapproveAll') ?>',
+                                        data: {
+                                            supplier_id: row.supplier_id,
+                                            period: row.period,
+                                            revision: row.revision,
+                                            tablename: "<?= $table ?>",
+                                            message: message
+                                        },
+                                        success: function(result) {
+                                            var result = eval('(' + result + ')');
+                                            requestApprove(total, json, number + 1, value);
+
+                                            if (number == total) {
+                                                $('#dg').datagrid('reload');
+                                                Swal.close();
+                                                Swal.fire(
+                                                    'Dispprove Completed',
+                                                    'Dispprove Data has been completed, You cannot restore data that has been Dispproved',
+                                                    'success'
+                                                );
+                                            }
+                                        },
+                                        error: function(jqXHR, textStatus, errorThrown) {
+                                            toastr.error(jqXHR.statusText);
+                                        },
+                                    });
+                                }
+                            }
+                        }else{
+                            Swal.fire(
+                                'Cannot Process',
+                                'Please Input your reason to Process Disapprove',
+                                'error'
+                            );
+                        }
+                    });
+                }
+            });
+        } else {
+            toastr.info("Please select one of the data in the table first");
+        }
+	}
+
+	function disapprove() {
+		var rows = $('#dg_details').datagrid('getSelections');
+        if (rows.length > 0) {
+            $("#dlg_details").window('close');
+
+            Swal.fire({
+                title: 'Dispprove Data',
+                text: "Are you sure? You want to Dispprove this data!",
+                icon: 'warning',
+                showCancelButton: true,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                confirmButtonText: 'Yes, Dispprove it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.messager.prompt('Reason', 'Please input your reason!!', function(message){
+                        if (message){
+                            Swal.fire({
+                                title: 'Please Wait...',
+                                showConfirmButton: false,
+                                allowOutsideClick: false,
+                                allowEscapeKey: false,
+                                didOpen: () => {
+                                    Swal.showLoading();
+                                },
+                            });
+
+                            requestApprove(rows.length, rows);
+                            function requestApprove(total, json, number = 1, value = 0) {
+                                if (value < 100) {
+                                    var row = json[number-1];
+                                    value = Math.floor((number / total) * 100);
+
+                                    $.ajax({
+                                        method: 'post',
+                                        url: '<?= base_url('approvals/disapprove') ?>',
+                                        data: {
+                                            id: row.id,
+                                            tablename: "<?= $table ?>",
+                                            message: message
+                                        },
+                                        success: function(result) {
+                                            var result = eval('(' + result + ')');
+                                            requestApprove(total, json, number + 1, value);
+
+                                            if (number == total) {
+                                                $('#dg_details').datagrid('reload');
+                                                $('#dg').datagrid('reload');
+                                                Swal.close();
+                                                Swal.fire(
+                                                    'Dispprove Completed',
+                                                    'Dispprove Data has been completed, You cannot restore data that has been Dispproved',
+                                                    'success'
+                                                );
+                                            }
+                                        },
+                                        error: function(jqXHR, textStatus, errorThrown) {
+                                            toastr.error(jqXHR.statusText);
+                                        },
+                                    });
+                                }
+                            }
+                        }else{
+                            Swal.fire(
+                                'Cannot Process',
+                                'Please Input your reason to Process Disapprove',
+                                'error'
+                            );
+                        }
+                    });
+                }
+            });
+        } else {
+            toastr.info("Please select one of the data in the table first");
+        }
 	}
 
     function numberformat(value, row) {
-		const formatter = new Intl.NumberFormat('id-ID');
+		const formatter = new Intl.NumberFormat('ja-JP');
 
-		return "<b>" + formatter.format(value) + "</b>";
+		return formatter.format(value);
 	}
 
-	function numberformatPrice(value, row){
-        const formatter = new Intl.NumberFormat('id-ID', {
-            minimumFractionDigits: 2
+	function numberformatPrice2(value, row){
+        var digit = 4;
+
+        const formatter = new Intl.NumberFormat('ja-JP', {
+            minimumFractionDigits: digit
         });
 
-        return "<b>" + formatter.format(value) + "</b>";
+        return formatter.format(value);
     }
 
-    $(function() {
-        //SETTING DATAGRID EASYUI
-        $('#dg').datagrid({
-            url: '<?= base_url('approvals/approvalGenerateMrpFinals/') ?>' + "<?= base64_encode($approved_to) ?>" + "/" + "<?= base64_encode($created_by) ?>" + "/" + "<?= base64_encode($approved_by) ?>",
-            pagination: false,
-            singleSelect: true,
+	function numberformatPrice(value, row){
+        if(row.currency == "INR"){
+            var digit = 2;
+        }else{
+            var digit = 4;
+        }
+
+        const formatter = new Intl.NumberFormat('ja-JP', {
+            minimumFractionDigits: digit
+        });
+
+        return formatter.format(value);
+    }
+
+    function BtnAttachment(val, row) {
+        if(val == "" || val == null){
+            return '-';
+        }else{
+            return '<a class="btn btn-primary w-100" style="pointer-events: visible; opacity:1;" target="_blank" href="' + val + '"><i class="fa fa-paperclip"></i> View</a>';
+        }
+    }
+
+    function BtnDetail(val, row) {
+        var details = "details('"+row.supplier_id+"','"+row.supplier_name+"','"+row.period+"','"+row.revision+"')";
+        return '<a class="btn btn-primary w-100" style="pointer-events: visible; opacity:1;" onClick="'+details+'"><i class="fa fa-eye"></i> View</a>';
+    }
+
+    function details(supplier_id = "", supplier_name = "", period = "", revision = "") {
+        $("#dlg_details").window('open');
+        $('#dlg_details').window('setTitle', 'Detail of ' + supplier_name);
+
+        $('#dg_details').datagrid({
+            url: '<?= base_url('approvals/approvalGenerateMrpFinalDetails/'.base64_encode($approved_to).'/'.base64_encode($approved_by)) ?>?supplier_id=' + btoa(supplier_id) + "&period=" + btoa(period) + "&revision=" + btoa(revision),
             clientPaging: false,
             remoteFilter: true,
             rownumbers: true,
-            fit: true,
-            columns: [
-                [{
-					field: 'p_month',
-					width: 80,
-					align: 'center',
-					title: "Month",
-					rowspan: 2
-				},{
-					field: 'p_year',
-					width: 80,
-					align: 'center',
-					title: "Year",
-					rowspan: 2
-				},{
-					field: 'revision',
-					width: 80,
-					align: 'center',
-					title: "Rev",
-					rowspan: 2
-				},{
-					field: 'part_no',
-					width: 200,
-					halign: 'center',
-					title: "Part No",
-					rowspan: 2
-				}, {
-					field: 'part_name',
-					width: 150,
-					halign: 'center',
-					title: "Part Name",
-					rowspan: 2
-				}, {
-					field: 'product_family',
-					width: 150,
-					halign: 'center',
-					title: "Product Family",
-					rowspan: 2
-				},{
-					field: 'mpq',
-					width: 80,
-					align: 'center',
-					title: "MPQ",
-					rowspan: 2
-				},{
-					field: 'moq',
-					width: 80,
-					align: 'center',
-					title: "MOQ",
-					rowspan: 2
-				},{
-					field: 'leadtime',
-					width: 100,
-					align: 'center',
-					title: "Leadtime",
-					rowspan: 2
-				},{
-					field: 'workorder',
-					width: 100,
-					halign: 'center',
-					title: "Workorder",
-					colspan: 3
-				},{
-					field: 'issued_avg',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "AVG",
-					rowspan: 2,
-					formatter: numberformat,
-				},{
-					field: 'stock_rm',
-					width: 100,
-					align: 'center',
-					title: "Stock Raw Material",
-					colspan: 3
-				},{
-					field: 'total_stock',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "Total Stock",
-					rowspan: 2,
-					formatter: numberformat,
-				},{
-					field: 'qty_supply',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "OS Supply",
-					rowspan: 2,
-					formatter: numberformat,
-				},{
-					field: 'qty_wo',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "OS WO",
-					rowspan: 2,
-					formatter: numberformat,
-				},{
-					field: 'total_wo',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "Total OS",
-					rowspan: 2,
-					formatter: numberformat,
-				},{
-					field: 'period_1',
-					width: 100,
-					align: 'center',
-					title: "Period 1",
-					colspan: 2
-				},{
-					field: 'period_2',
-					width: 100,
-					align: 'center',
-					title: "Period 2",
-					colspan: 2
-				},{
-					field: 'period_3',
-					width: 100,
-					align: 'center',
-					title: "Period 3",
-					colspan: 2
-				},{
-					field: 'period_4',
-					width: 100,
-					align: 'center',
-					title: "Period 4",
-					colspan: 2
-				},{
-					field: 'period_5',
-					width: 100,
-					align: 'center',
-					title: "Period 5",
-					colspan: 2
-				},{
-					field: 'period_6',
-					width: 100,
-					align: 'center',
-					title: "Period 6",
-					colspan: 2
-				},{
-					field: 'total_need',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "Total Need",
-					rowspan: 2,
-					formatter: numberformat,
-				},{
-					field: 'purchase_order',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "Purchase Order",
-					rowspan: 2,
-					formatter: numberformat,
-				},{
-					field: 'action',
-					width: 80,
-					align: 'center',
-					title: "Action",
-					rowspan: 2,
-					formatter: function(val, row) {
-						if (val != "-") {
-							var approve = "approve('" + row.id + "','" + "<?= $table ?>" + "')";
-							var disapprove = "disapprove('" + row.id + "','" + "<?= $table ?>" + "')";
-							var a = '<a class="btn btn-success w-50" style="pointer-events: visible; opacity:1;" onclick="' + approve + '"><i class="fa fa-check"></i></a>';
-							var b = '<a class="btn btn-danger w-50" style="pointer-events: visible; opacity:1;" onclick="' + disapprove + '"><i class="fa fa-times"></i></a>';
-							return a + " " + b;
-						}
-					}
-				}],[{
-					field: 'issued_1',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "Need 1",
-					formatter: numberformat,
-				},{
-					field: 'issued_2',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "Need 2",
-					formatter: numberformat,
-				},{
-					field: 'issued_3',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "Need 3",
-					formatter: numberformat,
-				},{
-					field: 'qty_rm',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "WHS",
-					formatter: numberformat,
-				},{
-					field: 'qty_wip',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "WIP",
-					formatter: numberformat,
-				},{
-					field: 'qty_vendor',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "OS SUPPLIER",
-					formatter: numberformat,
-				},{
-					field: 'need_1',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "Need 1",
-					formatter: numberformat,
-				},{
-					field: 'balance_1',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "Balance 1",
-					formatter: numberformat,
-				},{
-					field: 'need_2',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "Need 2",
-					formatter: numberformat,
-				},{
-					field: 'balance_2',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "Balance 2",
-					formatter: numberformat,
-				},{
-					field: 'need_3',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "Need 3",
-					formatter: numberformat,
-				},{
-					field: 'balance_3',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "Balance 3",
-					formatter: numberformat,
-				},{
-					field: 'need_4',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "Need 4",
-					formatter: numberformat,
-				},{
-					field: 'balance_4',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "Balance 4",
-					formatter: numberformat,
-				},{
-					field: 'need_5',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "Need 5",
-					formatter: numberformat,
-				},{
-					field: 'balance_5',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "Balance 5",
-					formatter: numberformat,
-				},{
-					field: 'need_6',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "Need 6",
-					formatter: numberformat,
-				},{
-					field: 'balance_6',
-					width: 100,
-					halign: 'center',
-					align: 'right',
-					title: "Balance 6",
-					formatter: numberformat,
-				}]
-            ],
-        }).datagrid('enableFilter');
-    });
+            singleSelect: false,
+            fit:true,
+        });
+    }
 </script>

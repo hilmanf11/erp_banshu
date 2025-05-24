@@ -1,30 +1,91 @@
 <!-- TABLE DATAGRID -->
-<table id="dg" class="easyui-datagrid" style="width:100%;" toolbar="#toolbar"></table>
+<table id="dg" class="easyui-datagrid" style="width:99.5%;" toolbar="#toolbar" data-options="
+    url: '<?= base_url('approvals/approvalPO/'.base64_encode($approved_to).'/'.base64_encode($approved_by)) ?>',
+    pagination: false,
+    clientPaging: false,
+    rownumbers: true,
+    fit: true">
+    <thead>
+        <tr>
+            <th data-options="field:'detail',width:80,halign:'center',formatter:BtnDetail">Details</th>
+            <th data-options="field:'po_no',width:150,halign:'center'">PO No</th>
+            <th data-options="field:'po_date',width:120,halign:'center'">PO Date</th>
+            <th data-options="field:'supplier_id',width:100,halign:'center'">Supplier ID</th>
+            <th data-options="field:'supplier_name',width:300,halign:'center'">Supplier Name</th>
+            <th data-options="field:'type',width:120,halign:'center'">Supplier Type</th>
+            <th data-options="field:'state',width:120,halign:'center'">State</th>
+            <th data-options="field:'currency',width:80,align:'center'">Currency</th>
+            <th data-options="field:'grandtotal',width:150,halign:'center',align:'right',formatter: numberformatPrice">Grand Total</th>
+            <th data-options="field:'note',width:280,halign:'center'">Note</th>
+            <th data-options="field:'attachment',width:80,align:'center',formatter: btnDetails">Attachment</th>
+            <!-- <th data-options="field:'remarks1',width:200,halign:'center'">Remarks Approval 1</th> -->
+            <!-- <th data-options="field:'remarks2',width:200,halign:'center'">Remarks Approval 2</th> -->
+            <!-- <th data-options="field:'remarks3',width:200,halign:'center'">Remarks Approval 3</th> -->
+        </tr>
+    </thead>
+</table>
 
 <!-- TOOLBAR DATAGRID -->
 <div id="toolbar" style="height: 35px;">
-	<a href="javascript:void(0)" id="approveacheck" class="easyui-linkbutton" data-options="plain:true" onclick="approve()"><i class="fa fa-check"></i> Approve</a>
-	<a href="javascript:void(0)" id="approveacheck" class="easyui-linkbutton" data-options="plain:true" onclick="disapprove()"><i class="fa fa-times"></i> Disapprove</a>
-    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true" onclick="export_excel()"><i class="fa fa-file"></i> Export Excel</a>
     <a href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true" onclick="reload()"><i class="fa fa-refresh"></i> Reload</a>
 </div>
 
+<!-- TOOLBAR DATAGRID -->
+<div id="toolbar2" style="height: 35px;">
+    <a href="javascript:void(0)" id="approveacheck" class="easyui-linkbutton" data-options="plain:true" onclick="approve()"><i class="fa fa-check"></i> Approve</a>
+	<a href="javascript:void(0)" id="approveacheck" class="easyui-linkbutton" data-options="plain:true" onclick="disapprove()"><i class="fa fa-times"></i> Disapprove</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true" onclick="export_excel()"><i class="fa fa-file"></i> Export Excel</a>
+</div>
+
+<div id="dlg_details" class="easyui-window" title="Detail Data" data-options="closed: true, modal:true, closed: true, minimizable:false, collapsible:false" style="width: 800px; height: 500px; top: 50px;">
+    <table id="dg_details" class="easyui-datagrid" style="width:100%;" toolbar="#toolbar2">
+        <thead frozen="true">
+            <tr>
+                <th field="ck" checkbox="true"></th>
+                <th data-options="field:'item_number',width:150,halign:'center'">Part No</th>
+                <th data-options="field:'item_name',width:250,halign:'center'">Part Name</th>
+            </tr>
+        </thead>
+        <thead>
+            <tr>
+                <th data-options="field:'item_family_name',width:150,halign:'center'">Product Family</th>
+                <th data-options="field:'uom',width:80,halign:'center'">Uom</th>
+                <th data-options="field:'mpq',width:80,halign:'center'">MPQ</th>
+                <th data-options="field:'moq',width:80,halign:'center'">MOQ</th>
+                <th data-options="field:'qty',width:80,halign:'center',align:'right',formatter: numberformat">Qty</th>
+                <th data-options="field:'currency',width:80,halign:'center'">Currency</th>
+                <th data-options="field:'price',width:100,halign:'center',align:'right',formatter: numberformatPrice">Price</th>
+                <th data-options="field:'total',width:100,halign:'center',align:'right',formatter: numberformatPrice">Total</th>
+                <th data-options="field:'remarks',width:150,halign:'center'">Remarks</th>
+                <th data-options="field:'created_by',width:120,halign:'center'">Create By</th>
+                <th data-options="field:'created_date',width:150,halign:'center'">Create Date</th>
+            </tr>
+        </thead>
+    </table>
+</div>
+
 <script>
+    $(function() {
+        $('#dg').datagrid('enableFilter');
+    });
+
     //RELOAD
     function reload() {
         window.location.reload();
     }
 
     function export_excel() {
-		$('#dg').datagrid('toExcel', "approval_<?= $table ?>.xls");
+		$('#dg_details').datagrid('toExcel', "approval_<?= $table ?>.xls");
 	}
 
 	function approve() {
-		var rows = $('#dg').datagrid('getSelections');
+		var rows = $('#dg_details').datagrid('getSelections');
         if (rows.length > 0) {
+            $("#dlg_details").window('close');
+
             Swal.fire({
                 title: 'Approve Data',
-                text: "Are you sure? You want to approve this data!",
+                text: "Are you sure? You want to Approve this data!",
                 icon: 'warning',
                 showCancelButton: true,
                 allowOutsideClick: false,
@@ -53,13 +114,15 @@
                                 url: '<?= base_url('approvals/approve') ?>',
                                 data: {
                                     id: row.id,
-									tablename: "<?= $table ?>"
+                                    tablename: "<?= $table ?>",
+                                    // message: message
                                 },
                                 success: function(result) {
                                     var result = eval('(' + result + ')');
                                     requestApprove(total, json, number + 1, value);
 
                                     if (number == total) {
+                                        $('#dg_details').datagrid('reload');
                                         $('#dg').datagrid('reload');
                                         Swal.close();
                                         Swal.fire(
@@ -83,8 +146,10 @@
 	}
 
 	function disapprove() {
-		var rows = $('#dg').datagrid('getSelections');
+		var rows = $('#dg_details').datagrid('getSelections');
         if (rows.length > 0) {
+            $("#dlg_details").window('close');
+
             Swal.fire({
                 title: 'Dispprove Data',
                 text: "Are you sure? You want to Dispprove this data!",
@@ -126,6 +191,7 @@
                                             requestApprove(total, json, number + 1, value);
 
                                             if (number == total) {
+                                                $('#dg_details').datagrid('reload');
                                                 $('#dg').datagrid('reload');
                                                 Swal.close();
                                                 Swal.fire(
@@ -157,131 +223,53 @@
 	}
 
     function numberformat(value, row) {
-		const formatter = new Intl.NumberFormat('id-ID');
+		const formatter = new Intl.NumberFormat('ja-JP');
 
 		return "<b>" + formatter.format(value) + "</b>";
 	}
 
 	function numberformatPrice(value, row){
-        const formatter = new Intl.NumberFormat('id-ID', {
-            minimumFractionDigits: 2
+        const formatter = new Intl.NumberFormat('ja-JP', {
+            minimumFractionDigits: 4
         });
 
         return "<b>" + formatter.format(value) + "</b>";
     }
 
-    $(function() {
-        //SETTING DATAGRID EASYUI
-        $('#dg').datagrid({
-            url: '<?= base_url('approvals/approvalPurchaseOrders/') ?>' + "<?= base64_encode($approved_to) ?>" + "/" + "<?= base64_encode($created_by) ?>" + "/" + "<?= base64_encode($approved_by) ?>",
-            pagination: false,
-            singleSelect: false,
+    function BtnAttachment(val, row) {
+        if(val == "" || val == null){
+            return '-';
+        }else{
+            return '<a class="btn btn-primary w-100" style="pointer-events: visible; opacity:1;" target="_blank" href="' + val + '"><i class="fa fa-paperclip"></i> View</a>';
+        }
+    }
+
+    function BtnDetail(val, row) {
+        var details = "details('"+row.po_no+"','"+row.supplier_name+"')";
+        return '<a class="btn btn-primary w-100" style="pointer-events: visible; opacity:1;" onClick="'+details+'"><i class="fa fa-eye"></i> View</a>';
+    }
+
+    function details(po_no, supplier_name) {
+        $("#dlg_details").window('open');
+        $('#dlg_details').window('setTitle', 'Detail of ' + supplier_name);
+
+        $('#dg_details').datagrid({
+            url: '<?= base_url('approvals/approvalPODetails/'.base64_encode($approved_to).'/'.base64_encode($approved_by)) ?>?po_no=' + btoa(po_no),
             clientPaging: false,
             remoteFilter: true,
             rownumbers: true,
-            fit: true,
-            columns: [
-				[{
-					field: 'ck',
-					checkbox: "true",
-				},{
-					field: 'p_month',
-					width: 80,
-					halign: 'center',
-					title: "Month",
-				},{
-					field: 'p_year',
-					width: 80,
-					halign: 'center',
-					title: "Year",
-				},{
-					field: 'revision',
-					width: 80,
-					align: 'center',
-					title: "Rev",
-				},{
-					field: 'purchase_request_no',
-					width: 180,
-					halign: 'center',
-					title: "PR NO",
-				},{
-					field: 'purchase_order_no',
-					width: 180,
-					halign: 'center',
-					title: "PO NO",
-				},{
-					field: 'purchase_order_date',
-					width: 100,
-					align: 'center',
-					title: "PO Date",
-				}, {
-					field: 'item_id',
-					width: 200,
-					halign: 'center',
-					title: "Product No",
-				}, {
-					field: 'item_name',
-					width: 100,
-					halign: 'center',
-					title: "Product Name",
-				}, {
-					field: 'product_family_name',
-					width: 150,
-					halign: 'center',
-					title: "Product Family",
-				}, {
-					field: 'uom',
-					width: 80,
-					align: 'center',
-					title: "UoM",
-				}, {
-					field: 'supplier_name',
-					width: 250,
-					halign: 'center',
-					title: "Supplier"
-				}, {
-					field: 'maker_name',
-					width: 250,
-					halign: 'center',
-					title: "Maker"
-				}, {
-					field: 'qty',
-					width: 80,
-					halign: 'center',
-					align: 'right',
-					title: "Qty",
-					formatter: numberformat,
-				}, {
-					field: 'currency',
-					width: 80,
-					align: 'center',
-					title: "Currency",
-				}, {
-					field: 'price',
-					width: 120,
-					halign: 'center',
-					align: 'right',
-					title: "Price",
-					formatter: numberformat,
-				}, {
-					field: 'total',
-					width: 120,
-					halign: 'center',
-					align: 'right',
-					title: "Total",
-					formatter: numberformat,
-				}, {
-					field: 'eta',
-					width: 100,
-					align: 'center',
-					title: "ETA",
-				},{
-					field: 'reason',
-					width: 250,
-					halign: 'center',
-					title: "Reason",
-				}]
-			],
-        }).datagrid('enableFilter');
-    });
+            singleSelect: false,
+            fit:true,
+        });
+    }
+
+    function btnDetails(val, row, index) {
+        var attachment = row.attachment;
+        
+        if (attachment != null && attachment != "") {
+            return '<a class="btn btn-primary w-100" target="_blank" href="<?= base_url('assets/documents/purchase_orders/') ?>'+row.attachment+'" style="pointer-events: visible; opacity:1;"><i class="fa fa-eye"></i> View</a>';
+        } else {
+            return '-';
+        }
+    }
 </script>

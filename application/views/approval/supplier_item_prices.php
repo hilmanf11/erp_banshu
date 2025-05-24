@@ -1,5 +1,33 @@
 <!-- TABLE DATAGRID -->
-<table id="dg" class="easyui-datagrid" style="width:99.5%;" toolbar="#toolbar"></table>
+<table id="dg" class="easyui-datagrid" style="width:99.5%;" toolbar="#toolbar" data-options="
+    url: '<?= base_url('approvals/approvalSupplierItemPrices/'.base64_encode($approved_to).'/'.base64_encode($approved_by)) ?>',
+    pagination: false,
+    clientPaging: false,
+    rownumbers: true,
+    fit: true">
+    <thead>
+        <tr>
+            <th field="ck" checkbox="true"></th>
+            <th data-options="field:'supplier_number',width:100,halign:'center'">Supplier Code</th>
+            <th data-options="field:'supplier_name',width:250,halign:'center'">Supplier Name</th>
+            <th data-options="field:'item_rm_number',width:150,halign:'center'">Part No</th>
+            <th data-options="field:'item_rm_name',width:150,halign:'center'">Part Name</th>
+            <th data-options="field:'item_family_name',width:150,halign:'center'">Product Family</th>
+            <!-- <th data-options="field:'maker',width:150,halign:'center'">Maker</th> -->
+            <!-- <th data-options="field:'mpq',width:80,halign:'center'">MPQ</th> -->
+            <!-- <th data-options="field:'moq',width:80,halign:'center'">MOQ</th> -->
+            <!-- <th data-options="field:'share_order',width:80,halign:'center'">Share Order</th> -->
+            <!-- <th data-options="field:'leadtime',width:80,halign:'center'">Leadtime</th> -->
+            <th data-options="field:'start_date',width:100,halign:'center'">Start Date</th>
+            <th data-options="field:'valid_date',width:100,halign:'center'">Valid Date</th>
+            <th data-options="field:'currency',width:80,halign:'center'">Currency</th>
+            <th data-options="field:'price',width:80,halign:'center',align:'right',formatter: numberformatPrice">Price</th>
+            <th data-options="field:'remarks',width:150,halign:'center'">Remarks</th>
+            <th data-options="field:'created_by',width:120,halign:'center'">Create By</th>
+            <th data-options="field:'created_date',width:150,halign:'center'">Create Date</th>
+        </tr>
+    </thead>
+</table>
 
 <!-- TOOLBAR DATAGRID -->
 <div id="toolbar" style="height: 35px;">
@@ -10,6 +38,10 @@
 </div>
 
 <script>
+    $(function() {
+        $('#dg').datagrid('enableFilter');
+    });
+
     //RELOAD
     function reload() {
         window.location.reload();
@@ -95,57 +127,61 @@
                 confirmButtonText: 'Yes, Dispprove it!'
             }).then((result) => {
                 if (result.isConfirmed) {
-					Swal.fire({
-						title: 'Please Wait...',
-						showConfirmButton: false,
-						allowOutsideClick: false,
-						allowEscapeKey: false,
-						didOpen: () => {
-							Swal.showLoading();
-						},
-					});
+                    $.messager.prompt('Reason', 'Please input your reason!!', function(message){
+                        if (message){
+                            Swal.fire({
+                                title: 'Please Wait...',
+                                showConfirmButton: false,
+                                allowOutsideClick: false,
+                                allowEscapeKey: false,
+                                didOpen: () => {
+                                    Swal.showLoading();
+                                },
+                            });
 
-					requestApprove(rows.length, rows);
-					function requestApprove(total, json, number = 1, value = 0) {
-						if (value < 100) {
-							var row = json[number-1];
-							value = Math.floor((number / total) * 100);
+                            requestApprove(rows.length, rows);
+                            function requestApprove(total, json, number = 1, value = 0) {
+                                if (value < 100) {
+                                    var row = json[number-1];
+                                    value = Math.floor((number / total) * 100);
 
-							$.ajax({
-								method: 'post',
-								url: '<?= base_url('approvals/disapprove') ?>',
-								data: {
-									id: row.id,
-									tablename: "<?= $table ?>",
-									message: message
-								},
-								success: function(result) {
-									var result = eval('(' + result + ')');
-									requestApprove(total, json, number + 1, value);
+                                    $.ajax({
+                                        method: 'post',
+                                        url: '<?= base_url('approvals/disapprove') ?>',
+                                        data: {
+                                            id: row.id,
+                                            tablename: "<?= $table ?>",
+                                            message: message
+                                        },
+                                        success: function(result) {
+                                            var result = eval('(' + result + ')');
+                                            requestApprove(total, json, number + 1, value);
 
-									if (number == total) {
-										$('#dg').datagrid('reload');
-										Swal.close();
-										Swal.fire(
-											'Dispprove Completed',
-											'Dispprove Data has been completed, You cannot restore data that has been Dispproved',
-											'success'
-										);
-									}
-								},
-								error: function(jqXHR, textStatus, errorThrown) {
-									toastr.error(jqXHR.statusText);
-								},
-							});
-						}
-					}
-				}else{
-					Swal.fire(
-						'Cannot Process',
-						'Please Input your reason to Process Disapprove',
-						'error'
-					);
-				}
+                                            if (number == total) {
+                                                $('#dg').datagrid('reload');
+                                                Swal.close();
+                                                Swal.fire(
+                                                    'Dispprove Completed',
+                                                    'Dispprove Data has been completed, You cannot restore data that has been Dispproved',
+                                                    'success'
+                                                );
+                                            }
+                                        },
+                                        error: function(jqXHR, textStatus, errorThrown) {
+                                            toastr.error(jqXHR.statusText);
+                                        },
+                                    });
+                                }
+                            }
+                        }else{
+                            Swal.fire(
+                                'Cannot Process',
+                                'Please Input your reason to Process Disapprove',
+                                'error'
+                            );
+                        }
+                    });
+                }
             });
         } else {
             toastr.info("Please select one of the data in the table first");
@@ -158,10 +194,6 @@
 		return "<b>" + formatter.format(value) + "</b>";
 	}
 
-    function Itemid(value, row) {
-		return "'" + value;
-	}
-
 	function numberformatPrice(value, row){
         const formatter = new Intl.NumberFormat('id-ID', {
             minimumFractionDigits: 2
@@ -169,67 +201,4 @@
 
         return "<b>" + formatter.format(value) + "</b>";
     }
-
-    $(function() {
-        //SETTING DATAGRID EASYUI
-        $('#dg').datagrid({
-            url: '<?= base_url('approvals/approvalSupplierItemPrices/') ?>' + "<?= base64_encode($approved_to) ?>" + "/" + "<?= base64_encode($created_by) ?>" + "/" + "<?= base64_encode($approved_by) ?>",
-            pagination: false,
-            singleSelect: false,
-            clientPaging: false,
-            remoteFilter: true,
-            rownumbers: true,
-            fit: true,
-            columns: [
-                [{
-					field: 'ck',
-					checkbox: "true",
-				}, {
-					field: 'item_id',
-					width: 200,
-					halign: 'center',
-					title: "Item No",
-					formatter: Itemid,
-				}, {
-					field: 'supplier_name',
-					width: 250,
-					halign: 'center',
-					title: "Vendor",
-				}, {
-					field: 'maker_name',
-					width: 150,
-					halign: 'center',
-					title: "Maker",
-				}, {
-					field: 'price',
-					width: 100,
-					halign: 'center',
-					title: "Price",
-					formatter: numberformat,
-				}, {
-					field: 'currency',
-					width: 80,
-					halign: 'center',
-					title: "Currency"
-				}, {
-					field: 'start_date',
-					width: 100,
-					align: 'right',
-					halign: 'center',
-					title: "Start Date",
-				}, {
-					field: 'valid_date',
-					width: 100,
-					align: 'right',
-					halign: 'center',
-					title: "Valid Date",
-				}, {
-					field: 'remarks',
-					width: 200,
-					halign: 'center',
-					title: "Remarks",
-				}]
-            ],
-        }).datagrid('enableFilter');
-    });
 </script>

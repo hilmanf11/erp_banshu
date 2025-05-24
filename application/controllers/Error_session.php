@@ -10,7 +10,7 @@ class Error_session extends CI_Controller
         $this->load->helper(array('form', 'url'));
         $this->load->library('form_validation');
         $this->load->library('session');
-        $this->load->model('api');
+        $this->load->model('crud');
     }
 
     public function index()

@@ -5,8 +5,8 @@
             <legend><b>Form Filter Data</b></legend>
             <div style="width: 50%; float:left;">
                 <div class="fitem">
-                    <span style="width:30%; display:inline-block;">Part No</span>
-                    <input style="width:60%;" id="filter_item_id" name="filter_item_id" class="easyui-combogrid">
+                    <span style="width:30%; display:inline-block;">Part No EBWS</span>
+                    <input style="width:60%;" id="filter_item_rm_id" name="filter_item_rm_id" class="easyui-combogrid">
                 </div>
                 <div class="fitem">
                     <span style="width:30%; display:inline-block;"></span>
@@ -32,57 +32,51 @@
     }
 
     function filter() {
-        var filter_item_id = $("#filter_item_id").combogrid('getValue');
+        var filter_item_rm_id = $("#filter_item_rm_id").combogrid('getValue');
+        var url = "?filter_item_rm_id=" + btoa(filter_item_rm_id);
 
-        // if (filter_item_id == "") {
-        //     toastr.warning("Please Choose Item Id");
-        // } else {
-            var url = "?filter_item_id=" + btoa(filter_item_id);
-
-            $("#printout").contents().find('html').html("<center><br><br><br><b style='font-size:20px;'>Please Wait...</b></center>");
-            $("#printout").attr('src', '<?= base_url('planning/where_used/print') ?>' + url);
-        // }
+        $("#printout").contents().find('html').html("<center><br><br><br><b style='font-size:20px;'>Please Wait...</b></center>");
+        $("#printout").attr('src', '<?= base_url('planning/where_used/print') ?>' + url);
     }
 
     function excel() {
-        var filter_item_id = $("#filter_item_id").combogrid('getValue');
+        var filter_item_rm_id = $("#filter_item_rm_id").combogrid('getValue');
 
-        // if (filter_item_id == "") {
-        //     toastr.warning("Please Choose Item Id");
-        // } else {
-            var url = "?filter_item_id=" + btoa(filter_item_id);
-            window.location.assign('<?= base_url('planning/where_used/print/excel') ?>' + url);
-        // }
+        var url = "?filter_item_rm_id=" + btoa(filter_item_rm_id);
+        window.location.assign('<?= base_url('planning/where_used/print/excel') ?>' + url);
     }
 
     $(function() {
         //Filter Cutoff
-        $('#filter_item_id').combogrid({
-            url: '<?= base_url('planning/mst_item/reads'); ?>',
-            panelWidth: 350,
-            idField: 'item_id',
-            textField: 'item_id',
+        $('#filter_item_rm_id').combogrid({
+            url: '<?= base_url('master/item_rm/reads'); ?>',
+            panelWidth: 500,
+            idField: 'id',
+            textField: 'number',
             mode: 'remote',
             fitColumns: true,
-            pagination: true,
-            prompt: "Select Part No",
+            prompt: "Choose Part No EBWS",
+            columns: [
+                [{
+                    field: 'id',
+                    title: 'Part No EBWS',
+                    width: 150
+                }, {
+                    field: 'number',
+                    title: 'Part No Supplier',
+                    width: 150
+                }, {
+                    field: 'name',
+                    title: 'Description',
+                    width: 150
+                }, ]
+            ],
             icons: [{
                 iconCls: 'icon-clear',
                 handler: function(e) {
                     $(e.data.target).combogrid('clear').combogrid('textbox').focus();
                 }
             }],
-            columns: [
-                [{
-                    field: 'item_id',
-                    title: 'Part No',
-                    width: 200
-                }, {
-                    field: 'item_name',
-                    title: 'Part Name',
-                    width: 100
-                }, ]
-            ]
         });
     });
 </script>

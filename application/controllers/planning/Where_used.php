@@ -11,7 +11,7 @@ class Where_used extends CI_Controller
         $this->load->helper(array('form', 'url'));
         $this->load->library('form_validation');
         $this->load->library('session');
-        $this->load->model('api');
+        $this->load->model('crud');
     }
 
     //HALAMAN UTAMA
@@ -37,14 +37,18 @@ class Where_used extends CI_Controller
         }
 
         if ($this->input->get()) {
-            $filter_item_id = base64_decode($this->input->get('filter_item_id'));
+            $filter_item_rm_id = base64_decode($this->input->get('filter_item_rm_id'));
 
-            $query = $this->db->query("SELECT a.component_id, d.item_name as component_name, a.item_id, b.item_name, a.qty, c.name as customer_name
-                FROM mst_bom a
-                LEFT JOIN mst_item b ON a.item_id = b.item_id
-                LEFT JOIN mst_customer c ON b.id_customer = c.number
-                LEFT JOIN mst_item_raw d ON a.component_id = d.item_id
-                WHERE b.pfm_id = '06' and a.component_id like '%$filter_item_id%' ORDER BY a.component_id ASC");
+            $query = $this->db->query("SELECT d.id as item_rm_id, d.number as item_rm_number, d.name as item_rm_name,
+                b.id as item_fg_id, b.number as item_fg_number, b.number_customer, b.name as item_fg_name, a.composition, e.name as customer_name
+                FROM bom a
+                LEFT JOIN item_fg b ON a.item_fg_id = b.id
+                LEFT JOIN customer_items c ON b.id = c.item_fg_id
+                LEFT JOIN item_rm d ON a.item_rm_id = d.id
+                LEFT JOIN customers e ON c.customer_id = e.id
+                WHERE a.item_rm_id like '%$filter_item_rm_id%' and b.status = 0
+                GROUP BY a.item_fg_id, a.item_rm_id
+                ORDER BY a.item_rm_id ASC");
             $records = $query->result_array();
 
             //Config
@@ -52,7 +56,7 @@ class Where_used extends CI_Controller
             $this->db->from('config');
             $config = $this->db->get()->row();
 
-            $html = '<html><head><title>Print Data</title></head><style>body {font-family: Arial, Helvetica, sans-serif;}#customers {border-collapse: collapse;width: 100%;font-size: 10px;}#customers td, #customers th {border: 1px solid #ddd;padding: 2px;}#customers tr:nth-child(even){background-color: #f2f2f2;}#customers tr:hover {background-color: #ddd;}#customers th {padding-top: 2px;padding-bottom: 2px;text-align: left;color: black;}</style>
+            $html = '<html><head><title>Print Data</title></head><style>body {font-family: Arial, Helvetica, sans-serif;}#customers {border-collapse: collapse;width: 100%;font-size: 12px;}#customers td, #customers th {border: 1px solid #ddd;padding: 2px;}#customers tr:nth-child(even){background-color: #f2f2f2;}#customers tr:hover {background-color: #ddd;}#customers th {padding-top: 2px;padding-bottom: 2px;text-align: left;color: black;}</style>
                     <style> .str{ mso-number-format:\@; } </style>
                     <body>
                     <center>
@@ -60,7 +64,7 @@ class Where_used extends CI_Controller
                             <table style="width: 100%;">
                                 <tr>
                                     <td width="50" style="font-size: 12px; vertical-align: top; text-align: center; vertical-align:jus margin-right:10px;">
-                                        <img src="' . base_url('assets/image/config/' . $config->logo) . '" width="30">
+                                        <img src="' .  $config->logo . '" width="30">
                                     </td>
                                     <td style="font-size: 14px; text-align: left; margin:2px;">
                                         <b>' . $config->name . '</b><br>
@@ -76,15 +80,17 @@ class Where_used extends CI_Controller
                     </center>
                     <br><br><br>
                     <center>
-                        <b style="font-size:16px;">WHERE USED</b><br><small>Part No '.$filter_item_id.'</small><br><br>
+                        <b style="font-size:20px;">WHERE USED</b><br><small>Part No EBWS '.$filter_item_rm_id.'</small><br><br>
                     </center>
                     <table id="customers" border="1">
                         <tr>
                             <th width="30">No</th>
-                            <th style="text-align:center;">Part No</th>
-                            <th style="text-align:center;">Part Name</th>
-                            <th style="text-align:center;">Product No</th>
-                            <th style="text-align:center;">Product Name</th>
+                            <th style="text-align:center;">Part No EBWS</th>
+                            <th style="text-align:center;">Part No Supplier</th>
+                            <th style="text-align:center;">Description</th>
+                            <th style="text-align:center;">Product No EBWS</th>
+                            <th style="text-align:center;">Product No Supplier</th>
+                            <th style="text-align:center;">Description</th>
                             <th style="text-align:center;">Qty</th>
                             <th style="text-align:center;">Customer</th>
                         </tr>';
@@ -92,11 +98,13 @@ class Where_used extends CI_Controller
             foreach ($records as $record) {
                 $html .= '<tr>
                             <td style="text-align:center;">' . $no . '</td>
-                            <td>' . $record['component_id'] . '</td>
-                            <td>' . $record['component_name'] . '</td>
-                            <td>' . $record['item_id'] . '</td>
-                            <td>' . $record['item_name'] . '</td>
-                            <td>' . $record['qty'] . '</td>
+                            <td style="mso-number-format:\@;">' . $record['item_rm_id'] . '</td>
+                            <td style="mso-number-format:\@;">' . $record['item_rm_number'] . '</td>
+                            <td>' . $record['item_rm_name'] . '</td>
+                            <td style="mso-number-format:\@;">' . $record['item_fg_number'] . '</td>
+                            <td style="mso-number-format:\@;">' . $record['number_customer'] . '</td>
+                            <td>' . $record['item_fg_name'] . '</td>
+                            <td>' . $record['composition'] . '</td>
                             <td>' . $record['customer_name'] . '</td>
                         </tr>';
                 $no++;

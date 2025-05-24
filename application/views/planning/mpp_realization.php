@@ -1,30 +1,32 @@
 <div id="f" class="easyui-panel" style="width:100%; background: #F4F4F4; padding: 10px;">
-    <div style="width: 100%; display: grid; grid-template-columns: auto auto auto; grid-gap: 5px; display: flex;">
-        <fieldset style="width: 45%; border:2px solid #d0d0d0; margin-bottom: 5px; margin-top: 5px; border-radius:4px;">
+        <fieldset style="width: 65%; border:2px solid #d0d0d0; margin-bottom: 5px; margin-top: 5px; border-radius:4px;">
             <legend><b>Form Filter Data</b></legend>
-            <div class="fitem">
-                <span style="width:35%; display:inline-block;">Period</span>
-                <input style="width:30%;" name="filter_month" id="filter_month" value="<?= date("m") ?>" class="easyui-combobox" data-options="prompt:'Month'">
-                <input style="width:30%;" name="filter_year" id="filter_year" value="<?= date("Y") ?>" class="easyui-combobox" data-options="prompt:'Year'">
+            <div style="float: left; width: 50%;">
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Period</span>
+                    <input style="width:30%;" name="filter_month" id="filter_month" value="<?= date("m") ?>" class="easyui-combobox" data-options="prompt:'Month'">
+                    <input style="width:30%;" name="filter_year" id="filter_year" value="<?= date("Y") ?>" class="easyui-combobox" data-options="prompt:'Year'">
+                </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Revision</span>
+                    <input style="width:60%;" name="filter_revision" id="filter_revision" value="<?= "0" ?>" class="easyui-combobox" data-options="prompt:'Revision'" panelHeight="auto">
+                </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;"></span>
+                    <a href="javascript:;" class="easyui-linkbutton" onclick="filter()"><i class="fa fa-search"></i> Filter Data</a>
+                </div>
             </div>
-            <div class="fitem">
-                <span style="width:35%; display:inline-block;">Revision</span>
-                <input style="width:60%;" name="filter_revision" id="filter_revision" value="<?= "0" ?>" class="easyui-combobox" data-options="prompt:'Revision'" panelHeight="auto">
-            </div>
-            <div class="fitem">
-                <span style="width:35%; display:inline-block;">Customer Name</span>
-                <input style="width:60%;" id="filter_line_no" class="easyui-combobox">
-            </div>
-            <div class="fitem">
-                <span style="width:35%; display:inline-block;">Product No</span>
-                <input style="width:60%;" id="filter_product_no" class="easyui-combogrid">
-            </div>
-            <div class="fitem">
-                <span style="width:35%; display:inline-block;"></span>
-                <a href="javascript:;" class="easyui-linkbutton" onclick="filter()"><i class="fa fa-search"></i> Filter Data</a>
+            <div style="float: left; width: 50%;">
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Customer Name</span>
+                    <input style="width:60%;" id="filter_customer" class="easyui-combobox">
+                </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Product No</span>
+                    <input style="width:60%;" id="filter_product_no" class="easyui-combogrid">
+                </div>
             </div>
         </fieldset>
-    </div>
     <?= $button ?>
 </div>
 
@@ -36,13 +38,13 @@
         var filter_month = $("#filter_month").combobox('getValue');
         var filter_year = $("#filter_year").textbox('getValue');
         var filter_revision = $("#filter_revision").combobox('getValue');
-        var filter_line_no = $("#filter_line_no").combobox('getValue');
+        var filter_customer = $("#filter_customer").combobox('getValue');
         var filter_product_no = $("#filter_product_no").combogrid('getValue');
 
         var url = "?filter_month=" + window.btoa(filter_month) +
             "&filter_year=" + window.btoa(filter_year) +
             "&filter_revision=" + window.btoa(filter_revision) +
-            "&filter_line_no=" + window.btoa(filter_line_no) +
+            "&filter_customer=" + window.btoa(filter_customer) +
             "&filter_product_no=" + window.btoa(filter_product_no);
 
         if (filter_month == "" || filter_year == "") {
@@ -61,13 +63,13 @@
         var filter_month = $("#filter_month").combobox('getValue');
         var filter_year = $("#filter_year").textbox('getValue');
         var filter_revision = $("#filter_revision").combobox('getValue');
-        var filter_line_no = $("#filter_line_no").combobox('getValue');
+        var filter_customer = $("#filter_customer").combobox('getValue');
         var filter_product_no = $("#filter_product_no").combogrid('getValue');
 
         var url = "?filter_month=" + window.btoa(filter_month) +
             "&filter_year=" + window.btoa(filter_year) +
             "&filter_revision=" + window.btoa(filter_revision) +
-            "&filter_line_no=" + window.btoa(filter_line_no) +
+            "&filter_customer=" + window.btoa(filter_customer) +
             "&filter_product_no=" + window.btoa(filter_product_no);
 
         if (filter_month == "" || filter_year == "") {
@@ -122,11 +124,11 @@
             }]
         });
 
-        $('#filter_line_no').combobox({
-            url: '<?php echo base_url('planning/mst_line/reads'); ?>',
-            valueField: 'line_no',
-            textField: 'remarks',
-            prompt: 'Select Customer Name',
+        $('#filter_customer').combobox({
+            url: '<?php echo base_url('master/customers/reads'); ?>',
+            valueField: 'id',
+            textField: 'name',
+            prompt: 'Choose Customer',
             icons: [{
                 iconCls: 'icon-clear',
                 handler: function(e) {
@@ -136,13 +138,13 @@
         });
 
         $('#filter_product_no').combogrid({
-            url: '<?= base_url('planning/mst_data/readProducts') ?>',
-            panelWidth: 400,
-            idField: 'item_id',
-            textField: 'item_id',
+            url: '<?= base_url('master/item_fg/reads') ?>',
+            panelWidth: 550,
+            idField: 'id',
+            textField: 'name',
             mode: 'remote',
             fitColumns: true,
-            prompt: "Select Product No",
+            prompt: "Choose Product No",
             icons: [{
                 iconCls: 'icon-clear',
                 handler: function(e) {
@@ -151,12 +153,16 @@
             }],
             columns: [
                 [{
-                    field: 'item_id',
-                    title: 'Item ID',
+                    field: 'number',
+                    title: 'Product EBWS',
+                    width: 150
+                }, {
+                    field: 'number_customer',
+                    title: 'Product Customer',
                     width: 200
                 }, {
-                    field: 'item_name',
-                    title: 'Item Name',
+                    field: 'name',
+                    title: 'Description',
                     width: 200
                 }]
             ]

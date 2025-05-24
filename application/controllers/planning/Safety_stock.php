@@ -10,7 +10,7 @@ class Safety_stock extends CI_Controller
         $this->load->helper(array('form', 'url'));
         $this->load->library('form_validation');
         $this->load->library('session');
-        $this->load->model('api');
+        $this->load->model('crud');
 
         //Validasi Form
         $this->form_validation->set_rules('number', 'Code', 'required|min_length[1]|max_length[30]');
@@ -18,7 +18,7 @@ class Safety_stock extends CI_Controller
 
     public function index()
     {
-        if (empty($this->session->api_key)) {
+        if (empty($this->session->username)) {
             redirect('error_session');
         } elseif ($this->checkuserAccess($this->id_menu()) > 0) {
             $data['button'] = $this->getbutton($this->id_menu());
@@ -30,10 +30,9 @@ class Safety_stock extends CI_Controller
         }
     }
 
-
     public function reads()
     {
-        $send = $this->api->reads('safety_stock', [], [], "", "name", "asc");
+        $send = $this->crud->reads('safety_stock', [], [], "", "name", "asc");
         echo json_encode($send);
     }
 
@@ -51,8 +50,8 @@ class Safety_stock extends CI_Controller
             //Select Query
             $this->db->select('a.*, b.name as created_name, c.name as updated_name');
             $this->db->from('safety_stock a');
-            $this->db->join('user b', 'a.created_by = b.username', 'left');
-            $this->db->join('user c', 'a.updated_by = c.username', 'left');
+            $this->db->join('users b', 'a.created_by = b.username', 'left');
+            $this->db->join('users c', 'a.updated_by = c.username', 'left');
             if (@count($filters) > 0) {
                 foreach ($filters as $filter) {
                     if ($filter->field == "created_by") {
@@ -84,7 +83,7 @@ class Safety_stock extends CI_Controller
             if ($this->form_validation->run() == TRUE) {
                 $post = $this->input->post();
 
-                $send = $this->api->create('safety_stock', $post);
+                $send = $this->crud->create('safety_stock', $post);
                 echo $send;
             } else {
                 show_error(validation_errors());
@@ -99,7 +98,7 @@ class Safety_stock extends CI_Controller
         if ($this->input->post()) {
             $id   = base64_decode($this->input->get('id'));
             $post = $this->input->post();
-            $send = $this->api->update('safety_stock', ["id" => $id], $post);
+            $send = $this->crud->update('safety_stock', ["id" => $id], $post);
             echo $send;
         } else {
             show_error("Cannot Process your request");
@@ -109,7 +108,7 @@ class Safety_stock extends CI_Controller
     public function delete()
     {
         $data = $this->input->post();
-        $send = $this->api->delete('safety_stock', $data);
+        $send = $this->crud->delete('safety_stock', $data);
         echo $send;
     }
 
@@ -128,7 +127,7 @@ class Safety_stock extends CI_Controller
 
         $this->db->select('a.*');
         $this->db->from('safety_stock a');
-        $this->db->where('a.deleted_is', 0);
+        $this->db->where('a.deleted', 0);
         $records = $this->db->get()->result_array();
 
         $html = '<html><head><title>Print Data</title></head><style>body {font-family: Arial, Helvetica, sans-serif;}#customers {border-collapse: collapse;width: 100%;font-size: 12px;}#customers td, #customers th {border: 1px solid #ddd;padding: 2px;}#customers tr:nth-child(even){background-color: #f2f2f2;}#customers tr:hover {background-color: #ddd;}#customers th {padding-top: 2px;padding-bottom: 2px;text-align: left;color: black;}</style><body>

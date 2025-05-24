@@ -108,17 +108,17 @@ class CI_Model
 
 			return $string . "-" . $autoID;
 		} elseif ($autonumber == "JUTA") {
-			$date 		= date("ymd");
+			$date 		= date("Ymd");
 			$autoID  	= 0;
 			$sqlGetID	= $this->db->query("SELECT max(id) as kode FROM $table WHERE id like '%$date%'");
 			$rowID      = $sqlGetID->row();
 			$kode 		= $rowID->kode;
 
-			if (empty($kode)) {
-				$autoID		= 1;
+			if ($kode == NULL) {
+				$autoID		+= 1;
 			} else {
-				$urutan 	= (int) substr($kode, 6);
-				$autoID		= $urutan + 1;
+				$urutan 	= (int) substr($kode, 8);
+				$autoID		+= $urutan + 1;
 			}
 
 			return $date . $autoID;
@@ -129,10 +129,10 @@ class CI_Model
 			$kode 		= $rowID->kode;
 
 			if ($kode == NULL) {
-				$autoID		= $date . sprintf("%06s", $kode + 1);
+				$autoID		= $date . sprintf("%04s", $kode + 1);
 			} else {
-				$urutan 	= (int) substr($kode, -12);
-				$autoID		= sprintf("%06s", $urutan + 1);
+				$urutan 	= (int) substr($kode, -10);
+				$autoID		= sprintf("%04s", $urutan + 1);
 			}
 
 			return $string . "-" . $autoID;

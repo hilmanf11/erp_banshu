@@ -1,5 +1,5 @@
 <?php
-date_default_timezone_set("Asia/Bangkok");
+date_default_timezone_set("Asia/Kolkata");
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Home extends CI_Controller
@@ -11,7 +11,7 @@ class Home extends CI_Controller
         $this->load->helper(array('form', 'url'));
         $this->load->library('form_validation');
         $this->load->library('session');
-        $this->load->model('api');
+        $this->load->model('crud');
     }
 
     public function index()
@@ -21,23 +21,27 @@ class Home extends CI_Controller
 
             $this->db->select('b.*');
             $this->db->from('logins a');
-            $this->db->join('user b', 'a.username = b.username');
-            $this->db->where('b.status_is', 0);
+            $this->db->join('users b', 'a.username = b.username');
+            $this->db->where('b.deleted', 0);
+            $this->db->where('b.actived', 0);
+            $this->db->where('b.status', 0);
             $this->db->where_not_in('b.username', $username);
             $this->db->like('a.created_date', date('Y-m-d'));
             $this->db->order_by('b.name', 'ASC');
             $logins = $this->db->get()->result_object();
 
-            $config = $this->api->read('config');
-            $profiles = $this->api->read("user", [], ["username" => $username]);
+            $config = $this->crud->read('config');
+            $profiles = $this->crud->read("users", [], ["username" => $username]);
+            $login = $this->crud->read("logins", [], ["username" => $username]);
 
             if ($profiles->avatar != "") {
-                $profile_img = "assets/image/users/" . $profiles->avatar;
+                $profile_img = $profiles->avatar;
             } else {
                 $profile_img = base_url('assets/image/users/default.png');
             }
 
             $data['users'] = $logins;
+            $data['login'] = $login;
             $data['profile'] = $profiles;
             $data['profile_img'] = $profile_img;
             $data['config'] = $config;
@@ -53,15 +57,20 @@ class Home extends CI_Controller
     {
         if ($this->session->username != "") {
             $username = $this->session->username;
+
             $searchName = $this->input->get('name');
-            
+
             $this->db->select('a.*');
-            $this->db->from('menu a');
-            $this->db->join('user_setting b', 'a.id = b.id_menu');
-            $this->db->join('user c', 'b.id_user = c.username');
+            $this->db->from('menus a');
+            $this->db->join('setting_users b', 'a.id = b.menus_id');
+            $this->db->join('users c', 'b.users_id = c.username');
+            $this->db->where('a.deleted', 0);
             $this->db->where('c.username', $username);
             $this->db->where('b.v_view', 1);
-            $this->db->like('a.name', $searchName);
+            if($searchName != ""){
+                $this->db->like('a.name', $searchName);
+                $this->db->where('a.state', '');
+            }
             $this->db->order_by('a.sort', 'ASC');
             $menus = $this->db->get()->result_array();
 
@@ -75,7 +84,7 @@ class Home extends CI_Controller
     {
         if ($this->input->post()) {
             $post = $this->input->post();
-            $avatar = $this->api->upload('avatar', ["jpg", "png", "jpeg"], 'assets/image/users/', ["username" => $post['username']], "user", "avatar");
+            $avatar = $this->crud->upload('avatar', ["jpg", "png", "jpeg"], 'assets/image/users/', ["username" => $post['username']], "users", "avatar");
 
             if ($post['password'] == "") {
                 $postFinal = array(
@@ -100,7 +109,7 @@ class Home extends CI_Controller
                 );
             }
 
-            $send = $this->api->update('user', ["username" => $post['username']], $postFinal);
+            $send = $this->crud->update('users', ["username" => $post['username']], $postFinal);
             echo $send;
         } else {
             show_error("Cannot Process your request");
@@ -113,9 +122,9 @@ class Home extends CI_Controller
             $to_users_id = $this->input->post('to_users_id');
             $from_users_id = $this->session->id;
 
-            $this->api->update("chats", ["from_users_id" => $to_users_id, "to_users_id" => $from_users_id], ["status" => 1]);
+            $this->crud->update("chats", ["from_users_id" => $to_users_id, "to_users_id" => $from_users_id], ["status" => 1]);
 
-            $chats = $this->api->query("SELECT * FROM chats WHERE (to_users_id='$to_users_id' and from_users_id = '$from_users_id') or (to_users_id='$from_users_id' and from_users_id = '$to_users_id')");
+            $chats = $this->crud->query("SELECT * FROM chats WHERE (to_users_id='$to_users_id' and from_users_id = '$from_users_id') or (to_users_id='$from_users_id' and from_users_id = '$to_users_id')");
             foreach ($chats as $chat) {
                 if ($chat->to_users_id == $to_users_id) {
                     echo '  <div class="alert alert-warning p-2" role="alert">
@@ -137,7 +146,7 @@ class Home extends CI_Controller
             $to_users_id = $this->input->post('to_users_id');
             $messages = $this->input->post('messages');
 
-            $chats = $this->api->create("chats", ["from_users_id" => $from_users_id, "to_users_id" => $to_users_id, "messages" => $messages]);
+            $chats = $this->crud->create("chats", ["from_users_id" => $from_users_id, "to_users_id" => $to_users_id, "messages" => $messages]);
             echo json_encode($chats);
         }
     }

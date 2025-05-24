@@ -2,8 +2,9 @@
     <thead>
         <tr>
             <th rowspan="2" field="ck" checkbox="true"></th>
-            <th rowspan="2" data-options="field:'product_no',width:200,halign:'center'">Product No</th>
-            <th rowspan="2" data-options="field:'product_name',width:250,halign:'center'">Product Name</th>
+            <th rowspan="2" data-options="field:'item_rm_id',width:150,halign:'center'">Part No EBWS</th>
+            <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No Suplier</th>
+            <th rowspan="2" data-options="field:'item_rm_name',width:200,halign:'center'">Description</th>
             <th rowspan="2" data-options="field:'product_family',width:200,halign:'center'">Product Family</th>
             <th rowspan="2" data-options="field:'qty',width:100,halign:'center',align:'right', formatter:numberformat">Balance WIP</th>
             <th rowspan="2" data-options="field:'status',width:100,align:'center', styler:cellStyler">Status</th>
@@ -26,8 +27,8 @@
             <div style="width: 50%; float: left;">
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Period</span>
-                    <input style="width:30%;" name="filter_month" id="filter_month" class="easyui-combobox" data-options="prompt:'Month'">
-                    <input style="width:30%;" name="filter_year" id="filter_year" class="easyui-combobox">
+                    <input style="width:30%;" name="filter_month" id="filter_month" value="<?= date("m") ?>" class="easyui-combobox" data-options="prompt:'Month'">
+                    <input style="width:30%;" name="filter_year" id="filter_year" value="<?= date("Y") ?>" class="easyui-combobox">
                 </div>
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Cutoff</span>
@@ -49,7 +50,7 @@
                 </div>
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Product No</span>
-                    <input style="width:60%;" id="filter_product_no" class="easyui-combogrid">
+                    <input style="width:60%;" id="filter_item_rm_id" class="easyui-combogrid">
                 </div>
             </div>
         </fieldset>
@@ -93,7 +94,7 @@
         var filter_cutoff = $("#filter_cutoff").datebox('getValue');
         var filter_revision = $("#filter_revision").combobox('getValue');
         var filter_product_family = $("#filter_product_family").combobox('getValue');
-        var filter_product_no = $("#filter_product_no").combogrid('getValue');
+        var filter_item_rm_id = $("#filter_item_rm_id").combogrid('getValue');
 
         var rows = $('#dg').datagrid('getChecked');
         if (rows.length > 0) {
@@ -148,15 +149,7 @@
 
                             }).fail(function(jqXHR, textStatus) {
                                 if (textStatus == "error") {
-                                    Swal.fire({
-                                        title: 'Connection Time Out, Check Your Connection',
-                                        showConfirmButton: false,
-                                        allowOutsideClick: false,
-                                        allowEscapeKey: false,
-                                        didOpen: () => {
-                                            Swal.showLoading();
-                                        },
-                                    });
+                                    Swal.fire('Failed!', 'System Error', 'error');
 
                                     requestData(total, json, number, value, success + 0, failed + 0);
                                 }
@@ -187,7 +180,7 @@
                             method: 'post',
                             url: '<?= base_url('planning/balance_wip/delete') ?>',
                             data: {
-                                product_no: row.product_no,
+                                item_rm_id: row.item_rm_id,
                                 p_month: row.p_month,
                                 p_year: row.p_year,
                                 revision: row.revision
@@ -217,13 +210,13 @@
         var filter_cutoff = $("#filter_cutoff").datebox('getValue');
         var filter_revision = $("#filter_revision").combobox('getValue');
         var filter_product_family = $("#filter_product_family").combobox('getValue');
-        var filter_product_no = $("#filter_product_no").combogrid('getValue');
+        var filter_item_rm_id = $("#filter_item_rm_id").combogrid('getValue');
 
         var url = "?filter_month=" + window.btoa(filter_month) +
             "&filter_year=" + window.btoa(filter_year) +
             "&filter_cutoff=" + window.btoa(filter_cutoff) +
             "&filter_revision=" + window.btoa(filter_revision) +
-            "&filter_product_no=" + window.btoa(filter_product_no) +
+            "&filter_item_rm_id=" + window.btoa(filter_item_rm_id) +
             "&filter_product_family=" + window.btoa(filter_product_family);
 
         if (filter_month == "" || filter_year == "" || filter_revision == "" || filter_cutoff == "") {
@@ -236,9 +229,6 @@
                 rownumbers: true,
                 url: '<?= base_url('planning/balance_wip/datatables') ?>' + url,
                 fit: true,
-            }).datagrid('enableCellEditing').datagrid('gotoCell', {
-                index: 0,
-                field: 'product_no'
             }).datagrid('enableFilter');
         }
     }
@@ -253,13 +243,13 @@
         var filter_cutoff = $("#filter_cutoff").datebox('getValue');
         var filter_revision = $("#filter_revision").combobox('getValue');
         var filter_product_family = $("#filter_product_family").combobox('getValue');
-        var filter_product_no = $("#filter_product_no").combogrid('getValue');
+        var filter_item_rm_id = $("#filter_item_rm_id").combogrid('getValue');
 
         var url = "?filter_month=" + window.btoa(filter_month) +
             "&filter_year=" + window.btoa(filter_year) +
             "&filter_cutoff=" + window.btoa(filter_cutoff) +
             "&filter_revision=" + window.btoa(filter_revision) +
-            "&filter_product_no=" + window.btoa(filter_product_no) +
+            "&filter_item_rm_id=" + window.btoa(filter_item_rm_id) +
             "&filter_product_family=" + window.btoa(filter_product_family);
 
         if (filter_month == "" || filter_year == "" || filter_revision == "" || filter_cutoff == "") {
@@ -463,7 +453,7 @@
                 }
             }],
             onSelect: function(row){
-                $('#filter_product_no').combogrid({
+                $('#filter_item_rm_id').combogrid({
                     url: '<?= base_url('planning/balance_wip/readProducts/') ?>' + row.pfm_id,
                     panelWidth: 400,
                     idField: 'item_id',

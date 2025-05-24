@@ -1,15 +1,40 @@
 <!-- TABLE DATAGRID -->
-<table id="dg" class="easyui-datagrid" style="width:99.5%;" toolbar="#toolbar"></table>
+<table id="dg" class="easyui-datagrid" style="width:99.5%;" toolbar="#toolbar" data-options="
+    url: '<?= base_url('approvals/approvalOsMpp/'.base64_encode($approved_to).'/'.base64_encode($approved_by)) ?>',
+    pagination: false,
+    clientPaging: false,
+    rownumbers: true,
+    fit: true">
+    <thead>
+        <tr>
+            <th field="ck" checkbox="true"></th>
+            <th data-options="field:'p_month',width:80,halign:'center'">Month</th>
+            <th data-options="field:'p_year',width:80,halign:'center'">Year</th>
+            <th data-options="field:'revision',width:80,halign:'center'">Rev</th>
+            <th data-options="field:'customer_name',width:250,halign:'center'">Customer</th>
+            <th data-options="field:'item_fg_number',width:150,halign:'center'">Product No</th>
+            <th data-options="field:'item_fg_name',width:150,halign:'center'">Product Name</th>
+            <th data-options="field:'document_no',width:100,halign:'center'">Document No</th>
+            <th data-options="field:'qty',width:80,halign:'center',align:'right',formatter: numberformat">Qty</th>
+            <th data-options="field:'created_by',width:120,halign:'center'">Create By</th>
+            <th data-options="field:'created_date',width:150,halign:'center'">Create Date</th>
+        </tr>
+    </thead>
+</table>
 
 <!-- TOOLBAR DATAGRID -->
 <div id="toolbar" style="height: 35px;">
-    <a href="javascript:void(0)" id="approveall" class="easyui-linkbutton" data-options="plain:true" onclick="approveall()"><i class="fa fa-check"></i> Approve ALL</a>
-    <a href="javascript:void(0)" id="disapproveall" class="easyui-linkbutton" data-options="plain:true" onclick="disapproveall()"><i class="fa fa-times"></i> Disapprove ALL</a>
+	<a href="javascript:void(0)" id="approveacheck" class="easyui-linkbutton" data-options="plain:true" onclick="approve()"><i class="fa fa-check"></i> Approve</a>
+	<a href="javascript:void(0)" id="approveacheck" class="easyui-linkbutton" data-options="plain:true" onclick="disapprove()"><i class="fa fa-times"></i> Disapprove</a>
     <a href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true" onclick="export_excel()"><i class="fa fa-file"></i> Export Excel</a>
     <a href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true" onclick="reload()"><i class="fa fa-refresh"></i> Reload</a>
 </div>
 
 <script>
+    $(function() {
+        $('#dg').datagrid('enableFilter');
+    });
+
     //RELOAD
     function reload() {
         window.location.reload();
@@ -19,97 +44,141 @@
 		$('#dg').datagrid('toExcel', "approval_<?= $table ?>.xls");
 	}
 
-    function approveall() {
-		$.messager.confirm('Warning', 'Are you sure you want to approve all data?', function(r) {
-			if (r) {
-				$.post('<?= base_url('approvals/approveall') ?>', {
-					table_name: "<?= $table ?>",
-					approved_to: "<?= $approved_to ?>",
-					created_by: "<?= $created_by ?>",
-					approved_by: "<?= $approved_by ?>",
-				}, function(result) {
-					var result = eval('(' + result + ')');
-					if (result.theme == "success") {
-						toastr.success(result.message, result.title);
-						$("#dg").datagrid("reload");
-					} else {
-						toastr.error(result.message, result.title);
-					}
-				});
-			}
-		});
+	function approve() {
+		var rows = $('#dg').datagrid('getSelections');
+        if (rows.length > 0) {
+            Swal.fire({
+                title: 'Approve Data',
+                text: "Are you sure? You want to approve this data!",
+                icon: 'warning',
+                showCancelButton: true,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                confirmButtonText: 'Yes, Approve it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Please Wait...',
+                        showConfirmButton: false,
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        },
+                    });
+
+                    requestApprove(rows.length, rows);
+                    function requestApprove(total, json, number = 1, value = 0) {
+                        if (value < 100) {
+                            var row = json[number-1];
+                            value = Math.floor((number / total) * 100);
+
+                            $.ajax({
+                                method: 'post',
+                                url: '<?= base_url('approvals/approve') ?>',
+                                data: {
+                                    id: row.id,
+									tablename: "<?= $table ?>"
+                                },
+                                success: function(result) {
+                                    var result = eval('(' + result + ')');
+                                    requestApprove(total, json, number + 1, value);
+
+                                    if (number == total) {
+                                        $('#dg').datagrid('reload');
+                                        Swal.close();
+                                        Swal.fire(
+                                            'Approve Completed',
+                                            'Approve Data has been completed, You cannot restore data that has been approved',
+                                            'success'
+                                        );
+                                    }
+                                },
+                                error: function(jqXHR, textStatus, errorThrown) {
+                                    toastr.error(jqXHR.statusText);
+                                },
+                            });
+                        }
+                    }
+                }
+            });
+        } else {
+            toastr.info("Please select one of the data in the table first");
+        }
 	}
 
-	function disapproveall() {
-		$.messager.confirm('Warning', 'Are you sure you want to disapprove all data?', function(r) {
-			if (r) {
-				Swal.fire({
-					title: 'Please Wait for Process Disapprove',
-					showConfirmButton: false,
-					allowOutsideClick: false,
-					allowEscapeKey: false,
-					didOpen: () => {
-						Swal.showLoading();
-					},
-				});
+	function disapprove() {
+		var rows = $('#dg').datagrid('getSelections');
+        if (rows.length > 0) {
+            Swal.fire({
+                title: 'Dispprove Data',
+                text: "Are you sure? You want to Dispprove this data!",
+                icon: 'warning',
+                showCancelButton: true,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                confirmButtonText: 'Yes, Dispprove it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.messager.prompt('Reason', 'Please input your reason!!', function(message){
+                        if (message){
+                            Swal.fire({
+                                title: 'Please Wait...',
+                                showConfirmButton: false,
+                                allowOutsideClick: false,
+                                allowEscapeKey: false,
+                                didOpen: () => {
+                                    Swal.showLoading();
+                                },
+                            });
 
-				$.post('<?= base_url('approvals/disapproveall') ?>', {
-					table_name: "<?= $table ?>",
-					approved_to: "<?= $approved_to ?>",
-					created_by: "<?= $created_by ?>",
-					approved_by: "<?= $approved_by ?>",
-				}, function(result) {
-					var result = eval('(' + result + ')');
-					Swal.close();
+                            requestApprove(rows.length, rows);
+                            function requestApprove(total, json, number = 1, value = 0) {
+                                if (value < 100) {
+                                    var row = json[number-1];
+                                    value = Math.floor((number / total) * 100);
 
-					if (result.theme == "success") {
-						toastr.success(result.message, result.title);
-						$("#dg").datagrid("reload");
-					} else {
-						toastr.error(result.message, result.title);
-					}
-				});
-			}
-		});
-	}
+                                    $.ajax({
+                                        method: 'post',
+                                        url: '<?= base_url('approvals/disapprove') ?>',
+                                        data: {
+                                            id: row.id,
+                                            tablename: "<?= $table ?>",
+                                            message: message
+                                        },
+                                        success: function(result) {
+                                            var result = eval('(' + result + ')');
+                                            requestApprove(total, json, number + 1, value);
 
-	function approve(id, tablename) {
-		$.messager.confirm('Warning', 'Are you sure you want to approve this data?', function(r) {
-			if (r) {
-				$.post('<?= base_url('approvals/approve') ?>', {
-					id: id,
-					tablename: tablename
-				}, function(result) {
-					var result = eval('(' + result + ')');
-					if (result.theme == "success") {
-						toastr.success(result.message, result.title);
-						$("#dg").datagrid("reload");
-					} else {
-						toastr.error(result.message, result.title);
-					}
-				});
-			}
-		});
-	}
-
-	function disapprove(id, tablename) {
-		$.messager.confirm('Warning', 'Are you sure you want to disapprove this data?', function(r) {
-			if (r) {
-				$.post('<?= base_url('approvals/disapprove') ?>', {
-					id: id,
-					tablename: tablename
-				}, function(result) {
-					var result = eval('(' + result + ')');
-
-					if (result.theme == "success") {
-						toastr.success(result.message, result.title);
-						$("#dg").datagrid("reload");
-					} else {
-						toastr.error(result.message, result.title);
-					}
-				});
-			}
-		});
+                                            if (number == total) {
+                                                $('#dg').datagrid('reload');
+                                                Swal.close();
+                                                Swal.fire(
+                                                    'Dispprove Completed',
+                                                    'Dispprove Data has been completed, You cannot restore data that has been Dispproved',
+                                                    'success'
+                                                );
+                                            }
+                                        },
+                                        error: function(jqXHR, textStatus, errorThrown) {
+                                            toastr.error(jqXHR.statusText);
+                                        },
+                                    });
+                                }
+                            }
+                        }else{
+                            Swal.fire(
+                                'Cannot Process',
+                                'Please Input your reason to Process Disapprove',
+                                'error'
+                            );
+                        }
+                    });
+                }
+            });
+        } else {
+            toastr.info("Please select one of the data in the table first");
+        }
 	}
 
     function numberformat(value, row) {
@@ -125,63 +194,4 @@
 
         return "<b>" + formatter.format(value) + "</b>";
     }
-
-    $(function() {
-        //SETTING DATAGRID EASYUI
-        $('#dg').datagrid({
-            url: '<?= base_url('approvals/approvalOsMpp/') ?>' + "<?= base64_encode($approved_to) ?>" + "/" + "<?= base64_encode($created_by) ?>" + "/" + "<?= base64_encode($approved_by) ?>",
-            pagination: false,
-            singleSelect: true,
-            clientPaging: false,
-            remoteFilter: true,
-            rownumbers: true,
-            fit: true,
-            columns: [
-                [{
-					field: 'product_no',
-					width: 200,
-					align: 'center',
-					title: "Product No",
-				}, {
-					field: 'product_name',
-					width: 150,
-					align: 'center',
-					title: "Product Name",
-				}, {
-					field: 'product_family',
-					width: 150,
-					align: 'center',
-					title: "Product Family",
-				}, {
-					field: 'qty',
-					width: 80,
-					halign: 'center',
-					align: 'right',
-					formatter: numberformat,
-					title: "Qty",
-				}, {
-					field: 'actual',
-					width: 80,
-					halign: 'center',
-					align: 'right',
-					formatter: numberformat,
-					title: "Actual",
-				}, {
-                    field: 'action',
-                    width: 80,
-                    align: 'center',
-                    title: "Action",
-                    formatter: function(val, row) {
-                        if (val != "-") {
-                            var approve = "approve('" + row.id + "','" + "<?= $table ?>" + "')";
-                            var disapprove = "disapprove('" + row.id + "','" + "<?= $table ?>" + "')";
-                            var a = '<a class="btn btn-success w-50" style="pointer-events: visible; opacity:1;" onclick="' + approve + '"><i class="fa fa-check"></i></a>';
-                            var b = '<a class="btn btn-danger w-50" style="pointer-events: visible; opacity:1;" onclick="' + disapprove + '"><i class="fa fa-times"></i></a>';
-                            return a + " " + b;
-                        }
-                    }
-                }]
-            ],
-        }).datagrid('enableFilter');
-    });
 </script>

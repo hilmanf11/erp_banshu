@@ -7,7 +7,7 @@
 		</div>
 
 		<div class="logo-company">
-			<img src="<?= base_url('assets/image/config/' . $config->logo) ?>" width="50"><br>
+			<img src="<?= $config->favicon ?>" width="90"><br>
 		</div>
 		<div class="name-company">
 			<b style="font-size: 16px !important;"><?= $config->name ?></b><br>
@@ -36,7 +36,7 @@
 
 	<!-- MAIN MENU -->
 	<div data-options="region:'west',split:false, collapsed:true, hideCollapsedContent:false, title:'Main Menu'" style="width:250px; padding:10px;">
-		<input id="searchMenu" placeholder="Search Menus" onchange="searchMenu(this.value)" title="Please Enter for Search Menu" style="width:100%; padding: 5px;">
+		<input id="searchMenu" placeholder="Search Menus" onkeypress="searchMenu(this.value)" style="width:100%; padding: 5px;">
 		<br><br>
 		<ul class="easyui-tree" id="menu" data-options="url:'<?= base_url('home/menus') ?>', method:'get',animate:true, lines:true"></ul>
 	</div>
@@ -48,23 +48,34 @@
 				<?php
 				foreach ($users as $user) {
 					if ($user->avatar == "") {
-						$avatar = "default.png";
+						$avatar = base_url('assets/image/users/default.png');
 					} else {
 						$avatar = $user->avatar;
 					}
 
+					$chats = $this->crud->reads("chats", [], ["from_users_id" => $user->id, "to_users_id" =>  $this->session->id, "status" => 0]);
+					if (count($chats) > 0) {
+						$totalChats = '<div style="border-radius:50%;background:red; color:white; text-align:center;">' . count($chats) . '</div>';
+					} else {
+						$totalChats = '';
+					}
+
+					$startChats = "onclick='startChats(" . $user->id . ")'";
 					echo '	<tr>
 								<td style="padding:6px;" width="50">
 									<div class="icon-container">
-										<img src="assets/image/users/' . $avatar . '" class="user-online" />
+										<img src="' . $avatar . '" class="user-online" />
 										<div class="status-circle"></div>
 									</div>
 								</td>
 								<td>
-									<a style="text-decoration:none;">
+									<a href="#" ' . $startChats . ' style="text-decoration:none;">
 										<b style="font-size:12px; color:black;">' . $user->name . '</b><br>
 										<small style="color:black;">' . $user->position . '</small>
 									</a>
+								</td>
+								<td style="padding:6px; text-align:right;" width="30">
+									' . $totalChats . '
 								</td>
 							</tr>';
 				}
@@ -81,7 +92,7 @@
 
 	<!-- FOOTER -->
 	<div data-options="region:'south',border:false" style="overflow: hidden;" id="footer">
-		Welcome in Application <?= $config->description ?> <b><?= $this->session->name ?></b> You are login in time <?= date("d F Y H:m:s"); ?>
+		Welcome in Application <?= $config->description ?> <b><?= $this->session->name ?></b> You are login in time <?= @$login->created_date ?>
 		<span style="float: right;"> Copyright &copy; <?= $config->name ?> 2022 Version 1.0</span>
 	</div>
 
@@ -183,7 +194,7 @@
 		</ul>
 	</div>
 
-	<div id="dlg_notification_detail" class="easyui-window" title="Notification Data" data-options="closed: true,minimizable:false,collapsible:false" style="width: 1000px; height: 400px; top: 60px;">
+	<div id="dlg_notification_detail" class="easyui-window" title="Notification Data" data-options="closed: true,minimizable:false,collapsible:false" style="width: 800px; height: 550px; top: 60px;">
 		<!-- <table id="dg_approval" class="easyui-datagrid" style="width:100%;" toolbar="#toolbar_approval" data-options="fitColumns: false, rownumbers: true"></table> -->
 		<center><h2 style="margin: 10px; font-size: 20px !important;" id="header_notification"></h2></center>
 		<iframe src="" scrolling="yes" id="pageNotification" style="border: 0; width: 100%; height: 93%; margin:0;"></iframe>
@@ -360,13 +371,13 @@
 		// get the top level nodes
 		for (var i = 0; i < rows.length; i++) {
 			var row = rows[i];
-			if (!exists(rows, row.parent_id)) {
+			if (!exists(rows, row.menus_id)) {
 				nodes.push({
 					id: row.id,
 					text: row.name,
 					link: row.link,
 					state: row.state,
-					iconCls: ""
+					iconCls: row.icon
 				});
 			}
 		}
@@ -389,7 +400,7 @@
 				} else {
 					var iconCls = "";
 				}
-				if (row.parent_id == node.id) {
+				if (row.menus_id == node.id) {
 					var child = {
 						id: row.id,
 						text: row.name,
@@ -409,6 +420,67 @@
 		return nodes;
 	}
 
+	function startChats(user_id) {
+		$("#to_users_id").val(user_id);
+		$("#dlg_chats").dialog('open');
+		var h = $("#messageChats").get(0).scrollHeight;
+		$("#messageChats").animate({
+			scrollTop: h
+		});
+		$('#inputChats').focus();
+
+		$.messager.progress({
+			title: 'Please waiting',
+			msg: 'Open Chat...'
+		});
+
+		$.ajax({
+			type: "post",
+			url: "<?= base_url('admin/users/readId') ?>",
+			data: "id=" + user_id,
+			dataType: "json",
+			success: function(user) {
+				$("#chatName").html(user.name);
+				$("#chatPosition").html(user.position);
+			}
+		});
+
+		$.ajax({
+			type: "post",
+			url: "<?= base_url('home/chats') ?>",
+			data: "to_users_id=" + user_id,
+			dataType: "html",
+			success: function(chats) {
+				$("#messageChats").html(chats);
+				$.messager.progress('close');
+			}
+		});
+	}
+
+	$('#inputChats').keypress(function(e) {
+		if (e.which == 13) {
+			var inputChats = $(this).val();
+			var to_users_id = $("#to_users_id").val();
+
+			if (inputChats == "") {
+				toastr.error("Message empty");
+			} else {
+				$.ajax({
+					type: "post",
+					url: "<?= base_url('home/createChats') ?>",
+					data: "to_users_id=" + to_users_id + "&messages=" + inputChats,
+					dataType: "json",
+					success: function(response) {
+						toastr.success("Message has been sent");
+						startChats(to_users_id);
+						$("#inputChats").val('');
+						$("#inputChats").focus();
+					}
+				});
+			}
+		}
+	});
+
 	function profile() {
 		$('#dlg_profile').dialog('open');
 	}
@@ -417,12 +489,14 @@
 		$('#dlg_approval').dialog('open');
 	}
 
-	function notification(){
+	function notification() {
 		$('#dlg_notif').dialog('open');
 	}
 
 	approvalList();
 	approvalCount();
+	notificationList();
+	notificationCount();
 	setInterval(approvalList, 10000);
 	setInterval(approvalCount, 10000);
 
@@ -433,6 +507,17 @@
 			dataType: "html",
 			success: function(response) {
 				$('#approvalList').html(response);
+			}
+		});
+	}
+
+	function notificationList() {
+		$.ajax({
+			type: "post",
+			url: "<?= base_url('notifications/notificationList') ?>",
+			dataType: "html",
+			success: function(response) {
+				$('#notificationList').html(response);
 			}
 		});
 	}
@@ -448,34 +533,10 @@
 		});
 	}
 
-	function approvalDetail(table = "", approved_to = "", created_by = "", updated_by = "") {
-		if (table == "" || approved_to == "") {
-			toastr.error("Notification Cannot get Data", "Error");
-		} else {
-			var outputString = table.replace(/_/g, ' ');
-			var header_approval = outputString.toUpperCase();
-			$("#header_approval").html("APPROVAL " + header_approval);
-
-			$('#dlg_approval_detail').window('open');
-			$('#pageApproval').attr('src', '<?= base_url("approvals/") ?>' + table + "/" + btoa(approved_to) + "/" + btoa(created_by) + "/" + btoa(updated_by));
-		}
-	}
-
-	function notificationList() {
-		$.ajax({
-			type: "post",
-			url: "<?= base_url('notification/notificationList') ?>",
-			dataType: "html",
-			success: function(response) {
-				$('#notificationList').html(response);
-			}
-		});
-	}
-
 	function notificationCount() {
 		$.ajax({
 			type: "post",
-			url: "<?= base_url('notification/notificationCount') ?>",
+			url: "<?= base_url('notifications/notificationCount') ?>",
 			dataType: "html",
 			success: function(response) {
 				$('#notificationCount').html(response);
@@ -483,38 +544,32 @@
 		});
 	}
 
-	function notificationDetail(user = "", table = "", name = "") {
-		if (user == "" || table == "") {
+	function approvalDetail(table = "", approved_to = "", approved_by = "", title = "") {
+		if (table == "" || approved_to == "") {
+			toastr.error("Approval Cannot get Data", "Error");
+		} else {
+			var outputString = title.replace(/_/g, ' ');
+			var header_approval = outputString.toUpperCase();
+			$("#header_approval").html(header_approval);
+
+			$('#dlg_approval_detail').window('open');
+			$('#pageApproval').attr('src', '<?= base_url("approvals/") ?>' + table + "/" + btoa(approved_to) + "/" + btoa(approved_by));
+		}
+	}
+
+	function notificationDetail(name = "", user_from = "", user_to = "", table = "") {
+		if (user_from == "" || user_to == "") {
 			toastr.error("Notification Cannot get Data", "Error");
 		} else {
 			var outputString = table.replace(/_/g, ' ');
 			var header_notification = outputString.toUpperCase();
-			$("#header_notification").html("DISAPPROVE " + header_notification);
+			$("#header_notification").html("NOTIFICATION " + header_notification);
 
 			$('#dlg_notification_detail').window('open');
-			$('#pageNotification').attr('src', '<?= base_url("notification/") ?>' + table + "/" + btoa(user) + "/" + btoa(name));
+			$('#pageNotification').attr('src', '<?= base_url("notifications/getData/") ?>' + btoa(name) + "/" + btoa(user_from) + "/" + btoa(user_to));
 		}
 	}
-
-	function notificationDetailPrice() {
-		$("#header_notification").html("PRICE EXPIRED");
-
-		$('#dlg_notification_detail').window('open');
-		$('#pageNotification').attr('src', '<?= base_url("notification/supplier_item_prices") ?>');
-	}
-
-	function notificationDelivery() {
-		$("#header_notification").html("DELIVERY SCHEDULE ETD EXPIRED in 14 DAY");
-
-		$('#dlg_notification_detail').window('open');
-		$('#pageNotification').attr('src', '<?= base_url("notification/delivery_schedules") ?>');
-	}
-
-	notificationList();
-	notificationCount();
-	setInterval(notificationList, 10000);
-	setInterval(notificationCount, 10000);
-
+	
 	function logout() {
 		Swal.fire({
 			title: 'Please Wait for Logout System',
@@ -534,41 +589,31 @@
 				url: "<?= base_url('login/logout') ?>",
 				dataType: "html",
 				success: function(response) {
-					// setTimeout(function() {
-						window.location.assign("<?= base_url('login') ?>");
-					// }, 10000);
+					if (response == 0) {
+						setTimeout(function() {
+							window.location.assign("<?= base_url('login') ?>");
+						}, 2000);
+					} else {
+						processingLogout();
+					}
 				}
 			});
 		}
 	}
 
-	// $(document).ready(function() {
-	// 	if (Notification.permission !== "granted")
-	// 	Notification.requestPermission();
-	// });
-		
-	// function notifikasi() {
-	// 	if (!Notification) {
-	// 		alert('Browser kamu belum mendukung web notifikasi.'); 
-	// 		return;
-	// 	}
+	function btnDrawing(val){
+        if(val == null || val == ""){
+            return "-";
+        }else{
+            return "<a class='btn btn-primary btn-sm' style='pointer-events: auto; opacity:1; width:100%;' target='_blank' href='<?= base_url('assets/documents/bom/') ?>"+val+"'><i class='fa fa-eye'></i> View</a>";
+        }
+    }
 
-	// 	if (Notification.permission !== "granted"){
-	// 		Notification.requestPermission();
-	// 	} else {
-	// 		var notifikasi = new Notification('Askara Technology', {
-	// 			icon: 'http://43.254.126.203/erp-new/assets/image/users/astek_1717585069.png',
-	// 			body: "Belajar Javascipt itu menyenangkan",
-	// 		});
-	// 		notifikasi.onclick = function () {
-	// 			window.open("http://43.254.126.203/erp-new");      
-	// 		};
+	function numberformat(value, row) {
+		const formatter = new Intl.NumberFormat('id-ID');
 
-	// 		setTimeout(function(){
-	// 			notifikasi.close();
-	// 		}, 10000);
-	// 	}
-	// };
+		return "<b>" + formatter.format(value) + "</b>";
+	}
 </script>
 
 </html>

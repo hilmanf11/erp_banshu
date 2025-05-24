@@ -6,8 +6,6 @@ class Emails extends CI_Model
     function __construct()
     {
         parent::__construct();
-        //PostgreSQL
-        $this->pg = $this->load->database('pg', TRUE);
         $this->load->library('email');
     }
 

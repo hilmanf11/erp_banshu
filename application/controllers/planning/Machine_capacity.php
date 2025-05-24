@@ -10,7 +10,7 @@ class Machine_capacity extends CI_Controller
         $this->load->helper(array('form', 'url'));
         $this->load->library('form_validation');
         $this->load->library('session');
-        $this->load->model('api');
+        $this->load->model('crud');
         //$this->load->model('banshu');
         //$this->pg = $this->load->database('pg', TRUE);
 
@@ -20,7 +20,7 @@ class Machine_capacity extends CI_Controller
 
     public function index()
     {
-        if (empty($this->session->api_key)) {
+        if (empty($this->session->username)) {
             redirect('error_session');
         } elseif ($this->checkuserAccess($this->id_menu()) > 0) {
             $data['button'] = $this->getbutton($this->id_menu());
@@ -71,14 +71,13 @@ class Machine_capacity extends CI_Controller
 	        $filter_process_sub_number = base64_decode($this->input->get('filter_process_sub_number'));
 
 	        $this->db->select('a.number as process_main_number, 
-	        	a.description as process_main_name, 
+	        	a.name as process_main_name, 
 	        	b.number as process_sub_number,
 	        	b.name as process_sub_name');
-	        $this->db->from('mst_process_main a');
-	        $this->db->join('mst_process_sub b', 'a.number = b.process_main_number');
-	        $this->db->where('a.description', $filter_process_main_number);
-	        $this->db->like('b.number', $filter_process_sub_number);
-	        $this->db->where('b.deleted_is', 0);
+	        $this->db->from('process_main a');
+	        $this->db->join('process_main_sub b', 'a.id = b.process_main_id');
+	        $this->db->where('a.id', $filter_process_main_number);
+	        $this->db->like('b.id', $filter_process_sub_number);
 	        $this->db->group_by('b.number');
 	        $this->db->order_by('b.flag', 'asc');
 	        $records = $this->db->get()->result_array();
@@ -303,6 +302,7 @@ class Machine_capacity extends CI_Controller
 
     public function print($option = "")
     {
+        error_reporting(0);
         if ($option == "excel") {
             $format  = date("Ymd");
             header("Content-type: application/vnd-ms-excel");
@@ -315,7 +315,7 @@ class Machine_capacity extends CI_Controller
         $config = $this->db->get()->row();
 
         //Database Server MRP
-        $this->dummy = $this->load->database('dummy', TRUE);
+        // $this->dummy = $this->load->database('dummy', TRUE);
 
         //Filter Data
         $filter_month = base64_decode($this->input->get('filter_month'));
@@ -329,20 +329,20 @@ class Machine_capacity extends CI_Controller
         $firstDate = date('01 M', strtotime($filter_year . "-" . $filter_month . "-01"));
         $endDate = date('t M', strtotime($filter_year . "-" . $filter_month . "-01"));
 
-        $this->db->select('c.*');
-        $this->db->from('mst_process_main a');
-        $this->db->join('mst_process_sub b', 'a.number = b.process_main_number');
-        $this->db->join('generate_machine_capacity c', 'b.number = c.process_sub_number');
-        $this->db->where('a.description', $filter_process_main_number);
-        $this->db->where('c.p_month', $filter_month);
-        $this->db->where('c.p_year', $filter_year);
-        $this->db->where('c.revision', $filter_revision);
-        $this->db->where('c.shift', $filter_shift);
-        $this->db->where('c.overtime', $filter_overtime);
-        $this->db->like('b.number', $filter_process_sub_number);
-        $this->db->group_by("b.number");
-        $this->db->order_by("b.flag", "asc");
-        $records = $this->db->get()->result_array();
+        // $this->db->select('c.*');
+        // $this->db->from('mst_process_main a');
+        // $this->db->join('mst_process_sub b', 'a.number = b.process_main_number');
+        // $this->db->join('generate_machine_capacity c', 'b.number = c.process_sub_number');
+        // $this->db->where('a.description', $filter_process_main_number);
+        // $this->db->where('c.p_month', $filter_month);
+        // $this->db->where('c.p_year', $filter_year);
+        // $this->db->where('c.revision', $filter_revision);
+        // $this->db->where('c.shift', $filter_shift);
+        // $this->db->where('c.overtime', $filter_overtime);
+        // $this->db->like('b.number', $filter_process_sub_number);
+        // $this->db->group_by("b.number");
+        // $this->db->order_by("b.flag", "asc");
+        // $records = $this->db->get()->result_array();
 
         //Setting Header
         $styles = "";
@@ -463,7 +463,7 @@ class Machine_capacity extends CI_Controller
                 <table style="width: 100%;">
                     <tr>
                         <td width="50" style="font-size: 12px; vertical-align: top; text-align: center; vertical-align:jus margin-right:10px;">
-                            <img src="' . base_url('assets/image/config/' . $config->logo) . '" width="30">
+                            <img src="' . $config->logo . '" width="30">
                         </td>
                         <td style="font-size: 14px; text-align: left; margin:2px;">
                             <b>' . $config->name . '</b><br>
