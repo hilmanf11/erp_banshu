@@ -51,7 +51,7 @@ class Mrp_banshu extends CI_Controller
 
         if ($total > 0) {
             for ($i = 0; $i < $total; $i++) {
-                if (trim($send[$i]->type_id) == '02' && trim($send[$i]->stscode_id) == '01') { // type raw material dan yang aktif
+                if (trim($send[$i]->pfm_id) != '06' && trim($send[$i]->stscode_id) == '01') { // type raw material dan yang aktif
                     $arr[] = array(
                         "item_family_id" => trim($send[$i]->pfm_id),
                         "number" => trim($send[$i]->item_id),
