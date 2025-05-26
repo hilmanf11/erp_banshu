@@ -5,10 +5,11 @@
             <th rowspan="2" field="ck" checkbox="true"></th>
             <th rowspan="2" data-options="field:'detail',width:80,halign:'center',formatter:BtnDetail">History</th>
             <th colspan="4" data-options="field:'',width:100,halign:'center'">Approved</th>
+            <th rowspan="2" data-options="field:'plant',width:100,halign:'center'">Plant</th>
             <th rowspan="2" data-options="field:'supplier_id',width:120,halign:'center'">Supplier ID</th>
             <th rowspan="2" data-options="field:'supplier_po',width:150,halign:'center'">Supplier PO</th>
             <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Supplier Name</th>
-            <th rowspan="2" data-options="field:'item_rm_id',width:150,halign:'center'">Part No</th>
+            <th rowspan="2" data-options="field:'item_rm_id',width:150,halign:'center'">Original Part No</th>
             <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No Supplier</th>
             <th rowspan="2" data-options="field:'item_rm_name',width:150,halign:'center'">Description</th>
             <!-- <th rowspan="2" data-options="field:'item_supplier',width:150,halign:'center'">Part Supplier</th> -->
@@ -17,6 +18,7 @@
             <th rowspan="2" data-options="field:'item_family_name',width:120,halign:'center'">Product Family</th>
             <th rowspan="2" data-options="field:'maker_name',width:150,halign:'center'">Maker</th>
             <th rowspan="2" data-options="field:'maker_type',width:100,halign:'center'">Maker Type</th>
+            <th rowspan="2" data-options="field:'spq',width:80,halign:'center',align:'right',formatter:numberformatComa">SPQ</th>
             <th rowspan="2" data-options="field:'mpq',width:80,halign:'center',align:'right',formatter:numberformatComa">MPQ</th>
             <th rowspan="2" data-options="field:'moq',width:80,halign:'center',align:'right',formatter:numberformatComa">MOQ</th>
             <th rowspan="2" data-options="field:'uom',width:80,align:'center'">UoM</th>
@@ -26,10 +28,8 @@
             <th rowspan="2" data-options="field:'attachment',width:100,halign:'center',formatter:BtnAttachment">Attachment</th>
             <th rowspan="2" data-options="field:'attachment2',width:100,halign:'center',formatter:BtnAttachment2">Attachment 2</th>
             <th rowspan="2" data-options="field:'attachment3',width:100,halign:'center',formatter:BtnAttachment3">Attachment 3</th>
-            <th rowspan="2" data-options="field:'hsn_number',width:100,halign:'center'">HSN Code</th>
-            <th rowspan="2" data-options="field:'igst',width:80,align:'center'">IGST %</th>
-            <th rowspan="2" data-options="field:'sgst',width:80,align:'center'">SGST %</th>
-            <th rowspan="2" data-options="field:'cgst',width:80,align:'center'">CGST %</th>
+            <th rowspan="2" data-options="field:'landed_cost',width:80,align:'center'">Landed Cost</th>
+            <th rowspan="2" data-options="field:'import_duty',width:80,align:'center'">Import Duty</th>
             <th rowspan="2" data-options="field:'leadtime',width:80,align:'center'">Mfg L/T<br>(Days)</th>
             <th rowspan="2" data-options="field:'transit',width:80,align:'center'">Transit<br>(Days)</th>
             <th rowspan="2" data-options="field:'share_order',width:80,align:'center'">Share Order %<br></th>
@@ -53,7 +53,7 @@
 </table>
 
 <!-- TOOLBAR DATAGRID -->
-<div id="toolbar" style="height: 200px; padding:10px;">
+<div id="toolbar" style="height: 230px; padding:10px;">
     <div style="width: 100%;">
         <fieldset style="width: 100%; border:2px solid #d0d0d0; margin-bottom: 5px; margin-top: 5px; border-radius:4px;">
             <legend><b>Form Filter Data</b></legend>
@@ -71,15 +71,15 @@
                     </select>
                 </div>
                 <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Maker</span>
+                    <input style="width:60%;" name="filter_maker" id="filter_maker" class="easyui-combogrid">
+                </div>
+                <div class="fitem">
                     <span style="width:35%; display:inline-block;"></span>
                     <a href="javascript:;" class="easyui-linkbutton" onclick="filter()"><i class="fa fa-search"></i> Filter Data</a>
                 </div>
             </div>
             <div style="width: 30%; float: left;">
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Maker</span>
-                    <input style="width:60%;" name="filter_maker" id="filter_maker" class="easyui-combogrid">
-                </div>
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Product Family</span>
                     <input style="width:60%;" id="filter_category" class="easyui-combobox">
@@ -88,8 +88,7 @@
                     <span style="width:35%; display:inline-block;">Part No</span>
                     <input style="width:60%;" name="filter_item_rm" id="filter_item_rm" class="easyui-combogrid">
                 </div>
-                
-                <div class="fitem" hidden>
+                <div class="fitem">
                     <span style="width:35%; display:inline-block;">Part Supplier</span>
                     <input style="width:60%;" name="filter_item_vendor" id="filter_item_vendor" class="easyui-combobox">
                 </div>
@@ -119,11 +118,15 @@
 </div>
 
 <!-- DIALOG SAVE AND UPDATE -->
-<div id="dlg_insert" class="easyui-dialog" title="Add New" data-options="closed: true,modal:true" style="width: 800px; padding:10px; top: 20px;">
+<div id="dlg_insert" class="easyui-dialog" title="Add New" data-options="closed: true,modal:true" style="width: 1200px; padding:10px; top: 20px;">
     <form id="frm_insert" method="post" enctype="multipart/form-data" novalidate>
         <fieldset style="width:100%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
             <legend><b>Form Data</b></legend>
-            <div style="width: 49%; float: left;">
+            <div style="width: 35%; float: left;">
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Plant</span>
+                    <input style="width:60%;" name="plant" id="plant" required="" class="easyui-combobox">
+                </div>
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Supplier</span>
                     <input style="width:60%;" name="supplier_id" id="supplier_id" required="" class="easyui-combogrid">
@@ -132,21 +135,21 @@
                     <span style="width:35%; display:inline-block;">PO No</span>
                     <input style="width:60%;" name="supplier_po" id="supplier_po" disabled class="easyui-textbox">
                 </div>
-                <div class="fitem" hidden>
-                    <span style="width:35%; display:inline-block;">Category</span>
-                    <input style="width:60%;" id="item_family" class="easyui-combobox">
-                </div>
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Part No</span>
                     <input style="width:60%;" name="item_rm_id" id="item_rm_id" required="" class="easyui-combogrid">
                 </div>
-                <div class="fitem" hidden>
-                    <span style="width:35%; display:inline-block;">Part Supplier</span>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Part Vendor</span>
                     <input style="width:60%;" name="item_supplier" id="item_supplier" class="easyui-textbox">
                 </div>
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Maker</span>
                     <input style="width:60%;" name="maker_id" id="maker_id" readonly class="easyui-combogrid">
+                </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">SPQ</span>
+                    <input style="width:60%;" name="spq" id="spq" class="easyui-numberbox" required data-options="precision:2">
                 </div>
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">MPQ</span>
@@ -155,6 +158,25 @@
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">MOQ</span>
                     <input style="width:60%;" name="moq" id="moq" class="easyui-numberbox" required data-options="precision:2">
+                </div>
+            </div>
+
+            <div style="width: 35%; float: left;">
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Landed Cost</span>
+                    <input style="width:60%;" name="landed_cost" id="landed_cost" class="easyui-numberbox" required data-options="precision:2">
+                </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Import Duty</span>
+                    <input style="width:60%;" name="import_duty" id="import_duty" class="easyui-numberbox" required data-options="precision:2">
+                </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Share Order %</span>
+                    <input style="width:60%;" name="share_order" required="" class="easyui-numberbox">
+                </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Safety Stock (%)</span>
+                    <input style="width:60%;" name="safety_stock" required="" class="easyui-numberbox" data-options="precision:2">
                 </div>
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Mfg L/T (Days)</span>
@@ -168,9 +190,6 @@
                     <span style="width:35%; display:inline-block;">Currency</span>
                     <input style="width:60%;" name="currency" id="currency" readonly panelHeight="auto" class="easyui-combobox">
                 </div>
-            </div>
-
-            <div style="width: 49%; float: left;">
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Price</span>
                     <input style="width:60%;" name="price" id="price" class="easyui-numberbox" required data-options="precision:4">
@@ -179,13 +198,15 @@
                     <span style="width:35%; display:inline-block;">Valid Date</span>
                     <input style="width:60%;" name="valid_date" id="valid_date" class="easyui-datebox" required data-options="formatter:myformatter,parser:myparser, editable:false">
                 </div>
+            </div>
+            <div style="width: 30%; float: left;">
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Share Order %</span>
-                    <input style="width:60%;" name="share_order" required="" class="easyui-numberbox">
+                    <span style="width:35%; display:inline-block;">COA No</span>
+                    <input style="width:60%;" name="account_number" id="account_number" class="easyui-combogrid">
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Safety Stock (%)</span>
-                    <input style="width:60%;" name="safety_stock" required="" class="easyui-numberbox" data-options="precision:2">
+                    <span style="width:35%; display:inline-block;">COA Name</span>
+                    <input style="width:60%;" name="account_name" id="account_name" class="easyui-textbox" readonly>
                 </div>
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Calculate MPQ</span>
@@ -918,15 +939,8 @@
             }
         });
 
-        $('#item_family').combobox({
-            url: '<?php echo base_url('master/item_familys/reads/C01'); ?>',
-            valueField: 'number',
-            textField: 'name',
-            prompt: 'Select Product Family'
-        });
-        
         $('#item_rm_id').combogrid({
-            url: '<?= base_url('master/item_rm/reads') ?>',
+            url: '<?= base_url('master/item_rm/reads/') ?>',
             panelWidth: 550,
             idField: 'id',
             textField: 'number',
@@ -936,7 +950,7 @@
             columns: [
                 [{
                     field: 'id',
-                    title: 'Part No',
+                    title: 'Original Part No',
                     width: 100
                 }, {
                     field: 'number',
@@ -953,11 +967,42 @@
             }
         });
 
+        $('#account_number').combogrid({
+            url: '<?= base_url('finance/account_coa/reads'); ?>',
+            panelWidth: 300,
+            idField: 'account_number',
+            textField: 'account_number',
+            mode: 'remote',
+            fitColumns: true,
+            prompt: "Choose COA Number",
+            columns: [
+                [{
+                    field: 'account_number',
+                    title: 'COA Number',
+                    width: 100
+                }, {
+                    field: 'account_name',
+                    title: 'COA Name',
+                    width: 200
+                }]
+            ],
+            onSelect: function(val, coa){
+                $("#account_name").textbox('setValue', coa.account_name);
+            }
+        });
+
         $('#currency').combobox({
             url: '<?php echo base_url('master/currencies/reads'); ?>',
             valueField: 'name',
             textField: 'name',
             prompt: 'Select Currency',
+        });
+
+        $('#plant').combobox({
+            url: '<?php echo base_url('master/plants/reads'); ?>',
+            valueField: 'number',
+            textField: 'name',
+            prompt: 'Select Plant',
         });
 
         $('#filter_item_rm').combogrid({
@@ -967,7 +1012,6 @@
             textField: 'number',
             mode: 'remote',
             fitColumns: true,
-            pagination: true,
             prompt: "Select Part No",
             icons: [{
                 iconCls: 'icon-clear',

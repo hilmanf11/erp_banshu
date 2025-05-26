@@ -135,14 +135,12 @@ class Supplier_items extends CI_Controller
 
         $this->db->select('a.*, c.number as item_rm_number, (case when g.uom_po is not null then g.uom_po else c.uom end) as uom,
             c.name as item_rm_name, a.item_supplier, b.number as supplier_number, b.origin, b.name as supplier_name,
-            d.name as item_family_name, b.type, b.supplier_po, e.name as maker_name, e.type as maker_type,
-            f.number as hsn_number, f.name as hsn_name, f.igst, f.sgst, f.cgst');
+            d.name as item_family_name, b.type, b.supplier_po, e.name as maker_name, e.type as maker_type');
         $this->db->from('supplier_items a');
         $this->db->join('suppliers b', 'b.id = a.supplier_id');
         $this->db->join('item_rm c', 'c.id = a.item_rm_id');
         $this->db->join('item_familys d', "c.item_family_id = d.id and d.item_category_id IN ('C01')");
         $this->db->join('makers e', 'c.maker_id = e.id', 'left');
-        $this->db->join('hsn f', 'c.hsn_code = f.number', 'left');
         $this->db->join('convertions g', 'a.item_rm_id = g.item_rm_id', 'left');
         if($filter_check == "true"){
             $this->db->join("(SELECT item_rm_id FROM supplier_items GROUP BY item_rm_id HAVING COUNT(*) > 1) h", 'a.item_rm_id = h.item_rm_id');
@@ -169,7 +167,7 @@ class Supplier_items extends CI_Controller
             $this->db->where('a.share_order', $filter_share_order);
         }
         if($filter_status_price == "Approved"){
-            $this->db->where("a.approved_to is null or f.approved_to = ''");
+            $this->db->where("a.approved_to is null or a.approved_to = ''");
         }elseif($filter_status_price == "Checking"){
             $this->db->where("a.approved_to != ''");
         }
@@ -377,17 +375,21 @@ class Supplier_items extends CI_Controller
                 //excel
                 'supplier_id' => $data->val($i, 2),
                 'item_rm_id' => $data->val($i, 3),
-                // 'item_supplier' => $data->val($i, 4),
-                'mpq' => $data->val($i, 4),
-                'moq' => $data->val($i, 5),
-                'share_order' => $data->val($i, 6),
-                'leadtime' => $data->val($i, 7),
-                'transit' => $data->val($i, 8),
-                'currency' => $data->val($i, 9),
-                'price' => $data->val($i, 10),
-                'valid_date' => $data->val($i, 11),
-                'safety_stock' => $data->val($i, 12),
-                'calculate' => $data->val($i, 13)
+                'spq' => $data->val($i, 4),
+                'mpq' => $data->val($i, 5),
+                'moq' => $data->val($i, 6),
+                'coo_name' => $data->val($i, 7),
+                'landed_cost' => $data->val($i, 8),
+                'import_duty' => $data->val($i, 9),
+                'share_order' => $data->val($i, 10),
+                'leadtime' => $data->val($i, 11),
+                'transit' => $data->val($i, 12),
+                'currency' => $data->val($i, 13),
+                'price' => $data->val($i, 14),
+                'valid_date' => $data->val($i, 15),
+                'safety_stock' => $data->val($i, 16),
+                'account_number' => $data->val($i, 17),
+                'calculate' => $data->val($i, 18)
             );
         }
         $datas['total'] = count($datas);
@@ -430,23 +432,27 @@ class Supplier_items extends CI_Controller
         if ($this->input->post()) {
             $data = $this->input->post('data');
 
-            //Cek Process Number          //table       //field        //field excel
             $supplier = $this->crud->read('suppliers', [], ["id" => $data['supplier_id']]);
+            $plant = $this->crud->read('plants', [], ["number" => $data['plant']]);
+            $account_number = $this->crud->read('account_coa', [], ["account_number" => $data['account_number']]);
             $item_rm = $this->crud->read('item_rm', [], ["id" => $data['item_rm_id'], "approved_to" => ""]);
-            // $supplier_item_share = $this->crud->read('supplier_items', [], ["item_rm_id" => @$item_rm->id]);
-            $supplier_items = $this->crud->read('supplier_items', [], ["supplier_id" => $data['supplier_id'], "item_rm_id" => @$item_rm->id]);
-            // $supplier_item_histories = $this->crud->read("supplier_item_histories", [], ["supplier_id" => $data['supplier_id'], "item_rm_id" => @$item_rm->id, "price" => $data['price']]);
+            $supplier_items = $this->crud->read('supplier_items', [], ["supplier_id" => $data['supplier_id'], "item_rm_id" => @$item_rm->id, "plant" => $data['plant']]);
             $sqlSupItm = $this->db->query("SELECT SUM(share_order) as share_order FROM supplier_items WHERE item_rm_id = '$item_rm->id' and supplier_id != '$supplier->id' GROUP BY item_rm_id");
             $rowSupItm = $sqlSupItm->row();
 
             $dataFinal = array(
                 //field
                 "supplier_id" => $data['supplier_id'],
+                "plant" => $data['plant'],
                 "item_rm_id" => @$item_rm->id,
                 "maker_id" => @$item_rm->maker_id,
                 "item_supplier" => @$item_rm->number,
+                "spq" => $data['spq'],
                 "mpq" => $data['mpq'],
                 "moq" => $data['moq'],
+                "coo_name" => $data['coo_name'],
+                "landed_cost" => $data['landed_cost'],
+                "import_duty" => $data['import_duty'],
                 "share_order" => $data['share_order'],
                 "leadtime" => $data['leadtime'],
                 "transit" => $data['transit'],
@@ -454,6 +460,7 @@ class Supplier_items extends CI_Controller
                 "price" => $data['price'],
                 "valid_date" => $data['valid_date'],
                 "safety_stock" => $data['safety_stock'],
+                "account_number" => $data['account_number'],
                 "calculate" => $data['calculate'],
             );
 
@@ -461,6 +468,10 @@ class Supplier_items extends CI_Controller
                 echo json_encode(array("title" => "Not Found", "message" => "Supplier Code " . $data['supplier_id'] . " Not Found", "theme" => "error"));
             }elseif(empty($item_rm->id)){
                 echo json_encode(array("title" => "Not Found", "message" => "Part No " . $data['item_rm_id'] . " Not Found", "theme" => "error"));
+            }elseif(empty($plant->id)){
+                echo json_encode(array("title" => "Not Found", "message" => "Plant " . $data['plant'] . " Not Found", "theme" => "error"));
+            }elseif(empty($account_number->id)){
+                echo json_encode(array("title" => "Not Found", "message" => "Account COA " . $data['account_number'] . " Not Found", "theme" => "error"));
             }elseif($data['price'] <= 0){
                 echo json_encode(array("title" => "Failed", "message" => "Price Cannot Input 0", "theme" => "error"));
             }elseif((@$rowSupItm->share_order + $data['share_order']) > 100){
@@ -512,14 +523,12 @@ class Supplier_items extends CI_Controller
 
         $this->db->select('a.*, c.number as item_rm_number, (case when g.uom_po is not null then g.uom_po else c.uom end) as uom,
             c.name as item_rm_name, a.item_supplier, b.number as supplier_number, b.origin, b.name as supplier_name,
-            d.name as item_family_name, b.type, e.name as maker_name, e.type as maker_type,
-            f.number as hsn_number, f.name as hsn_name, f.igst, f.sgst, f.cgst');
+            d.name as item_family_name, b.type, e.name as maker_name, e.type as maker_type');
         $this->db->from('supplier_items a');
         $this->db->join('suppliers b', 'b.id = a.supplier_id');
         $this->db->join('item_rm c', 'c.id = a.item_rm_id');
         $this->db->join('item_familys d', "c.item_family_id = d.id and d.item_category_id IN ('C01')");
         $this->db->join('makers e', 'c.maker_id = e.id', 'left');
-        $this->db->join('hsn f', 'c.hsn_code = f.number', 'left');
         $this->db->join('convertions g', 'a.item_rm_id = g.item_rm_id', 'left');
         if($filter_check == "true"){
             $this->db->join("(SELECT item_rm_id FROM supplier_items GROUP BY item_rm_id HAVING COUNT(*) > 1) h", 'a.item_rm_id = h.item_rm_id');
@@ -543,7 +552,7 @@ class Supplier_items extends CI_Controller
             $this->db->where('a.share_order', $filter_share_order);
         }
         if($filter_status_price == "Approved"){
-            $this->db->where("a.approved_to is null or f.approved_to = ''");
+            $this->db->where("a.approved_to is null or a.approved_to = ''");
         }elseif($filter_status_price == "Checking"){
             $this->db->where("a.approved_to != ''");
         }
@@ -587,7 +596,7 @@ class Supplier_items extends CI_Controller
                 <th>Approved Date</th>
                 <th>Supplier ID</th>
                 <th>Supplier Name</th>
-                <th>Part No</th>
+                <th>Original Part No</th>
                 <th>Part No Supplier</th>
                 <th>Description</th>
                 <th>Supplier Type</th>
@@ -595,21 +604,21 @@ class Supplier_items extends CI_Controller
                 <th>Product Family</th>
                 <th>Maker</th>
                 <th>Maker Type</th>
+                <th>SPQ</th>
                 <th>MPQ</th>
                 <th>MOQ</th>
                 <th>Uom</th>
                 <th>Currency</th>
                 <th>Price</th>
                 <th>Valid Date</th>
-                <th>HSN Code</th>
-                <th>IGST %</th>
-                <th>SGST %</th>
-                <th>CGST %</th>
+                <th>Landed Cost</th>
+                <th>Import Duty</th>
                 <th>Mfg L/T<br>(Days)</th>
                 <th>Transit<br>(Days)</th>
                 <th>Share Order</th>
                 <th>Safety<br>Stock (%)</th>
                 <th>Calculate MPQ</th>
+                <th>Account COA</th>
                 <th>Remarks</th>
                 <th>Created By</th>
                 <th>Created Date</th>
@@ -639,21 +648,19 @@ class Supplier_items extends CI_Controller
                     <td>' . $data['item_family_name'] . '</td>
                     <td>' . $data['maker_name'] . '</td>
                     <td>' . $data['maker_type'] . '</td>
+                    <td>' . $data['spq'] . '</td>
                     <td>' . $data['mpq'] . '</td>
                     <td>' . $data['moq'] . '</td>
                     <td>' . $data['uom'] . '</td>
                     <td>' . $data['currency'] . '</td>
                     <td>' . $data['price'] . '</td>
                     <td>' . $data['valid_date'] . '</td>
-                    <td>' . $data['hsn_number'] . '</td>
-                    <td>' . $data['igst'] . '</td>
-                    <td>' . $data['sgst'] . '</td>
-                    <td>' . $data['cgst'] . '</td>
                     <td>' . $data['leadtime'] . '</td>
                     <td>' . $data['transit'] . '</td>
                     <td>' . $data['share_order'] . '</td>
                     <td>' . $data['safety_stock'] . '</td>
                     <td>' . $data['calculate'] . '</td>
+                    <td>' . $data['account_number'] . '</td>
                     <td>' . $data['remarks'] . '</td>
                     <td>' . $data['created_by'] . '</td>
                     <td>' . $data['created_date'] . '</td>
@@ -733,7 +740,7 @@ class Supplier_items extends CI_Controller
                 <th width="20">No</th>
                 <th>Supplier ID</th>
                 <th>Supplier Name</th>
-                <th>Part No</th>
+                <th>Part No EBWS</th>
                 <th>Part No Supplier</th>
                 <th>Description</th>
                 <th>Supplier Type</th>
