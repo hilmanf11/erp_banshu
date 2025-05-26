@@ -4,6 +4,7 @@
         <tr>
             <th rowspan="2" field="ck" checkbox="true"></th>
             <th hidden rowspan="2" data-options="field:'id',width:80,align:'center'">ID</th>
+            <th rowspan="2" data-options="field:'number',width:200,halign:'center'">Code</th>
             <th rowspan="2" data-options="field:'name',width:200,halign:'center'">Name</th>
             <th rowspan="2" data-options="field:'description',width:150,halign:'center'">Description</th>
             <th colspan="2" data-options="field:'',width:100,halign:'center'"> Created</th>
@@ -31,6 +32,10 @@
                 <input style="width:30%;" name="id" id="id" required="" class="easyui-textbox" readonly>
             </div>
             <div class="fitem">
+                <span style="width:35%; display:inline-block;">Code</span>
+                <input style="width:60%;" name="number" id="number" required="" class="easyui-textbox">
+            </div>
+            <div class="fitem">
                 <span style="width:35%; display:inline-block;">Name</span>
                 <input style="width:60%;" name="name" id="name" required="" class="easyui-textbox">
             </div>
@@ -51,10 +56,10 @@
         $('#frm_insert').form('clear');
 
         $.ajax({
-            type : "post",
-            url : "<?= base_url('master/uom/autoid')?>",
-            dataType : "html",
-            success : function(response){
+            type: "post",
+            url: "<?= base_url('master/uom/autoid') ?>",
+            dataType: "html",
+            success: function(response) {
                 $('#id').textbox('setValue', response);
             }
         });
@@ -95,9 +100,10 @@
                     });
 
                     requestDelete(rows.length, rows);
+
                     function requestDelete(total, json, number = 1, value = 0) {
                         if (value < 100) {
-                            var row = json[number-1];
+                            var row = json[number - 1];
                             value = Math.floor((number / total) * 100);
 
                             $.ajax({
@@ -156,7 +162,7 @@
             pageList: [20, 50, 100, 500, 1000],
             pageSize: 20,
         }).datagrid('enableFilter');
-        
+
         //SAVE DATA
         $('#dlg_insert').dialog({
             buttons: [{
@@ -166,9 +172,9 @@
                     $('#frm_insert').form('submit', {
                         url: url_save,
                         onSubmit: function() {
-                            if($(this).form('validate') === true){
+                            if ($(this).form('validate') === true) {
                                 $('#dlg_insert').dialog('close');
-                                
+
                                 Swal.fire({
                                     title: 'Please Wait...',
                                     showConfirmButton: false,
@@ -178,7 +184,7 @@
                                         Swal.showLoading();
                                     },
                                 });
-                            }else{
+                            } else {
                                 return $(this).form('validate');
                             }
                         },

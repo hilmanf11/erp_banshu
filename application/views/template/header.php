@@ -66,6 +66,10 @@ $config = $this->db->get()->row();
             transform: translate(-50%, -50%);
             font: 14px arial;
         }
+
+        .swal2-container {
+            z-index: 9100 !important;
+        }
     </style>
     <script>
         $(document).ready(function() {

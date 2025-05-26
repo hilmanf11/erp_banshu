@@ -3,7 +3,7 @@
     <thead frozen="true">
         <th field="ck" checkbox="true"></th>
         <th data-options="field:'foto',width:35,halign:'center',formatter:FormatterImage">Foto</th>
-        <th data-options="field:'id',width:120,halign:'center'">Part No</th>
+        <th data-options="field:'id',width:120,halign:'center'">Original Part No</th>
         <th data-options="field:'number',width:200,halign:'center'">Part No Supplier</th>
     </thead>
     <thead>
@@ -18,8 +18,8 @@
             <!-- <th rowspan="2" data-options="field:'igst',width:100,halign:'center'">IGST %</th>
             <th rowspan="2" data-options="field:'sgst',width:100,halign:'center'">SGST %</th>
             <th rowspan="2" data-options="field:'cgst',width:100,halign:'center'">CGST %</th> -->
-            <th rowspan="2" data-options="field:'account_number',width:150,halign:'center'">COA No</th>
-            <th rowspan="2" data-options="field:'account_name',width:150,halign:'center'">COA Name</th>
+            <!-- <th rowspan="2" data-options="field:'account_number',width:150,halign:'center'">COA No</th>
+            <th rowspan="2" data-options="field:'account_name',width:150,halign:'center'">COA Name</th> -->
             <th rowspan="2" data-options="field:'description',width:150,halign:'center'">Remarks</th>
             <th rowspan="2" data-options="field:'supply',width:80,align:'center', styler:cellStyler, formatter:cellFormatterSup">Supply</th>
             <th rowspan="2" data-options="field:'status',width:80,align:'center', styler:cellStyler, formatter:cellFormatter">Status</th>
@@ -41,8 +41,9 @@
 
 <!-- TOOLBAR DATAGRID -->
 <div id="toolbar" style="height: 35px;">
-    <a href="javascript:;" class="easyui-linkbutton" id="sync" data-options="plain:true" onclick="sync()"><i class="fa fa-history"></i> Sync Data</a>
+    <a href="javascript:;" class="easyui-linkbutton" id="sync" data-options="plain:true" onclick="sync()"><i class="fa fa-history"></i> Push Data</a>
     <?= $button ?>
+    <span style="border-left:1px #C3C3C3 solid; margin:0 5px 0 5px;"></span><a href="javascript:;" class="easyui-linkbutton" data-options="plain:true" onclick="syncPullMrp()"><i class="fa fa-retweet"></i> Synchronize</a>
 </div>
 
 <!-- DIALOG SAVE AND UPDATE -->
@@ -128,9 +129,9 @@
                             <option value="LOCAL">LOCAL</option>
                         </select>
                     </div>
-                    
+
                     <div class="fitem">
-                        <span style="width:35%; display:inline-block;">Part No</span>
+                        <span style="width:35%; display:inline-block;">Original Part No</span>
                         <input style="width:50%;" name="id" id="id" required="" class="easyui-textbox" data-options="prompt:'Automatic'" readonly>
                         <a href="javascript:;" class="easyui-linkbutton" title="Generate ID" data-options="plain:false" onclick="autoid()"><i class="fa fa-history"></i></a>
                     </div>
@@ -163,14 +164,14 @@
                         <span style="width:35%; display:inline-block;">HSN No</span>
                         <input style="width:60%;" name="hsn_code" id="hsn_code" required class="easyui-combogrid">
                     </div>
-                    <div class="fitem">
+                    <!-- <div class="fitem">
                         <span style="width:35%; display:inline-block;">COA No</span>
                         <input style="width:60%;" name="account_number" id="account_number" class="easyui-textbox" readonly>
                     </div>
                     <div class="fitem">
                         <span style="width:35%; display:inline-block;">COA Name</span>
                         <input style="width:60%;" name="account_name" id="account_name" class="easyui-textbox" readonly>
-                    </div>
+                    </div> -->
                     <div class="fitem">
                         <span style="width:35%; display:inline-block;">Remarks</span>
                         <input style="width:60%;" name="description" id="description" class="easyui-textbox">
@@ -226,6 +227,19 @@
     </div>
 </div>
 
+<!-- Synchronize erp -->
+<div id="dlg_sync_erp" class="easyui-dialog" title="Synchronize Data From MRP" data-options="closed: true,modal:true" style="width: 800px; padding:10px; top: 20px;">
+    <form id="frm_sync_erp" method="post" enctype="multipart/form-data" novalidate>
+    </form>
+    <span style="float: left; color:green;">SUCCESS : <b id="p_sync_success">0</b></span><span style="float: right; color:red;"> FAILED : <b id="p_sync_failed">0</b></span>
+    <div id="p_sync_erp" class="easyui-progressbar" style="width:100%; margin-top: 10px;"></div>
+    <center><b id="p_start_sync">0</b> Of <b id="p_finish_sync">0</b></center>
+    <div id="p_remarks_sync" title="History Synchronize" class="easyui-panel" style="width:100%; height:350px; padding:10px; margin-top: 10px;">
+        <ul id="remarks_sync">
+        </ul>
+    </div>
+</div>
+
 <!-- PDF -->
 <iframe id="printout" src="<?= base_url('master/item_rm/print') ?>" style="width: 100%;" hidden></iframe>
 <script>
@@ -243,6 +257,7 @@
             });
 
             requestData(rows.length, rows);
+
             function requestData(total, json, number = 1, value = 0) {
                 if (value < 100) {
                     value = Math.floor((number / total) * 100);
@@ -281,12 +296,12 @@
                     });
                 }
             }
-        }else{
+        } else {
             toastr.warning("Please Select data in the table first");
         }
     }
 
-    function autoid(){
+    function autoid() {
         var item_family_number = $("#item_family_number").textbox('getValue');
         var kind = $("#kind").combogrid('getValue');
         var size = $("#size").combogrid('getValue');
@@ -297,32 +312,32 @@
         var platting = $("#platting").combogrid('getValue');
         var type = $("#type").combogrid('getValue');
 
-        if(item_family_number != "" || type != ""){
+        if (item_family_number != "" || type != "") {
             $.ajax({
-                type : "post",
-                url : "<?= base_url('master/item_rm/autoid')?>",
+                type: "post",
+                url: "<?= base_url('master/item_rm/autoid') ?>",
                 data: {
-                    "item_family_number" : item_family_number,
-                    "kind" : kind,
-                    "size" : size,
-                    "color_1" : color_1,
-                    "color_2" : color_2,
-                    "male" : male,
-                    "waterproof" : waterproof,
-                    "platting" : platting,
-                    "type" : type,
+                    "item_family_number": item_family_number,
+                    "kind": kind,
+                    "size": size,
+                    "color_1": color_1,
+                    "color_2": color_2,
+                    "male": male,
+                    "waterproof": waterproof,
+                    "platting": platting,
+                    "type": type,
                 },
-                dataType : "json",
-                success : function(response){
-                    if(response.code.length == 10){
+                dataType: "json",
+                success: function(response) {
+                    if (response.code.length == 11) {
                         $('#id').textbox('setValue', response.code);
-                    }else{
+                    } else {
                         toastr.info("Please complete your digital code data");
                         $('#id').textbox('clear');
                     }
                 }
             });
-        }else{
+        } else {
             toastr.info("Please Choose Product Family and Type");
         }
     }
@@ -332,7 +347,7 @@
         $('#dlg_insert').dialog('open');
         url_save = '<?= base_url('master/item_rm/create') ?>';
         $('#frm_insert').form('clear');
-        
+
         $('#status').combobox('setValue', '0');
         $("#t_kind").hide();
         $("#t_size").hide();
@@ -360,9 +375,9 @@
             $('#dlg_insert').dialog('open');
             $('#frm_insert').form('load', row);
 
-            if(row.foto != "" && row.foto != null){
+            if (row.foto != "" && row.foto != null) {
                 $('#fotoPreview').attr('src', row.foto);
-            }else{
+            } else {
                 $('#fotoPreview').attr('src', '<?= base_url("assets/image/users/default.png") ?>');
             }
 
@@ -374,7 +389,7 @@
                 mode: 'remote',
                 fitColumns: true,
                 prompt: "Choose Kind",
-                onLoadSuccess: function(){
+                onLoadSuccess: function() {
                     $("#kind").combogrid('setValue', row.kind);
                 },
                 columns: [
@@ -398,7 +413,7 @@
                 mode: 'remote',
                 fitColumns: true,
                 prompt: "Choose Size",
-                onLoadSuccess: function(){
+                onLoadSuccess: function() {
                     $("#size").combogrid('setValue', row.size);
                 },
                 columns: [
@@ -453,9 +468,10 @@
                     });
 
                     requestDelete(rows.length, rows);
+
                     function requestDelete(total, json, number = 1, value = 0) {
                         if (value < 100) {
-                            var row = json[number-1];
+                            var row = json[number - 1];
                             value = Math.floor((number / total) * 100);
 
                             $.ajax({
@@ -532,13 +548,13 @@
                 handler: function() {
                     var hsn_code = $("#hsn_code").combogrid('getValue');
 
-                    if(hsn_code.length >= 6){
+                    if (hsn_code.length >= 6) {
                         $('#frm_insert').form('submit', {
                             url: url_save,
                             onSubmit: function() {
-                                if($(this).form('validate') === true){
+                                if ($(this).form('validate') === true) {
                                     $('#dlg_insert').dialog('close');
-                                    
+
                                     Swal.fire({
                                         title: 'Please Wait...',
                                         showConfirmButton: false,
@@ -548,7 +564,7 @@
                                             Swal.showLoading();
                                         },
                                     });
-                                }else{
+                                } else {
                                     return $(this).form('validate');
                                 }
                             },
@@ -565,7 +581,7 @@
                                 Swal.close();
                             }
                         });
-                    }else{
+                    } else {
                         toastr.error("Please Input HSN Code Correctly");
                     }
                 }
@@ -574,16 +590,16 @@
     });
 
     $('#uom').combobox({
-        url:'<?= base_url('master/uom/reads'); ?>',
-        valueField:'name',
-        textField:'name',
+        url: '<?= base_url('master/uom/reads'); ?>',
+        valueField: 'name',
+        textField: 'name',
         prompt: 'Choose Unit of Measure',
     });
 
     $('#maker_id').combobox({
-        url:'<?= base_url('master/makers/reads'); ?>',
-        valueField:'id',
-        textField:'name',
+        url: '<?= base_url('master/makers/reads'); ?>',
+        valueField: 'id',
+        textField: 'name',
         prompt: 'Choose Maker',
     });
 
@@ -651,22 +667,22 @@
     });
 
     $('#item_category_id').combobox({
-        url:'<?= base_url('master/item_categories/reads/FG'); ?>',
-        valueField:'id',
-        textField:'name',
+        url: '<?= base_url('master/item_categories/reads/FG'); ?>',
+        valueField: 'id',
+        textField: 'name',
         prompt: 'Choose Category',
-        onSelect: function(category){
+        onSelect: function(category) {
             $('#item_family_id').combobox({
-                url:'<?= base_url('master/item_familys/reads/'); ?>' + category.id,
-                valueField:'id',
-                textField:'name',
+                url: '<?= base_url('master/item_familys/reads/'); ?>' + category.id,
+                valueField: 'id',
+                textField: 'name',
                 prompt: 'Choose Product Family',
                 onSelect: function(family) {
-                    var arrFamily = ["7","8","9","10","11","12","13","14","15","16","17","18","19"];
+                    var arrFamily = ["7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19"];
 
-                    if(category.number == "RM"){
+                    if (category.number == "RM") {
                         //Wire & Tape
-                        if(family.number == "1" || family.number == "4"){
+                        if (family.number == "1" || family.number == "4") {
                             $("#t_kind").show();
                             $("#t_size").show();
                             $("#t_color_1").show();
@@ -674,8 +690,8 @@
                             $("#t_male").hide();
                             $("#t_waterproof").hide();
                             $("#t_platting").hide();
-                        //Accesoris
-                        }else if ($.inArray(family.number, arrFamily) != -1){
+                            //Accesoris
+                        } else if ($.inArray(family.number, arrFamily) != -1) {
                             $("#t_kind").show();
                             $("#t_size").hide();
                             $("#t_color_1").show();
@@ -683,8 +699,8 @@
                             $("#t_male").hide();
                             $("#t_waterproof").hide();
                             $("#t_platting").hide();
-                        //Terminal
-                        }else if(family.number == "2"){
+                            //Terminal
+                        } else if (family.number == "2") {
                             $("#t_kind").hide();
                             $("#t_size").hide();
                             $("#t_color_1").hide();
@@ -692,8 +708,8 @@
                             $("#t_male").show();
                             $("#t_waterproof").show();
                             $("#t_platting").show();
-                        //Connector
-                        }else if(family.number == "3"){
+                            //Connector
+                        } else if (family.number == "3") {
                             $("#t_kind").hide();
                             $("#t_size").hide();
                             $("#t_color_1").show();
@@ -701,8 +717,8 @@
                             $("#t_male").show();
                             $("#t_waterproof").show();
                             $("#t_platting").hide();
-                        //Fuse
-                        }else if(family.number == "5" || family.number == "6"){
+                            //Fuse
+                        } else if (family.number == "5" || family.number == "6") {
                             $("#t_kind").show();
                             $("#t_size").show();
                             $("#t_color_1").show();
@@ -710,7 +726,7 @@
                             $("#t_male").hide();
                             $("#t_waterproof").hide();
                             $("#t_platting").hide();
-                        }else{
+                        } else {
                             $("#t_kind").hide();
                             $("#t_size").hide();
                             $("#t_color_1").hide();
@@ -719,7 +735,7 @@
                             $("#t_waterproof").hide();
                             $("#t_platting").hide();
                         }
-                    }else{
+                    } else {
                         $("#t_kind").hide();
                         $("#t_size").hide();
                         $("#t_color_1").hide();
@@ -730,8 +746,8 @@
                     }
 
                     $("#item_family_number").textbox('setValue', family.number);
-                    $("#account_number").textbox('setValue', family.account_number);
-                    $("#account_name").textbox('setValue', family.account_name);
+                    // $("#account_number").textbox('setValue', family.account_number);
+                    // $("#account_name").textbox('setValue', family.account_name);
 
                     $('#kind').combogrid({
                         url: '<?= base_url('master/item_kinds/reads/'); ?>' + family.id,
@@ -839,8 +855,8 @@
             return 'Not Active';
         }
     };
-     //FORMATTER STATUS
-     function cellFormatterSup(value) {
+    //FORMATTER STATUS
+    function cellFormatterSup(value) {
         if (value == 0) {
             return 'YES';
         } else {
@@ -850,7 +866,7 @@
 
     //CELLSTYLE APPROVE
     function styleApproved(value, row, index) {
-        if (value == "" || value === null ) {
+        if (value == "" || value === null) {
             return 'background: #53D636; color:white;';
         } else {
             return 'background: #FF5F5F; color:white;';
@@ -858,7 +874,7 @@
     }
     //FORMATTER APPROVE
     function formatApproved(value) {
-        if (value == "" || value === null ) {
+        if (value == "" || value === null) {
             return 'Approved';
         } else {
             return 'Checking';
@@ -875,81 +891,171 @@
 
     // UPLOAD DATA
     $('#dlg_upload').dialog({
-            buttons: [{
-                text: 'List Failed',
-                handler: function() {
-                    window.open('<?= base_url('master/item_rm/uploadDownloadFailed') ?>', '_blank');
-                }
-            }, {
-                text: 'Upload',
-                iconCls: 'icon-ok',
-                handler: function() {
-                    $('#frm_upload').form('submit', {
-                        url: '<?= base_url('master/item_rm/upload') ?>',
-                        onSubmit: function() {
-                            if ($(this).form('validate') == false) {
-                                return $(this).form('validate');
-                            } else {
-                                $.messager.progress({
-                                    title: 'Please Wait',
-                                    msg: 'Importing Excel to Database'
+        buttons: [{
+            text: 'List Failed',
+            handler: function() {
+                window.open('<?= base_url('master/item_rm/uploadDownloadFailed') ?>', '_blank');
+            }
+        }, {
+            text: 'Upload',
+            iconCls: 'icon-ok',
+            handler: function() {
+                $('#frm_upload').form('submit', {
+                    url: '<?= base_url('master/item_rm/upload') ?>',
+                    onSubmit: function() {
+                        if ($(this).form('validate') == false) {
+                            return $(this).form('validate');
+                        } else {
+                            $.messager.progress({
+                                title: 'Please Wait',
+                                msg: 'Importing Excel to Database'
+                            });
+                        }
+                    },
+                    success: function(result) {
+                        $.messager.progress('close');
+                        //Clear File
+                        $.ajax({
+                            url: "<?= base_url('master/item_rm/uploadclearFailed') ?>"
+                        });
+                        var json = eval('(' + result + ')');
+                        requestData(json.total, json);
+
+                        function requestData(total, json, number = 1, value = 0, success = 1, failed = 1) {
+                            if (value < 100) {
+                                value = Math.floor((number / total) * 100);
+                                $('#p_upload').progressbar('setValue', value);
+                                $('#p_start').html(number);
+                                $('#p_finish').html(total);
+
+                                $.ajax({
+                                    type: "POST",
+                                    async: true,
+                                    url: "<?= base_url('master/item_rm/uploadCreate') ?>",
+                                    data: {
+                                        "data": json[number - 1]
+                                    },
+                                    cache: false,
+                                    dataType: "json",
+                                    success: function(result) {
+                                        if (result.theme == "success") {
+                                            $('#p_success').html(success);
+                                            var title = "<b style='color: green;'>" + result.title + "</b> | " + result.message;
+                                            requestData(total, json, number + 1, value, success + 1, failed + 0);
+                                        } else {
+                                            $('#p_failed').html(failed);
+                                            var title = "<b style='color: red;'>" + result.title + "</b> | " + result.message;
+                                            //Json Failed
+                                            $.ajax({
+                                                type: "POST",
+                                                async: true,
+                                                url: "<?= base_url('master/item_rm/uploadcreateFailed') ?>",
+                                                data: {
+                                                    data: json[number - 1],
+                                                    message: result.message
+                                                },
+                                                cache: false
+                                            });
+                                            requestData(total, json, number + 1, value, success + 0, failed + 1);
+                                        }
+                                        $("#p_remarks").append(title + "<br>");
+                                    }
                                 });
                             }
-                        },
-                        success: function(result) {
-                            $.messager.progress('close');
-                            //Clear File
-                            $.ajax({
-                                url: "<?= base_url('master/item_rm/uploadclearFailed') ?>"
-                            });
-                            var json = eval('(' + result + ')');
+                        }
+                    }
+                });
+            }
+        }]
+    });
+
+    function syncPullMrp() {
+        $('#dlg_sync_erp').dialog('open');
+    }
+
+    //Synchronize Data
+    $('#dlg_sync_erp').dialog({
+        buttons: [{
+            text: 'List Failed',
+            handler: function() {
+                window.open('<?= base_url('master/item_rm/syncPullDownloadFailed') ?>', '_blank');
+            }
+        }, {
+            text: 'Start Synchronize',
+            iconCls: 'icon-ok',
+            handler: function() {
+                $('#frm_sync_erp').form('submit', {
+                    url: "<?= base_url('api/mrp_banshu/getDataItems') ?>",
+                    onSubmit: function() {
+                        Swal.fire({
+                            title: 'Collecting data..',
+                            showConfirmButton: false,
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            },
+                        });
+                    },
+                    success: function(result) {
+                        Swal.close(); //Clear File
+                        $.ajax({
+                            url: "<?= base_url('master/item_rm/syncPullclearFailed') ?>"
+                        });
+                        var json = eval('(' + result + ')');
+                        if (json.total == 0) {
+                            var title = "<b style='color: red;'>Data Not Found</b><br>";
+                            $("#p_remarks_sync").append(title);
+                        } else {
                             requestData(json.total, json);
+                        }
 
-                            function requestData(total, json, number = 1, value = 0, success = 1, failed = 1) {
-                                if (value < 100) {
-                                    value = Math.floor((number / total) * 100);
-                                    $('#p_upload').progressbar('setValue', value);
-                                    $('#p_start').html(number);
-                                    $('#p_finish').html(total);
+                        function requestData(total, json, number = 1, value = 0, success = 1, failed = 1) {
+                            if (value < 100) {
+                                value = Math.floor((number / total) * 100);
+                                $('#p_sync_erp').progressbar('setValue', value);
+                                $('#p_start_sync').html(number);
+                                $('#p_finish_sync').html(total);
 
-                                    $.ajax({
-                                        type: "POST",
-                                        async: true,
-                                        url: "<?= base_url('master/item_rm/uploadCreate') ?>",
-                                        data: {
-                                            "data": json[number - 1]
-                                        },
-                                        cache: false,
-                                        dataType: "json",
-                                        success: function(result) {
-                                            if (result.theme == "success") {
-                                                $('#p_success').html(success);
-                                                var title = "<b style='color: green;'>" + result.title + "</b> | " + result.message;
-                                                requestData(total, json, number + 1, value, success + 1, failed + 0);
-                                            } else {
-                                                $('#p_failed').html(failed);
-                                                var title = "<b style='color: red;'>" + result.title + "</b> | " + result.message;
-                                                //Json Failed
-                                                $.ajax({
-                                                    type: "POST",
-                                                    async: true,
-                                                    url: "<?= base_url('master/item_rm/uploadcreateFailed') ?>",
-                                                    data: {
-                                                        data: json[number - 1],
-                                                        message: result.message
-                                                    },
-                                                    cache: false
-                                                });
-                                                requestData(total, json, number + 1, value, success + 0, failed + 1);
-                                            }
-                                            $("#p_remarks").append(title + "<br>");
+                                $.ajax({
+                                    type: "POST",
+                                    async: true,
+                                    url: "<?= base_url('master/item_rm/syncPullCreate') ?>",
+                                    data: {
+                                        "data": json[number - 1]
+                                    },
+                                    cache: false,
+                                    dataType: "json",
+                                    success: function(result) {
+                                        if (result.theme == "success") {
+                                            $('#p_sync_success').html(success);
+                                            var title = "<b style='color: green;'>" + result.title + "</b> | " + result.message;
+                                            requestData(total, json, number + 1, value, success + 1, failed + 0);
+                                        } else {
+                                            $('#p_sync_failed').html(failed);
+                                            var title = "<b style='color: red;'>" + result.title + "</b> | " + result.message; //Json Failed
+                                            $.ajax({
+                                                type: "POST",
+                                                async: true,
+                                                url: "<?= base_url('master/item_rm/syncPullcreateFailed') ?>",
+                                                data: {
+                                                    data: json[number - 1],
+                                                    message: result.message
+                                                },
+                                                cache: false
+                                            });
+                                            requestData(total, json, number + 1, value, success + 0, failed + 1);
                                         }
-                                    });
-                                }
+                                        $("#p_remarks_sync").prepend(title + "<br>");
+                                    }
+                                });
+                            } else {
+                                // 
                             }
                         }
-                    });
-                }
-            }]
-        });
+                    }
+                });
+            }
+        }]
+    });
 </script>

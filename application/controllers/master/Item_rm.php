@@ -158,98 +158,23 @@ class Item_rm extends CI_Controller
     public function autoid()
     {
         $post = $this->input->post();
+        $y = date("y");
         $item_family_number = $post['item_family_number'];
-        $kind = $post['kind'];
-        $size = $post['size'];
-        $color_1 = $post['color_1'];
-        $color_2 = $post['color_2'];
-        $male = $post['male'];
-        $waterproof = $post['waterproof'];
-        $platting = $post['platting'];
-        $type = $post['type'];
-
-        if($type == "LOCAL"){
-            $type = 2;
-        }elseif($type == "IMPORT"){
-            $type = 1;
+        $sql = $this->db->query("SELECT max(id) as kode FROM item_rm WHERE id LIKE '%RM" . $item_family_number . $y . "%'");
+        $row = $sql->row();
+        if ($row->kode == null) {
+            $autonumber = "RM" . $item_family_number . $y . "00001";
+        } else {
+            $kode = substr($row->kode, -5);
+            $autonumber = "RM" . $item_family_number . $y . sprintf("%05s", $kode + 1);
         }
-
-        if($item_family_number == "1" || $item_family_number == "4"){
-            $format = $item_family_number.$kind.$size.$color_1.$color_2.$type;
-        }else if(in_array($item_family_number, ["7","8","9"])){
-            $codes = $item_family_number.$kind.$color_1;
-            $sql = $this->db->query("SELECT max(SUBSTRING(id, 6, 4)) as kode FROM item_rm WHERE SUBSTRING(id, 1, 1) = '$item_family_number'");
-            $row = $sql->row();
-            if ($row->kode == "") {
-                $kode = 0;
-            } else {
-                $kode = $row->kode;
-            }
-            $format = $codes . sprintf("%04s", $kode + 1) . $type;
-        }else if(in_array($item_family_number, ["10","11","12","13","14","15","16","17","18","19"])){
-            $codes = $item_family_number.$kind.$color_1;
-            $sql = $this->db->query("SELECT max(SUBSTRING(id, 7, 3)) as kode FROM item_rm WHERE SUBSTRING(id, 1, 2) = '$item_family_number'");
-            $row = $sql->row();
-            if ($row->kode == "") {
-                $kode = 0;
-            } else {
-                $kode = $row->kode;
-            }
-            $format = $codes . sprintf("%03s", $kode + 1) . $type;
-        }else if($item_family_number == "2"){
-            $codes = $item_family_number.$male.$waterproof.$platting;
-            $sql = $this->db->query("SELECT max(SUBSTRING(id, 6, 4)) as kode FROM item_rm WHERE SUBSTRING(id, 1, 1) = '$item_family_number'");
-            $row = $sql->row();
-            if ($row->kode == "") {
-                $kode = 0;
-            } else {
-                $kode = $row->kode;
-            }
-            $format = $codes . sprintf("%04s", $kode + 1) . $type;
-        }else if($item_family_number == "3"){
-            $codes = $item_family_number.$male.$waterproof.$color_1;
-            $sql = $this->db->query("SELECT max(SUBSTRING(id, 6, 4)) as kode FROM item_rm WHERE SUBSTRING(id, 1, 1) = '$item_family_number'");
-            $row = $sql->row();
-            if ($row->kode == "") {
-                $kode = 0;
-            } else {
-                $kode = $row->kode;
-            }
-            $format = $codes . sprintf("%04s", $kode + 1) . $type;
-        }else if($item_family_number == "5"){
-            $format = $item_family_number.$kind."0".$size.$color_1."0".$type;
-        }else if($item_family_number == "6"){
-            $codes = $item_family_number.$kind.$size.$color_1;
-            $sql = $this->db->query("SELECT max(SUBSTRING(id, 8, 2)) as kode FROM item_rm WHERE id like '%$codes%'");
-            $row = $sql->row();
-            if ($row->kode == "") {
-                $kode = 0;
-            } else {
-                $kode = $row->kode;
-            }
-            $format = $codes . sprintf("%02s", $kode + 1) . $type;
-        }else{
-            $codes = $item_family_number;
-            $sql = $this->db->query("SELECT max(SUBSTRING(id, 3, 7)) as kode FROM item_rm WHERE SUBSTRING(id, 1, 2) = '$codes'");
-            $row = $sql->row();
-            
-            if ($row->kode == "") {
-                $kode = 0;
-            } else {
-                $kode = $row->kode;
-            }
-
-            $format = $codes . sprintf("%07s", $kode + 1) . $type;
-            // $format = $codes ."000000". ($kode + 1) . $type;
-        }
-
-        echo json_encode(array("code" => $format));
+        echo json_encode(array("code" => $autonumber));
     }
 
     // public function getSync()
     // {
     //     error_reporting(0);
-        
+
     //     $items = $this->crud->reads('item_rm');
     //     $rowItem = array();
     //     foreach ($items as $item) {
@@ -282,15 +207,15 @@ class Item_rm extends CI_Controller
         $moq = @$supplier_item->moq;
         $mpq = @$supplier_item->mpq;
 
-        if($data['item_family_name'] == "WIRE"){
+        if ($data['item_family_name'] == "WIRE") {
             $pfm_id = "01";
-        }elseif($data['item_family_name'] == "TERMINAL"){
+        } elseif ($data['item_family_name'] == "TERMINAL") {
             $pfm_id = "02";
-        }elseif($data['item_family_name'] == "NAME PLATE"){
+        } elseif ($data['item_family_name'] == "NAME PLATE") {
             $pfm_id = "05";
-        }elseif($data['item_family_name'] == "TUBE"){
+        } elseif ($data['item_family_name'] == "TUBE") {
             $pfm_id = "07";
-        }else{
+        } else {
             $pfm_id = "04";
         }
 
@@ -301,13 +226,13 @@ class Item_rm extends CI_Controller
         $this->pg->where("item_id", $data['number']);
         $record = $this->pg->get()->row();
 
-        if(empty($record)){
+        if (empty($record)) {
             $dataFinal = array(
                 "item_id" => $data['number'],
                 "um_id" => "01",
                 "item_name" => $data['name'],
                 "item_cct" => 0,
-                "item_regno" => mt_rand(1000,9999),
+                "item_regno" => mt_rand(1000, 9999),
                 "item_regdate" => date("Y-m-d"),
                 "stscode_id" => "01",
                 "type_id" => "02",
@@ -328,11 +253,108 @@ class Item_rm extends CI_Controller
 
             $this->pg->insert("mst_item", $dataFinal);
             echo json_encode(array("title" => "Good Job", "message" => "Save Data Completed", "theme" => "success"));
-        }else{
+        } else {
             echo json_encode(array("title" => "Duplicate", "message" => "Data Cannot Save in MRP Banshu", "theme" => "error"));
         }
     }
-    
+
+    public function syncPullclearFailed()
+    {
+        @unlink('failed/sync_item_rm.txt');
+    }
+
+    public function synccreateFailed()
+    {
+        if ($this->input->post()) {
+            $message = $this->input->post('message');
+            $textFailed = fopen('failed/sync_item_rm.txt', 'a');
+            fwrite($textFailed, $message . "\n");
+            fclose($textFailed);
+        }
+    }
+
+    //UPLOAD DOWNLOAD FAILED
+    public function syncPullDownloadFailed()
+    {
+        $file = "failed/sync_item_rm.txt";
+        header('Content-Description: File Failed');
+        header('Content-Disposition: attachment; filename=' . basename($file));
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+        header('Content-Length: ' . @filesize($file));
+        header("Content-Type: text/plain");
+        @readfile($file);
+    }
+
+    public function syncPullCreate()
+    {
+        if ($this->input->post()) {
+            $data = $this->input->post('data');
+            //Cek name                //table             //field db           //field excel
+
+            $y = date("y");
+            $item_family_number = $data['item_family_id'];
+
+            $sql = $this->db->query("SELECT max(id) as kode FROM item_rm WHERE id LIKE '%RM" . $item_family_number . $y . "%'");
+            $row = $sql->row();
+            if ($row->kode == null) {
+                $autonumber = "RM" . $item_family_number . $y . "00001";
+            } else {
+                $kode = substr($row->kode, -5);
+                $autonumber = "RM" . $item_family_number . $y . sprintf("%05s", $kode + 1);
+            }
+
+            $item_rm = $this->crud->read('item_rm', [], ["number" => $data['number']]);
+            $item_familys = $this->crud->read('item_familys', [], ["number" => $data['item_family_id']]);
+            $uom = $this->crud->read('uom', [], ["number" => $data['um_id']]);
+
+            $dataFinal = array(
+                //field        //excel
+                "item_category_id" => @$item_familys->item_category_id,
+                "item_family_id" => @$item_familys->id,
+                "number" => $data['number'],
+                "name" => $data['name'],
+                "uom" => @$uom->name,
+                "maker_id" => $data['maker_id'],
+            );
+
+            if (empty(@$item_familys->number)) {
+                $send = json_encode(array("title" => "Not Found", "message" => "Product Family " . $data['item_family_id'] . " Not Found", "theme" => "error"));
+            } else if (empty(@$uom->number)) {
+                $send = json_encode(array("title" => "Not Found", "message" => "Unit Measure  " . $data['um_id'] . " Not Found", "theme" => "error"));
+            } else {
+                if (!empty(@$item_rm->number)) {
+                    $item_categories = $this->crud->read('item_categories', [], ["id" => @$item_familys->item_category_id]);
+
+                    if (
+                        @$item_rm->item_category_id == @$item_familys->item_category_id &&
+                        @$item_rm->item_family_id == @$item_familys->id &&
+                        @$item_rm->number == $data['number'] &&
+                        @$item_rm->name == $data['name'] &&
+                        @$item_rm->uom == @$uom->name &&
+                        @$item_rm->maker_id == $data['maker_id']
+                    ) {
+                        $send = json_encode(array("title" => "No Changes", "message" => "Data is Same, No any changes", "theme" => "success"));
+                    } else {
+                        $exec = $this->crud->update('item_rm', ["id" => @$item_rm->id], $dataFinal);
+                        $exec = json_decode($exec);
+                        if ($exec->theme == 'success') {
+                            $send = json_encode(array("title" => "Good Job", "message" => "Part No Supplier " . $data['number'] . " Updated Successfully", "theme" => "success"));
+                        }
+                    }
+                } else {
+                    $exec = $this->crud->create('item_rm', array_merge($dataFinal, ["id" => $autonumber]));
+                    $exec = json_decode($exec);
+                    if ($exec->theme == 'success') {
+                        $send = json_encode(array("title" => "Good Job", "message" => "Part No Supplier." . $data['number'] . " Saved Successfully", "theme" => "success"));
+                    }
+                }
+            }
+            echo $send;
+        }
+    }
+
     //CREATE DATA
     public function create()
     {
@@ -456,17 +478,19 @@ class Item_rm extends CI_Controller
             $platting = $this->crud->read('item_platting', [], ["number" => $data['platting']]);
             $hsn = $this->crud->read('hsn', [], ["number" => $data['hsn_code']]);
             $maker = $this->crud->read('makers', [], ["number" => $data['maker_code']]);
-            $account_coa = $this->crud->read('account_coa', [], ["account_number" => @$product_family->account_number]);
+            // $account_coa = $this->crud->read('account_coa', [], ["account_number" => @$product_family->account_number]);
 
             if (empty($category->number)) {
                 echo json_encode(array("title" => "Not Found", "message" => "Category " . $data['item_category_number'] . " Not Found", "theme" => "error"));
             } elseif (empty($product_family->number)) {
                 echo json_encode(array("title" => "Not Found", "message" => "Product Family " . $data['item_family_number'] . " Not Found", "theme" => "error"));
-            // } elseif ($data['item_category_number'] == "FA") {
-            //     echo json_encode(array("title" => "Fixed Asset", "message" => "Category " . $data['item_category_number'] . " Cannot Create in Master RM", "theme" => "error"));
-            } elseif (empty(@$account_coa->account_number) && $product_family->number != "FA") {
-                echo json_encode(array("title" => "Not Found", "message" => "COA No " . @$data['account_number'] . " Not Found", "theme" => "error"));
-            } elseif (empty($hsn->name)) {
+                // } elseif ($data['item_category_number'] == "FA") {
+                //     echo json_encode(array("title" => "Fixed Asset", "message" => "Category " . $data['item_category_number'] . " Cannot Create in Master RM", "theme" => "error"));
+            }
+            //  elseif (empty(@$account_coa->account_number) && $product_family->number != "FA") {
+            //     echo json_encode(array("title" => "Not Found", "message" => "COA No " . @$data['account_number'] . " Not Found", "theme" => "error"));
+            // } 
+            elseif (empty($hsn->name)) {
                 echo json_encode(array("title" => "Not Found", "message" => "HSN Code " . $data['hsn_code'] . " Not Found", "theme" => "error"));
             } elseif (empty($kind->name)) {
                 echo json_encode(array("title" => "Not Found", "message" => "Kind Code " . $data['kind'] . " Not Found", "theme" => "error"));
@@ -486,87 +510,15 @@ class Item_rm extends CI_Controller
                 echo json_encode(array("title" => "Duplicated", "message" => " Part Name " . $data['name'] . " Similar Data in Item master", "theme" => "error"));
             } else {
                 $item_family_number = $product_family->number;
-                $kind = $data['kind'];
-                $size = $data['size'];
-                $color_1 = $data['color_1'];
-                $color_2 = $data['color_2'];
-                $male = $data['male'];
-                $waterproof = $data['waterproof'];
-                $platting = $data['platting'];
-                $type = $data['type'];
+                $y = date("y");
 
-                if($type == "LOCAL"){
-                    $type = 2;
-                }else{
-                    $type = 1;
-                }
-
-                if($item_family_number == "1" || $item_family_number == "4"){
-                    $format = $item_family_number.$kind.$size.$color_1.$color_2.$type;
-                }else if(in_array($item_family_number, ["7","8","9"])){
-                    $codes = $item_family_number.$kind.$color_1;
-                    $sql = $this->db->query("SELECT max(SUBSTRING(id, 6, 4)) as kode FROM item_rm WHERE SUBSTRING(id, 1, 1) = '$item_family_number'");
-                    $row = $sql->row();
-                    if ($row->kode == "") {
-                        $kode = 0;
-                    } else {
-                        $kode = $row->kode;
-                    }
-                    $format = $codes . sprintf("%04s", $kode + 1) . $type;
-                }else if(in_array($item_family_number, ["10","11","12","13","14","15","16","17","18","19"])){
-                    $codes = $item_family_number.$kind.$color_1;
-                    $sql = $this->db->query("SELECT max(SUBSTRING(id, 7, 3)) as kode FROM item_rm WHERE SUBSTRING(id, 1, 2) = '$item_family_number'");
-                    $row = $sql->row();
-                    if ($row->kode == "") {
-                        $kode = 0;
-                    } else {
-                        $kode = $row->kode;
-                    }
-                    $format = $codes . sprintf("%03s", $kode + 1) . $type;
-                }else if($item_family_number == "2"){
-                    $codes = $item_family_number.$male.$waterproof.$platting;
-                    $sql = $this->db->query("SELECT max(SUBSTRING(id, 6, 4)) as kode FROM item_rm WHERE SUBSTRING(id, 1, 1) = '$item_family_number'");
-                    $row = $sql->row();
-                    if ($row->kode == "") {
-                        $kode = 0;
-                    } else {
-                        $kode = $row->kode;
-                    }
-                    $format = $codes . sprintf("%04s", $kode + 1) . $type;
-                }else if($item_family_number == "3"){
-                    $codes = $item_family_number.$male.$waterproof.$color_1;
-                    $sql = $this->db->query("SELECT max(SUBSTRING(id, 6, 4)) as kode FROM item_rm WHERE SUBSTRING(id, 1, 1) = '$item_family_number'");
-                    $row = $sql->row();
-                    if ($row->kode == "") {
-                        $kode = 0;
-                    } else {
-                        $kode = $row->kode;
-                    }
-                    $format = $codes . sprintf("%04s", $kode + 1) . $type;
-                }else if($item_family_number == "5"){
-                    $format = $item_family_number.$kind."0".$size.$color_1."0".$type;
-                }else if($item_family_number == "6"){
-                    $codes = $item_family_number.$kind.$size.$color_1;
-                    $sql = $this->db->query("SELECT max(SUBSTRING(id, 8, 2)) as kode FROM item_rm WHERE id like '%$codes%'");
-                    $row = $sql->row();
-                    if ($row->kode == "") {
-                        $kode = 0;
-                    } else {
-                        $kode = $row->kode;
-                    }
-                    $format = $codes . sprintf("%02s", $kode + 1) . $type;
-                }else{
-                    $codes = $item_family_number;
-                    $sql = $this->db->query("SELECT max(SUBSTRING(id, 3, 7)) as kode FROM item_rm WHERE SUBSTRING(id, 1, 2) = '$codes'");
-                    $row = $sql->row();
-                    
-                    if ($row->kode == "") {
-                        $kode = 0;
-                    } else {
-                        $kode = $row->kode;
-                    }
-
-                    $format = $codes . sprintf("%07s", $kode + 1) . $type;
+                $sql = $this->db->query("SELECT max(id) as kode FROM item_rm WHERE id LIKE '%RM" . $item_family_number . $y . "%'");
+                $row = $sql->row();
+                if ($row->kode == null) {
+                    $format = "RM" . $item_family_number . $y . "00001";
+                } else {
+                    $kode = substr($row->kode, -5);
+                    $format = "RM" . $item_family_number . $y . sprintf("%05s", $kode + 1);
                 }
 
                 $dataFinal = array(
@@ -651,7 +603,7 @@ class Item_rm extends CI_Controller
             <tr>
                 <th width="20">No</th>
                 <th>Part ID</th>
-                <th>Part No</th>
+                <th>Part No EBWS</th>
                 <th>Description</th>
                 <th>Maker</th>
                 <th>Type</th>
@@ -662,8 +614,6 @@ class Item_rm extends CI_Controller
                 <th>IGST %</th>
                 <th>SGST %</th>
                 <th>CGST %</th>
-                <th>COA No</th>
-                <th>COA Name</th>
                 <th>Remark</th>
                 <th>Supply</th>
                 <th>Status</th>
@@ -684,8 +634,6 @@ class Item_rm extends CI_Controller
                         <td>' . $data['igst'] . '</td>
                         <td>' . $data['sgst'] . '</td>
                         <td>' . $data['cgst'] . '</td>
-                        <td>' . $data['account_number'] . '</td>
-                        <td>' . $data['account_name'] . '</td>
                         <td>' . $data['description'] . '</td>
                         <td>' . $data['supply'] . '</td>
                         <td>' . $data['status'] . '</td>
