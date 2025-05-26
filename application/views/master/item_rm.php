@@ -998,7 +998,7 @@
                         });
                     },
                     success: function(result) {
-                        Swal.close(); //Clear File
+                        Swal.close();
                         $.ajax({
                             url: "<?= base_url('master/item_rm/syncPullclearFailed') ?>"
                         });
@@ -1017,59 +1017,48 @@
                                 $('#p_start_sync').html(number);
                                 $('#p_finish_sync').html(total);
 
-                                $.ajax({
-                                    type: "POST",
-                                    async: true,
-                                    url: "<?= base_url('master/item_rm/syncPullCreate') ?>",
-                                    data: {
-                                        "data": json[number - 1]
-                                    },
-                                    cache: false,
-                                    dataType: "json",
-                                    success: function(result) {
-                                        if (result.theme == "success") {
-                                            $('#p_sync_success').html(success);
-                                            var title = "<b style='color: green;'>" + result.title + "</b> | " + result.message;
-                                            requestData(total, json, number + 1, value, success + 1, failed + 0);
-                                        } else {
-                                            $('#p_sync_failed').html(failed);
-                                            var title = "<b style='color: red;'>" + result.title + "</b> | " + result.message; //Json Failed
-                                            $.ajax({
-                                                type: "POST",
-                                                async: true,
-                                                url: "<?= base_url('master/item_rm/syncPullcreateFailed') ?>",
-                                                data: {
-                                                    data: json[number - 1],
-                                                    message: result.message
-                                                },
-                                                cache: false
-                                            });
-                                            requestData(total, json, number + 1, value, success + 0, failed + 1);
-                                        }
-                                        $("#p_remarks_sync").prepend(title + "<br>");
+                                $.post('<?= base_url('master/item_rm/syncPullCreate') ?>', {
+                                    data: json[number - 1]
+                                }, function(note) {
+                                    var result = eval('(' + note + ')');
+                                    if (result.theme == "success") {
+                                        Swal.close();
+                                        $('#p_sync_success').html(success);
+                                        var title = "<b style='color: green;'>" + result.title + "</b> | " + result.message;
+                                        requestData(total, json, number + 1, value, success + 1, failed + 0);
+                                    } else {
+                                        Swal.close();
+                                        $('#p_sync_failed').html(failed);
+                                        var title = "<b style='color: red;'>" + result.title + "</b> | " + result.message; //Json Failed
+                                        $.ajax({
+                                            type: "POST",
+                                            async: true,
+                                            url: "<?= base_url('master/item_rm/syncPullcreateFailed') ?>",
+                                            data: {
+                                                data: json[number - 1],
+                                                message: result.message
+                                            },
+                                            cache: false
+                                        });
+                                        requestData(total, json, number + 1, value, success + 0, failed + 1);
                                     }
+                                    $("#p_remarks_sync").prepend(title + "<br>");
+                                }).fail(function(jqXHR, textStatus) {
+                                    Swal.fire({
+                                        title: 'Connection Time Out, Re-connecting..',
+                                        showConfirmButton: false,
+                                        allowOutsideClick: false,
+                                        allowEscapeKey: false,
+                                        didOpen: () => {
+                                            Swal.showLoading();
+                                        },
+                                    });
+
+                                    requestData(total, json, number, value);
                                 });
-                            } else {
-                                // 
                             }
                         }
                     },
-
-                    error: function(jqXHR, textStatus, errorThrown) {
-                        if (textStatus == "error") {
-                            Swal.fire({
-                                title: 'Connection Time Out, Check Your Connection',
-                                showConfirmButton: false,
-                                allowOutsideClick: false,
-                                allowEscapeKey: false,
-                                didOpen: () => {
-                                    Swal.showLoading();
-                                },
-                            });
-
-                            requestData(total, json, number, value);
-                        }
-                    }
                 });
             }
         }]
