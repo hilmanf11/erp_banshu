@@ -225,9 +225,9 @@ class Os_rm extends CI_Controller
             $item_rm = $this->crud->read('item_rm', [], ["id" => $data['item_rm_id']]);
 
             if (!empty($os_rm->item_rm_id)) {
-                echo json_encode(array("title" => "Duplicated", "message" => "Part No EBWS " . $data['item_rm_id'] . " is Already Exist", "theme" => "error"));
+                echo json_encode(array("title" => "Duplicated", "message" => "Part No " . $data['item_rm_id'] . " is Already Exist", "theme" => "error"));
             }elseif(empty($item_rm->id)){
-                echo json_encode(array("title" => "Not Found", "message" => "Part No EBWS " . $data['item_rm_id'] . " is Not Found", "theme" => "error"));
+                echo json_encode(array("title" => "Not Found", "message" => "Part No " . $data['item_rm_id'] . " is Not Found", "theme" => "error"));
             } else {
                 $location = $this->crud->query("SELECT `number` from warehouse_locations where item_family_id = '$item_rm->item_family_id' order by RAND() limit 1");
 
@@ -243,7 +243,7 @@ class Os_rm extends CI_Controller
                     $send = $this->crud->create('os_rm', $dataFinal);
                     echo $send;
                 }else{
-                    echo json_encode(array("title" => "Not Found", "message" => "Part No EBWS " . $data['item_rm_id'] . " Location Not Ready", "theme" => "error"));
+                    echo json_encode(array("title" => "Not Found", "message" => "Part No " . $data['item_rm_id'] . " Location Not Ready", "theme" => "error"));
                 }
             }
         }
@@ -504,7 +504,7 @@ class Os_rm extends CI_Controller
             <table id="os_rm" border="1">
                 <tr>
                     <th width="20">No</th>
-                    <th>Part No EBWS</th>
+                    <th>Part No</th>
                     <th>Part No Supplier</th>
                     <th>Description</th>
                     <th>Category</th>

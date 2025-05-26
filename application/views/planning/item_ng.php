@@ -9,7 +9,7 @@
             <th rowspan="2" data-options="field:'process',width:120,halign:'center'">Process</th>
             <th rowspan="2" data-options="field:'type',width:100,halign:'center'">NG Type</th>
             <th rowspan="2" data-options="field:'workorder',width:150,halign:'center'">Work Order</th>
-            <th rowspan="2" data-options="field:'item_rm_id',width:100,halign:'center'">Part No EBWS</th>
+            <th rowspan="2" data-options="field:'item_rm_id',width:100,halign:'center'">Part No</th>
             <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No Supplier</th>
             <th rowspan="2" data-options="field:'item_rm_name',width:200,halign:'center'">Description</th>
             <th rowspan="2" data-options="field:'stock',width:80,halign:'center',align:'right',formatter:numberformat">Qty</th>
@@ -180,7 +180,7 @@
                     field: 'item_rm_id',
                     width: 150,
                     halign: 'center',
-                    title: "Part No EBWS",
+                    title: "Part No",
                     editor: {
                         type: 'combogrid',
                         options: {
@@ -195,7 +195,7 @@
                             columns: [
                                 [{
                                     field: 'id',
-                                    title: 'Part No EBWS',
+                                    title: 'Part No',
                                     width: 100
                                 },{
                                     field: 'number',
@@ -699,7 +699,7 @@
                     columns: [
                         [{
                             field: 'id',
-                            title: 'Part No EBWS',
+                            title: 'Part No',
                             width: 100
                         }, {
                             field: 'number',

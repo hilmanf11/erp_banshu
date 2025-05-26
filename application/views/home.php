@@ -7,7 +7,7 @@
 		</div>
 
 		<div class="logo-company">
-			<img src="<?= $config->favicon ?>" width="90"><br>
+			<img src="<?= $config->favicon ?>" width="50"><br>
 		</div>
 		<div class="name-company">
 			<b style="font-size: 16px !important;"><?= $config->name ?></b><br>

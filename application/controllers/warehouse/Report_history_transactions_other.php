@@ -127,7 +127,7 @@ class Report_history_transactions_other extends CI_Controller
             <table id="customers" border="1">
                 <tr>
                     <th width="20">No</th>
-                    <th colspan="2">Part No EBWS</th>
+                    <th colspan="2">Part No</th>
                     <th>Part No Supplier</th>
                     <th colspan="3">Description</th>
                     <th>Uom</th>

@@ -380,7 +380,7 @@ class purchase_returns extends CI_Controller
                         </tr>
                             <tr>
                             <th>NO</th>
-                            <th>PART NO EBWS</th>
+                            <th>Part No</th>
                             <th>PART NO SUPPLIER</th>
                             <th>PO NO</th>
                             <th>INVOICE NO</th>

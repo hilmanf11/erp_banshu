@@ -5,7 +5,7 @@
             <legend><b>Form Filter Data</b></legend>
             <div style="width: 50%; float:left;">
                 <div class="fitem">
-                    <span style="width:30%; display:inline-block;">Part No EBWS</span>
+                    <span style="width:30%; display:inline-block;">Part No</span>
                     <input style="width:60%;" id="filter_item_rm_id" name="filter_item_rm_id" class="easyui-combogrid">
                 </div>
                 <div class="fitem">
@@ -55,11 +55,11 @@
             textField: 'number',
             mode: 'remote',
             fitColumns: true,
-            prompt: "Choose Part No EBWS",
+            prompt: "Choose Part No",
             columns: [
                 [{
                     field: 'id',
-                    title: 'Part No EBWS',
+                    title: 'Part No',
                     width: 150
                 }, {
                     field: 'number',

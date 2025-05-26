@@ -8,7 +8,7 @@
             <th rowspan="2" data-options="field:'po_date',width:100,align:'center'">Del. Sch Date</th>
             <th rowspan="2" data-options="field:'supplier_po',width:150,halign:'center'">PO No</th>
             <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Supplier</th>
-            <th rowspan="2" data-options="field:'item_rm_id',width:100,halign:'center'">Part No EBWS</th>
+            <th rowspan="2" data-options="field:'item_rm_id',width:100,halign:'center'">Part No</th>
             <th rowspan="2" data-options="field:'item_rm_number',width:150,halign:'center'">Part No Supplier</th>
             <th rowspan="2" data-options="field:'item_rm_name',width:200,halign:'center'">Description</th>
             <th rowspan="2" data-options="field:'asset_code',width:100,halign:'center'">Asset Code</th>
@@ -135,7 +135,7 @@
                 <input style="width:60%;" name="request_no" readonly class="easyui-textbox">
             </div>
             <div class="fitem">
-                <span style="width:35%; display:inline-block;">Part No EBWS</span>
+                <span style="width:35%; display:inline-block;">Part No</span>
                 <input style="width:60%;" name="item_rm_id" readonly class="easyui-textbox">
             </div>
             <div class="fitem">
@@ -392,7 +392,7 @@
             columns: [
                 [{
                     field: 'id',
-                    title: 'Part No EBWS',
+                    title: 'Part No',
                     width: 100
                 }, {
                     field: 'number',
@@ -462,7 +462,7 @@
                             field: 'item_rm_id',
                             width: 150,
                             halign: 'center',
-                            title: "Part No EBWS",
+                            title: "Part No",
                             editor: {
                                 type: 'combogrid',
                                 options: {
@@ -477,7 +477,7 @@
                                     columns: [
                                         [{
                                             field: 'id',
-                                            title: 'Part No EBWS',
+                                            title: 'Part No',
                                             width: 100
                                         }, {
                                             field: 'number',

@@ -242,7 +242,7 @@ class Generate_mrp extends CI_Controller
         <table id="os_fg" border="1">
             <tr>
                 <th width="20">No</th>
-                <th>Part No EBWS</th>
+                <th>Part No</th>
                 <th>Part No Supplier</th>
                 <th>Description</th>
             </tr>';
@@ -1244,7 +1244,7 @@ class Generate_mrp extends CI_Controller
                         <th rowspan="2" style="text-align:center;" width="80">APPROVE</th>
                         <th rowspan="2" style="text-align:center;">APPROVED BY</th>
                         <th rowspan="2" style="text-align:center;">PERIOD</th>
-                        <th rowspan="2" style="text-align:center;">PART NO EBWS</th>
+                        <th rowspan="2" style="text-align:center;">Part No</th>
                         <th rowspan="2" style="text-align:center;">PART NO SUPPLIER</th>
                         <th rowspan="2" style="text-align:center;">DESCRIPTION</th>
                         <th rowspan="2" style="text-align:center;">PRODUCT FAMILY</th>

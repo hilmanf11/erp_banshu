@@ -619,7 +619,7 @@ class Material_calculation extends CI_Controller
         <table id="customers" border="1" style="width:150%;">
             <tr>
                 <th style="text-align:center;" rowspan="3" width="20">NO</th>
-                <th style="text-align:center;" width="150" rowspan="3">PART NO EBWS</th>
+                <th style="text-align:center;" width="150" rowspan="3">Part No</th>
                 <th style="text-align:center;" width="150" rowspan="3">PART NO SUPPLIER</th>
                 <th style="text-align:center;" width="80" rowspan="3">DESCRIPTION</th>
                 <th style="text-align:center;" width="80" rowspan="3">PRODUCT FAMILY</th>

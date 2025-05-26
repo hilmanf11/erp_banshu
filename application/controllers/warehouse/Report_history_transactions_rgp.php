@@ -243,7 +243,7 @@ class Report_history_transactions_rgp extends CI_Controller
             <table id="customers" border="1">
                 <tr>
                     <th rowspan="2" width="20">No</th>
-                    <th rowspan="2" colspan="2">Part No EBWS</th>
+                    <th rowspan="2" colspan="2">Part No</th>
                     <th rowspan="2" colspan="3">Part No Supplier</th>
                     <th rowspan="2" colspan="3">Description</th>
                     <th rowspan="2">Category</th>

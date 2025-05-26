@@ -15,7 +15,7 @@
             <th colspan="2" data-options="field:'coslpan',halign:'center'">Invoice</th>
             <th rowspan="2" data-options="field:'awb_no',width:120,halign:'center'">BOE No</th>
             <th rowspan="2" data-options="field:'awb_date',width:120,halign:'center', formatter: dateFormat">BOE Date</th>
-            <th rowspan="2" data-options="field:'item_rm_id',width:150,halign:'center'">Part No EBWS</th>
+            <th rowspan="2" data-options="field:'item_rm_id',width:150,halign:'center'">Part No</th>
             <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No Supplier</th>
             <th rowspan="2" data-options="field:'item_rm_name',width:200,halign:'center'">Description</th>
             <th rowspan="2" data-options="field:'asset_code',width:120,halign:'center'">Asset Code</th>
@@ -168,7 +168,7 @@
                     <!-- <th field="ck" checkbox="true"></th> -->
                     <th hidden data-options="field:'id',width:100,editor:{type:'numberbox', options:{readonly:true}}">ID</th>
                     <th data-options="field:'po_no',width:120">PO No</th>
-                    <th data-options="field:'item_rm_id',width:120">Part No EBWS</th>
+                    <th data-options="field:'item_rm_id',width:120">Part No</th>
                     <th data-options="field:'item_rm_number',width:200">Part No Supplier</th>
                     <th data-options="field:'item_rm_name',width:200">Description</th>
                     <th hidden data-options="field:'asset_code_sub',width:150">Asset Code Sub</th>
@@ -786,7 +786,7 @@
             columns: [
                 [{
                     field: 'id',
-                    title: 'Part No EBWS',
+                    title: 'Part No',
                     width: 120
                 }, {
                     field: 'number',

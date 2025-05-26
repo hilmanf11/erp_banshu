@@ -13,7 +13,7 @@ class Sample_requests extends CI_Controller
         $this->load->library('Ciqrcode');
         $this->load->model('crud');
         //Validasi Form
-        $this->form_validation->set_rules('item_rm_id', 'Part No EBWS', 'required|min_length[1]|max_length[100]');
+        $this->form_validation->set_rules('item_rm_id', 'Part No', 'required|min_length[1]|max_length[100]');
     }
 
     public function index()
@@ -383,7 +383,7 @@ class Sample_requests extends CI_Controller
                 <tr>
                     <th width="20">No</th>
                     <th>Sample No</th>
-                    <th>Part No EBWS</th>
+                    <th>Part No</th>
                     <th>Part No Supplier</th>
                     <th>Description</th>
                     <th>Category</th>
@@ -494,7 +494,7 @@ class Sample_requests extends CI_Controller
                 <tr>
                     <th width="20">No</th>
                     <th>Sample No</th>
-                    <th>Part No EBWS</th>
+                    <th>Part No</th>
                     <th>Part No Supplier</th>
                     <th>Description</th>
                     <th>Category</th>

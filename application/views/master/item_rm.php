@@ -3,7 +3,7 @@
     <thead frozen="true">
         <th field="ck" checkbox="true"></th>
         <th data-options="field:'foto',width:35,halign:'center',formatter:FormatterImage">Foto</th>
-        <th data-options="field:'id',width:120,halign:'center'">Part No EBWS</th>
+        <th data-options="field:'id',width:120,halign:'center'">Part No</th>
         <th data-options="field:'number',width:200,halign:'center'">Part No Supplier</th>
     </thead>
     <thead>
@@ -15,9 +15,9 @@
             <th rowspan="2" data-options="field:'maker_name',width:150,halign:'center'">Maker Name</th>
             <th rowspan="2" data-options="field:'type',width:100,halign:'center'">Type</th>
             <th rowspan="2" data-options="field:'hsn_number',width:100,halign:'center'">HSN No</th>
-            <th rowspan="2" data-options="field:'igst',width:100,halign:'center'">IGST %</th>
+            <!-- <th rowspan="2" data-options="field:'igst',width:100,halign:'center'">IGST %</th>
             <th rowspan="2" data-options="field:'sgst',width:100,halign:'center'">SGST %</th>
-            <th rowspan="2" data-options="field:'cgst',width:100,halign:'center'">CGST %</th>
+            <th rowspan="2" data-options="field:'cgst',width:100,halign:'center'">CGST %</th> -->
             <th rowspan="2" data-options="field:'account_number',width:150,halign:'center'">COA No</th>
             <th rowspan="2" data-options="field:'account_name',width:150,halign:'center'">COA Name</th>
             <th rowspan="2" data-options="field:'description',width:150,halign:'center'">Remarks</th>
@@ -41,7 +41,7 @@
 
 <!-- TOOLBAR DATAGRID -->
 <div id="toolbar" style="height: 35px;">
-    <a href="javascript:;" class="easyui-linkbutton" id="sync" data-options="plain:true" onclick="sync()"><i class="fa fa-history"></i> Push Data</a>
+    <a href="javascript:;" class="easyui-linkbutton" id="sync" data-options="plain:true" onclick="sync()"><i class="fa fa-history"></i> Sync Data</a>
     <?= $button ?>
 </div>
 
@@ -130,7 +130,7 @@
                     </div>
                     
                     <div class="fitem">
-                        <span style="width:35%; display:inline-block;">Part No EBWS</span>
+                        <span style="width:35%; display:inline-block;">Part No</span>
                         <input style="width:50%;" name="id" id="id" required="" class="easyui-textbox" data-options="prompt:'Automatic'" readonly>
                         <a href="javascript:;" class="easyui-linkbutton" title="Generate ID" data-options="plain:false" onclick="autoid()"><i class="fa fa-history"></i></a>
                     </div>

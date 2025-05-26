@@ -184,7 +184,7 @@
                     field: 'item_rm_id',
                     width: 150,
                     halign: 'center',
-                    title: "Part No EBWS",
+                    title: "Part No",
                     editor: {
                         type: 'combogrid',
                         options: {
@@ -200,7 +200,7 @@
                             columns: [
                                 [{
                                     field: 'id',
-                                    title: 'Part No EBWS',
+                                    title: 'Part No',
                                     width: 100
                                 },{
                                     field: 'number',
@@ -785,7 +785,7 @@
                     columns: [
                         [{
                             field: 'id',
-                            title: 'Part No EBWS',
+                            title: 'Part No',
                             width: 100
                         },{
                             field: 'number',

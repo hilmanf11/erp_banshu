@@ -226,7 +226,7 @@ class Sto_other extends CI_Controller
             $warehouse_location_others = $this->crud->read('warehouse_location_others', [], ["number" => $data['number']]);
 
             if (empty($item_rm->id)) {
-                echo json_encode(array("title" => "Not Found", "message" => "Part No EBWS " . $data['item_rm_id'] . " is Not Found", "theme" => "error"));
+                echo json_encode(array("title" => "Not Found", "message" => "Part No " . $data['item_rm_id'] . " is Not Found", "theme" => "error"));
             } elseif (empty($warehouse_location_others->number)) {
                 echo json_encode(array("title" => "Not Found", "message" => "Location Other " . $data['location_other_number'] . " is Not Found", "theme" => "error"));
             } else {
@@ -328,7 +328,7 @@ class Sto_other extends CI_Controller
                 <tr>
                     <th width="20">No</th>
                     <th>Document No</th>
-                    <th>Part No EBWS</th>
+                    <th>Part No</th>
                     <th>Part No Supplier</th>
                     <th>Description</th>
                     <th>Category</th>

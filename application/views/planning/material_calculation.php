@@ -2,7 +2,7 @@
     <thead data-options="frozen:true">
         <tr>
             <th field="ck" checkbox="true"></th>
-            <th data-options="field:'item_rm_id',width:120,halign:'center'">Part No EBWS</th>
+            <th data-options="field:'item_rm_id',width:120,halign:'center'">Part No</th>
             <th data-options="field:'item_rm_number',width:200,halign:'center'">Part No Supplier</th>
         </tr>
     </thead>
@@ -177,7 +177,7 @@
         <thead>
             <tr>
                 <th data-options="field:'number_customer',width:150,halign:'center'">Product No</th>
-                <th data-options="field:'item_rm_id',width:120,halign:'center'">Part No EBWS</th>
+                <th data-options="field:'item_rm_id',width:120,halign:'center'">Part No</th>
                 <th data-options="field:'item_rm_number',width:180,halign:'center'">Part No Supplier</th>
                 <th data-options="field:'total',width:80,halign:'center',align:'right',formatter:numberformat">Qty</th>
             </tr>
@@ -537,7 +537,7 @@
                     columns: [
                         [{
                             field: 'id',
-                            title: 'Part No EBWS',
+                            title: 'Part No',
                             width: 100
                         }, {
                             field: 'number',
@@ -570,7 +570,7 @@
             columns: [
                 [{
                     field: 'id',
-                    title: 'Part No EBWS',
+                    title: 'Part No',
                     width: 100
                 }, {
                     field: 'number',

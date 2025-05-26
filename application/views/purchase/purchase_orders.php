@@ -265,7 +265,7 @@
         <thead>
             <tr>
                 <th field="ck" checkbox="true"></th>
-                <th data-options="field:'item_rm_id',width:150,halign:'center'">Part No EBWS</th>
+                <th data-options="field:'item_rm_id',width:150,halign:'center'">Part No</th>
                 <th data-options="field:'item_rm_number',width:200,halign:'center'">Part No Supplier</th>
                 <th data-options="field:'item_rm_name',width:200,halign:'center'">Description</th>
                 <th data-options="field:'product_family',width:120,halign:'center'">Product Family</th>
@@ -584,7 +584,7 @@
                     columns: [
                         [{
                             field: 'id',
-                            title: 'Part No EBWS',
+                            title: 'Part No',
                             width: 150
                         },{
                             field: 'number',
@@ -1447,7 +1447,7 @@
                     columns: [
                         [{
                             field: 'id',
-                            title: 'Part No EBWS',
+                            title: 'Part No',
                             width: 120
                         }, {
                             field: 'number',
@@ -1480,7 +1480,7 @@
             columns: [
                 [{
                     field: 'id',
-                    title: 'Part No EBWS',
+                    title: 'Part No',
                     width: 120
                 }, {
                     field: 'number',

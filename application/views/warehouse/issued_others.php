@@ -7,7 +7,7 @@
             <th rowspan="2" data-options="field:'request_no',width:150,halign:'center'">Requisition No</th>
             <th rowspan="2" data-options="field:'trans_date',width:120,halign:'center'">Requisition Date</th>
             <th rowspan="2" data-options="field:'request_name',width:150,halign:'center'">Requisition Name</th>
-            <th rowspan="2" data-options="field:'item_rm_id',width:120,halign:'center'">Part No EBWS</th>
+            <th rowspan="2" data-options="field:'item_rm_id',width:120,halign:'center'">Part No</th>
             <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No Supplier</th>
             <th rowspan="2" data-options="field:'item_rm_name',width:200,halign:'center'">Description</th>
             <th rowspan="2" data-options="field:'uom',width:80,align:'center'">UoM</th>
@@ -121,7 +121,7 @@
                 <input style="width:60%;" name="id" id="id" required class="easyui-textbox">
             </div>
             <div class="fitem">
-                <span style="width:35%; display:inline-block;">Part No EBWS</span>
+                <span style="width:35%; display:inline-block;">Part No</span>
                 <input style="width:60%;" name="item_rm_id" id="item_rm_id" disabled class="easyui-textbox">
             </div>
             <div class="fitem">
@@ -206,7 +206,7 @@
                     field: 'item_rm_id',
                     width: 120,
                     halign: 'center',
-                    title: "Part No EBWS",
+                    title: "Part No",
                     editor: {
                         type: 'combogrid',
                         options: {
@@ -217,11 +217,11 @@
                             textField: 'item_rm_id',
                             mode: 'remote',
                             fitColumns: true,
-                            prompt: 'Choose Part No EBWS',
+                            prompt: 'Choose Part No',
                             columns: [
                                 [{
                                     field: 'item_rm_id',
-                                    title: 'Part No EBWS',
+                                    title: 'Part No',
                                     width: 150
                                 }, {
                                     field: 'item_rm_number',

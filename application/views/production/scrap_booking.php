@@ -3,7 +3,7 @@
         <tr>
             <th data-options="field:'detail',width:80,halign:'center',formatter:BtnDetail">Detail</th>
             <th data-options="field:'status2',width:80,align:'center', formatter: statusformat, styler:statusStyle">Status</th>
-            <th data-options="field:'id',width:150,halign:'center'">Part No EBWS</th>
+            <th data-options="field:'id',width:150,halign:'center'">Part No</th>
             <th data-options="field:'number',width:150,halign:'center'">Part No Supplier</th>
             <th data-options="field:'name',width:200,halign:'center'">Description</th>
             <th data-options="field:'uom',width:80,align:'center'">UoM</th>
@@ -287,7 +287,7 @@
             columns: [
                 [{
                     field: 'id',
-                    title: 'Part No EBWS',
+                    title: 'Part No',
                     width: 150
                 }, {
                     field: 'number',

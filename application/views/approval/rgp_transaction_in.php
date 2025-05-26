@@ -21,7 +21,7 @@
             <th data-options="field:'reference_number',width:150,halign:'center'">Reference</th>
             <th data-options="field:'rgp_number',width:200,halign:'center'">RGP Out No.</th>
             <th data-options="field:'customer_order_no',width:150,halign:'center'">Customer Order No</th>
-            <th data-options="field:'item_id',width:150,halign:'center'">Part No EBWS</th>
+            <th data-options="field:'item_id',width:150,halign:'center'">Part No</th>
             <th data-options="field:'item_number',width:150,halign:'center'">Part No Supplier</th>
             <th data-options="field:'item_name',width:120,halign:'center'">Description</th>
             <th data-options="field:'uom',width:80,align:'center'">Uom</th>

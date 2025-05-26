@@ -983,7 +983,7 @@ class Purchase_requests extends CI_Controller
                                 <table id="customers">
                                     <tr>
                                         <th width="20">No</th>
-                                        <th width="120">Part No EBWS</th>
+                                        <th width="120">Part No</th>
                                         <th width="120">Part No Supplier</th>
                                         <th width="100">Delivery Date <br>(ETA)</th>
                                         <th width="50">Qty</th>

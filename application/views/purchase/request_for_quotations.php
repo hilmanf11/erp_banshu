@@ -8,7 +8,7 @@
             <!-- <th rowspan="2" data-options="field:'status',width:120,align:'center',formatter:statusformat,styler:statusStyle">Status</th> -->
             <th rowspan="2" data-options="field:'rfq_no',width:200,halign:'center'">RFQ No</th>
             <th rowspan="2" data-options="field:'rfq_date',width:100,halign:'center'">RFQ Date</th>
-            <th rowspan="2" data-options="field:'item_rm_id',width:120,halign:'center'">Part No EBWS</th>
+            <th rowspan="2" data-options="field:'item_rm_id',width:120,halign:'center'">Part No</th>
             <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No Supplier</th>
             <th rowspan="2" data-options="field:'item_rm_name',width:200,halign:'center'">Description</th>
             <th rowspan="2" data-options="field:'uom',width:80,align:'center'">UoM</th>
@@ -166,7 +166,7 @@
                     field: 'item_rm_id',
                     width: 150,
                     halign: 'center',
-                    title: "Part No EBWS",
+                    title: "Part No",
                     editor: {
                         type: 'combogrid',
                         options: {
@@ -181,7 +181,7 @@
                             columns: [
                                 [{
                                     field: 'id',
-                                    title: 'Part No EBWS',
+                                    title: 'Part No',
                                     width: 100
                                 }, {
                                     field: 'number',
@@ -775,7 +775,7 @@
         columns: [
             [{
                 field: 'id',
-                title: 'Part No EBWS',
+                title: 'Part No',
                 width: 100
             }, {
                 field: 'number',

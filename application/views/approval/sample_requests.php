@@ -9,7 +9,7 @@
     <tr>
             <th field="ck" checkbox="true"></th>
             <th data-options="field:'number',width:180,halign:'center'">Sample No.</th>
-            <th data-options="field:'item_rm_number',width:150,halign:'center'">Part No EBWS</th>
+            <th data-options="field:'item_rm_number',width:150,halign:'center'">Part No</th>
             <th data-options="field:'item_rm_number',width:150,halign:'center'">Part No Supplier</th>
             <th data-options="field:'item_rm_name',width:200,halign:'center'">Description</th>
             <th data-options="field:'item_category_name',width:200,halign:'center'">Category</th>

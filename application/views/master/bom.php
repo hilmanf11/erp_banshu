@@ -233,7 +233,7 @@
                     field: 'item_rm_id',
                     width: 150,
                     halign: 'center',
-                    title: "Part No EBWS",
+                    title: "Part No",
                     editor: {
                         type: 'combogrid',
                         options: {
@@ -244,11 +244,11 @@
                             textField: 'id',
                             mode: 'remote',
                             fitColumns: true,
-                            prompt: 'Choose Part No EBWS',
+                            prompt: 'Choose Part No',
                             columns: [
                                 [{
                                     field: 'id',
-                                    title: 'Part No EBWS',
+                                    title: 'Part No',
                                     width: 150
                                 }, {
                                     field: 'number',
@@ -424,7 +424,7 @@
                     field: 'item_rm_id',
                     width: 150,
                     halign: 'center',
-                    title: "Part No EBWS",
+                    title: "Part No",
                     editor: {
                         type: 'combogrid',
                         options: {
@@ -435,11 +435,11 @@
                             textField: 'id',
                             mode: 'remote',
                             fitColumns: true,
-                            prompt: 'Choose Part No EBWS',
+                            prompt: 'Choose Part No',
                             columns: [
                                 [{
                                     field: 'id',
-                                    title: 'Part No EBWS',
+                                    title: 'Part No',
                                     width: 150
                                 }, {
                                     field: 'number',
@@ -1031,7 +1031,7 @@
                     columns: [
                         [{
                             field: 'item_rm_id',
-                            title: 'Part No EBWS',
+                            title: 'Part No',
                             halign: 'center',
                             width: 150
                         }, {

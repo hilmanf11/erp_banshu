@@ -110,7 +110,7 @@
     <table id="dg_details" class="easyui-datagrid" style="width:100%;">
         <thead>
             <tr>
-                <th data-options="field:'item_rm_id',width:120,halign:'center'">Part No EBWS</th>
+                <th data-options="field:'item_rm_id',width:120,halign:'center'">Part No</th>
                 <th data-options="field:'item_rm_number',width:200,halign:'center'">Part No Supplier</th>
                 <th data-options="field:'item_rm_name',width:150,halign:'center'">Description</th>
                 <th data-options="field:'uom',width:80,align:'center'">Uom</th>

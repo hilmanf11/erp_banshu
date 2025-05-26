@@ -83,7 +83,7 @@
     <table id="dg_exception" class="easyui-datagrid" style="width:100%;" toolbar="#toolbar">
         <thead>
             <tr>
-                <th data-options="field:'item_rm_id',width:120,halign:'center'">Part No EBWS</th>
+                <th data-options="field:'item_rm_id',width:120,halign:'center'">Part No</th>
                 <th data-options="field:'item_rm_number',width:250,halign:'center'">Part No Supplier</th>
                 <th data-options="field:'item_rm_name',width:250,halign:'center'">Description</th>
                 <th data-options="field:'mpq',width:80,align:'center', styler:numberStyle">MPQ</th>
@@ -696,7 +696,7 @@
                     columns: [
                         [{
                             field: 'id',
-                            title: 'Part No EBWS',
+                            title: 'Part No',
                             width: 150
                         },{
                             field: 'number',

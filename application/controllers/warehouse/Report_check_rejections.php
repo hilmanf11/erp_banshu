@@ -100,7 +100,7 @@ class Report_check_rejections extends CI_Controller
                 <th width="20" rowspan="2">No</th>
                 <th rowspan="2">Serial No</th>
                 <th rowspan="2">Supplier Name</th>
-                <th rowspan="2">Part No EBWS</th>
+                <th rowspan="2">Part No</th>
                 <th rowspan="2">Part No Supplier</th>
                 <th rowspan="2">PO No</th>
                 <th rowspan="2">Invoice No</th>

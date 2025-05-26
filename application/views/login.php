@@ -17,7 +17,7 @@
 			<div class="wrap-login100">
 				<form class="login100-form validate-form" method="post">
 					<center>
-						<img src="<?= $config->logo ?>" width="200">
+						<img src="<?= $config->logo ?>" width="80">
 					</center>
 					<br>
 					<?= $message ?>

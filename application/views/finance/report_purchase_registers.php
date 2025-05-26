@@ -152,7 +152,7 @@
                     columns: [
                         [{
                             field: 'item_rm_id',
-                            title: 'Part No EBWS',
+                            title: 'Part No',
                             width: 120
                         }, {
                             field: 'item_rm_number',
@@ -179,7 +179,7 @@
             columns: [
                 [{
                     field: 'item_rm_id',
-                    title: 'Part No EBWS',
+                    title: 'Part No',
                     width: 120
                 }, {
                     field: 'item_rm_number',

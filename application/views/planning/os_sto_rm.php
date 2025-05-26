@@ -5,7 +5,7 @@
             <th rowspan="2" field="ck" checkbox="true"></th>
             <th rowspan="2" data-options="field:'id',width:120,halign:'center'">STO ID</th>
             <th rowspan="2" data-options="field:'document_no',width:120,halign:'center'">Document No</th>
-            <th rowspan="2" data-options="field:'item_rm_id',width:150,halign:'center'">Part No EBWS</th>
+            <th rowspan="2" data-options="field:'item_rm_id',width:150,halign:'center'">Part No</th>
             <th rowspan="2" data-options="field:'item_rm_number',width:150,halign:'center'">Part No Supplier</th>
             <th rowspan="2" data-options="field:'item_rm_name',width:100,halign:'center'">Description</th>
             <th rowspan="2" data-options="field:'category_name',width:100,halign:'center'">Category</th>

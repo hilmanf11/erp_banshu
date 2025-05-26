@@ -9,7 +9,7 @@
         <tr>
             <th field="ck" checkbox="true"></th>
             <th data-options="field:'document_no',width:120,halign:'center'">Document No</th>
-            <th data-options="field:'item_rm_id',width:150,halign:'center'">Part No EBWS</th>
+            <th data-options="field:'item_rm_id',width:150,halign:'center'">Part No</th>
             <th data-options="field:'item_rm_number',width:150,halign:'center'">Part No Supplier</th>
             <th data-options="field:'item_rm_name',width:100,halign:'center'">Description</th>
             <th data-options="field:'product_family_name',width:150,halign:'center'">Product Family</th>

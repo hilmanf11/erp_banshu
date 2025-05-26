@@ -586,7 +586,7 @@ class Purchase_order_receipt_others extends CI_Controller
                                             <tr>
                                                 <th>No</th>
                                                 <th>PO No</th>
-                                                <th>Part No EBWS</th>
+                                                <th>Part No</th>
                                                 <th>Part No Supplier</th>
                                                 <th>Description</th>
                                                 <th>Category</th>
@@ -739,7 +739,7 @@ class Purchase_order_receipt_others extends CI_Controller
                 <th rowspan="2">BOE No</th>
                 <th rowspan="2">BOE Date</th>
                 <th colspan="4" style="text-align:center;">Supplier</th>
-                <th rowspan="2">Part No EBWS</th>
+                <th rowspan="2">Part No</th>
                 <th rowspan="2">Part No Supplier</th>
                 <th rowspan="2">Description</th>
                 <th rowspan="2">UoM</th>

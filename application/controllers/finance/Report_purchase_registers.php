@@ -177,7 +177,7 @@ class Report_purchase_registers extends CI_Controller
                     <th rowspan="2">Invoice No</th>
                     <th rowspan="2">Invoice Date</th>
                     <th rowspan="2">Posting Date</th>
-                    <th rowspan="2">Part No EBWS</th>
+                    <th rowspan="2">Part No</th>
                     <th rowspan="2">Asset Code</th>
                     <th rowspan="2">Part Description</th>
                     <th rowspan="2">Material Type</th>

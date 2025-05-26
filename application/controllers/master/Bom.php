@@ -495,7 +495,7 @@ class Bom extends CI_Controller
             if (empty($item_fg->id)) {
                 echo json_encode(array("title" => "Not Found", "message" => "Product No EBWS " . $data['item_fg_number'] . " Not Found", "theme" => "error"));
             } elseif (empty($item_rm->id)) {
-                echo json_encode(array("title" => "Not Found", "message" => "Part No EBWS " . $data['item_rm_number'] . " Not Found", "theme" => "error"));
+                echo json_encode(array("title" => "Not Found", "message" => "Part No " . $data['item_rm_number'] . " Not Found", "theme" => "error"));
             } elseif (empty($process_main->id)) {
                 echo json_encode(array("title" => "Not Found", "message" => "Process Main " . $data['main_process'] . " Not Found", "theme" => "error"));
             } elseif (!empty($bom->item_rm_id)) {
@@ -619,7 +619,7 @@ class Bom extends CI_Controller
                 <th>Product No EBWS</th>
                 <th>Product No Customer</th>
                 <th>Description</th>
-                <th>Part No EBWS</th>
+                <th>Part No</th>
                 <th>Part No Supplier</th>
                 <th>Description</th>
                 <th>Maker</th>
@@ -729,7 +729,7 @@ class Bom extends CI_Controller
             </tr>';
         $html .= '<tr>
         <th width="5">No</th>
-        <th>Part No EBWS</th>
+        <th>Part No</th>
         <th>Part No Supplier</th>
         <th>Product Family</th>
         <th>Process Main</th>
@@ -737,7 +737,7 @@ class Bom extends CI_Controller
         <th>UoM</th>
         <th>QPA</th>
         <th width="5">No</th>
-        <th>Part No EBWS</th>
+        <th>Part No</th>
         <th>Part No Supplier</th>
         <th>Product Family</th>
         <th>Process Main</th>

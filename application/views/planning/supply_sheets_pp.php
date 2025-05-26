@@ -240,7 +240,7 @@
                                             columns: [
                                                 [{
                                                     field: 'id',
-                                                    title: 'Part No EBWS',
+                                                    title: 'Part No',
                                                     width: 150
                                                 },{
                                                     field: 'number',
@@ -302,7 +302,7 @@
                         width: 150,
                         // hidden: true,
                         halign: 'center',
-                        title: "Part No EBWS",
+                        title: "Part No",
                         editor: {
                             type: 'textbox',
                             options: {

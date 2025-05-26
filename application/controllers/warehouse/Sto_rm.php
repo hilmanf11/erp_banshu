@@ -223,7 +223,7 @@ class Sto_rm extends CI_Controller
             $item_rm = $this->crud->read('item_rm', [], ["id" => $data['item_rm_id']]);
 
             if(empty($item_rm->id)){
-                echo json_encode(array("title" => "Not Found", "message" => "Part No EBWS " . $data['item_rm_id'] . " is Not Found", "theme" => "error"));
+                echo json_encode(array("title" => "Not Found", "message" => "Part No " . $data['item_rm_id'] . " is Not Found", "theme" => "error"));
             }elseif(!in_array($data['type'], array("IN","OUT"))){
                 echo json_encode(array("title" => "Not Found", "message" => "Type " . $data['type'] . " is Not IN/OUT", "theme" => "error"));
             } else {
@@ -323,7 +323,7 @@ class Sto_rm extends CI_Controller
                 <tr>
                     <th width="20">No</th>
                     <th>Document No</th>
-                    <th>Part No EBWS</th>
+                    <th>Part No</th>
                     <th>Part No Supplier</th>
                     <th>Description</th>
                     <th>Category</th>

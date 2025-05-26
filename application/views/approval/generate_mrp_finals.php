@@ -55,7 +55,7 @@
             <tr>
                 <th field="ck" checkbox="true"></th>
                 <th data-options="field:'period',width:80,halign:'center'">Period</th>
-                <th data-options="field:'item_rm_id',width:100,halign:'center'">Part No EBWS</th>
+                <th data-options="field:'item_rm_id',width:100,halign:'center'">Part No</th>
                 <th data-options="field:'item_rm_number',width:200,halign:'center'">Part No Supplier</th>
             </tr>
         </thead>

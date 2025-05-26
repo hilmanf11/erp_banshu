@@ -329,7 +329,7 @@ class Report_check_serialno extends CI_Controller
                 <th width="20">No</th>
                 <th>Serial No</th>
                 <th>Supplier Name</th>
-                <th>Part No EBWS</th>
+                <th>Part No</th>
                 <th>Part No Supplier</th>
                 <th>Receipt No</th>
                 <th>Receipt Date</th>

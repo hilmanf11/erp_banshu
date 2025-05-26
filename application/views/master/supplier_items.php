@@ -8,7 +8,7 @@
             <th rowspan="2" data-options="field:'supplier_id',width:120,halign:'center'">Supplier ID</th>
             <th rowspan="2" data-options="field:'supplier_po',width:150,halign:'center'">Supplier PO</th>
             <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Supplier Name</th>
-            <th rowspan="2" data-options="field:'item_rm_id',width:150,halign:'center'">Part No EBWS</th>
+            <th rowspan="2" data-options="field:'item_rm_id',width:150,halign:'center'">Part No</th>
             <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No Supplier</th>
             <th rowspan="2" data-options="field:'item_rm_name',width:150,halign:'center'">Description</th>
             <!-- <th rowspan="2" data-options="field:'item_supplier',width:150,halign:'center'">Part Supplier</th> -->
@@ -936,7 +936,7 @@
             columns: [
                 [{
                     field: 'id',
-                    title: 'Part No EBWS',
+                    title: 'Part No',
                     width: 100
                 }, {
                     field: 'number',

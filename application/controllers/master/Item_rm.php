@@ -651,7 +651,7 @@ class Item_rm extends CI_Controller
             <tr>
                 <th width="20">No</th>
                 <th>Part ID</th>
-                <th>Part No EBWS</th>
+                <th>Part No</th>
                 <th>Description</th>
                 <th>Maker</th>
                 <th>Type</th>

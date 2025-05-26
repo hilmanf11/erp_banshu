@@ -641,7 +641,7 @@ class Costing_products extends CI_Controller
                                 </tr>
                                 <tr>
                                     <th width="20">No</th>
-                                    <th>Part No EBWS</th>
+                                    <th>Part No</th>
                                     <th>Part No Supplier</th>
                                     <th>Uom</th>
                                     <th>Supply Type</th>

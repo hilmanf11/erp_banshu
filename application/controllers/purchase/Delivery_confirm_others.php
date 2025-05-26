@@ -464,7 +464,7 @@ class Delivery_confirm_others extends CI_Controller
                 <th>Invoice No</th>
                 <th>PO No</th>
                 <th>PO Date</th>
-                <th>Part No EBWS</th>
+                <th>Part No</th>
                 <th>Part No Supplier</th>
                 <th>Description</th>
                 <th>Product Family</th>

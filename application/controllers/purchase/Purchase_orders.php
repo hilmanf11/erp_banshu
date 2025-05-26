@@ -1213,7 +1213,7 @@ class Purchase_orders extends CI_Controller
                                 <table class="customers" style="width:100%;">
                                     <tr>
                                         <th style="text-align:center;">No</th>
-                                        <th style="text-align:center;">Part No EBWS</th>
+                                        <th style="text-align:center;">Part No</th>
                                         <th style="text-align:center;">Part No Supplier</th>
                                         <th style="text-align:center;">Part Name</th>
                                         <th style="text-align:center;">ETD</th>
@@ -1657,7 +1657,7 @@ class Purchase_orders extends CI_Controller
                 <th style="text-align:center;">PO No</th>
                 <th style="text-align:center;">Register No</th>
                 <th style="text-align:center;">Register Date</th>
-                <th style="text-align:center;">Part No EBWS</th>
+                <th style="text-align:center;">Part No</th>
                 <th style="text-align:center;">Part No Supplier</th>
                 <th style="text-align:center;">Part Name</th>
                 <th style="text-align:center;">Product Family</th>

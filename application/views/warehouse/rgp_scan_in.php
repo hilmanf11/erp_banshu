@@ -14,7 +14,7 @@
     <thead>
         <tr>
             <th rowspan="2" data-options="field:'label_no',halign:'center',width:200">Serial No</th>
-            <th rowspan="2" data-options="field:'item_id',width:150,halign:'center'">Part No EBWS</th>
+            <th rowspan="2" data-options="field:'item_id',width:150,halign:'center'">Part No</th>
             <th rowspan="2" data-options="field:'item_number',width:200,halign:'center'">Part No Supplier</th>
             <th rowspan="2" data-options="field:'item_name',width:200,halign:'center'">Description</th>
             <th rowspan="2" data-options="field:'item_category_name',width:150,halign:'center'">Category</th>
