@@ -81,45 +81,45 @@ class Mrp extends CI_Model
         $login = $this->login();
 
         if ($login->information == 'Success') {
-            // $token = $login->token;
-            // $curl = curl_init();
-
-            // curl_setopt_array($curl, array(
-            //     CURLOPT_URL => 'http://erp.banshu-ind.com/pro-api/master_item',
-            //     CURLOPT_RETURNTRANSFER => true,
-            //     CURLOPT_ENCODING => '',
-            //     CURLOPT_MAXREDIRS => 10,
-            //     CURLOPT_TIMEOUT => 0,
-            //     CURLOPT_FOLLOWLOCATION => true,
-            //     CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            //     CURLOPT_CUSTOMREQUEST => 'GET',
-            //     CURLOPT_HTTPHEADER => array(
-            //         'Content-Type: application/json',
-            //         "Authorization: Bearer $token",
-            //     ),
-            // ));
-
-            // $response = curl_exec($curl);
-
-            // curl_close($curl);
-            // return json_decode($response);
-
             $token = $login->token;
-            $url = 'http://erp.banshu-ind.com/pro-api/master_item';
+            $curl = curl_init();
 
-            $ch = curl_init($url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-                'Content-Type:application/json',
-                "Authorization: Bearer $token",
+            curl_setopt_array($curl, array(
+                CURLOPT_URL => 'http://erp.banshu-ind.com/pro-api/master_item',
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => '',
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 0,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => 'GET',
+                CURLOPT_HTTPHEADER => array(
+                    'Content-Type: application/json',
+                    "Authorization: Bearer $token",
+                ),
             ));
-            curl_setopt($ch, CURLOPT_TIMEOUT, 600);
-            curl_setopt($ch, CURLOPT_POST, true);
-            $response = curl_exec($ch);
 
-            curl_close($ch);
+            $response = curl_exec($curl);
 
+            curl_close($curl);
             return json_decode($response);
+
+            // $token = $login->token;
+            // $url = 'http://erp.banshu-ind.com/pro-api/master_item';
+
+            // $ch = curl_init($url);
+            // curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            // curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            //     'Content-Type:application/json',
+            //     "Authorization: Bearer $token",
+            // ));
+            // curl_setopt($ch, CURLOPT_TIMEOUT, 600);
+            // curl_setopt($ch, CURLOPT_POST, true);
+            // $response = curl_exec($ch);
+
+            // curl_close($ch);
+
+            // return json_decode($response);
         } else {
             $data = [];
             return $data;

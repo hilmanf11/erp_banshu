@@ -1053,6 +1053,22 @@
                                 // 
                             }
                         }
+                    },
+
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        if (textStatus == "error") {
+                            Swal.fire({
+                                title: 'Connection Time Out, Check Your Connection',
+                                showConfirmButton: false,
+                                allowOutsideClick: false,
+                                allowEscapeKey: false,
+                                didOpen: () => {
+                                    Swal.showLoading();
+                                },
+                            });
+
+                            requestData(total, json, number, value);
+                        }
                     }
                 });
             }

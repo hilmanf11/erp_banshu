@@ -263,7 +263,7 @@ class Item_rm extends CI_Controller
         @unlink('failed/sync_item_rm.txt');
     }
 
-    public function synccreateFailed()
+    public function syncPullcreateFailed()
     {
         if ($this->input->post()) {
             $message = $this->input->post('message');
