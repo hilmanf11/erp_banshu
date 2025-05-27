@@ -1054,7 +1054,7 @@
                                         },
                                     });
 
-                                    requestData(total, json, number, value);
+                                    requestData(total, json, number, value, success, failed);
                                 });
                             }
                         }

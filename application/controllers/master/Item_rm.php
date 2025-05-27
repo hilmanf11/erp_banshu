@@ -603,7 +603,7 @@ class Item_rm extends CI_Controller
             <tr>
                 <th width="20">No</th>
                 <th>Part ID</th>
-                <th>Part No EBWS</th>
+                <th>Original Part No</th>
                 <th>Description</th>
                 <th>Maker</th>
                 <th>Type</th>
@@ -611,9 +611,6 @@ class Item_rm extends CI_Controller
                 <th>Category</th>
                 <th>Product Family</th>
                 <th>HSN Code</th>
-                <th>IGST %</th>
-                <th>SGST %</th>
-                <th>CGST %</th>
                 <th>Remark</th>
                 <th>Supply</th>
                 <th>Status</th>
@@ -631,9 +628,6 @@ class Item_rm extends CI_Controller
                         <td>' . $data['item_category_name'] . '</td>
                         <td>' . $data['item_family_name'] . '</td>
                         <td>' . $data['hsn_code'] . '</td>
-                        <td>' . $data['igst'] . '</td>
-                        <td>' . $data['sgst'] . '</td>
-                        <td>' . $data['cgst'] . '</td>
                         <td>' . $data['description'] . '</td>
                         <td>' . $data['supply'] . '</td>
                         <td>' . $data['status'] . '</td>
