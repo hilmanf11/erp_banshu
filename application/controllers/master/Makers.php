@@ -141,6 +141,7 @@ class Makers extends CI_Controller
                 'name' => $data->val($i, 3),
                 'description' => $data->val($i, 4),
                 'type' => $data->val($i, 5),
+                'origin' => $data->val($i, 6)
             );
         }
         $datas['total'] = count($datas);
@@ -207,6 +208,7 @@ class Makers extends CI_Controller
         $this->db->where('deleted', 0);
         $this->db->order_by('id', 'ASC');
         $records = $this->db->get()->result_array();
+
         $html = '<html><head><title>Print Data</title></head><style>body {font-family: Arial, Helvetica, sans-serif;}#customers {border-collapse: collapse;width: 100%;font-size: 12px;}#customers td, #customers th {border: 1px solid #ddd;padding: 2px;}#customers tr:nth-child(even){background-color: #f2f2f2;}#customers tr:hover {background-color: #ddd;}#customers th {padding-top: 2px;padding-bottom: 2px;text-align: left;color: black;}</style><body>
         <center>
             <div style="float: left; font-size: 12px; text-align: left;">
@@ -239,6 +241,7 @@ class Makers extends CI_Controller
                 <th>Name</th>
                 <th>Description</th>
                 <th>Type</th>
+                <th>Country of Origin</th>
             </tr>';
         $no = 1;
         foreach ($records as $data) {
@@ -248,7 +251,8 @@ class Makers extends CI_Controller
                     <td>' . $data['name'] . '</td>
                     <td>' . $data['number'] . '</td>
                     <td>' . $data['description'] . '</td>
-                    <td>' . $data['type'] . '</td>';
+                    <td>' . $data['type'] . '</td>
+                    <td>' . $data['origin'] . '</td>';
             $no++;
         }
         $html .= '</table></body></html>';

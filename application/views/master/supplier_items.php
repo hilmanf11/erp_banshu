@@ -4,10 +4,9 @@
         <tr>
             <th rowspan="2" field="ck" checkbox="true"></th>
             <th rowspan="2" data-options="field:'detail',width:80,halign:'center',formatter:BtnDetail">History</th>
-            <th colspan="4" data-options="field:'',width:100,halign:'center'">Approved</th>
-            <th rowspan="2" data-options="field:'plant',width:100,halign:'center'">Plant</th>
-            <th rowspan="2" data-options="field:'supplier_id',width:120,halign:'center'">Supplier ID</th>
-            <th rowspan="2" data-options="field:'supplier_po',width:150,halign:'center'">Supplier PO</th>
+            <th rowspan="2" data-options="field:'plant',width:80,halign:'center'">Plant</th>
+            <th rowspan="2" data-options="field:'supplier_id',width:100,halign:'center'">Supplier ID</th>
+            <!-- <th rowspan="2" data-options="field:'supplier_po',width:150,halign:'center'">Supplier PO</th> -->
             <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Supplier Name</th>
             <th rowspan="2" data-options="field:'item_rm_id',width:150,halign:'center'">Original Part No</th>
             <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No Supplier</th>
@@ -28,14 +27,15 @@
             <th rowspan="2" data-options="field:'attachment',width:100,halign:'center',formatter:BtnAttachment">Attachment</th>
             <th rowspan="2" data-options="field:'attachment2',width:100,halign:'center',formatter:BtnAttachment2">Attachment 2</th>
             <th rowspan="2" data-options="field:'attachment3',width:100,halign:'center',formatter:BtnAttachment3">Attachment 3</th>
-            <th rowspan="2" data-options="field:'landed_cost',width:80,align:'center'">Landed Cost</th>
-            <th rowspan="2" data-options="field:'import_duty',width:80,align:'center'">Import Duty</th>
+            <th rowspan="2" data-options="field:'landed_cost',width:80,align:'center'">Landed<br>Cost</th>
+            <th rowspan="2" data-options="field:'import_duty',width:80,align:'center'">Import<br>Duty</th>
             <th rowspan="2" data-options="field:'leadtime',width:80,align:'center'">Mfg L/T<br>(Days)</th>
             <th rowspan="2" data-options="field:'transit',width:80,align:'center'">Transit<br>(Days)</th>
             <th rowspan="2" data-options="field:'share_order',width:80,align:'center'">Share Order %<br></th>
             <th rowspan="2" data-options="field:'safety_stock',width:80,halign:'center',align:'right',formatter:numberformatComa">Safety <br>Stock<br>(%)</th>
             <th rowspan="2" data-options="field:'calculate',width:80,align:'center'">Calculate<br>MPQ</th>
             <th rowspan="2" data-options="field:'remarks',width:250,halign:'center'">Remarks</th>
+            <th colspan="4" data-options="field:'',width:100,halign:'center'">Approved</th>
             <th colspan="2" data-options="field:'',width:100,halign:'center'"> Created</th>
             <th colspan="2" data-options="field:'',width:100,halign:'center'"> Updated</th>
         </tr>
@@ -59,6 +59,10 @@
             <legend><b>Form Filter Data</b></legend>
             <div style="width: 30%; float: left;">
                 <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Plant</span>
+                    <input style="width:60%;" name="filter_plant" id="filter_plant" class="easyui-combobox">
+                </div>
+                <div class="fitem">
                     <span style="width:35%; display:inline-block;">Supplier</span>
                     <input style="width:60%;" name="filter_suppliers" id="filter_suppliers" class="easyui-combogrid">
                 </div>
@@ -71,15 +75,15 @@
                     </select>
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Maker</span>
-                    <input style="width:60%;" name="filter_maker" id="filter_maker" class="easyui-combogrid">
-                </div>
-                <div class="fitem">
                     <span style="width:35%; display:inline-block;"></span>
                     <a href="javascript:;" class="easyui-linkbutton" onclick="filter()"><i class="fa fa-search"></i> Filter Data</a>
                 </div>
             </div>
             <div style="width: 30%; float: left;">
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Maker</span>
+                    <input style="width:60%;" name="filter_maker" id="filter_maker" class="easyui-combogrid">
+                </div>
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Product Family</span>
                     <input style="width:60%;" id="filter_category" class="easyui-combobox">
@@ -88,17 +92,17 @@
                     <span style="width:35%; display:inline-block;">Part No</span>
                     <input style="width:60%;" name="filter_item_rm" id="filter_item_rm" class="easyui-combogrid">
                 </div>
+            </div>
+            <div style="width: 30%; float: left;">
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Part Supplier</span>
                     <input style="width:60%;" name="filter_item_vendor" id="filter_item_vendor" class="easyui-combobox">
                 </div>
-            </div>
-            <div style="width: 30%; float: left;">
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Share Order</span>
                     <input style="width:60%;" name="filter_share_order" id="filter_share_order" class="easyui-combobox">
                 </div>
-                <div class="fitem" style="margin-bottom: 5px;">
+                <div class="fitem" style="margin-bottom: 5px;" hidden>
                     <span style="width:35%; display:inline-block;">Approval</span>
                     <select style="width:60%;" name="filter_status_price" id="filter_status_price" panelHeight="auto" class="easyui-combobox">
                         <option value="">ALL</option>
@@ -298,7 +302,7 @@
 </div>
 
 <!-- PDF -->
-<iframe id="printout" src="<?= base_url('master/supplier_items/print') ?>" style="width: 100%;" hidden></iframe>
+<iframe id="printout" style="width: 100%;" hidden></iframe>
 <script>
 
     //ADD DATA
@@ -410,6 +414,7 @@
     //FILTER DATA
     function filter() {
         var filter_category = $("#filter_category").combobox('getValue');
+        var filter_plant = $("#filter_plant").combobox('getValue');
         var filter_suppliers = $("#filter_suppliers").combogrid('getValue');
         var filter_maker = $("#filter_maker").combogrid('getValue');
         var filter_item_rm = $("#filter_item_rm").combogrid('getValue');
@@ -421,6 +426,7 @@
 
         var url = "?filter_suppliers=" + window.btoa(filter_suppliers) +
             "&filter_item_rm=" + window.btoa(filter_item_rm) +
+            "&filter_plant=" + window.btoa(filter_plant) +
             "&filter_category=" + window.btoa(filter_category) +
             "&filter_maker=" + window.btoa(filter_maker) +
             "&filter_item_vendor=" + window.btoa(filter_item_vendor) +
@@ -440,8 +446,8 @@
             pageSize: 20,
         });
 
-        $("#printout").contents().find('html').html("<center><br><br><br><b style='font-size:20px;'>Please Wait...</b></center>");
-        $("#printout").attr('src', '<?= base_url('master/supplier_items/print') ?>' + url);
+        //$("#printout").contents().find('html').html("<center><br><br><br><b style='font-size:20px;'>Please Wait...</b></center>");
+        //$("#printout").attr('src', '<?= base_url('master/supplier_items/print') ?>' + url);
     }
 
     //PRINT PDF
@@ -452,6 +458,7 @@
     //PRINT EXCEL
     function excel() {
         var filter_category = $("#filter_category").combobox('getValue');
+        var filter_plant = $("#filter_plant").combobox('getValue');
         var filter_suppliers = $("#filter_suppliers").combogrid('getValue');
         var filter_maker = $("#filter_maker").combogrid('getValue');
         var filter_item_rm = $("#filter_item_rm").combogrid('getValue');
@@ -463,6 +470,7 @@
 
         var url = "?filter_suppliers=" + window.btoa(filter_suppliers) +
             "&filter_item_rm=" + window.btoa(filter_item_rm) +
+            "&filter_plant=" + window.btoa(filter_plant) +
             "&filter_category=" + window.btoa(filter_category) +
             "&filter_maker=" + window.btoa(filter_maker) +
             "&filter_item_vendor=" + window.btoa(filter_item_vendor) +
@@ -1003,6 +1011,19 @@
             valueField: 'number',
             textField: 'name',
             prompt: 'Select Plant',
+        });
+
+        $('#filter_plant').combobox({
+            url: '<?php echo base_url('master/plants/reads'); ?>',
+            valueField: 'number',
+            textField: 'name',
+            prompt: 'Select Plant',
+            icons: [{
+                iconCls: 'icon-clear',
+                handler: function(e) {
+                    $(e.data.target).combobox('clear').combobox('textbox').focus();
+                }
+            }],
         });
 
         $('#filter_item_rm').combogrid({

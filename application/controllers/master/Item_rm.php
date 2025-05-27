@@ -40,7 +40,8 @@ class Item_rm extends CI_Controller
             JOIN item_familys b ON a.item_family_id = b.id
             JOIN item_categories c ON a.item_category_id = c.id 
             WHERE b.id like '%$item_family_id%' and a.status = 0 and c.id IN ('C01')
-            and (a.id like '%$post%' or a.number like '%$post%' or a.name like '%$post%')");
+            and (a.id like '%$post%' or a.number like '%$post%' or a.name like '%$post%')
+            LIMIT 1000");
         echo json_encode($send);
     }
 
