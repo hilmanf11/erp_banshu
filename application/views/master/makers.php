@@ -8,6 +8,7 @@
             <th rowspan="2" data-options="field:'name',width:200,halign:'center'">Name</th>
             <th rowspan="2" data-options="field:'description',width:150,halign:'center'">Description</th>
             <th rowspan="2" data-options="field:'type',width:100,halign:'center'">Type</th>
+            <th rowspan="2" data-options="field:'origin',width:120,halign:'center'">Country of Origin</th>
             <th colspan="2" data-options="field:'',width:100,halign:'center'"> Created</th>
             <th colspan="2" data-options="field:'',width:100,halign:'center'"> Updated</th>
         </tr>
@@ -46,6 +47,10 @@
                     <option value="IMPORT">IMPORT</option>
                     <option value="LOCAL">LOCAL</option>
                 </select>
+            </div>
+            <div class="fitem">
+                <span style="width:35%; display:inline-block;">Country of Origin</span>
+                <input style="width:60%;" name="origin" id="origin" class="easyui-combobox">
             </div>
         </fieldset>
     </form>
@@ -237,6 +242,13 @@
                     });
                 }
             }]
+        });
+
+        $('#origin').combobox({
+            url:'<?= base_url('master/origins/reads'); ?>',
+            valueField:'name',
+            textField:'name',
+            prompt: 'Choose Origin',
         });
 
         // UPLOAD

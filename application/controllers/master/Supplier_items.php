@@ -115,6 +115,7 @@ class Supplier_items extends CI_Controller
     //GET DATATABLES
     public function datatables()
     {
+        $filter_plant = base64_decode($this->input->get('filter_plant'));
         $filter_suppliers = base64_decode($this->input->get('filter_suppliers'));
         $filter_category = base64_decode($this->input->get('filter_category'));
         $filter_maker  = base64_decode($this->input->get('filter_maker'));
@@ -153,6 +154,9 @@ class Supplier_items extends CI_Controller
         }
         if($filter_suppliers != ""){
             $this->db->like('a.supplier_id', $filter_suppliers);
+        }
+        if($filter_plant != ""){
+            $this->db->like('a.plant', $filter_plant);
         }
         if($filter_item_rm != ""){
             $this->db->like('a.item_rm_id', $filter_item_rm);
@@ -373,23 +377,24 @@ class Supplier_items extends CI_Controller
         for ($i = 3; $i <= $total_row; $i++) {
             $datas[] = array(
                 //excel
-                'supplier_id' => $data->val($i, 2),
-                'item_rm_id' => $data->val($i, 3),
-                'spq' => $data->val($i, 4),
-                'mpq' => $data->val($i, 5),
-                'moq' => $data->val($i, 6),
-                'coo_name' => $data->val($i, 7),
-                'landed_cost' => $data->val($i, 8),
-                'import_duty' => $data->val($i, 9),
-                'share_order' => $data->val($i, 10),
-                'leadtime' => $data->val($i, 11),
-                'transit' => $data->val($i, 12),
-                'currency' => $data->val($i, 13),
-                'price' => $data->val($i, 14),
-                'valid_date' => $data->val($i, 15),
-                'safety_stock' => $data->val($i, 16),
-                'account_number' => $data->val($i, 17),
-                'calculate' => $data->val($i, 18)
+                'plant' => $data->val($i, 2),
+                'supplier_id' => $data->val($i, 3),
+                'item_rm_id' => $data->val($i, 4),
+                'spq' => $data->val($i, 5),
+                'mpq' => $data->val($i, 6),
+                'moq' => $data->val($i, 7),
+                'coo_name' => $data->val($i, 8),
+                'landed_cost' => $data->val($i, 9),
+                'import_duty' => $data->val($i, 10),
+                'share_order' => $data->val($i, 11),
+                'leadtime' => $data->val($i, 12),
+                'transit' => $data->val($i, 13),
+                'currency' => $data->val($i, 14),
+                'price' => $data->val($i, 15),
+                'valid_date' => $data->val($i, 16),
+                'safety_stock' => $data->val($i, 17),
+                'account_number' => $data->val($i, 18),
+                'calculate' => $data->val($i, 19)
             );
         }
         $datas['total'] = count($datas);
@@ -435,9 +440,11 @@ class Supplier_items extends CI_Controller
             $supplier = $this->crud->read('suppliers', [], ["id" => $data['supplier_id']]);
             $plant = $this->crud->read('plants', [], ["number" => $data['plant']]);
             $account_number = $this->crud->read('account_coa', [], ["account_number" => $data['account_number']]);
-            $item_rm = $this->crud->read('item_rm', [], ["id" => $data['item_rm_id'], "approved_to" => ""]);
-            $supplier_items = $this->crud->read('supplier_items', [], ["supplier_id" => $data['supplier_id'], "item_rm_id" => @$item_rm->id, "plant" => $data['plant']]);
-            $sqlSupItm = $this->db->query("SELECT SUM(share_order) as share_order FROM supplier_items WHERE item_rm_id = '$item_rm->id' and supplier_id != '$supplier->id' GROUP BY item_rm_id");
+            $item_rm = $this->crud->read('item_rm', [], ["id" => $data['item_rm_id']]);
+            $item_rm_id = @$item_rm->id;
+            $supplier_id = @$supplier->id;
+            $supplier_items = $this->crud->read('supplier_items', [], ["supplier_id" => $supplier_id, "item_rm_id" => $item_rm_id, "plant" => $data['plant']]);
+            $sqlSupItm = $this->db->query("SELECT SUM(share_order) as share_order FROM supplier_items WHERE item_rm_id = '$item_rm_id' and supplier_id != '$supplier_id' GROUP BY item_rm_id");
             $rowSupItm = $sqlSupItm->row();
 
             $dataFinal = array(
@@ -477,7 +484,7 @@ class Supplier_items extends CI_Controller
             }elseif((@$rowSupItm->share_order + $data['share_order']) > 100){
                 echo json_encode(array("title" => "Share Order", "message" => "Share Order for Part No " . $data['item_rm_id'] . " Cannot >= 100", "theme" => "error"));
             }elseif($data['mpq'] <= 0 || $data['moq'] <= 0 || $data['share_order'] <= 0 || $data['leadtime'] <= 0){
-                echo json_encode(array("title" => "MPQ 0", "message" => "MPQ or MOQ for Part No " . $data['item_rm_id'] . " Cannot <= 0", "theme" => "error"));
+                echo json_encode(array("title" => "MPQ 0", "message" => "MPQ, MOQ, Share Order, Leadtime for Part No " . $data['item_rm_id'] . " Cannot <= 0", "theme" => "error"));
             }elseif(@$supplier_items->supplier_id != "") {
                 if(@$supplier_items->price == $data['price']){
                     $this->db->update('supplier_items', $dataFinal, ["supplier_id" => @$supplier->id, "item_rm_id" => @$item_rm->id]);
@@ -506,6 +513,7 @@ class Supplier_items extends CI_Controller
             header("Content-Disposition: attachment; filename=supplier_items_$format.xls");
         }
 
+        $filter_plant  = base64_decode($this->input->get('filter_plant'));
         $filter_suppliers  = base64_decode($this->input->get('filter_suppliers'));
         $filter_category  = base64_decode($this->input->get('filter_category'));
         $filter_maker  = base64_decode($this->input->get('filter_maker'));
@@ -538,6 +546,9 @@ class Supplier_items extends CI_Controller
         }
         if($filter_suppliers != ""){
             $this->db->like('a.supplier_id', $filter_suppliers);
+        }
+        if($filter_plant != ""){
+            $this->db->like('a.plant', $filter_plant);
         }
         if($filter_item_rm != ""){
             $this->db->like('a.item_rm_id', $filter_item_rm);
@@ -655,6 +666,8 @@ class Supplier_items extends CI_Controller
                     <td>' . $data['currency'] . '</td>
                     <td>' . $data['price'] . '</td>
                     <td>' . $data['valid_date'] . '</td>
+                    <td>' . $data['landed_cost'] . '</td>
+                    <td>' . $data['import_duty'] . '</td>
                     <td>' . $data['leadtime'] . '</td>
                     <td>' . $data['transit'] . '</td>
                     <td>' . $data['share_order'] . '</td>
