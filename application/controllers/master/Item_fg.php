@@ -35,7 +35,7 @@ class item_fg extends CI_Controller
         //master/customers
         //master/customer_items
         $post = isset($_POST['q']) ? $_POST['q'] : "";
-        $send = $this->crud->query("SELECT * FROM item_fg WHERE (`number` like '%$post%' or number_customer like '%$post%' or `name` like '%$post%') and approved_to = '' and status = 0");
+        $send = $this->crud->query("SELECT * FROM item_fg WHERE (`number` like '%$post%' or number_customer like '%$post%' or `name` like '%$post%') and (approved_to = '' or approved_to is null) and status = 0");
         echo json_encode($send);
     }
 
@@ -99,27 +99,45 @@ class item_fg extends CI_Controller
     //AUTO ID
     public function autoid()
     {
-        $post = $this->input->post();
-        $customer_number = $post['customer_number'];
-        $harnes_type = $post['harnes_type'];
-        $revision = $post['revision'];
+        // $post = $this->input->post();
+        // $customer_number = $post['customer_number'];
+        // $harnes_type = $post['harnes_type'];
+        // $revision = $post['revision'];
 
-        $combine = $customer_number . $harnes_type;
-        $sql = $this->db->query("SELECT max(SUBSTRING(`number`, 5, 4)) as kode FROM item_fg WHERE SUBSTRING(`number`, 1, 4) = '$combine' and SUBSTRING(`number`, 9, 2) = '$revision'");
-        $row = $sql->row();
-        if ($row->kode == "") {
-            $kode = 0;
+        // $combine = $customer_number . $harnes_type;
+        // $sql = $this->db->query("SELECT max(SUBSTRING(`number`, 5, 4)) as kode FROM item_fg WHERE SUBSTRING(`number`, 1, 4) = '$combine' and SUBSTRING(`number`, 9, 2) = '$revision'");
+        // $row = $sql->row();
+        // if ($row->kode == "") {
+        //     $kode = 0;
+        // } else {
+        //     $kode = $row->kode;
+        // }
+        // $autoid = $combine . sprintf("%04s", $kode + 1) . $revision;
+        // echo json_encode(array("code" => $autoid));
+
+        $post = $this->input->post();
+        $y = date("y");;
+        if (strlen($post['customer_number']) == 2) {
+            $customernumber = "0" .  $post['customer_number']; // Tambahkan nol di depan jika panjangnya 2
         } else {
-            $kode = $row->kode;
+            $customernumber =  $post['customer_number'];
         }
-        $autoid = $combine . sprintf("%04s", $kode + 1) . $revision;
+        $combine = 'FG' . $y . $customernumber;
+        $sql = $this->db->query("SELECT max(`number`) as kode FROM item_fg WHERE `number` like '%$combine%'");
+        $row = $sql->row();
+        if ($row->kode == null) {
+            $autoid = $combine . "00001";
+        } else {
+            $kode = substr($row->kode, -5);
+            $autoid = $combine . sprintf("%05s", $kode + 1);
+        }
         echo json_encode(array("code" => $autoid));
     }
 
     public function getSync()
     {
         error_reporting(0);
-        
+
         $this->pg = $this->load->database('dummy', TRUE);
         $this->pg->select("item_id");
         $this->pg->from("mst_item");
@@ -156,19 +174,19 @@ class item_fg extends CI_Controller
         $this->dummy->where("item_id", $data['number']);
         $read = $this->dummy->get()->result_array();
 
-        if($data['uom'] == "METER"){
+        if ($data['uom'] == "METER") {
             $uom = "01";
-        }elseif($data['uom'] == "PIECES"){
+        } elseif ($data['uom'] == "PIECES") {
             $uom = "02";
-        }elseif($data['uom'] == "SET"){
+        } elseif ($data['uom'] == "SET") {
             $uom = "03";
-        }elseif($data['uom'] == "GRAM"){
+        } elseif ($data['uom'] == "GRAM") {
             $uom = "04";
-        }elseif($data['uom'] == "LITER"){
+        } elseif ($data['uom'] == "LITER") {
             $uom = "05";
-        }elseif($data['uom'] == "KILOGRAM"){
+        } elseif ($data['uom'] == "KILOGRAM") {
             $uom = "06";
-        }else{
+        } else {
             $uom = "02";
         }
 
@@ -199,6 +217,116 @@ class item_fg extends CI_Controller
         }
     }
 
+    public function syncPullclearFailed()
+    {
+        @unlink('failed/sync_item_fg.txt');
+    }
+
+    public function syncPullcreateFailed()
+    {
+        if ($this->input->post()) {
+            $message = $this->input->post('message');
+            $textFailed = fopen('failed/sync_item_fg.txt', 'a');
+            fwrite($textFailed, $message . "\n");
+            fclose($textFailed);
+        }
+    }
+
+    //UPLOAD DOWNLOAD FAILED
+    public function syncPullDownloadFailed()
+    {
+        $file = "failed/sync_item_fg.txt";
+        header('Content-Description: File Failed');
+        header('Content-Disposition: attachment; filename=' . basename($file));
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+        header('Content-Length: ' . @filesize($file));
+        header("Content-Type: text/plain");
+        @readfile($file);
+    }
+
+    public function syncPullCreate()
+    {
+        if ($this->input->post()) {
+            $data = $this->input->post('data');
+            //Cek name                //table             //field db           //field excel
+
+            $y = date("y");
+            $customers = $this->crud->read('customers', [], ["number" => $data['customer_id']]);
+            if (strlen(@$customers->number) == 2) {
+                $customernumber = "0" . @$customers->number; // Tambahkan nol di depan jika panjangnya 2
+            } else {
+                $customernumber = @$customers->number;
+            }
+            $combine = 'FG' . $y . $customernumber;
+            $sql = $this->db->query("SELECT max(`number`) as kode FROM item_fg WHERE `number` like '%$combine%'");
+            $row = $sql->row();
+            if ($row->kode == null) {
+                $autoid = $combine . "00001";
+            } else {
+                $kode = substr($row->kode, -5);
+                $autoid = $combine . sprintf("%05s", $kode + 1);
+            }
+
+            $item_fg = $this->crud->read('item_fg', [], ["number_customer" => $data['number_customer']]);
+            $uom = $this->crud->read('uom', [], ["number" => $data['um_id']]);
+
+            $dataFinal = array(
+                //field        //excel
+                "number_customer" => $data['number_customer'],
+                "cct" => $data['cct'],
+                "revision" => $data['revision'],
+                "mpq" => $data['mpq'],
+                "moq" => $data['moq'],
+                "leadtime" => $data['leadtime'],
+                "customer_id" => @$customers->id,
+                "weight" => $data['weight'],
+                "lot" => $data['lot'],
+                "name" => $data['name'],
+                "uom" => @$uom->name,
+            );
+
+            if (empty(@$customers->number)) {
+                $send = json_encode(array("title" => "Not Found", "message" => "Customer " . $data['customer_id'] . " Not Found", "theme" => "error"));
+            } else if (empty(@$uom->number)) {
+                $send = json_encode(array("title" => "Not Found", "message" => "Unit Measure  " . $data['um_id'] . " Not Found", "theme" => "error"));
+            } else {
+                if (!empty(@$item_fg->number)) {
+
+                    if (
+                        @$item_fg->number_customer == $data['number_customer'] &&
+                        @$item_fg->cct == $data['cct'] &&
+                        @$item_fg->revision == $data['revision'] &&
+                        @$item_fg->mpq == $data['mpq'] &&
+                        @$item_fg->moq == $data['moq'] &&
+                        @$item_fg->leadtime == $data['leadtime'] &&
+                        @$item_fg->customer_id == $data['customer_id'] &&
+                        @$item_fg->weight == $data['weight'] &&
+                        @$item_fg->lot == $data['lot'] &&
+                        @$item_fg->name == $data['name'] &&
+                        @$item_fg->uom == @$uom->name
+                    ) {
+                        $send = json_encode(array("title" => "No Changes", "message" => "Data is Same, No any changes", "theme" => "success"));
+                    } else {
+                        $exec = $this->crud->update('item_fg', ["id" => @$item_fg->id], $dataFinal);
+                        $exec = json_decode($exec);
+                        if ($exec->theme == 'success') {
+                            $send = json_encode(array("title" => "Good Job", "message" => "Part No Customer " . $data['number_customer'] . " Updated Successfully", "theme" => "success"));
+                        }
+                    }
+                } else {
+                    $exec = $this->crud->create('item_fg', array_merge($dataFinal, ["number" => $autoid]));
+                    $exec = json_decode($exec);
+                    if ($exec->theme == 'success') {
+                        $send = json_encode(array("title" => "Good Job", "message" => "Part No Customer." . $data['number_customer'] . " Saved Successfully", "theme" => "success"));
+                    }
+                }
+            }
+            echo $send;
+        }
+    }
+
     //CREATE DATA
     public function create()
     {
@@ -207,7 +335,7 @@ class item_fg extends CI_Controller
                 $post = $this->input->post();
 
                 $attachment = $this->crud->upload('attachment', ["pdf"], 'assets/documents/item_fg/');
-                $foto = $this->crud->upload('foto', ["jpg","png","jpeg"], 'assets/image/item_fg/');
+                $foto = $this->crud->upload('foto', ["jpg", "png", "jpeg"], 'assets/image/item_fg/');
                 $postFinal = array_merge($post, ["attachment" => $attachment, "foto" => $foto]);
 
                 $send   = $this->crud->create('item_fg', $postFinal);
@@ -219,7 +347,7 @@ class item_fg extends CI_Controller
             show_error("Cannot Process your request");
         }
     }
-    
+
     //UPDATE DATA
     public function update()
     {
@@ -227,7 +355,7 @@ class item_fg extends CI_Controller
             $id   = base64_decode($this->input->get('id'));
             $post = $this->input->post();
             $attachment = $this->crud->upload('attachment', ["pdf"], 'assets/documents/item_fg/', ["id" => $id], "item_fg", "attachment");
-            $foto = $this->crud->upload('foto', ["jpg","png","jpeg"], 'assets/image/item_fg/', ["id" => $id], "item_fg", "foto");
+            $foto = $this->crud->upload('foto', ["jpg", "png", "jpeg"], 'assets/image/item_fg/', ["id" => $id], "item_fg", "foto");
             $postFinal = array_merge($post, ["attachment" => $attachment, "foto" => $foto]);
             $send = $this->crud->update('item_fg', ["id" => $id], $postFinal);
             echo $send;
@@ -336,27 +464,34 @@ class item_fg extends CI_Controller
                 echo json_encode(array("title" => "Not Found", "message" => "Harnes Type Code " . $data['harnes_type'] . " Not Found", "theme" => "error"));
             } elseif (empty($account_coa->name)) {
                 echo json_encode(array("title" => "Not Found", "message" => "COA No " . $data['account_number'] . " Not Found", "theme" => "error"));
-            } elseif (in_array($data['revision'], ["01","02","03","04","05","06","07","08","09","10"])) {
+            } elseif (in_array($data['revision'], ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10"])) {
                 echo json_encode(array("title" => "Failed", "message" => "Revision Format " . $data['revision'] . " Is Wrong", "theme" => "error"));
             } elseif (!empty($item_fg->number)) {
                 echo json_encode(array("title" => "Duplicated", "message" => " Product No. " . $data['number'] . " is Duplicate Data", "theme" => "error"));
             } else {
-                $combine = $data['customer_number'] . $data['harnes_type'];
-                $sql = $this->db->query("SELECT max(SUBSTRING(`number`, 5, 4)) as kode FROM item_fg WHERE SUBSTRING(`number`, 1, 4) = '$combine' and SUBSTRING(`number`, 9, 2) = '$revision'");
-                $row = $sql->row();
-                if ($row->kode == "") {
-                    $kode = 0;
+
+                $y = date("y");
+                if (strlen($data['customer_number']) == 2) {
+                    $customernumber = "0" .  $data['customer_number']; // Tambahkan nol di depan jika panjangnya 2
                 } else {
-                    $kode = $row->kode;
+                    $customernumber =  $data['customer_number'];
                 }
-                $autoid = $combine . sprintf("%04s", $kode + 1) . $data['revision'];
+                $combine = 'FG' . $y . $customernumber;
+                $sql = $this->db->query("SELECT max(`number`) as kode FROM item_fg WHERE `number` like '%$combine%'");
+                $row = $sql->row();
+                if ($row->kode == null) {
+                    $autoid = $combine . "00001";
+                } else {
+                    $kode = substr($row->kode, -5);
+                    $autoid = $combine . sprintf("%05s", $kode + 1);
+                }
 
                 $dataFinal = array(
                     //field
                     "number" => $autoid,
                     "name" => $data['name'],
                     "number_customer" => $data['number_customer'],
-                    "alias"=> $data['alias'],
+                    "alias" => $data['alias'],
                     "customer_id" => $customer->id,
                     "harnes_type" => $data['harnes_type'],
                     "control_id" => $data['control_id'],
@@ -436,7 +571,7 @@ class item_fg extends CI_Controller
         <table id="item_fg" border="1">
             <tr>
                 <th width="20">No</th>
-                <th>Product No EBWS</th>
+                <th>Product No Original</th>
                 <th>Product No Customer</th>
                 <th>Description</th>
                 <th>Product No Invoice</th>

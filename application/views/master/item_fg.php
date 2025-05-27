@@ -4,7 +4,7 @@
         <tr>
             <th field="ck" checkbox="true"></th>
             <th data-options="field:'foto',width:35,halign:'center',formatter:FormatterImage">Foto</th>
-            <th data-options="field:'number',width:150,halign:'center'">Product No EBWS</th>
+            <th data-options="field:'number',width:150,halign:'center'">Product No Original</th>
             <th data-options="field:'name',width:150,halign:'center'">Description</th>
         </tr>
     </thead>
@@ -56,6 +56,7 @@
 <div id="toolbar" style="height: 35px;">
     <a href="javascript:;" class="easyui-linkbutton" id="sync" data-options="plain:true" onclick="sync()"><i class="fa fa-history"></i> Push Data</a>
     <?= $button ?>
+    <span style="border-left:1px #C3C3C3 solid; margin:0 5px 0 5px;"></span><a href="javascript:;" class="easyui-linkbutton" data-options="plain:true" onclick="syncPullMrp()"><i class="fa fa-retweet"></i> Synchronize</a>
 </div>
 <!-- DIALOG SAVE AND UPDATE -->
 <div id="dlg_insert" class="easyui-dialog" title="Add New" data-options="closed: true,modal:true" style="width: 95%; padding:10px; top: 10px; left: 10px;">
@@ -73,7 +74,7 @@
                     <input style="width:60%;" name="foto" id="foto" class="easyui-filebox" data-options="prompt:'Choose Foto Product', accept:'.png, .jpg, .jpeg'">
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Product No EBWS</span>
+                    <span style="width:35%; display:inline-block;">Product No Original</span>
                     <input style="width:50%;" name="number" id="number" readonly required="" class="easyui-textbox">
                     <a href="javascript:;" class="easyui-linkbutton" title="Generate ID" data-options="plain:false" onclick="autoid()"><i class="fa fa-history"></i></a>
                 </div>
@@ -258,6 +259,18 @@
     </div>
 </div>
 
+<div id="dlg_sync_erp" class="easyui-dialog" title="Synchronize Data From MRP" data-options="closed: true,modal:true" style="width: 800px; padding:10px; top: 20px;">
+    <form id="frm_sync_erp" method="post" enctype="multipart/form-data" novalidate>
+    </form>
+    <span style="float: left; color:green;">SUCCESS : <b id="p_sync_success">0</b></span><span style="float: right; color:red;"> FAILED : <b id="p_sync_failed">0</b></span>
+    <div id="p_sync_erp" class="easyui-progressbar" style="width:100%; margin-top: 10px;"></div>
+    <center><b id="p_start_sync">0</b> Of <b id="p_finish_sync">0</b></center>
+    <div id="p_remarks_sync" title="History Synchronize" class="easyui-panel" style="width:100%; height:350px; padding:10px; margin-top: 10px;">
+        <ul id="remarks_sync">
+        </ul>
+    </div>
+</div>
+
 <!-- PDF -->
 <iframe id="printout" src="<?= base_url('master/item_fg/print') ?>" style="width: 100%;" hidden></iframe>
 <script>
@@ -283,8 +296,9 @@
                         $("#dlg_sync").dialog('open');
                         $("#sync").linkbutton("disable");
 
-                        if(rows['total'] > 0){
+                        if (rows['total'] > 0) {
                             requestData(rows['total'], rows);
+
                             function requestData(total, json, number = 1, value = 0) {
                                 if (value < 100) {
                                     value = Math.floor((number / total) * 100);
@@ -322,12 +336,12 @@
                                     });
                                 }
                             }
-                        }else{
+                        } else {
                             Swal.close();
                             Swal.fire('Failed!', 'Data to Push data is 0', 'error');
                         }
                     },
-                    error: function(){
+                    error: function() {
                         Swal.close();
                         Swal.fire('Failed!', 'Not Connected in MRP Banshu', 'error');
                     }
@@ -336,27 +350,27 @@
         });
     }
 
-    function autoid(){
+    function autoid() {
         var customer_number = $("#customer_number").textbox('getValue');
-        var harnes_type = $("#harnes_type").combogrid('getValue');
-        var revision = $("#revision").combobox('getValue');
+        // var harnes_type = $("#harnes_type").combogrid('getValue');
+        // var revision = $("#revision").combobox('getValue');
 
-        if(customer_number != "" && harnes_type != "" && revision != ""){
+        if (customer_number != "") {
             $.ajax({
-                type : "post",
-                url : "<?= base_url('master/item_fg/autoid')?>",
+                type: "post",
+                url: "<?= base_url('master/item_fg/autoid') ?>",
                 data: {
-                    "customer_number" : customer_number,
-                    "harnes_type" : harnes_type,
-                    "revision" : revision
+                    "customer_number": customer_number,
+                    // "harnes_type": harnes_type,
+                    // "revision": revision
                 },
-                dataType : "json",
-                success : function(response){
+                dataType: "json",
+                success: function(response) {
                     $('#number').textbox('setValue', response.code);
                 }
             });
-        }else{
-            toastr.info("Please Choose Customer, Harnes Type and Revision");
+        } else {
+            toastr.info("Please Choose Customer");
         }
     }
 
@@ -377,7 +391,7 @@
     function update() {
         var row = $('#dg').datagrid('getSelected');
 
-        setTimeout(function() { 
+        setTimeout(function() {
             $('#id').textbox('setValue', row.id);
         }, 500);
 
@@ -385,9 +399,9 @@
             $('#dlg_insert').dialog('open');
             $('#frm_insert').form('load', row);
             // $('#id').textbox('disable');
-            if(row.foto != "" && row.foto != null){
+            if (row.foto != "" && row.foto != null) {
                 $('#fotoPreview').attr('src', row.foto);
-            }else{
+            } else {
                 $('#fotoPreview').attr('src', '<?= base_url("assets/image/users/default.png") ?>');
             }
 
@@ -421,9 +435,10 @@
                     });
 
                     requestDelete(rows.length, rows);
+
                     function requestDelete(total, json, number = 1, value = 0) {
                         if (value < 100) {
-                            var row = json[number-1];
+                            var row = json[number - 1];
                             value = Math.floor((number / total) * 100);
 
                             $.ajax({
@@ -501,9 +516,9 @@
                     $('#frm_insert').form('submit', {
                         url: url_save,
                         onSubmit: function() {
-                            if($(this).form('validate') === true){
+                            if ($(this).form('validate') === true) {
                                 $('#dlg_insert').dialog('close');
-                                
+
                                 Swal.fire({
                                     title: 'Please Wait...',
                                     showConfirmButton: false,
@@ -513,7 +528,7 @@
                                         Swal.showLoading();
                                     },
                                 });
-                            }else{
+                            } else {
                                 return $(this).form('validate');
                             }
                         },
@@ -554,7 +569,7 @@
                 width: 200
             }]
         ],
-        onSelect: function(val, coa){
+        onSelect: function(val, coa) {
             $("#account_name").textbox('setValue', coa.account_name);
         }
     });
@@ -632,7 +647,7 @@
                 width: 250
             }]
         ],
-        onSelect: function(val, row){
+        onSelect: function(val, row) {
             $("#customer_number").textbox('setValue', row.number);
         }
     });
@@ -682,8 +697,8 @@
         }
     };
 
-     //FORMATTER LOGO
-     function cellFormatterLogo(value) {
+    //FORMATTER LOGO
+    function cellFormatterLogo(value) {
         if (value == 0) {
             return 'YES';
         } else {
@@ -701,7 +716,7 @@
 
     //CELLSTYLE APPROVE
     function styleApproved(value, row, index) {
-        if (value == "" || value === null ) {
+        if (value == "" || value === null) {
             return 'background: #53D636; color:white;';
         } else {
             return 'background: #FF5F5F; color:white;';
@@ -709,7 +724,7 @@
     }
     //FORMATTER APPROVE
     function formatApproved(value) {
-        if (value == "" || value === null ) {
+        if (value == "" || value === null) {
             return 'Approved';
         } else {
             return 'Checking';
@@ -799,6 +814,101 @@
                             }
                         }
                     }
+                });
+            }
+        }]
+    });
+
+    function syncPullMrp() {
+        $('#dlg_sync_erp').dialog('open');
+    }
+
+    //Synchronize Data
+    $('#dlg_sync_erp').dialog({
+        buttons: [{
+            text: 'List Failed',
+            handler: function() {
+                window.open('<?= base_url('master/item_fg/syncPullDownloadFailed') ?>', '_blank');
+            }
+        }, {
+            text: 'Start Synchronize',
+            iconCls: 'icon-ok',
+            handler: function() {
+                $('#frm_sync_erp').form('submit', {
+                    url: "<?= base_url('api/mrp_banshu/getDataItemFgs') ?>",
+                    onSubmit: function() {
+                        Swal.fire({
+                            title: 'Collecting data..',
+                            showConfirmButton: false,
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            },
+                        });
+                    },
+                    success: function(result) {
+                        Swal.close();
+                        $.ajax({
+                            url: "<?= base_url('master/item_fg/syncPullclearFailed') ?>"
+                        });
+                        var json = eval('(' + result + ')');
+                        if (json.total == 0) {
+                            var title = "<b style='color: red;'>Data Not Found</b><br>";
+                            $("#p_remarks_sync").append(title);
+                        } else {
+                            requestData(json.total, json);
+                        }
+
+                        function requestData(total, json, number = 1, value = 0, success = 1, failed = 1) {
+                            if (value < 100) {
+                                value = Math.floor((number / total) * 100);
+                                $('#p_sync_erp').progressbar('setValue', value);
+                                $('#p_start_sync').html(number);
+                                $('#p_finish_sync').html(total);
+
+                                $.post('<?= base_url('master/item_fg/syncPullCreate') ?>', {
+                                    data: json[number - 1]
+                                }, function(note) {
+                                    var result = eval('(' + note + ')');
+                                    if (result.theme == "success") {
+                                        Swal.close();
+                                        $('#p_sync_success').html(success);
+                                        var title = "<b style='color: green;'>" + result.title + "</b> | " + result.message;
+                                        requestData(total, json, number + 1, value, success + 1, failed + 0);
+                                    } else {
+                                        Swal.close();
+                                        $('#p_sync_failed').html(failed);
+                                        var title = "<b style='color: red;'>" + result.title + "</b> | " + result.message; //Json Failed
+                                        $.ajax({
+                                            type: "POST",
+                                            async: true,
+                                            url: "<?= base_url('master/item_fg/syncPullcreateFailed') ?>",
+                                            data: {
+                                                data: json[number - 1],
+                                                message: result.message
+                                            },
+                                            cache: false
+                                        });
+                                        requestData(total, json, number + 1, value, success + 0, failed + 1);
+                                    }
+                                    $("#p_remarks_sync").prepend(title + "<br>");
+                                }).fail(function(jqXHR, textStatus) {
+                                    Swal.fire({
+                                        title: 'Connection Time Out, Re-connecting..',
+                                        showConfirmButton: false,
+                                        allowOutsideClick: false,
+                                        allowEscapeKey: false,
+                                        didOpen: () => {
+                                            Swal.showLoading();
+                                        },
+                                    });
+
+                                    requestData(total, json, number, value, success, failed);
+                                });
+                            }
+                        }
+                    },
                 });
             }
         }]

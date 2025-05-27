@@ -325,8 +325,6 @@ class Item_rm extends CI_Controller
                 $send = json_encode(array("title" => "Not Found", "message" => "Unit Measure  " . $data['um_id'] . " Not Found", "theme" => "error"));
             } else {
                 if (!empty(@$item_rm->number)) {
-                    $item_categories = $this->crud->read('item_categories', [], ["id" => @$item_familys->item_category_id]);
-
                     if (
                         @$item_rm->item_category_id == @$item_familys->item_category_id &&
                         @$item_rm->item_family_id == @$item_familys->id &&

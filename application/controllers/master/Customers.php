@@ -99,7 +99,7 @@ class Customers extends CI_Controller
             $this->db->where('a.customer_id', $customer_id);
             if (@count($filters) > 0) {
                 foreach ($filters as $filter) {
-                    $this->db->like("a.".$filter->field, $filter->value);
+                    $this->db->like("a." . $filter->field, $filter->value);
                 }
             }
             $this->db->order_by('a.plant', 'asc');
@@ -122,15 +122,15 @@ class Customers extends CI_Controller
         $sql = $this->db->query("SELECT max(SUBSTRING(id, 5)) as kode FROM customers");
         $row = $sql->row();
 
-        if(substr($row->kode, 3, 2) == 99){
+        if (substr($row->kode, 3, 2) == 99) {
             $kode1 = sprintf("%02s", substr($row->kode, 0, 2) + 1);
             $kode2 = "01";
-        }else{
+        } else {
             $kode1 = empty($row->kode) ? "01" : substr($row->kode, 0, 2);
             $kode2 = sprintf("%02s", substr($row->kode, 3, 2) + 1);
         }
 
-        $autoid = "CUS-" . $kode1 ."-". $kode2;
+        $autoid = "CUS-" . $kode1 . "-" . $kode2;
         echo json_encode(array("id" => $autoid));
     }
 
@@ -156,9 +156,9 @@ class Customers extends CI_Controller
             $post = $this->input->post();
             $read = $this->crud->read("customer_address", [], ["customer_id" => $post['customer_id'], "plant" => $post['plant']]);
 
-            if($read){
+            if ($read) {
                 show_error("Duplicate Data Plant");
-            }else{
+            } else {
                 $send = $this->crud->create('customer_address', $post);
                 echo $send;
             }
@@ -172,10 +172,10 @@ class Customers extends CI_Controller
     {
         if ($this->input->post()) {
             // if ($this->form_validation->run() == TRUE) {
-                $id   = base64_decode($this->input->get('id'));
-                $post = $this->input->post();
-                $send = $this->crud->update('customers', ["id" => $id], $post);
-                echo $send;
+            $id   = base64_decode($this->input->get('id'));
+            $post = $this->input->post();
+            $send = $this->crud->update('customers', ["id" => $id], $post);
+            echo $send;
             // } else {
             //     show_error(validation_errors());
             // }
@@ -209,7 +209,7 @@ class Customers extends CI_Controller
         $send = $this->crud->delete('customer_address', $data);
         echo $send;
     }
-    
+
     //UPLOAD DATA
     public function upload()
     {
@@ -276,15 +276,15 @@ class Customers extends CI_Controller
             $sql = $this->db->query("SELECT max(SUBSTRING(id, 5)) as kode FROM customers");
             $row = $sql->row();
 
-            if(substr($row->kode, 3, 2) == 99){
+            if (substr($row->kode, 3, 2) == 99) {
                 $kode1 = sprintf("%02s", substr($row->kode, 0, 2) + 1);
                 $kode2 = "01";
-            }else{
+            } else {
                 $kode1 = empty($row->kode) ? "01" : substr($row->kode, 0, 2);
                 $kode2 = sprintf("%02s", substr($row->kode, 3, 2) + 1);
             }
 
-            $autoid = "CUS-" . $kode1 ."-". $kode2;
+            $autoid = "CUS-" . $kode1 . "-" . $kode2;
 
             if (!empty($customers->number)) {
                 echo json_encode(array("title" => "Duplicated", "message" => " Customer Code " . $data['number'] . " is Duplicate Data", "theme" => "error"));
@@ -397,7 +397,70 @@ class Customers extends CI_Controller
             }
         }
     }
-    
+
+
+    public function syncPullclearFailed()
+    {
+        @unlink('failed/sync_customers.txt');
+    }
+
+    public function syncPullcreateFailed()
+    {
+        if ($this->input->post()) {
+            $message = $this->input->post('message');
+            $textFailed = fopen('failed/sync_customers.txt', 'a');
+            fwrite($textFailed, $message . "\n");
+            fclose($textFailed);
+        }
+    }
+
+    //UPLOAD DOWNLOAD FAILED
+    public function syncPullDownloadFailed()
+    {
+        $file = "failed/sync_customers.txt";
+        header('Content-Description: File Failed');
+        header('Content-Disposition: attachment; filename=' . basename($file));
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+        header('Content-Length: ' . @filesize($file));
+        header("Content-Type: text/plain");
+        @readfile($file);
+    }
+
+    public function syncPullCreate()
+    {
+        if ($this->input->post()) {
+            $data = $this->input->post('data');
+            //Cek name                //table             //field db           //field excel
+
+            $sql = $this->db->query("SELECT max(SUBSTRING(id, 5)) as kode FROM customers");
+            $row = $sql->row();
+
+            if (substr($row->kode, 3, 2) == 99) {
+                $kode1 = sprintf("%02s", substr($row->kode, 0, 2) + 1);
+                $kode2 = "01";
+            } else {
+                $kode1 = empty($row->kode) ? "01" : substr($row->kode, 0, 2);
+                $kode2 = sprintf("%02s", substr($row->kode, 3, 2) + 1);
+            }
+
+            $autoid = "CUS-" . $kode1 . "-" . $kode2;
+
+            $customers = $this->crud->read('customers', [], ["number" => $data['number']]);
+            if (empty(@$customers->number)) {
+                $send   = $this->crud->create('customers', array_merge($data, ["id" => $autoid]));
+            } else {
+                if (@$customers->number == $data['number'] && @$customers->name == $data['name']) {
+                    $send = json_encode(array("title" => "No Changes", "message" => "Data is Same, No any changes", "theme" => "success"));
+                } else {
+                    $send = $this->crud->update('customers', ["id" => @$customers->id], $data);
+                }
+            }
+            echo $send;
+        }
+    }
+
     //PRINT & EXCEL DATA
     public function print($option = "")
     {
@@ -482,7 +545,7 @@ class Customers extends CI_Controller
             </tr>';
         $no = 1;
         foreach ($records as $data) {
-            
+
             if ($data['status'] == 0) {
                 $status = 'Active';
             } else {

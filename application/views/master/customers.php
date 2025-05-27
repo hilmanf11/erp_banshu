@@ -27,6 +27,7 @@
 <!-- TOOLBAR DATAGRID -->
 <div id="toolbar" style="height: 35px;">
     <?= $button ?>
+    <span style="border-left:1px #C3C3C3 solid; margin:0 5px 0 5px;"></span><a href="javascript:;" class="easyui-linkbutton" data-options="plain:true" onclick="syncPullMrp()"><i class="fa fa-retweet"></i> Synchronize</a>
 </div>
 <!-- TOOLBAR CUSTOMERS ADDRESS DATAGRID -->
 <div id="toolbar2" style="height: 35px;">
@@ -186,90 +187,90 @@
             <fieldset style="width:49%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
                 <legend><b>Shipping Information</b></legend>
                 <div style="float:left; width:100%;">
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Pin Code</span>
-                    <input style="width:60%;" name="ship_pin" id="ship_pin" data-options="validType:'length[0,6]'" required class="easyui-textbox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Address</span>
-                    <input style="width:60%;" name="ship_address" id="ship_address" class="easyui-textbox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Country</span>
-                    <input style="width:60%;" name="ship_country" id="ship_country" class="easyui-combobox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">State</span>
-                    <input style="width:60%;" name="ship_state" id="ship_state" class="easyui-combobox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">City</span>
-                    <input style="width:60%;" name="ship_city" id="ship_city" class="easyui-combobox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Contact Person</span>
-                    <input style="width:60%;" name="ship_contact" id="ship_contact" class="easyui-textbox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Telp</span>
-                    <input style="width:60%;" name="ship_telp" id="ship_telp" class="easyui-textbox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Fax</span>
-                    <input style="width:60%;" name="ship_fax" id="ship_fax" class="easyui-textbox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Email</span>
-                    <input style="width:60%;" name="ship_email" id="ship_email" class="easyui-textbox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Website</span>
-                    <input style="width:60%;" name="ship_website" id="ship_website" class="easyui-textbox">
-                </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">Pin Code</span>
+                        <input style="width:60%;" name="ship_pin" id="ship_pin" data-options="validType:'length[0,6]'" required class="easyui-textbox">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">Address</span>
+                        <input style="width:60%;" name="ship_address" id="ship_address" class="easyui-textbox">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">Country</span>
+                        <input style="width:60%;" name="ship_country" id="ship_country" class="easyui-combobox">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">State</span>
+                        <input style="width:60%;" name="ship_state" id="ship_state" class="easyui-combobox">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">City</span>
+                        <input style="width:60%;" name="ship_city" id="ship_city" class="easyui-combobox">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">Contact Person</span>
+                        <input style="width:60%;" name="ship_contact" id="ship_contact" class="easyui-textbox">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">Telp</span>
+                        <input style="width:60%;" name="ship_telp" id="ship_telp" class="easyui-textbox">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">Fax</span>
+                        <input style="width:60%;" name="ship_fax" id="ship_fax" class="easyui-textbox">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">Email</span>
+                        <input style="width:60%;" name="ship_email" id="ship_email" class="easyui-textbox">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">Website</span>
+                        <input style="width:60%;" name="ship_website" id="ship_website" class="easyui-textbox">
+                    </div>
             </fieldset>
             <fieldset style="width:49%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
                 <legend><b>Billing Information</b></legend>
                 <div style="float:left; width:100%;">
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Pin Code</span>
-                    <input style="width:60%;" name="bill_pin" id="bill_pin" data-options="validType:'length[0,6]'" required class="easyui-textbox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Address</span>
-                    <input style="width:60%;" name="bill_address" id="bill_address" class="easyui-textbox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Country</span>
-                    <input style="width:60%;" name="bill_country" id="bill_country" class="easyui-combobox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">State</span>
-                    <input style="width:60%;" name="bill_state" id="bill_state" class="easyui-combobox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">City</span>
-                    <input style="width:60%;" name="bill_city" id="bill_city" class="easyui-combobox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Contact Person</span>
-                    <input style="width:60%;" name="bill_contact" id="bill_contact" class="easyui-textbox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Telp</span>
-                    <input style="width:60%;" name="bill_telp" id="bill_telp" class="easyui-textbox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Fax</span>
-                    <input style="width:60%;" name="bill_fax" id="bill_fax" class="easyui-textbox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Email</span>
-                    <input style="width:60%;" name="bill_email" id="bill_email" class="easyui-textbox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Website</span>
-                    <input style="width:60%;" name="bill_website" id="bill_website" class="easyui-textbox">
-                </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">Pin Code</span>
+                        <input style="width:60%;" name="bill_pin" id="bill_pin" data-options="validType:'length[0,6]'" required class="easyui-textbox">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">Address</span>
+                        <input style="width:60%;" name="bill_address" id="bill_address" class="easyui-textbox">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">Country</span>
+                        <input style="width:60%;" name="bill_country" id="bill_country" class="easyui-combobox">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">State</span>
+                        <input style="width:60%;" name="bill_state" id="bill_state" class="easyui-combobox">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">City</span>
+                        <input style="width:60%;" name="bill_city" id="bill_city" class="easyui-combobox">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">Contact Person</span>
+                        <input style="width:60%;" name="bill_contact" id="bill_contact" class="easyui-textbox">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">Telp</span>
+                        <input style="width:60%;" name="bill_telp" id="bill_telp" class="easyui-textbox">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">Fax</span>
+                        <input style="width:60%;" name="bill_fax" id="bill_fax" class="easyui-textbox">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">Email</span>
+                        <input style="width:60%;" name="bill_email" id="bill_email" class="easyui-textbox">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">Website</span>
+                        <input style="width:60%;" name="bill_website" id="bill_website" class="easyui-textbox">
+                    </div>
             </fieldset>
         </div>
     </form>
@@ -314,6 +315,19 @@
         </ul>
     </div>
 </div>
+
+<div id="dlg_sync_erp" class="easyui-dialog" title="Synchronize Data From MRP" data-options="closed: true,modal:true" style="width: 800px; padding:10px; top: 20px;">
+    <form id="frm_sync_erp" method="post" enctype="multipart/form-data" novalidate>
+    </form>
+    <span style="float: left; color:green;">SUCCESS : <b id="p_sync_success">0</b></span><span style="float: right; color:red;"> FAILED : <b id="p_sync_failed">0</b></span>
+    <div id="p_sync_erp" class="easyui-progressbar" style="width:100%; margin-top: 10px;"></div>
+    <center><b id="p_start_sync">0</b> Of <b id="p_finish_sync">0</b></center>
+    <div id="p_remarks_sync" title="History Synchronize" class="easyui-panel" style="width:100%; height:350px; padding:10px; margin-top: 10px;">
+        <ul id="remarks_sync">
+        </ul>
+    </div>
+</div>
+
 
 <!-- PDF -->
 <iframe id="printout" src="<?= base_url('master/customers/print') ?>" style="width: 100%;" hidden></iframe>
@@ -373,29 +387,29 @@
                 valueField: 'name',
                 textField: 'name',
                 prompt: 'Choose Origin',
-                onLoadSuccess: function(){
+                onLoadSuccess: function() {
                     $("#ship_country").combobox('setValue', row.ship_country);
                 },
-                onSelect: function(origin){
+                onSelect: function(origin) {
                     $('#ship_state').combobox({
                         url: '<?= base_url('master/states/reads/'); ?>' + origin.id,
                         valueField: 'name',
                         textField: 'name',
                         prompt: 'Choose State',
-                        onLoadSuccess: function(){
+                        onLoadSuccess: function() {
                             $("#ship_state").combobox('setValue', row.ship_state);
                         },
-                        onSelect: function(state){
+                        onSelect: function(state) {
                             $('#ship_city').combobox({
                                 url: '<?= base_url('master/cities/reads/'); ?>' + origin.id + '/' + state.id,
                                 valueField: 'name',
                                 textField: 'name',
                                 prompt: 'Choose Cities',
-                                onLoadSuccess: function(){
+                                onLoadSuccess: function() {
                                     $("#ship_city").combobox('setValue', row.ship_city);
                                 },
                             });
-                        } 
+                        }
                     });
                 }
             });
@@ -405,29 +419,29 @@
                 valueField: 'name',
                 textField: 'name',
                 prompt: 'Choose Origin',
-                onLoadSuccess: function(){
+                onLoadSuccess: function() {
                     $("#bill_country").combobox('setValue', row.bill_country);
                 },
-                onSelect: function(origin){
+                onSelect: function(origin) {
                     $('#bill_state').combobox({
                         url: '<?= base_url('master/states/reads/'); ?>' + origin.id,
                         valueField: 'name',
                         textField: 'name',
                         prompt: 'Choose State',
-                        onLoadSuccess: function(){
+                        onLoadSuccess: function() {
                             $("#bill_state").combobox('setValue', row.bill_state);
                         },
-                        onSelect: function(state){
+                        onSelect: function(state) {
                             $('#bill_city').combobox({
                                 url: '<?= base_url('master/cities/reads/'); ?>' + origin.id + '/' + state.id,
                                 valueField: 'name',
                                 textField: 'name',
                                 prompt: 'Choose Cities',
-                                onLoadSuccess: function(){
+                                onLoadSuccess: function() {
                                     $("#bill_city").combobox('setValue', row.bill_city);
                                 },
                             });
-                        } 
+                        }
                     });
                 }
             });
@@ -461,9 +475,10 @@
                     });
 
                     requestDelete(rows.length, rows);
+
                     function requestDelete(total, json, number = 1, value = 0) {
                         if (value < 100) {
-                            var row = json[number-1];
+                            var row = json[number - 1];
                             value = Math.floor((number / total) * 100);
 
                             $.ajax({
@@ -517,7 +532,7 @@
                             },
                             error: function(jqXHR, textStatus, errorThrown) {
                                 toastr.error("This data is already used in other modules, You must delete it First", "Error");
-                                
+
                             },
                             complete: function(data) {
                                 $('#dg2').datagrid('reload');
@@ -546,8 +561,8 @@
         window.location.assign('<?= base_url('template/tmp_customers.xls') ?>');
     }
 
-     // DOWNLOAD
-     function download_excel2() {
+    // DOWNLOAD
+    function download_excel2() {
         window.location.assign('<?= base_url('template/tmp_customer_address.xls') ?>');
     }
     //PRINT PDF
@@ -584,9 +599,9 @@
                     $('#frm_insert').form('submit', {
                         url: url_save,
                         onSubmit: function() {
-                            if($(this).form('validate') === true){
+                            if ($(this).form('validate') === true) {
                                 $('#dlg_insert').dialog('close');
-                                
+
                                 Swal.fire({
                                     title: 'Please Wait...',
                                     showConfirmButton: false,
@@ -596,7 +611,7 @@
                                         Swal.showLoading();
                                     },
                                 });
-                            }else{
+                            } else {
                                 return $(this).form('validate');
                             }
                         },
@@ -704,20 +719,20 @@
         valueField: 'name',
         textField: 'name',
         prompt: 'Choose Origin',
-        onSelect: function(origin){
+        onSelect: function(origin) {
             $('#ship_state').combobox({
                 url: '<?= base_url('master/states/reads/'); ?>' + origin.id,
                 valueField: 'name',
                 textField: 'name',
                 prompt: 'Choose State',
-                onSelect: function(state){
+                onSelect: function(state) {
                     $('#ship_city').combobox({
                         url: '<?= base_url('master/cities/reads/'); ?>' + origin.id + '/' + state.id,
                         valueField: 'name',
                         textField: 'name',
                         prompt: 'Choose Cities',
                     });
-                } 
+                }
             });
         }
     });
@@ -727,20 +742,20 @@
         valueField: 'name',
         textField: 'name',
         prompt: 'Choose Origin',
-        onSelect: function(origin){
+        onSelect: function(origin) {
             $('#bill_state').combobox({
                 url: '<?= base_url('master/states/reads/'); ?>' + origin.id,
                 valueField: 'name',
                 textField: 'name',
                 prompt: 'Choose State',
-                onSelect: function(state){
+                onSelect: function(state) {
                     $('#bill_city').combobox({
                         url: '<?= base_url('master/cities/reads/'); ?>' + origin.id + '/' + state.id,
                         valueField: 'name',
                         textField: 'name',
                         prompt: 'Choose Cities',
                     });
-                } 
+                }
             });
         }
     });
@@ -900,6 +915,101 @@
                             }
                         }
                     }
+                });
+            }
+        }]
+    });
+
+    function syncPullMrp() {
+        $('#dlg_sync_erp').dialog('open');
+    }
+
+    //Synchronize Data
+    $('#dlg_sync_erp').dialog({
+        buttons: [{
+            text: 'List Failed',
+            handler: function() {
+                window.open('<?= base_url('master/customers/syncPullDownloadFailed') ?>', '_blank');
+            }
+        }, {
+            text: 'Start Synchronize',
+            iconCls: 'icon-ok',
+            handler: function() {
+                $('#frm_sync_erp').form('submit', {
+                    url: "<?= base_url('api/mrp_banshu/getDataCustomers') ?>",
+                    onSubmit: function() {
+                        Swal.fire({
+                            title: 'Collecting data..',
+                            showConfirmButton: false,
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            },
+                        });
+                    },
+                    success: function(result) {
+                        Swal.close();
+                        $.ajax({
+                            url: "<?= base_url('master/customers/syncPullclearFailed') ?>"
+                        });
+                        var json = eval('(' + result + ')');
+                        if (json.total == 0) {
+                            var title = "<b style='color: red;'>Data Not Found</b><br>";
+                            $("#p_remarks_sync").append(title);
+                        } else {
+                            requestData(json.total, json);
+                        }
+
+                        function requestData(total, json, number = 1, value = 0, success = 1, failed = 1) {
+                            if (value < 100) {
+                                value = Math.floor((number / total) * 100);
+                                $('#p_sync_erp').progressbar('setValue', value);
+                                $('#p_start_sync').html(number);
+                                $('#p_finish_sync').html(total);
+
+                                $.post('<?= base_url('master/customers/syncPullCreate') ?>', {
+                                    data: json[number - 1]
+                                }, function(note) {
+                                    var result = eval('(' + note + ')');
+                                    if (result.theme == "success") {
+                                        Swal.close();
+                                        $('#p_sync_success').html(success);
+                                        var title = "<b style='color: green;'>" + result.title + "</b> | " + result.message;
+                                        requestData(total, json, number + 1, value, success + 1, failed + 0);
+                                    } else {
+                                        Swal.close();
+                                        $('#p_sync_failed').html(failed);
+                                        var title = "<b style='color: red;'>" + result.title + "</b> | " + result.message; //Json Failed
+                                        $.ajax({
+                                            type: "POST",
+                                            async: true,
+                                            url: "<?= base_url('master/customers/syncPullcreateFailed') ?>",
+                                            data: {
+                                                data: json[number - 1],
+                                                message: result.message
+                                            },
+                                            cache: false
+                                        });
+                                        requestData(total, json, number + 1, value, success + 0, failed + 1);
+                                    }
+                                    $("#p_remarks_sync").prepend(title + "<br>");
+                                }).fail(function(jqXHR, textStatus) {
+                                    Swal.fire({
+                                        title: 'Connection Time Out, Re-connecting..',
+                                        showConfirmButton: false,
+                                        allowOutsideClick: false,
+                                        allowEscapeKey: false,
+                                        didOpen: () => {
+                                            Swal.showLoading();
+                                        },
+                                    });
+
+                                    requestData(total, json, number, value, success, failed);
+                                });
+                            }
+                        }
+                    },
                 });
             }
         }]

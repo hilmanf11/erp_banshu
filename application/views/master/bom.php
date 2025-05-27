@@ -4,7 +4,7 @@
         <tr>
             <th rowspan="2" field="ck" checkbox="true"></th>
             <!-- <th rowspan="2" data-options="field:'item_fg_id',width:150,align:'center'">Product ID</th> -->
-            <th rowspan="2" data-options="field:'item_fg_number',width:150,halign:'center'">Product No EBWS</th>
+            <th rowspan="2" data-options="field:'item_fg_number',width:150,halign:'center'">Product No Original</th>
             <th rowspan="2" data-options="field:'number_customer',width:200,halign:'center'">Product No Customer</th>
             <th rowspan="2" data-options="field:'item_fg_name',width:200,halign:'center'">Description</th>
             <th rowspan="2" data-options="field:'revision',width:100,halign:'center'">Revision</th>
@@ -51,6 +51,7 @@
         <?= $button ?>
         <a href="javascript:;" class="easyui-linkbutton" data-options="plain:true" onclick="openDlgCompare()"><i class="fa fa-retweet"></i> Compare Bom</a>
         <a href="javascript:;" class="easyui-linkbutton" data-options="plain:true" onclick="openDlgCopy()"><i class="fa fa-copy"></i> Copy Bom</a>
+        <a href="javascript:;" class="easyui-linkbutton" data-options="plain:true" onclick="syncPullMrp()"><i class="fa fa-retweet"></i> Synchronize</a>
     </div>
 </div>
 
@@ -71,7 +72,7 @@
             <legend><b>Form Data</b></legend>
             <div style="width: 30%; float: left;">
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Product No EBWS</span>
+                    <span style="width:35%; display:inline-block;">Product No Original</span>
                     <input style="width:60%;" name="item_fg_id" id="item_fg_id" required="" class="easyui-combogrid">
                 </div>
             </div>
@@ -198,6 +199,30 @@
     </form>
 </div>
 
+<!-- Synchronize erp -->
+<div id="dlg_sync_erp" class="easyui-dialog" title="Synchronize Data From MRP" data-options="closed: true,modal:true" style="width: 800px; padding:10px; top: 20px;">
+    <form id="frm_sync_erp" method="post" enctype="multipart/form-data" novalidate>
+        <fieldset style="width:100%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
+            <legend><b>Form Data</b></legend>
+            <div class="fitem">
+                <span style="width:10%; display:inline-block;">Customer</span>
+                <input style="width:40%;" name="sync_customer_id" id="sync_customer_id" class="easyui-combogrid">
+            </div>
+            <div class="fitem">
+                <span style="width:10%; display:inline-block;">Product No</span>
+                <input style="width:40%;" name="sync_item_fg_id" id="sync_item_fg_id" class="easyui-combogrid">
+            </div>
+        </fieldset>
+    </form>
+    <span style="float: left; color:green;">SUCCESS : <b id="p_sync_success">0</b></span><span style="float: right; color:red;"> FAILED : <b id="p_sync_failed">0</b></span>
+    <div id="p_sync_erp" class="easyui-progressbar" style="width:100%; margin-top: 10px;"></div>
+    <center><b id="p_start_sync">0</b> Of <b id="p_finish_sync">0</b></center>
+    <div id="p_remarks_sync" title="History Synchronize" class="easyui-panel" style="width:100%; height:350px; padding:10px; margin-top: 10px;">
+        <ul id="remarks_sync">
+        </ul>
+    </div>
+</div>
+
 <!-- PDF -->
 <iframe id="printout" src="<?= base_url('master/bom/print') ?>" style="width: 100%;" hidden></iframe>
 
@@ -212,13 +237,13 @@
         $("#frm_revision").show();
     }
 
-    function preview(){
+    function preview() {
         var item_fg_id = $("#item_fg_id").combogrid('getValue');
         var revision = $("#revision").combobox('getValue');
 
-        if(item_fg_id != "" && revision != ""){
+        if (item_fg_id != "" && revision != "") {
             addTable('<?= base_url('master/bom/datatableUpdates?item_fg_id=') ?>' + window.btoa(item_fg_id) + "&revision=" + revision);
-        }else{
+        } else {
             toastr.error("Please select Product No and Revision!");
         }
 
@@ -407,8 +432,8 @@
                 }]
             ],
             onClickCell: onClickCell,
-            rowStyler: function(index,row){
-                if (row.remove == 1){
+            rowStyler: function(index, row) {
+                if (row.remove == 1) {
                     return 'background-color:red; color:#fff; font-weight:bold;';
                 }
             }
@@ -598,8 +623,8 @@
                 }]
             ],
             onClickCell: onClickCellCopy,
-            rowStyler: function(index,row){
-                if (row.remove == 1){
+            rowStyler: function(index, row) {
+                if (row.remove == 1) {
                     return 'background-color:red; color:#fff; font-weight:bold;';
                 }
             }
@@ -645,7 +670,7 @@
                 $('#dg2').datagrid('selectRow', editIndex).datagrid('beginEdit', editIndex);
             }
         } else {
-            toastr.error("Please Choose Product No EBWS first");
+            toastr.error("Please Choose Product No Original first");
         }
     }
 
@@ -739,7 +764,7 @@
                 $('#dg-copy').datagrid('selectRow', editIndexCopy).datagrid('beginEdit', editIndexCopy);
             }
         } else {
-            toastr.error("Please Choose Product No EBWS first");
+            toastr.error("Please Choose Product No Original first");
         }
     }
 
@@ -789,7 +814,7 @@
     function update() {
         var row = $('#dg').treegrid('getSelected');
 
-        if(row.approved_to == ''){
+        if (row.approved_to == '') {
             toastr.error("Cannot Update Because the status is Approved");
             return false;
         }
@@ -922,10 +947,10 @@
         var revision_compare = $("#revision_compare").combobox('getValue');
 
         var url = "?item_fg_id_source=" + window.btoa(item_fg_id_source) +
-            "&item_fg_id_compare=" + window.btoa(item_fg_id_compare) + 
+            "&item_fg_id_compare=" + window.btoa(item_fg_id_compare) +
             "&revision_source=" + window.btoa(revision_source) +
             "&revision_compare=" + window.btoa(revision_compare);
-            
+
         if (item_fg_id_source == "" || item_fg_id_compare == "" || revision_source == "" || revision_compare == "") {
             toastr.warning("Please select Product and Revision!");
         } else {
@@ -962,10 +987,10 @@
         var revision_compare = $("#revision_compare").combobox('getValue');
 
         var url = "?item_fg_id_source=" + window.btoa(item_fg_id_source) +
-            "&item_fg_id_compare=" + window.btoa(item_fg_id_compare) + 
+            "&item_fg_id_compare=" + window.btoa(item_fg_id_compare) +
             "&revision_source=" + window.btoa(revision_source) +
             "&revision_compare=" + window.btoa(revision_compare);
-            
+
         if (item_fg_id_source == "" || item_fg_id_compare == "" || revision_source == "" || revision_compare == "") {
             toastr.warning("Please select Product and Revision!");
         } else {
@@ -1085,8 +1110,8 @@
                             $('#dg').datagrid('fixDetailRowHeight', index);
                         }, 0);
                     },
-                    rowStyler: function(index,row){
-                        if(row.remove == 1){
+                    rowStyler: function(index, row) {
+                        if (row.remove == 1) {
                             return 'background-color:#e5b5b5;font-weight:bold;';
                         }
                     }
@@ -1126,7 +1151,7 @@
                     for (let i = 0; i < totalrows; i++) {
                         var json = rows[i];
                         // if(json.remove == 0){
-                        if(json.item_rm_id == "" || json.main_process == ""){
+                        if (json.item_rm_id == "" || json.main_process == "") {
                             toastr.error("Please Completed your data!");
                             return false;
                         }
@@ -1146,11 +1171,13 @@
                     $.ajax({
                         type: "post",
                         url: '<?= base_url('master/bom/create') ?>',
-                        data: JSON.stringify({ dataBom: combinedBom }),
+                        data: JSON.stringify({
+                            dataBom: combinedBom
+                        }),
                         dataType: "json",
-                        success: function (result) {
+                        success: function(result) {
                             Swal.close();
-                            
+
                             Swal.fire({
                                 title: result.message,
                                 icon: result.theme,
@@ -1181,67 +1208,69 @@
                     // if (type === undefined) {
                     //     toastr.error("Please Choose Type Copy");
                     // } else {
-                        // if ((type == '2' || type == '3') && item_fg_id_copy_2 == '') {
-                        if (item_fg_id_copy_2 == '') {
-                            toastr.error("Please Choose New Product No EBWS");
-                        } else {
-                            Swal.fire({
-                                title: 'Please Wait...',
-                                showConfirmButton: false,
-                                allowOutsideClick: false,
-                                allowEscapeKey: false,
-                                didOpen: () => {
-                                    Swal.showLoading();
-                                },
-                            });
+                    // if ((type == '2' || type == '3') && item_fg_id_copy_2 == '') {
+                    if (item_fg_id_copy_2 == '') {
+                        toastr.error("Please Choose New Product No Original");
+                    } else {
+                        Swal.fire({
+                            title: 'Please Wait...',
+                            showConfirmButton: false,
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            },
+                        });
 
-                            $('#dg-copy').datagrid('acceptChanges');
-                            var rows = $('#dg-copy').datagrid('getRows');
-                            var totalrows = rows.length;
-                            endEditing();
+                        $('#dg-copy').datagrid('acceptChanges');
+                        var rows = $('#dg-copy').datagrid('getRows');
+                        var totalrows = rows.length;
+                        endEditing();
 
-                            combinedBom = [];
-                            for (let i = 0; i < totalrows; i++) {
-                                var json = rows[i];
-                                if(json.remove == 0){
-                                    combinedBom.push({
-                                        item_fg_id_copy_1: item_fg_id_copy_1,
-                                        item_fg_id_copy_2: item_fg_id_copy_2,
-                                        type: "COPY",
-                                        item_rm_id: json.item_rm_id,
-                                        main_process: json.main_process,
-                                        composition: json.composition,
-                                    });
-                                }
+                        combinedBom = [];
+                        for (let i = 0; i < totalrows; i++) {
+                            var json = rows[i];
+                            if (json.remove == 0) {
+                                combinedBom.push({
+                                    item_fg_id_copy_1: item_fg_id_copy_1,
+                                    item_fg_id_copy_2: item_fg_id_copy_2,
+                                    type: "COPY",
+                                    item_rm_id: json.item_rm_id,
+                                    main_process: json.main_process,
+                                    composition: json.composition,
+                                });
                             }
-
-                            $.ajax({
-                                type: "post",
-                                url: '<?= base_url('master/bom/copy') ?>',
-                                data: JSON.stringify({ dataBom: combinedBom }),
-                                dataType: "json",
-                                success: function (result) {
-                                    Swal.close();
-                                    
-                                    if(result.theme == "error"){
-                                        $('#dlg_copy').dialog('open');
-                                        toastr.error(result.message);
-                                        return false;
-                                    }
-
-                                    Swal.fire({
-                                        title: result.message,
-                                        icon: result.theme,
-                                        confirmButtonText: 'Ok',
-                                        allowOutsideClick: false,
-                                    }).then((result) => {
-                                        if (result.isConfirmed) {
-                                            window.location.reload();
-                                        }
-                                    });
-                                }
-                            });
                         }
+
+                        $.ajax({
+                            type: "post",
+                            url: '<?= base_url('master/bom/copy') ?>',
+                            data: JSON.stringify({
+                                dataBom: combinedBom
+                            }),
+                            dataType: "json",
+                            success: function(result) {
+                                Swal.close();
+
+                                if (result.theme == "error") {
+                                    $('#dlg_copy').dialog('open');
+                                    toastr.error(result.message);
+                                    return false;
+                                }
+
+                                Swal.fire({
+                                    title: result.message,
+                                    icon: result.theme,
+                                    confirmButtonText: 'Ok',
+                                    allowOutsideClick: false,
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        window.location.reload();
+                                    }
+                                });
+                            }
+                        });
+                    }
                     // }
                 }
             }]
@@ -1254,11 +1283,11 @@
             textField: 'number_customer',
             mode: 'remote',
             fitColumns: true,
-            prompt: "Choose Product No EBWS",
+            prompt: "Choose Product No Original",
             columns: [
                 [{
                     field: 'number',
-                    title: 'Product No EBWS',
+                    title: 'Product No Original',
                     width: 150
                 }, {
                     field: 'number_customer',
@@ -1278,8 +1307,8 @@
                     url: "<?= base_url('master/bom/readRevision') ?>",
                     data: "item_fg_id=" + row.id,
                     dataType: "json",
-                    success: function (data) {
-                        if(data.rows.length > 0){
+                    success: function(data) {
+                        if (data.rows.length > 0) {
                             $("#revision").combobox({
                                 data: data.rows,
                                 valueField: 'revision',
@@ -1288,7 +1317,7 @@
 
                             $("#revision").combobox('setValue', data.rows[0].revision);
                             $("#new_revision").textbox('setValue', data.new_revision);
-                        }else{
+                        } else {
                             toastr.info("History Bill of Material Cannot Found");
                             $("#revision").combobox('setValue', 0);
                             $("#new_revision").textbox('setValue', 0);
@@ -1297,6 +1326,71 @@
                 });
             }
         });
+
+        $('#sync_customer_id').combogrid({
+            url: '<?= base_url('master/customers/reads'); ?>',
+            panelWidth: 600,
+            idField: 'id',
+            textField: 'name',
+            mode: 'remote',
+            fitColumns: true,
+            prompt: "Choose Customer",
+            columns: [
+                [{
+                    field: 'id',
+                    title: 'Customer ID',
+                    width: 150
+                }, {
+                    field: 'number',
+                    title: 'Customer Code',
+                    width: 200
+                }, {
+                    field: 'name',
+                    title: 'Customer Name',
+                    width: 200
+                }, ]
+            ],
+            icons: [{
+                iconCls: 'icon-clear',
+                handler: function(e) {
+                    $(e.data.target).combogrid('clear').combogrid('textbox').focus();
+                }
+            }],
+            onSelect: function(val, row) {
+                $('#sync_item_fg_id').combogrid({
+                    url: '<?= base_url('master/bom/readitemcustomer?customer_id='); ?>' + row.id,
+                    panelWidth: 600,
+                    idField: 'id',
+                    textField: 'number',
+                    mode: 'remote',
+                    fitColumns: true,
+                    prompt: "Choose Product No",
+                    columns: [
+                        [{
+                            field: 'number',
+                            title: 'Product No Original',
+                            width: 150
+                        }, {
+                            field: 'number_customer',
+                            title: 'Product No Customer',
+                            width: 200
+                        }, {
+                            field: 'name',
+                            title: 'Description',
+                            width: 200
+                        }, ]
+                    ],
+                    icons: [{
+                        iconCls: 'icon-clear',
+                        handler: function(e) {
+                            $(e.data.target).combogrid('clear').combogrid('textbox').focus();
+                        }
+                    }],
+                });
+            }
+        });
+
+
 
         $('#filter_item_fg_id').combogrid({
             url: '<?= base_url('master/item_fg/reads'); ?>',
@@ -1309,7 +1403,7 @@
             columns: [
                 [{
                     field: 'number',
-                    title: 'Product No EBWS',
+                    title: 'Product No Original',
                     width: 150
                 }, {
                     field: 'number_customer',
@@ -1340,7 +1434,7 @@
             columns: [
                 [{
                     field: 'id',
-                    title: 'Part EBWS',
+                    title: 'Part Original',
                     width: 150
                 }, {
                     field: 'number',
@@ -1390,11 +1484,11 @@
             textField: 'number',
             mode: 'remote',
             fitColumns: true,
-            prompt: "Choose Product No EBWS",
+            prompt: "Choose Product No Original",
             columns: [
                 [{
                     field: 'number',
-                    title: 'Product No EBWS',
+                    title: 'Product No Original',
                     width: 150
                 }, {
                     field: 'number_customer',
@@ -1412,8 +1506,8 @@
                     url: "<?= base_url('master/bom/readRevision') ?>",
                     data: "item_fg_id=" + row.id,
                     dataType: "json",
-                    success: function (data) {
-                        if(data.rows.length > 0){
+                    success: function(data) {
+                        if (data.rows.length > 0) {
                             $("#revision_source").combobox({
                                 data: data.rows,
                                 valueField: 'revision',
@@ -1434,11 +1528,11 @@
             textField: 'number',
             mode: 'remote',
             fitColumns: true,
-            prompt: "Choose Product No EBWS",
+            prompt: "Choose Product No Original",
             columns: [
                 [{
                     field: 'number',
-                    title: 'Product No EBWS',
+                    title: 'Product No Original',
                     width: 150
                 }, {
                     field: 'number_customer',
@@ -1456,8 +1550,8 @@
                     url: "<?= base_url('master/bom/readRevision') ?>",
                     data: "item_fg_id=" + row.id,
                     dataType: "json",
-                    success: function (data) {
-                        if(data.rows.length > 0){
+                    success: function(data) {
+                        if (data.rows.length > 0) {
                             $("#revision_compare").combobox({
                                 data: data.rows,
                                 valueField: 'revision',
@@ -1478,11 +1572,11 @@
             textField: 'number',
             mode: 'remote',
             fitColumns: true,
-            prompt: "Choose Product No EBWS",
+            prompt: "Choose Product No Original",
             columns: [
                 [{
                     field: 'number',
-                    title: 'Product No EBWS',
+                    title: 'Product No Original',
                     width: 150
                 }, {
                     field: 'number_customer',
@@ -1503,11 +1597,11 @@
             textField: 'number',
             mode: 'remote',
             fitColumns: true,
-            prompt: "Choose Product No EBWS",
+            prompt: "Choose Product No Original",
             columns: [
                 [{
                     field: 'number',
-                    title: 'Product No EBWS',
+                    title: 'Product No Original',
                     width: 150
                 }, {
                     field: 'number_customer',
@@ -1600,5 +1694,100 @@
                 }
             }]
         });
+    });
+
+    function syncPullMrp() {
+        $('#dlg_sync_erp').dialog('open');
+    }
+
+    //Synchronize Data
+    $('#dlg_sync_erp').dialog({
+        buttons: [{
+            text: 'List Failed',
+            handler: function() {
+                window.open('<?= base_url('master/bom/syncPullDownloadFailed') ?>', '_blank');
+            }
+        }, {
+            text: 'Start Synchronize',
+            iconCls: 'icon-ok',
+            handler: function() {
+                $('#frm_sync_erp').form('submit', {
+                    url: "<?= base_url('api/mrp_banshu/getDataBoms') ?>",
+                    onSubmit: function() {
+                        Swal.fire({
+                            title: 'Collecting data..',
+                            showConfirmButton: false,
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            },
+                        });
+                    },
+                    success: function(result) {
+                        Swal.close();
+                        $.ajax({
+                            url: "<?= base_url('master/bom/syncPullclearFailed') ?>"
+                        });
+                        var json = eval('(' + result + ')');
+                        if (json.total == 0) {
+                            var title = "<b style='color: red;'>Data Not Found</b><br>";
+                            $("#p_remarks_sync").prepend(title);
+                        } else {
+                            requestData(json.total, json);
+                        }
+
+                        function requestData(total, json, number = 1, value = 0, success = 1, failed = 1) {
+                            if (value < 100) {
+                                value = Math.floor((number / total) * 100);
+                                $('#p_sync_erp').progressbar('setValue', value);
+                                $('#p_start_sync').html(number);
+                                $('#p_finish_sync').html(total);
+
+                                $.post('<?= base_url('master/bom/syncPullCreate') ?>', {
+                                    data: json[number - 1]
+                                }, function(note) {
+                                    var result = eval('(' + note + ')');
+                                    if (result.theme == "success") {
+                                        Swal.close();
+                                        $('#p_sync_success').html(success);
+                                        var title = "<b style='color: green;'>" + result.title + "</b> | " + result.message;
+                                        requestData(total, json, number + 1, value, success + 1, failed + 0);
+                                    } else {
+                                        Swal.close();
+                                        $('#p_sync_failed').html(failed);
+                                        var title = "<b style='color: red;'>" + result.title + "</b> | " + result.message; //Json Failed
+                                        $.ajax({
+                                            type: "POST",
+                                            async: true,
+                                            url: "<?= base_url('master/bom/syncPullcreateFailed') ?>",
+                                            data: {
+                                                data: json[number - 1],
+                                                message: result.message
+                                            },
+                                            cache: false
+                                        });
+                                        requestData(total, json, number + 1, value, success + 0, failed + 1);
+                                    }
+                                    $("#p_remarks_sync").prepend(title + "<br>");
+                                }).fail(function(jqXHR, textStatus) {
+                                    Swal.fire({
+                                        title: 'Connection Time Out, Re-connecting..',
+                                        showConfirmButton: false,
+                                        allowOutsideClick: false,
+                                        allowEscapeKey: false,
+                                        didOpen: () => {
+                                            Swal.showLoading();
+                                        },
+                                    });
+
+                                    requestData(total, json, number, value, success, failed);
+                                });
+                            }
+                        }
+                    },
+                });
+            }
+        }]
     });
 </script>
