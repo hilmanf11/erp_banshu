@@ -197,14 +197,15 @@ class Mrp_banshu extends CI_Controller
 
         if ($total > 0) {
             for ($i = 0; $i < $total; $i++) {
-                $bom = $this->read('bom', [], ["item_fg_id" => trim($send[$i]['bom_par_item']), "item_rm_id" => trim($send[$i]['bom_com_item'])]);
+                $bom = $this->read('bom', [], ["item_fg_id" => trim($send[$i]['bom_par_item']), "item_rm_id" => trim($send[$i]['bom_com_item']), "main_process" => trim($send[$i]['bom_routid'])]);
                 $item_rm = $this->read('item_rm', [], ["number" => trim($send[$i]['bom_com_item'])]);
                 $item_fg = $this->read('item_fg', [], ["number_customer" => trim($send[$i]['bom_par_item'])]);
                 if (
                     @$bom->item_fg_id == @$item_fg->id &&
                     @$bom->item_rm_id == @$item_rm->id &&
                     @$bom->composition == trim($send[$i]['bom_qty_perassy']) &&
-                    @$bom->revision == trim($send[$i]['bom_revision'])
+                    @$bom->revision == trim($send[$i]['bom_revision']) &&
+                    @$bom->main_process == trim($send[$i]['bom_routid'])
                 ) {
                 } else {
                     $arr[] = array(
@@ -212,6 +213,7 @@ class Mrp_banshu extends CI_Controller
                         "bom_com_item" => trim($send[$i]['bom_com_item']),
                         "bom_qty_perassy" => trim($send[$i]['bom_qty_perassy']),
                         "bom_revision" => trim($send[$i]['bom_revision']),
+                        "bom_routid" => trim($send[$i]['bom_routid']),
 
                     );
                 }
