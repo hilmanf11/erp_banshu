@@ -204,13 +204,21 @@
     <form id="frm_sync_erp" method="post" enctype="multipart/form-data" novalidate>
         <fieldset style="width:100%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
             <legend><b>Form Data</b></legend>
-            <div class="fitem">
-                <span style="width:10%; display:inline-block;">Customer</span>
-                <input style="width:40%;" name="sync_customer_id" id="sync_customer_id" class="easyui-combogrid">
+            <div style="float: left; width: 50%;">
+                <div class="fitem">
+                    <span style="width:30%; display:inline-block;">Customer</span>
+                    <input style="width:65%;" name="sync_customer_id" id="sync_customer_id" class="easyui-combogrid">
+                </div>
+                <div class="fitem">
+                    <span style="width:30%; display:inline-block;">Product No</span>
+                    <input style="width:65%;" name="sync_item_fg_id" id="sync_item_fg_id" class="easyui-combogrid">
+                </div>
             </div>
-            <div class="fitem">
-                <span style="width:10%; display:inline-block;">Product No</span>
-                <input style="width:40%;" name="sync_item_fg_id" id="sync_item_fg_id" class="easyui-combogrid">
+            <div style="float: left; width: 20%;">
+                <div class="alert-info" style="height: 60px; text-align:center;">
+                    <b>Total Assy</b>
+                    <h1 style="margin: 0; font-size:20px !important;" id="total_assy">0</h1>
+                </div>
             </div>
         </fieldset>
     </form>
@@ -1357,6 +1365,7 @@
                 }
             }],
             onSelect: function(val, row) {
+                $('#total_assy').html(0);
                 $('#sync_item_fg_id').combogrid({
                     url: '<?= base_url('master/bom/readitemcustomer?customer_id='); ?>' + row.id,
                     panelWidth: 600,
@@ -1734,6 +1743,7 @@
                             var title = "<b style='color: red;'>Data Not Found</b><br>";
                             $("#p_remarks_sync").prepend(title);
                         } else {
+                            $('#total_assy').html(json.total_assy);
                             requestData(json.total, json);
                         }
 
