@@ -121,7 +121,7 @@ class Crud extends CI_Model
         }
     }
 
-    function update($table, $where, $values)
+    function update($table, $where, $values, $logs = "")
     {
         if ($this->session->username != "") {
             $data = array_merge($values, [
@@ -133,11 +133,13 @@ class Crud extends CI_Model
 
             $this->db->where($where);
             if ($this->db->update($table, $data)) {
-                $this->logs("Update Before", json_encode($dataBefore), $table);
-                $this->logs("Update New", json_encode($data), $table);
-                
-                $read = $this->read($table, [], $where);
-                $this->approvals($table, @$read->id, $dataBefore);
+                if($logs == ""){
+                    $this->logs("Update Before", json_encode($dataBefore), $table);
+                    $this->logs("Update New", json_encode($data), $table);
+                    
+                    $read = $this->read($table, [], $where);
+                    $this->approvals($table, @$read->id, $dataBefore);
+                }
 
                 return json_encode(array("title" => "Good Job", "message" => "Data Updated Successfully", "theme" => "success"));
             } else {

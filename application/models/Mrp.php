@@ -236,4 +236,164 @@ class Mrp extends CI_Model
             return $data;
         }
     }
+
+    public function lttp($period)
+    {
+        $login = $this->login();
+
+        if ($login->information == 'Success') {
+            $token = $login->token;
+
+            $curl = curl_init();
+            curl_setopt_array($curl, array(
+                CURLOPT_URL => 'http://erp.banshu-ind.com/pro-api/mps_ltpp',
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => '',
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 0,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => 'GET',
+                CURLOPT_POSTFIELDS => '{"period":"' . $period . '"}',
+                CURLOPT_HTTPHEADER => array(
+                    'Content-Type: application/json',
+                    "Authorization: Bearer $token",
+                ),
+            ));
+
+            $result = curl_exec($curl);
+            curl_close($curl);
+            $decoded = json_decode($result, true);
+        }
+
+        return $decoded;
+    }
+
+    public function ospo()
+    {
+        $login = $this->login();
+        
+        if ($login->information == 'Success') {
+            $token = $login->token;
+
+            $curl = curl_init();
+            curl_setopt_array($curl, array(
+                CURLOPT_URL => 'http://erp.banshu-ind.com/pro-api/os_supplier',
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => '',
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 0,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => 'GET',
+                // CURLOPT_POSTFIELDS => '{"period":"' . $period . '"}',
+                CURLOPT_HTTPHEADER => array(
+                    'Content-Type: application/json',
+                    "Authorization: Bearer $token",
+                ),
+            ));
+
+            $result = curl_exec($curl);
+            curl_close($curl);
+            $decoded = json_decode($result, true);
+        }
+
+        return $decoded;
+    }
+
+    public function wip($period)
+    {
+        $login = $this->login();
+
+        if ($login->information == 'Success') {
+            $token = $login->token;
+
+            $curl = curl_init();
+            curl_setopt_array($curl, array(
+                CURLOPT_URL => 'http://erp.banshu-ind.com/pro-api/os_supply_wip',
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => '',
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 0,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => 'GET',
+                CURLOPT_POSTFIELDS => '{"cutoff":"' . $period . '"}',
+                CURLOPT_HTTPHEADER => array(
+                    'Content-Type: application/json',
+                    "Authorization: Bearer $token",
+                ),
+            ));
+
+            $result = curl_exec($curl);
+            curl_close($curl);
+            $decoded = json_decode($result, true);
+        }
+
+        return $decoded;
+    }
+
+    public function mpp($period)
+    {
+        $login = $this->login();
+
+        if ($login->information == 'Success') {
+            $token = $login->token;
+
+            $curl = curl_init();
+            curl_setopt_array($curl, array(
+                CURLOPT_URL => 'http://erp.banshu-ind.com/pro-api/os_mpp',
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => '',
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 0,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => 'GET',
+                CURLOPT_POSTFIELDS => '{"cutoff":"' . $period . '"}',
+                CURLOPT_HTTPHEADER => array(
+                    'Content-Type: application/json',
+                    "Authorization: Bearer $token",
+                ),
+            ));
+
+            $result = curl_exec($curl);
+            curl_close($curl);
+            $decoded = json_decode($result, true);
+        }
+
+        return $decoded;
+    }
+
+    public function stock($period)
+    {
+        $login = $this->login();
+
+        if ($login->information == 'Success') {
+            $token = $login->token;
+
+            $curl = curl_init();
+            curl_setopt_array($curl, array(
+                CURLOPT_URL => 'http://erp.banshu-ind.com/pro-api/ith',
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => '',
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 0,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => 'GET',
+                CURLOPT_POSTFIELDS => '{"cutoff":"' . $period . '"}',
+                CURLOPT_HTTPHEADER => array(
+                    'Content-Type: application/json',
+                    "Authorization: Bearer $token",
+                ),
+            ));
+
+            $result = curl_exec($curl);
+            curl_close($curl);
+            $decoded = json_decode($result, true);
+        }
+
+        return $decoded;
+    }
 }

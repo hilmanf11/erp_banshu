@@ -204,14 +204,16 @@ class Mrp_banshu extends CI_Controller
                     @$bom->item_fg_id == @$item_fg->id &&
                     @$bom->item_rm_id == @$item_rm->id &&
                     @$bom->composition == trim($send[$i]['bom_qty_perassy']) &&
-                    @$bom->revision == trim($send[$i]['bom_revision'])
+                    @$bom->revision == trim($send[$i]['bom_revision']) &&
+                    @$bom->main_process == trim($send[$i]['bom_routid'])
                 ) {
                 } else {
                     $arr[] = array(
                         "bom_par_item" => trim($send[$i]['bom_par_item']),
                         "bom_com_item" => trim($send[$i]['bom_com_item']),
                         "bom_qty_perassy" => trim($send[$i]['bom_qty_perassy']),
-                        "bom_revision" => trim($send[$i]['bom_revision']),
+                        "bom_revision" => trim($send[$i]['bom_revision']),,
+                        "bom_routid" => trim($send[$i]['bom_routid']),
 
                     );
                 }
@@ -220,5 +222,168 @@ class Mrp_banshu extends CI_Controller
 
         $arr['total'] = @count($arr);
         die(json_encode($arr));
+    }
+
+    public function getDataLttp(){
+        if ($this->input->post()) {
+            $filter_month = $this->input->post('filter_month');
+            $filter_year = $this->input->post('filter_year');
+            $filter_revision = $this->input->post('filter_revision');
+            $filter_cutoff = $this->input->post('filter_cutoff');
+            $period = $filter_year . $filter_month;
+
+            $data = $this->mrp->lttp($period);
+            
+            $arr = array();
+            for ($i = 0; $i < count($data); $i++) {
+                $customer = $this->read('customers', [], ["number" => trim($data[$i]['cust_id'])]);
+                $item_fg = $this->read('item_fg', [], ["number_customer" => trim($data[$i]['assy_no'])]);
+
+                if(@$item_fg->id != "" && @$customer->id != ""){
+                    $arr[] = array(
+                        "item_fg_id" => @$item_fg->id,
+                        "customer_id" => @$customer->id,
+                        "p_month" => $filter_month,
+                        "p_year" => $filter_year,
+                        "revision" => $filter_revision,
+                        "prod_plan_1" => $data[$i]['prod_plan_1'],
+                        "prod_plan_2" => $data[$i]['prod_plan_2'],
+                        "prod_plan_3" => $data[$i]['prod_plan_3'],
+                        "prod_plan_4" => $data[$i]['prod_plan_4'],
+                        "prod_plan_5" => $data[$i]['prod_plan_5'],
+                        "prod_plan_6" => $data[$i]['prod_plan_6'],
+                        "fc_1" => $data[$i]['fc_1'],
+                        "fc_2" => $data[$i]['fc_2'],
+                        "fc_3" => $data[$i]['fc_3'],
+                        "fc_4" => $data[$i]['fc_4'],
+                        "fc_5" => $data[$i]['fc_5'],
+                        "fc_6" => $data[$i]['fc_6'],
+                    );
+                }
+            }
+
+            $arr['total'] = count($arr);
+            die(json_encode($arr));
+        }
+    }
+
+    public function getDataOsPo(){
+        if ($this->input->post()) {
+            $filter_month = $this->input->post('filter_month');
+            $filter_year = $this->input->post('filter_year');
+            $filter_revision = $this->input->post('filter_revision');
+            $filter_cutoff = $this->input->post('filter_cutoff');
+            $period = $filter_year . $filter_month;
+
+            $data = $this->mrp->ospo();
+
+            $arr = array();
+            for ($i = 0; $i < count($data); $i++) {
+                $item_rm = $this->read('item_rm', [], ["number" => trim($data[$i]['item_id'])]);
+
+                if(@$item_rm->id != "" && $data[$i]['qty_open'] > 0){
+                    $arr[] = array(
+                        "item_rm_id" => @$item_rm->id,
+                        "p_month" => $filter_month,
+                        "p_year" => $filter_year,
+                        "revision" => $filter_revision,
+                        "qty" => $data[$i]['qty_open'],
+                    );
+                }
+            }
+
+            $arr['total'] = count($arr);
+            die(json_encode($arr));
+        }
+    }
+
+    public function getDataWip(){
+        if ($this->input->post()) {
+            $filter_month = $this->input->post('filter_month');
+            $filter_year = $this->input->post('filter_year');
+            $filter_revision = $this->input->post('filter_revision');
+            $filter_cutoff = $this->input->post('filter_cutoff');
+            $period = $filter_year . $filter_month;
+
+            $data = $this->mrp->wip($filter_cutoff);
+
+            $arr = array();
+            for ($i = 0; $i < count($data); $i++) {
+                $item_rm = $this->read('item_rm', [], ["number" => trim($data[$i]['item_id'])]);
+
+                if(@$item_rm->id != ""){
+                    $arr[] = array(
+                        "item_rm_id" => @$item_rm->id,
+                        "p_month" => $filter_month,
+                        "p_year" => $filter_year,
+                        "revision" => $filter_revision,
+                        "qty" => $data[$i]['stock'],
+                    );
+                }
+            }
+
+            $arr['total'] = count($arr);
+            die(json_encode($arr));
+        }
+    }
+
+    public function getDataMpp(){
+        if ($this->input->post()) {
+            $filter_month = $this->input->post('filter_month');
+            $filter_year = $this->input->post('filter_year');
+            $filter_revision = $this->input->post('filter_revision');
+            $filter_cutoff = $this->input->post('filter_cutoff');
+            $period = $filter_year . $filter_month;
+
+            $data = $this->mrp->mpp($filter_cutoff);
+
+            $arr = array();
+            for ($i = 0; $i < count($data); $i++) {
+                $item_rm = $this->read('item_rm', [], ["number" => trim($data[$i]['bom_com_item'])]);
+
+                if(@$item_rm->id != ""){
+                    $arr[] = array(
+                        "item_rm_id" => @$item_rm->id,
+                        "p_month" => $filter_month,
+                        "p_year" => $filter_year,
+                        "revision" => $filter_revision,
+                        "qty" => $data[$i]['total'],
+                    );
+                }
+            }
+
+            $arr['total'] = count($arr);
+            die(json_encode($arr));
+        }
+    }
+
+    public function getDataStock(){
+        if ($this->input->post()) {
+            $filter_month = $this->input->post('filter_month');
+            $filter_year = $this->input->post('filter_year');
+            $filter_revision = $this->input->post('filter_revision');
+            $filter_cutoff = $this->input->post('filter_cutoff');
+            $period = $filter_year . $filter_month;
+
+            $data = $this->mrp->stock($filter_cutoff);
+
+            $arr = array();
+            for ($i = 0; $i < count($data); $i++) {
+                $item_rm = $this->read('item_rm', [], ["number" => trim($data[$i]['item'])]);
+
+                if(@$item_rm->id != "" && $data[$i]['qty'] > 0){
+                    $arr[] = array(
+                        "item_rm_id" => @$item_rm->id,
+                        "p_month" => $filter_month,
+                        "p_year" => $filter_year,
+                        "revision" => $filter_revision,
+                        "qty" => $data[$i]['qty'],
+                    );
+                }
+            }
+
+            $arr['total'] = count($arr);
+            die(json_encode($arr));
+        }
     }
 }
