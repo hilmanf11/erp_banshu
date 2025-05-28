@@ -197,7 +197,7 @@ class Mrp_banshu extends CI_Controller
 
         if ($total > 0) {
             for ($i = 0; $i < $total; $i++) {
-                $bom = $this->read('bom', [], ["item_fg_id" => trim($send[$i]['bom_par_item']), "item_rm_id" => trim($send[$i]['bom_com_item'])]);
+                $bom = $this->read('bom', [], ["item_fg_id" => trim($send[$i]['bom_par_item']), "item_rm_id" => trim($send[$i]['bom_com_item']), "main_process" => trim($send[$i]['bom_routid'])]);
                 $item_rm = $this->read('item_rm', [], ["number" => trim($send[$i]['bom_com_item'])]);
                 $item_fg = $this->read('item_fg', [], ["number_customer" => trim($send[$i]['bom_par_item'])]);
                 if (
@@ -212,7 +212,11 @@ class Mrp_banshu extends CI_Controller
                         "bom_par_item" => trim($send[$i]['bom_par_item']),
                         "bom_com_item" => trim($send[$i]['bom_com_item']),
                         "bom_qty_perassy" => trim($send[$i]['bom_qty_perassy']),
+<<<<<<< HEAD
                         "bom_revision" => trim($send[$i]['bom_revision']),,
+=======
+                        "bom_revision" => trim($send[$i]['bom_revision']),
+>>>>>>> c2278269af2be458990c64e6dff4bbc3cdbe529e
                         "bom_routid" => trim($send[$i]['bom_routid']),
 
                     );
