@@ -180,53 +180,49 @@ class Mrp_banshu extends CI_Controller
     {
         $item_fg_id = $this->input->post('sync_item_fg_id');
         $customer = $this->input->post('sync_customer_id');
-        $this->db->select('number_customer');
-        $this->db->from('item_fg');
-        $this->db->where('deleted', 0);
+
+        $this->db->select('b.number_customer, b.id as item_fg_id');
+        $this->db->from('mrp_ltpp a');
+        $this->db->join('item_fg b', 'a.item_fg_id = b.id');
         if (!empty($item_fg_id)) {
-            $this->db->where('id', $item_fg_id);
+            $this->db->where('b.id', $item_fg_id);
         }
         if (!empty($customer)) {
-            $this->db->where('customer_id', $customer);
+            $this->db->where('b.customer_id', $customer);
         }
-        $this->db->order_by('id', 'ASC');
-        $assy = $this->db->get()->result_array();
+        $this->db->group_by('a.item_fg_id');
+        $this->db->order_by('b.id', 'ASC');
+        // $this->db->limit(100, 300);
+        $items = $this->db->get()->result_array();
 
-        $send = $this->mrp->master_bom($assy);
-        $total = count($send);
+        // $arr = [];
+        // foreach ($items as $item) {
+        //     $send = $this->mrp->master_bom($item['number_customer']);
+        //     $total = count($send);
 
-        if ($total > 0) {
-            $tassy = '';
-            $totalassy = 0;
-            for ($i = 0; $i < $total; $i++) {
-                if ($tassy != trim($send[$i]['bom_par_item'])) {
-                    $tassy = trim($send[$i]['bom_par_item']);
-                    $totalassy++;
-                }
-                $bom = $this->read('bom', [], ["item_fg_id" => trim($send[$i]['bom_par_item']), "item_rm_id" => trim($send[$i]['bom_com_item']), "main_process" => trim($send[$i]['bom_routid'])]);
-                $item_rm = $this->read('item_rm', [], ["number" => trim($send[$i]['bom_com_item'])]);
-                $item_fg = $this->read('item_fg', [], ["number_customer" => trim($send[$i]['bom_par_item'])]);
-                if (
-                    @$bom->item_fg_id == @$item_fg->id &&
-                    @$bom->item_rm_id == @$item_rm->id &&
-                    @$bom->composition == trim($send[$i]['bom_qty_perassy']) &&
-                    @$bom->revision == trim($send[$i]['bom_revision']) &&
-                    @$bom->main_process == trim($send[$i]['bom_routid'])
-                ) {
-                } else {
-                    $arr[] = array(
-                        "bom_par_item" => trim($send[$i]['bom_par_item']),
-                        "bom_com_item" => trim($send[$i]['bom_com_item']),
-                        "bom_qty_perassy" => trim($send[$i]['bom_qty_perassy']),
-                        "bom_revision" => trim($send[$i]['bom_revision']),
-                        "bom_routid" => trim($send[$i]['bom_routid']),
-                    );
-                }
-            }
-        }
+        //     if ($total > 0) {
+        //         for ($i = 0; $i < $total; $i++) {
+        //             $item_rm = $this->read('item_rm', [], ["number" => trim($send[$i]['bom_com_item'])]);
+        //             $item_fg = $this->read('item_fg', [], ["number_customer" => trim($send[$i]['bom_par_item'])]);
+        //             $bom = $this->read('bom', [], ["item_fg_id" => @$item_fg->id, "item_rm_id" => @$item_rm->id]);
+        //             if(!empty($item_rm->id) && !empty($item_fg->id)){
+        //                 if (empty($bom->id)) {
+        //                     $arr[] = array(
+        //                         "bom_par_item" => trim($send[$i]['bom_par_item']),
+        //                         "bom_com_item" => trim($send[$i]['bom_com_item']),
+        //                         "bom_qty_perassy" => trim($send[$i]['bom_qty_perassy']),
+        //                         "bom_revision" => trim($send[$i]['bom_revision']),
+        //                         "bom_routid" => trim($send[$i]['bom_routid']),
+        //                     );
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
-        $arr['total'] = @count($arr);
-        $arr['total_assy'] = $totalassy;
+        $arr = $items;
+        $arr['total'] = @count($items);
+        $arr['total_assy'] = count($items);
         die(json_encode($arr));
     }
 

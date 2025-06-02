@@ -200,7 +200,7 @@
 </div>
 
 <!-- Synchronize erp -->
-<div id="dlg_sync_erp" class="easyui-dialog" title="Synchronize Data From MRP" data-options="closed: true,modal:true" style="width: 800px; padding:10px; top: 20px;">
+<div id="dlg_sync_erp" class="easyui-dialog" title="Synchronize Data From MRP" data-options="closed: true,modal:true" style="width: 800px; height: 550px; padding:10px; top: 20px;">
     <form id="frm_sync_erp" method="post" enctype="multipart/form-data" novalidate>
         <fieldset style="width:100%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
             <legend><b>Form Data</b></legend>
@@ -225,6 +225,8 @@
     <span style="float: left; color:green;">SUCCESS : <b id="p_sync_success">0</b></span><span style="float: right; color:red;"> FAILED : <b id="p_sync_failed">0</b></span>
     <div id="p_sync_erp" class="easyui-progressbar" style="width:100%; margin-top: 10px;"></div>
     <center><b id="p_start_sync">0</b> Of <b id="p_finish_sync">0</b></center>
+    <div id="p_sync_erp2" class="easyui-progressbar" style="width:100%; margin-top: 10px;"></div>
+    <center><b id="p_start_sync2">0</b> Of <b id="p_finish_sync2">0</b></center>
     <div id="p_remarks_sync" title="History Synchronize" class="easyui-panel" style="width:100%; height:350px; padding:10px; margin-top: 10px;">
         <ul id="remarks_sync">
         </ul>
@@ -232,7 +234,7 @@
 </div>
 
 <!-- PDF -->
-<iframe id="printout" src="<?= base_url('master/bom/print') ?>" style="width: 100%;" hidden></iframe>
+<iframe id="printout" style="width: 100%;" hidden></iframe>
 
 <script>
     //ADD DATA
@@ -1738,6 +1740,7 @@
                         $.ajax({
                             url: "<?= base_url('master/bom/syncPullclearFailed') ?>"
                         });
+                        
                         var json = eval('(' + result + ')');
                         if (json.total == 0) {
                             var title = "<b style='color: red;'>Data Not Found</b><br>";
@@ -1753,45 +1756,61 @@
                                 $('#p_sync_erp').progressbar('setValue', value);
                                 $('#p_start_sync').html(number);
                                 $('#p_finish_sync').html(total);
+                                $.messager.progress();
 
-                                $.post('<?= base_url('master/bom/syncPullCreate') ?>', {
+                                $.post('<?= base_url('master/bom/syncPullgetPart') ?>', {
                                     data: json[number - 1]
                                 }, function(note) {
                                     var result = eval('(' + note + ')');
-                                    if (result.theme == "success") {
-                                        Swal.close();
-                                        $('#p_sync_success').html(success);
-                                        var title = "<b style='color: green;'>" + result.title + "</b> | " + result.message;
-                                        requestData(total, json, number + 1, value, success + 1, failed + 0);
-                                    } else {
-                                        Swal.close();
-                                        $('#p_sync_failed').html(failed);
-                                        var title = "<b style='color: red;'>" + result.title + "</b> | " + result.message; //Json Failed
-                                        $.ajax({
-                                            type: "POST",
-                                            async: true,
-                                            url: "<?= base_url('master/bom/syncPullcreateFailed') ?>",
-                                            data: {
-                                                data: json[number - 1],
-                                                message: result.message
-                                            },
-                                            cache: false
-                                        });
-                                        requestData(total, json, number + 1, value, success + 0, failed + 1);
+                                    $.messager.progress('close');
+                                    if (result.total == 0) {
+                                        var title = "<b style='color: red;'>Product No "+json[number - 1].number_customer+" Not Found</b><br>";
+                                        $("#p_remarks_sync").prepend(title);
+                                        requestData(total, json, number + 1, value, success, failed + 1);
+                                    }else{
+                                        var title = "<b style='color: green;'>Product No "+json[number - 1].number_customer+" Founded</b><br>";
+                                        $("#p_remarks_sync").prepend(title);
+                                        requestData2(result.total, result);
                                     }
-                                    $("#p_remarks_sync").prepend(title + "<br>");
-                                }).fail(function(jqXHR, textStatus) {
-                                    Swal.fire({
-                                        title: 'Connection Time Out, Re-connecting..',
-                                        showConfirmButton: false,
-                                        allowOutsideClick: false,
-                                        allowEscapeKey: false,
-                                        didOpen: () => {
-                                            Swal.showLoading();
-                                        },
-                                    });
 
-                                    requestData(total, json, number, value, success, failed);
+                                    function requestData2(total2, json2, number2 = 1, value2 = 0, success2 = 1, failed2 = 1) {
+                                        if (value2 < 100) {
+                                            value2 = Math.floor((number2 / total2) * 100);
+                                            $('#p_sync_erp2').progressbar('setValue', value2);
+                                            $('#p_start_sync2').html(number2);
+                                            $('#p_finish_sync2').html(total2);
+
+                                            $.post('<?= base_url('master/bom/syncPullCreate') ?>', {
+                                                data: json2[number2 - 1]
+                                            }, function(note2) {
+                                                var result2 = eval('(' + note2 + ')');
+                                                if (result2.theme == "success") {
+                                                    $('#p_sync_success').html(success2);
+                                                    var title = "<b style='color: green;'>" + result2.title + "</b> | " + result2.message;
+                                                    requestData2(total2, json2, number2 + 1, value2, success2 + 1, failed2 + 0);
+                                                } else {
+                                                    $('#p_sync_failed').html(failed2);
+                                                    var title = "<b style='color: red;'>" + result2.title + "</b> | " + result2.message; //Json Failed
+                                                    $.ajax({
+                                                        type: "POST",
+                                                        async: true,
+                                                        url: "<?= base_url('master/bom/syncPullcreateFailed') ?>",
+                                                        data: {
+                                                            data: json2[number2 - 1].item_rm_id,
+                                                            message: result2.message
+                                                        },
+                                                        cache: false
+                                                    });
+                                                    requestData2(total2, json2, number2 + 1, value2, success2 + 0, failed2 + 1);
+                                                }
+                                                $("#p_remarks_sync").prepend(title + "<br>");
+
+                                                if (number2 == total2) {
+                                                    requestData(total, json, number + 1, value);
+                                                }
+                                            });
+                                        }
+                                    }
                                 });
                             }
                         }

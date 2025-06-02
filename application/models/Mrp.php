@@ -200,7 +200,7 @@ class Mrp extends CI_Model
             $token = $login->token;
             $databom = [];
 
-            foreach ($assy_no as $assy) {
+            // foreach ($assy_no as $assy) {
                 $curl = curl_init();
 
                 curl_setopt_array($curl, array(
@@ -212,7 +212,7 @@ class Mrp extends CI_Model
                     CURLOPT_FOLLOWLOCATION => true,
                     CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
                     CURLOPT_CUSTOMREQUEST => 'GET',
-                    CURLOPT_POSTFIELDS => '{"assy":"' . $assy['number_customer'] . '"}',
+                    CURLOPT_POSTFIELDS => '{"assy":"' . $assy_no . '"}',
                     CURLOPT_HTTPHEADER => array(
                         'Content-Type: application/json',
                         "Authorization: Bearer $token",
@@ -228,7 +228,7 @@ class Mrp extends CI_Model
                 if (is_array($decoded)) {
                     $databom = array_merge($databom, $decoded);
                 }
-            }
+            // }
 
             return $databom;
         } else {

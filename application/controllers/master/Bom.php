@@ -11,6 +11,8 @@ class Bom extends CI_Controller
         $this->load->library('form_validation');
         $this->load->library('session');
         $this->load->model('crud');
+        $this->load->model('mrp');
+        
         //VALIDASI FORM
         $this->form_validation->set_rules('item_fg_id', 'Product No.', 'required|min_length[1]|max_length[20]|is_unique[bom.item_fg_id]');
         $this->form_validation->set_rules('item_rm_id', 'Part No.', 'required|min_length[1]|max_length[20]|is_unique[bom.item_rm_id]');
@@ -44,8 +46,6 @@ class Bom extends CI_Controller
         $send = $this->crud->query("SELECT * FROM item_fg WHERE (`number` like '%$post%' or number_customer like '%$post%' or `name` like '%$post%') and (approved_to = '' or approved_to is null) and status = 0 and customer_id='$customer_id'");
         echo json_encode($send);
     }
-
-
 
     //GET DATA
     public function readBom($item_fg_id)
@@ -571,86 +571,49 @@ class Bom extends CI_Controller
         @readfile($file);
     }
 
-    public function syncPullCreate()
+    public function syncPullgetPart()
     {
         if ($this->input->post()) {
             $data = $this->input->post('data');
+            $dataFinal = [];
+            
+            $bom = $this->crud->reads('bom', [], ["item_fg_id" => $data['item_fg_id']]);
+            if(count($bom) == 0){
+                $send = $this->mrp->master_bom($data['number_customer']);
+                $total = count($send);
 
-            $item_rm = $this->crud->read('item_rm', [], ["number" => $data['bom_com_item']]);
-            $item_fg = $this->crud->read('item_fg', [], ["number_customer" => $data['bom_par_item']]);
-
-            $dataFinal = array(
-                "item_fg_id" => @$item_fg->id,
-                "item_rm_id" => @$item_rm->id,
-                "composition" => $data['bom_qty_perassy'],
-                "revision" => $data['bom_revision'],
-                "main_process" => $data['bom_routid'],
-            );
-
-            if (empty(@$item_rm->number)) {
-                $send = json_encode(array("title" => "Not Found", "message" => "Part No " . $data['bom_par_item'] . " Not Found", "theme" => "error"));
-            } else if (empty(@$item_fg->number)) {
-                $send = json_encode(array("title" => "Not Found", "message" => "Product No " . $data['bom_par_item'] . " Not Found", "theme" => "error"));
-            } else {
-
-                if ($data['bom_revision'] == "") {
-                    $bom = $this->crud->read("bom", [], ["item_fg_id" => @$item_fg->id, "item_rm_id" => @$item_rm->id, "main_process" => $data['bom_routid']]);
-                    if (@$bom->item_fg_id != "") {
-                        $this->crud->update('bom', ["item_fg_id" => @$item_fg->id, "item_rm_id" => @$item_rm->id, "main_process" => $data['bom_routid']], $dataFinal, "logs");
-                        $this->db->update("bom_log", $dataFinal, ["item_fg_id" => @$item_fg->id, "item_rm_id" => @$item_rm->id, "main_process" => $data['bom_routid']]);
-                        $send = json_encode(array("title" => "Good Job", "message" => "Product No. " . $data['bom_par_item'] . " | Part No. " . $data['bom_com_item'] . " | Rout ID." . $data['bom_routid'] . " Updated Successfully", "theme" => "success"));
-                    } else {
-                        $this->crud->create('bom', $dataFinal, "logs");
-                        $this->db->insert("bom_log", $dataFinal);
-                        $send = json_encode(array("title" => "Good Job", "message" => "Product No. " . $data['bom_par_item'] . " | Part No. " . $data['bom_com_item'] . " | Rout ID." . $data['bom_routid'] . " Saved Successfully", "theme" => "success"));
-                    }
-                } else {
-                    $bom = $this->crud->read("bom", [], ["item_fg_id" => @$item_fg->id, "item_rm_id" => @$item_rm->id, "main_process" => $data['bom_routid']]);
-                    if (@$bom->item_fg_id != "") {
-                        if (@$bom->approved_to != "") {
-                            $send = json_encode(array("title" => "Failed", "message" => "Data Cannot Save because the Data still Process Approvals", "theme" => "error"));
+                if ($total > 0) {
+                    for ($i = 0; $i < $total; $i++) {
+                        $item_rm = $this->crud->read('item_rm', [], ["number" => trim($send[$i]['bom_com_item'])]);
+                        $item_fg = $this->crud->read('item_fg', [], ["number_customer" => trim($send[$i]['bom_par_item'])]);
+                        if(!empty($item_rm->id) && !empty($item_fg->id)){
+                            $dataFinal[] = array(
+                                "item_fg_id" => @$item_fg->id,
+                                "item_rm_id" => @$item_rm->id,
+                                "composition" => trim($send[$i]['bom_qty_perassy']),
+                                "main_process" => trim($send[$i]['bom_routid']),
+                            );
                         }
-
-                        if ($data['bom_revision'] > 0) {
-                            $this->crud->update('bom', ["item_fg_id" => @$item_fg->id, "item_rm_id" => @$item_rm->id, "main_process" => $data['bom_routid']], $dataFinal, "logs");
-                            $send = json_encode(array("title" => "Good Job", "message" => "Product No. " . $data['bom_par_item'] . " | Part No. " . $data['bom_com_item'] . " | Rout ID." . $data['bom_routid'] . " Updated Successfully", "theme" => "success"));
-                        } else {
-                            $this->db->update('bom', $dataFinal, ["item_fg_id" => @$item_fg->id, "item_rm_id" => @$item_rm->id, "main_process" => $data['bom_routid']]);
-                            $send = json_encode(array("title" => "Good Job", "message" => "Product No. " . $data['bom_par_item'] . " | Part No. " . $data['bom_com_item'] . " | Rout ID." . $data['bom_routid'] . " Updated Successfully", "theme" => "success"));
-                        }
-                    } else {
-                        $this->crud->create('bom', $dataFinal);
-                        $send = json_encode(array("title" => "Good Job", "message" => "Product No. " . $data['bom_par_item'] . " | Part No. " . $data['bom_com_item'] . " | Rout ID." . $data['bom_routid'] . " Saved Successfully", "theme" => "success"));
                     }
-
-                    $this->db->insert("bom_log", $dataFinal);
                 }
-
-
-                // if (!empty(@$bom->number)) {
-                //     if (
-                //         @$bom->item_fg_id == @$item_fg->id &&
-                //         @$bom->item_rm_id == @$item_rm->id &&
-                //         @$bom->composition == $data['bom_qty_perassy'] &&
-                //         @$bom->revision == $data['bom_revision']
-                //     ) {
-                //         $send = json_encode(array("title" => "No Changes", "message" => "Data is Same, No any changes", "theme" => "success"));
-                //     } else {
-                //         $exec = $this->crud->update('bom', ["id" => @$bom->id], $dataFinal);
-                //         $exec = json_decode($exec);
-                //         if ($exec->theme == 'success') {
-                //             $send = json_encode(array("title" => "Good Job", "message" => "Product No " . $data['bom_par_item'] . " Updated Successfully", "theme" => "success"));
-                //         }
-                //     }
-                // } else {
-                //     $exec = $this->crud->create('bom', $dataFinal);
-                //     $exec = json_decode($exec);
-                //     if ($exec->theme == 'success') {
-                //         $send = json_encode(array("title" => "Good Job", "message" => "Product No." . $data['bom_par_item'] . " Saved Successfully", "theme" => "success"));
-                //     }
-                // }
             }
-            echo $send;
+
+            $dataFinal['total'] = count($dataFinal);
+            die(json_encode($dataFinal));
+        }
+    }
+
+    public function syncPullCreate(){
+        if ($this->input->post()) {
+            $data = $this->input->post('data');
+            $bom = $this->crud->read('bom', [], ["item_fg_id" => $data['item_fg_id'], "item_rm_id" => $data['item_rm_id']]);
+            if (empty($bom->id)) {
+                $send = $this->crud->create('bom', $data, "logs");
+                $this->db->insert("bom_log", array_merge($data, ["created_by" => $this->session->username, "created_date" => date("Y-m-d H:i:s")]));
+                echo $send;
+            }else{
+                die(json_encode(array("title" => "Duplicate", "message" => "Product No ".$data['item_fg_id']." and Part No ".$data['item_rm_id']." already created", "theme" => "error")));
+            }
         }
     }
 
