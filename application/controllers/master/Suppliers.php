@@ -155,26 +155,21 @@ class Suppliers extends CI_Controller
                 //excel
                 'name' => $data->val($i, 2),
                 'number' => $data->val($i, 3),
-                'supplier_type' => $data->val($i, 4),
-                'type' => $data->val($i, 5),
-                'origin' => $data->val($i, 6),
-                'state' => $data->val($i, 7),
-                'tds' => $data->val($i, 8),
-                'address' => $data->val($i, 9),
-                'contact_person' => $data->val($i, 10),
-                'telp' => $data->val($i, 11),
-                'fax' => $data->val($i, 12),
-                'email' => $data->val($i, 13),
-                'website' => $data->val($i, 14),
-                'currency' => $data->val($i, 15),
-                'payment_term' => $data->val($i, 16),
-                'incoterm' => $data->val($i, 17),
-                'gst' => $data->val($i, 18),
-                'pen' => $data->val($i, 19),
-                'ifsc' => $data->val($i, 20),
-                'bank_account' => $data->val($i, 21),
-                'bank_name' => $data->val($i, 22),
-                'status' => $data->val($i, 23)
+                'type' => $data->val($i, 4),
+                'origin' => $data->val($i, 5),
+                'state' => $data->val($i, 6),
+                'address' => $data->val($i, 7),
+                'contact_person' => $data->val($i, 8),
+                'telp' => $data->val($i, 9),
+                'fax' => $data->val($i, 10),
+                'email' => $data->val($i, 11),
+                'website' => $data->val($i, 12),
+                'currency' => $data->val($i, 13),
+                'payment_term' => $data->val($i, 14),
+                'incoterm' => $data->val($i, 15),
+                'bank_account' => $data->val($i, 16),
+                'bank_name' => $data->val($i, 17),
+                'status' => $data->val($i, 18)
             );
         }
         $datas['total'] = count($datas);
@@ -215,7 +210,6 @@ class Suppliers extends CI_Controller
 
             //Cek Process Number          //table       //field        //field excel
             $suppliers = $this->crud->read('suppliers', [], ["number" => $data['number']]);
-            $tds = $this->crud->read('tds', [], ["section" => $data['tds']]);
 
             //AUTOID
             $sql = $this->db->query("SELECT max(SUBSTRING(id, 5)) as kode FROM suppliers");
@@ -233,8 +227,8 @@ class Suppliers extends CI_Controller
 
             if (!empty($suppliers->number)) {
                 echo json_encode(array("title" => "Duplicated", "message" => " Supplier Code " . $data['number'] . " is Duplicate Data", "theme" => "error"));
-            } else if(!in_array($data['supplier_type'], array("RAW MATERIAL","CAPITAL GOODS","SERVICE","CONSUMABLE","OTHER"))){
-                echo json_encode(array("title" => "Not Found", "message" => " Supplier Type " . $data['supplier_type'] . " is Not Found", "theme" => "error"));
+            } else if(!in_array($data['type'], array("LOCAL","IMPORT"))){
+                echo json_encode(array("title" => "Not Found", "message" => " Supplier Type " . $data['type'] . " is Not Match", "theme" => "error"));
             // } else if(empty($tds->section)){
             //     echo json_encode(array("title" => "Not Found", "message" => " TDS Section " . $data['tds'] . " is Not Found", "theme" => "error"));
             } else {
@@ -243,7 +237,6 @@ class Suppliers extends CI_Controller
                     "id" => $autoid,
                     "name" => $data['name'],
                     "number" => $data['number'],
-                    "supplier_type" => $data['supplier_type'],
                     "type" => $data['type'],
                     "origin" => $data['origin'],
                     "state" => $data['state'],
@@ -255,11 +248,7 @@ class Suppliers extends CI_Controller
                     "website" => $data['website'],
                     "currency" => $data['currency'],
                     "payment_term" => $data['payment_term'],
-                    "tds" => $data['tds'],
                     "incoterm" => $data['incoterm'],
-                    "gst" => $data['gst'],
-                    "pen" => $data['pen'],
-                    "ifsc" => $data['ifsc'],
                     "bank_account" => $data['bank_account'],
                     "bank_name" => $data['bank_name'],
                     "status" => $data['status'],
@@ -327,14 +316,10 @@ class Suppliers extends CI_Controller
                 <th>Email</th>
                 <th>Website</th>
                 <th>Currency</th>
-                <th>TDS</th>
                 <th>Payment Term (Day)</th>
                 <th>Incoterm</th>
                 <th>Tax</th>
                 <th>Vat</th>
-                <th>GST No</th>
-                <th>PEN No</th>
-                <th>Bank IFSC Code</th>
                 <th>Bank Account</th>
                 <th>Bank Name</th>
                 <th>Status</th>
@@ -356,14 +341,10 @@ class Suppliers extends CI_Controller
                     <td>' . $data['email'] . '</td>
                     <td>' . $data['website'] . '</td>
                     <td>' . $data['currency'] . '</td>
-                    <td>' . $data['tds'] . '</td>
                     <td>' . $data['payment_term'] . '</td>
                     <td>' . $data['incoterm'] . '</td>
                     <td>' . $data['tax'] . '</td>
                     <td>' . $data['vat_status'] . '</td>
-                    <td>' . $data['gst'] . '</td>
-                    <td>' . $data['pen'] . '</td>
-                    <td>' . $data['ifsc'] . '</td>
                     <td>' . $data['bank_account'] . '</td>
                     <td>' . $data['bank_name'] . '</td>
                     <td>' . $data['status'] . '</td>';

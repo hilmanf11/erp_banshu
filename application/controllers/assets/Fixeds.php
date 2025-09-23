@@ -497,7 +497,7 @@ class Fixeds extends CI_Controller
             if (empty($item_family->id)) {
                 echo json_encode(array("title" => "Not Found", "message" => "Product Family " . $data['item_family_number'] . " Not Found", "theme" => "error"));
             // } elseif (empty($item_rm->id)) {
-            //     echo json_encode(array("title" => "Not Found", "message" => "Part No " . $data['item_rm_id'] . " Not Found", "theme" => "error"));
+            //     echo json_encode(array("title" => "Not Found", "message" => "Part No EBWS " . $data['item_rm_id'] . " Not Found", "theme" => "error"));
             } elseif (empty($supplier->id)) {
                 echo json_encode(array("title" => "Not Found", "message" => "Supplier ID " . $data['supplier_id'] . " Not Found", "theme" => "error"));
             } elseif (!empty($fixed_assets->id)) {

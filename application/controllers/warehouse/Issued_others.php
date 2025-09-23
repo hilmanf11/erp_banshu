@@ -320,7 +320,7 @@ class Issued_others extends CI_Controller
                                 <table id="customers">
                                     <tr>
                                         <th>No</th>
-                                        <th width="120">Part No</th>
+                                        <th width="120">Part No EBWS</th>
                                         <th width="150">Part No Supplier</th>
                                         <th>Description</th>
                                         <th width="50">Uom</th>
@@ -445,7 +445,7 @@ class Issued_others extends CI_Controller
                     <th>Requisition No</th>
                     <th>Requisition Date</th>
                     <th>Requisition Name</th>
-                    <th>Part No</th>
+                    <th>Part No EBWS</th>
                     <th>Part No Supplier</th>
                     <th>Description</th>
                     <th>Uom</th>

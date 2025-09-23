@@ -19,7 +19,7 @@
             <th rowspan="2" data-options="field:'bc_document',width:100,halign:'center'">Inovice No</th>
             <!-- <th rowspan="2" data-options="field:'bc_date',width:100,halign:'center'">Invoice Date</th> -->
             <th rowspan="2" data-options="field:'po_no',width:170,halign:'center'">PO No</th>
-            <th rowspan="2" data-options="field:'item_rm_id',width:150,halign:'center'">Part No</th>
+            <th rowspan="2" data-options="field:'item_rm_id',width:150,halign:'center'">Part No EBWS</th>
             <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No Supplier</th>
             <th rowspan="2" data-options="field:'item_rm_name',width:200,halign:'center'">Description</th>
             <th rowspan="2" data-options="field:'qty',width:80,halign:'center',align:'right',formatter:numberformat">Qty</th>

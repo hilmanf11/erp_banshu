@@ -10,7 +10,7 @@
             <th rowspan="2" data-options="field:'invoice_date',width:100,halign:'center'">Invoice Date</th>
             <th rowspan="2" data-options="field:'po_no',width:120,halign:'center'">PO No</th>
             <th rowspan="2" data-options="field:'po_date',width:100,halign:'center'">PO Date</th>
-            <th rowspan="2" data-options="field:'item_rm_id',width:100,halign:'center'">Part No</th>
+            <th rowspan="2" data-options="field:'item_rm_id',width:100,halign:'center'">Part No EBWS</th>
             <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No Supplier</th>
             <th rowspan="2" data-options="field:'item_rm_name',width:200,halign:'center'">Description</th>
             <th rowspan="2" data-options="field:'item_family_name',width:100,halign:'center'">Product<br>Family</th>
@@ -158,7 +158,7 @@
                     <input style="width:60%;" name="supplier_name" id="supplier_name" disabled class="easyui-textbox">
                 </div>
                 <div class="fitem" hidden>
-                    <span style="width:35%; display:inline-block;">Part No</span>
+                    <span style="width:35%; display:inline-block;">Part No EBWS</span>
                     <input style="width:60%;" name="item_rm_id" id="item_rm_id" disabled class="easyui-textbox">
                 </div>
                 <div class="fitem">
@@ -301,11 +301,11 @@
                                     textField: 'number',
                                     mode: 'remote',
                                     fitColumns: true,
-                                    prompt: 'Choose Part No',
+                                    prompt: 'Choose Part No EBWS',
                                     columns: [
                                         [{
                                             field: 'id',
-                                            title: 'Part No',
+                                            title: 'Part No EBWS',
                                             width: 150
                                         },{
                                             field: 'number',
@@ -1029,11 +1029,11 @@
             textField: 'number',
             mode: 'remote',
             fitColumns: true,
-            prompt: "Choose Part No",
+            prompt: "Choose Part No EBWS",
             columns: [
                 [{
                     field: 'id',
-                    title: 'Part No',
+                    title: 'Part No EBWS',
                     width: 150
                 }, {
                     field: 'number',

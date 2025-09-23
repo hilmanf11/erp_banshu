@@ -3,7 +3,7 @@
     <thead>
         <tr>
             <th rowspan="2" field="ck" checkbox="true"></th>
-            <!-- <th rowspan="2" data-options="field:'item_fg_id',width:150,align:'center'">Product ID</th> -->
+            <th rowspan="2" data-options="field:'plant',width:80,align:'center'">Plant</th>
             <th rowspan="2" data-options="field:'item_fg_number',width:150,halign:'center'">Product No Original</th>
             <th rowspan="2" data-options="field:'number_customer',width:200,halign:'center'">Product No Customer</th>
             <th rowspan="2" data-options="field:'item_fg_name',width:200,halign:'center'">Description</th>
@@ -29,19 +29,25 @@
 <div id="toolbar" style="height: 160px; padding: 10px;">
     <!-- <div style="width: 100%; display: grid; grid-template-columns: auto auto auto; grid-gap: 5px; display: flex;"> -->
     <div style="width: 100%;">
-        <fieldset style="width: 75%; border:2px solid #d0d0d0; margin-bottom: 5px; margin-top: 5px; border-radius:4px;">
+        <fieldset style="width: 100%; border:2px solid #d0d0d0; margin-bottom: 5px; margin-top: 5px; border-radius:4px;">
             <legend><b>Form Filter Data</b></legend>
-            <div style="width: 50%; float:left;">
+            <div style="width: 30%; float:left;">
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Product No</span>
-                    <input style="width:60%;" id="filter_item_fg_id" class="easyui-combogrid">
+                    <span style="width:35%; display:inline-block;">Plant</span>
+                    <input style="width:60%;" id="filter_plant" class="easyui-combobox">
                 </div>
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;"></span>
                     <a href="javascript:;" class="easyui-linkbutton" onclick="filter()"><i class="fa fa-search"></i> Filter Data</a>
                 </div>
             </div>
-            <div style="width: 50%; float:left;">
+            <div style="width: 30%; float:left;">
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Product No</span>
+                    <input style="width:60%;" id="filter_item_fg_id" class="easyui-combogrid">
+                </div>
+            </div>
+            <div style="width: 30%; float:left;">
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Part No</span>
                     <input style="width:60%;" id="filter_item_rm_id" class="easyui-combogrid">
@@ -70,6 +76,10 @@
     <form id="frm_insert" method="post" enctype="multipart/form-data" novalidate>
         <fieldset style="width:100%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
             <legend><b>Form Data</b></legend>
+            <div class="fitem">
+                <span style="width:10.5%; display:inline-block;">Plant</span>
+                <input style="width:18%;" name="plant" id="plant" required="" class="easyui-combobox">
+            </div>
             <div style="width: 30%; float: left;">
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Product No Original</span>
@@ -206,8 +216,8 @@
             <legend><b>Form Data</b></legend>
             <div style="float: left; width: 50%;">
                 <div class="fitem">
-                    <span style="width:30%; display:inline-block;">Customer</span>
-                    <input style="width:65%;" name="sync_customer_id" id="sync_customer_id" class="easyui-combogrid">
+                    <span style="width:30%; display:inline-block;">Plant</span>
+                    <input style="width:65%;" name="sync_plant" id="sync_plant" class="easyui-combobox">
                 </div>
                 <div class="fitem">
                     <span style="width:30%; display:inline-block;">Product No</span>
@@ -218,6 +228,12 @@
                 <div class="alert-info" style="height: 60px; text-align:center;">
                     <b>Total Assy</b>
                     <h1 style="margin: 0; font-size:20px !important;" id="total_assy">0</h1>
+                </div>
+            </div>
+            <div style="float: left; width: 30%;">
+                <div class="alert-success" style="height: 60px; text-align:center;">
+                    <b>Product No</b>
+                    <h1 style="margin: 0; font-size:12px !important;" id="txt_assy_no">-</h1>
                 </div>
             </div>
         </fieldset>
@@ -256,7 +272,6 @@
         } else {
             toastr.error("Please select Product No and Revision!");
         }
-
     }
 
     function addTable(link = "") {
@@ -938,16 +953,18 @@
     function filter() {
         var filter_item_fg_id = $("#filter_item_fg_id").combogrid('getValue');
         var filter_item_rm_id = $("#filter_item_rm_id").combogrid('getValue');
+        var filter_plant = $("#filter_plant").combobox('getValue');
 
         var url = "?filter_item_fg_id=" + window.btoa(filter_item_fg_id) +
-            "&filter_item_rm_id=" + window.btoa(filter_item_rm_id);
+            "&filter_item_rm_id=" + window.btoa(filter_item_rm_id) +
+            "&filter_plant=" + window.btoa(filter_plant);
 
         $('#dg').datagrid({
             url: '<?= base_url('master/bom/datatables') ?>' + url
         });
 
-        $("#printout").contents().find('html').html("<center><br><br><br><b style='font-size:20px;'>Please Wait...</b></center>");
-        $("#printout").attr('src', '<?= base_url('master/bom/print') ?>' + url);
+        // $("#printout").contents().find('html').html("<center><br><br><br><b style='font-size:20px;'>Please Wait...</b></center>");
+        // $("#printout").attr('src', '<?= base_url('master/bom/print') ?>' + url);
     }
 
     function filter_compare() {
@@ -982,9 +999,11 @@
     function excel() {
         var filter_item_fg_id = $("#filter_item_fg_id").combogrid('getValue');
         var filter_item_rm_id = $("#filter_item_rm_id").combogrid('getValue');
+        var filter_plant = $("#filter_plant").combobox('getValue');
 
         var url = "?filter_item_fg_id=" + window.btoa(filter_item_fg_id) +
-            "&filter_item_rm_id=" + window.btoa(filter_item_rm_id);
+            "&filter_item_rm_id=" + window.btoa(filter_item_rm_id) +
+            "&filter_plant=" + window.btoa(filter_plant);
 
         window.location.assign('<?= base_url('master/bom/print/excel') ?>' + url);
     }
@@ -1060,7 +1079,7 @@
                 var filter_item_rm_id = $("#filter_item_rm_id").combogrid('getValue');
 
                 ddv.datagrid({
-                    url: '<?= base_url('master/bom/datatableDetails?number=') ?>' + window.btoa(row.item_fg_number) + "&filter_item_rm_id=" + window.btoa(filter_item_rm_id),
+                    url: '<?= base_url('master/bom/datatableDetails?number=') ?>' + window.btoa(row.item_fg_number) + "&filter_item_rm_id=" + window.btoa(filter_item_rm_id) + "&filter_plant=" + btoa(row.plant),
                     singleSelect: true,
                     rownumbers: true,
                     columns: [
@@ -1139,6 +1158,7 @@
                     $('#dlg_insert').dialog('close');
 
                     var item_fg_id = $("#item_fg_id").combogrid('getValue');
+                    var plant = $("#plant").combobox('getValue');
                     var drawing = $("#drawing").textbox('getValue');
                     var new_revision = $("#new_revision").textbox('getValue');
 
@@ -1173,6 +1193,7 @@
                             item_rm_id: json.item_rm_id,
                             main_process: json.main_process,
                             composition: json.composition,
+                            plant: plant,
                             remove: json.remove
                         });
                         // }
@@ -1337,26 +1358,26 @@
             }
         });
 
-        $('#sync_customer_id').combogrid({
-            url: '<?= base_url('master/customers/reads'); ?>',
+        $('#sync_item_fg_id').combogrid({
+            url: '<?= base_url('master/item_fg/reads'); ?>',
             panelWidth: 600,
             idField: 'id',
-            textField: 'name',
+            textField: 'number',
             mode: 'remote',
             fitColumns: true,
-            prompt: "Choose Customer",
+            prompt: "Choose Product No",
             columns: [
                 [{
-                    field: 'id',
-                    title: 'Customer ID',
+                    field: 'number',
+                    title: 'Product No Original',
                     width: 150
                 }, {
-                    field: 'number',
-                    title: 'Customer Code',
+                    field: 'number_customer',
+                    title: 'Product No Customer',
                     width: 200
                 }, {
                     field: 'name',
-                    title: 'Customer Name',
+                    title: 'Description',
                     width: 200
                 }, ]
             ],
@@ -1366,41 +1387,7 @@
                     $(e.data.target).combogrid('clear').combogrid('textbox').focus();
                 }
             }],
-            onSelect: function(val, row) {
-                $('#total_assy').html(0);
-                $('#sync_item_fg_id').combogrid({
-                    url: '<?= base_url('master/bom/readitemcustomer?customer_id='); ?>' + row.id,
-                    panelWidth: 600,
-                    idField: 'id',
-                    textField: 'number',
-                    mode: 'remote',
-                    fitColumns: true,
-                    prompt: "Choose Product No",
-                    columns: [
-                        [{
-                            field: 'number',
-                            title: 'Product No Original',
-                            width: 150
-                        }, {
-                            field: 'number_customer',
-                            title: 'Product No Customer',
-                            width: 200
-                        }, {
-                            field: 'name',
-                            title: 'Description',
-                            width: 200
-                        }, ]
-                    ],
-                    icons: [{
-                        iconCls: 'icon-clear',
-                        handler: function(e) {
-                            $(e.data.target).combogrid('clear').combogrid('textbox').focus();
-                        }
-                    }],
-                });
-            }
         });
-
 
 
         $('#filter_item_fg_id').combogrid({
@@ -1626,6 +1613,27 @@
             ]
         });
 
+        $('#plant').combobox({
+            url: '<?php echo base_url('master/plants/reads'); ?>',
+            valueField: 'number',
+            textField: 'name',
+            prompt: 'Select Plant',
+        });
+        
+        $('#filter_plant').combobox({
+            url: '<?php echo base_url('master/plants/reads'); ?>',
+            valueField: 'number',
+            textField: 'name',
+            prompt: 'Select Plant',
+        });
+
+        $('#sync_plant').combobox({
+            url: '<?php echo base_url('master/plants/reads'); ?>',
+            valueField: 'number',
+            textField: 'name',
+            prompt: 'Select Plant',
+        });
+
         // UPLOAD DATA
         $('#dlg_upload').dialog({
             buttons: [{
@@ -1722,6 +1730,13 @@
             text: 'Start Synchronize',
             iconCls: 'icon-ok',
             handler: function() {
+                var plant = $("#sync_plant").combobox('getValue');
+
+                if(plant == ""){
+                    toastr.error("Please Choose Plant First");
+                    return false;
+                }
+
                 $('#frm_sync_erp').form('submit', {
                     url: "<?= base_url('api/mrp_banshu/getDataBoms') ?>",
                     onSubmit: function() {
@@ -1748,27 +1763,30 @@
                         } else {
                             $('#total_assy').html(json.total_assy);
                             requestData(json.total, json);
+                            // requestData(json.total, json, 1833, Math.floor((1833 / json.total) * 100));
                         }
 
                         function requestData(total, json, number = 1, value = 0, success = 1, failed = 1) {
                             if (value < 100) {
                                 value = Math.floor((number / total) * 100);
+                                $("#txt_assy_no").html(json[number - 1].number_customer);
                                 $('#p_sync_erp').progressbar('setValue', value);
                                 $('#p_start_sync').html(number);
                                 $('#p_finish_sync').html(total);
                                 $.messager.progress();
 
                                 $.post('<?= base_url('master/bom/syncPullgetPart') ?>', {
-                                    data: json[number - 1]
+                                    data: json[number - 1],
+                                    plant: plant
                                 }, function(note) {
                                     var result = eval('(' + note + ')');
                                     $.messager.progress('close');
                                     if (result.total == 0) {
-                                        var title = "<b style='color: red;'>Product No "+json[number - 1].number_customer+" Not Found</b><br>";
-                                        $("#p_remarks_sync").prepend(title);
+                                        // var title = "<b style='color: red;'>Product No "+json[number - 1].number_customer+" Not Found or Already Created</b><br>";
+                                        // $("#p_remarks_sync").prepend(title);
                                         requestData(total, json, number + 1, value, success, failed + 1);
                                     }else{
-                                        var title = "<b style='color: green;'>Product No "+json[number - 1].number_customer+" Founded</b><br>";
+                                        var title = "<b style='color: green;'>Product No "+json[number - 1].number_customer+" Starting Sync</b><br>";
                                         $("#p_remarks_sync").prepend(title);
                                         requestData2(result.total, result);
                                     }
@@ -1781,16 +1799,17 @@
                                             $('#p_finish_sync2').html(total2);
 
                                             $.post('<?= base_url('master/bom/syncPullCreate') ?>', {
-                                                data: json2[number2 - 1]
+                                                data: json2[number2 - 1],
+                                                plant: plant
                                             }, function(note2) {
                                                 var result2 = eval('(' + note2 + ')');
                                                 if (result2.theme == "success") {
                                                     $('#p_sync_success').html(success2);
-                                                    var title = "<b style='color: green;'>" + result2.title + "</b> | " + result2.message;
+                                                    // var title = "<b style='color: green;'>" + result2.title + "</b> | " + result2.message;
                                                     requestData2(total2, json2, number2 + 1, value2, success2 + 1, failed2 + 0);
                                                 } else {
                                                     $('#p_sync_failed').html(failed2);
-                                                    var title = "<b style='color: red;'>" + result2.title + "</b> | " + result2.message; //Json Failed
+                                                    // var title = "<b style='color: red;'>" + result2.title + "</b> | " + result2.message;
                                                     $.ajax({
                                                         type: "POST",
                                                         async: true,
@@ -1803,7 +1822,8 @@
                                                     });
                                                     requestData2(total2, json2, number2 + 1, value2, success2 + 0, failed2 + 1);
                                                 }
-                                                $("#p_remarks_sync").prepend(title + "<br>");
+
+                                                // $("#p_remarks_sync").prepend(title + "<br>");
 
                                                 if (number2 == total2) {
                                                     requestData(total, json, number + 1, value);

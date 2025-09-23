@@ -10,7 +10,7 @@
             <th rowspan="2" data-options="field:'request_name',width:150,halign:'center'">Request Name</th>
             <th rowspan="2" data-options="field:'expected_date',width:100,halign:'center'">Expected Date</th>
             <th rowspan="2" data-options="field:'item_family_name',width:150,halign:'center'">Product Family</th>
-            <th rowspan="2" data-options="field:'item_rm_id',width:120,halign:'center'">Part No</th>
+            <th rowspan="2" data-options="field:'item_rm_id',width:120,halign:'center'">Part No EBWS</th>
             <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No Supplier</th>
             <th rowspan="2" data-options="field:'item_rm_name',width:200,halign:'center'">Description</th>
             <th rowspan="2" data-options="field:'asset_code',width:120,halign:'center'">Asset Code</th>
@@ -205,7 +205,7 @@
                     field: 'item_rm_id',
                     width: 150,
                     halign: 'center',
-                    title: "Part No",
+                    title: "Part No EBWS",
                     editor: {
                         type: 'combogrid',
                         options: {
@@ -220,7 +220,7 @@
                             columns: [
                                 [{
                                     field: 'id',
-                                    title: 'Part No',
+                                    title: 'Part No EBWS',
                                     width: 100
                                 }, {
                                     field: 'number',
@@ -1013,7 +1013,7 @@
             columns: [
                 [{
                     field: 'id',
-                    title: 'Part No',
+                    title: 'Part No EBWS',
                     width: 100
                 }, {
                     field: 'number',

@@ -134,7 +134,7 @@ class Report_material_consumtions extends CI_Controller
             <table id="customers" border="1">
             <tr>
                 <th rowspan="2" style="text-align: center;">No</th>
-                <th rowspan="2" style="text-align: center;">Part No</th>
+                <th rowspan="2" style="text-align: center;">Part No EBWS</th>
                 <th rowspan="2" style="text-align: center;">Part No Supplier</th>
                 <th rowspan="2" style="text-align: center;">Description</th>
                 <th rowspan="2" style="text-align: center;">UOM</th>

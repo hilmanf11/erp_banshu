@@ -646,7 +646,7 @@ class Supply_sheets_pp extends CI_Controller
                             <table id="customers">
                                 <tr>
                                     <th>No</th>
-                                    <th>Part No</th>
+                                    <th>Part No EBWS</th>
                                     <th>Part No Supplier</th>
                                     <th>Maker</th>
                                     <th>QPA</th>

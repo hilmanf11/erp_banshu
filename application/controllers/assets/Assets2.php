@@ -268,7 +268,7 @@ class Assets extends CI_Controller
                 <th>Asset Code</th>
                 <th>Asset Name</th>
                 <th>Description</th>
-                <th>Part No</th>
+                <th>Part No EBWS</th>
                 <th>Part No Supplier</th>
                 <th>Description</th>
             </tr>';

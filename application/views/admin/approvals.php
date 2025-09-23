@@ -37,6 +37,7 @@
                     <option value="users">Users</option>
                     <option value="item_rm">Item RM</option>
                     <option value="item_fg">Item FG</option>
+                    <option value="suppliers">Suppliers</option>
                     <option value="bom">Bill of Material</option>
                     <option value="customer_items">Customer Contract</option>
                     <option value="stock_fg">Upload Data FG</option>

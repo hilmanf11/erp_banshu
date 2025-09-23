@@ -533,7 +533,7 @@ class Purchase_request_others extends CI_Controller
                                 <table id="customers">
                                     <tr>
                                         <th width="20">No</th>
-                                        <th width="80">Part No</th>
+                                        <th width="80">Part No EBWS</th>
                                         <th width="200">Part No Supplier</th>
                                         <th width="50">Qty</th>
                                         <th width="50">Uom</th>
@@ -674,7 +674,7 @@ class Purchase_request_others extends CI_Controller
                 <th>Request Date</th>
                 <th>Request Name</th>
                 <th>Expected Date</th>
-                <th>Part No</th>
+                <th>Part No EBWS</th>
                 <th>Part No Supplier</th>
                 <th>Description</th>
                 <th>Asset Code</th>

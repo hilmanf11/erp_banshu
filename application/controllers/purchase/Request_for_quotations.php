@@ -464,7 +464,7 @@ class Request_for_quotations extends CI_Controller
                                 <table id="customers">
                                     <tr>
                                         <th width="20">No</th>
-                                        <th width="80">Part No</th>
+                                        <th width="80">Part No EBWS</th>
                                         <th width="200">Part No Supplier</th>
                                         <th width="200">Description</th>
                                         <th width="50">Uom</th>
@@ -592,7 +592,7 @@ class Request_for_quotations extends CI_Controller
                 <th>Supplier Name</th>
                 <th>RFQ No</th>
                 <th>RFQ Date</th>
-                <th>Part No</th>
+                <th>Part No EBWS</th>
                 <th>Part No Supplier</th>
                 <th>Description</th>
                 <th>Uom</th>

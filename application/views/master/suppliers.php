@@ -4,7 +4,6 @@
         <tr>
             <th field="ck" checkbox="true"></th>
             <th data-options="field:'id',width:100,align:'center'">Supplier ID</th>
-            <th data-options="field:'supplier_po',width:150,align:'center'">Supplier<br>PO</th>
             <th data-options="field:'name',width:250,halign:'center'">Supplier Name</th>
         </tr>
     </thead>
@@ -27,16 +26,9 @@
             <th rowspan="2" data-options="field:'vat_status',align:'center',width:80">Vat Status</th>
             <th rowspan="2" data-options="field:'vat',halign:'center',width:80,align:'right'">Vat</th>
             <th rowspan="2" data-options="field:'commodity',width:80,align:'center'">Commodity</th>
-            <th rowspan="2" data-options="field:'tds',halign:'center',width:120">TDS</th>
             <th rowspan="2" data-options="field:'tax',halign:'center',width:120">Tax No</th>
-            <th rowspan="2" data-options="field:'gst',halign:'center',width:120">GST No</th>
-            <th rowspan="2" data-options="field:'pen',halign:'center',width:120">PAN No</th>
-            <th rowspan="2" data-options="field:'ifsc',halign:'center',width:120">Bank IFSC Code</th>
             <th rowspan="2" data-options="field:'bank_account',width:150,halign:'center'">Bank Account</th>
             <th rowspan="2" data-options="field:'bank_name',width:150,halign:'center'">Bank Name</th>
-            <th rowspan="2" data-options="field:'idn_no',width:100,halign:'center'">IDN No</th>
-            <th rowspan="2" data-options="field:'msmi',width:50,halign:'center'">MSMI</th>
-            <!-- <th rowspan="2" data-options="field:'terms',width:100,halign:'center',formatter:btnTerms">Terms<br>Condition</th> -->
             <th rowspan="2" data-options="field:'status',width:80,align:'center', styler:cellStyler, formatter:cellFormatter">Status</th>
             <th colspan="2" data-options="field:'',width:100,halign:'center'"> Created</th>
             <th colspan="2" data-options="field:'',width:100,halign:'center'"> Updated</th>
@@ -117,6 +109,8 @@
                     <span style="width:35%; display:inline-block;">Website</span>
                     <input style="width:60%;" name="website" id="website" class="easyui-textbox">
                 </div>
+            </div>
+            <div style="float:left; width:50%;">
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Currency</span>
                     <input style="width:60%;" name="currency" id="currency" required="" class="easyui-combobox">
@@ -128,12 +122,6 @@
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">State</span>
                     <input style="width:60%;" name="state" id="state" class="easyui-combobox">
-                </div>
-            </div>
-            <div style="float:left; width:50%;">
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">TDS</span>
-                    <input style="width:60%;" name="tds" id="tds" class="easyui-combogrid">
                 </div>
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Payment Term</span>
@@ -164,29 +152,6 @@
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Tax No</span>
                     <input style="width:60%;" name="tax" class="easyui-textbox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">GST No</span>
-                    <input style="width:60%;" name="gst" class="easyui-textbox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">PAN No</span>
-                    <input style="width:60%;" name="pen" class="easyui-textbox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">IDN No</span>
-                    <input style="width:60%;" name="idn_no" class="easyui-textbox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">MSMI</span>
-                    <select style="width:30%;" name="msmi" id="msmi" class="easyui-combobox" panelHeight="auto">
-                        <option value="YES">YES</option>
-                        <option value="NO">NO</option>
-                    </select>
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Bank IFSC Code</span>
-                    <input style="width:60%;" name="ifsc" class="easyui-textbox">
                 </div>
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Bank Account</span>
@@ -264,10 +229,10 @@
         $('#type').combobox('setValue', 'LOCAL');
         $('#status').combobox('setValue', '0');
         $('#commodity').combobox('setValue', 'NO');
-        $('#msmi').combobox('setValue', 'NO');
+        // $('#msmi').combobox('setValue', 'NO');
         $('#vat_status').combobox('setValue', 'VAT');
         $('#currency').combobox('setValue', 'INR');
-        $('#origin').combobox('setValue', 'INDIA');
+        $('#origin').combobox('setValue', 'INDONESIA');
 
         $.ajax({
             type: "post",
@@ -538,35 +503,6 @@
         valueField: 'name',
         textField: 'name',
         prompt: 'Choose Incoterms',
-    });
-
-    $('#tds').combogrid({
-        url: '<?= base_url('master/tds/reads'); ?>',
-        panelWidth: 560,
-        idField: 'section',
-        textField: 'payment',
-        mode: 'remote',
-        fitColumns: true,
-        prompt: "Choose TDS",
-        columns: [
-            [{
-                field: 'section',
-                title: 'Section',
-                width: 100
-            }, {
-                field: 'payment',
-                title: 'For Payment Of',
-                width: 250
-            }, {
-                field: 'exceed',
-                title: 'Payment Exceed',
-                width: 100
-            }, {
-                field: 'individual',
-                title: 'Individual',
-                width: 100
-            }]
-        ]
     });
 
     // UPLOAD

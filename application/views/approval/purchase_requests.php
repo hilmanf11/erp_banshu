@@ -8,15 +8,18 @@
     <thead>
         <tr>
             <th field="ck" checkbox="true"></th>
+            <th data-options="field:'flag',width:80,align:'center',styler:cellStylerFlag">Status</th>
             <th data-options="field:'request_no',width:150,halign:'center'">PR No</th>
             <th data-options="field:'request_date',width:120,halign:'center'">PR Date</th>
-            <th data-options="field:'item_rm_id',width:150,halign:'center'">Part No</th>
-            <th data-options="field:'item_rm_number',width:150,halign:'center'">Part No Supplier</th>
+            <th data-options="field:'item_rm_number',width:150,halign:'center'">Part No BEI</th>
+            <th data-options="field:'item_supplier',width:150,halign:'center'">Part No Supplier</th>
             <th data-options="field:'item_rm_name',width:150,halign:'center'">Description</th>
             <th data-options="field:'item_family_name',width:150,halign:'center'">Product Family</th>
             <th data-options="field:'uom',width:80,halign:'center'">Uom</th>
             <th data-options="field:'supplier_name',width:250,halign:'center'">Supplier</th>
             <th data-options="field:'qty',width:80,halign:'center',align:'right',formatter: numberformat">Qty</th>
+            <th data-options="field:'forecast_avg',width:80,halign:'center',align:'right',formatter: numberformat">Xbar<br>(3 Month)</th>
+            <th data-options="field:'ito',width:80,halign:'center',align:'right',formatter: numberformat">ITO</th>
             <th data-options="field:'currency',width:80,halign:'center'">Currency</th>
             <th data-options="field:'price',width:100,halign:'center',align:'right',formatter: numberformatPrice2">Price</th>
             <th data-options="field:'total',width:100,halign:'center',align:'right',formatter: numberformatPrice4">Total</th>
@@ -216,6 +219,14 @@
             return '<a class="btn btn-primary w-100" target="_blank" href="<?= base_url('assets/documents/purchase_requests/') ?>'+row.attachment+'" style="pointer-events: visible; opacity:1;"><i class="fa fa-eye"></i> View</a>';
         } else {
             return '-';
+        }
+    }
+
+    function cellStylerFlag(value, row, index) {
+        if (row.flag == "OK") {
+            return 'background: #53D636; color:white;';
+        } else {
+            return 'background: #ffc25fff; color:white;';
         }
     }
 </script>

@@ -1,43 +1,27 @@
-<style>
-    @keyframes blink {
-        0%, 50%, 100% {
-            opacity: 1;
-        }
-        25%, 75% {
-            opacity: 0;
-        }
-    }
-
-    .blink {
-        animation: blink 1s infinite;
-        font-size: 20px !important;
-        color: red;
-        font-weight: bold;
-    }
-</style>
-
 <table id="dg" class="easyui-datagrid" style="width:100%;" toolbar="#toolbar">
     <thead>
         <tr>
             <th rowspan="2" field="ck" checkbox="true"></th>
+            <th rowspan="2" data-options="field:'plant',width:80,halign:'center'">Plant</th>
             <th rowspan="2" data-options="field:'request_no',width:120,halign:'center'">PR No</th>
             <th rowspan="2" data-options="field:'request_date',width:100,halign:'center'">PR Date</th>
-            <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Vendor Name</th>
+            <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Supplier Name</th>
             <th rowspan="2" data-options="field:'item_family_name',width:120,halign:'center'">Product Family</th>
+            <th rowspan="2" data-options="field:'total_mrp',width:100,halign:'center',align:'right',formatter:numberformat">Total MRP</th>
             <th rowspan="2" data-options="field:'total_pr',width:100,halign:'center',align:'right',formatter:numberformat">Total PR</th>
             <th rowspan="2" data-options="field:'detail',width:80,halign:'center',formatter:BtnDetail">Detail</th>
             <th rowspan="2" data-options="field:'print_pr',width:80,halign:'center',formatter:BtnPrint">Print PR</th>
             <th colspan="2" data-options="field:'',width:100,halign:'center'">Create PO</th>
             <th rowspan="2" data-options="field:'attachment',width:80,align:'center',formatter: btnDetails">Attachment</th>
-            <!-- <th colspan="2" data-options="field:'',width:100,halign:'center'">Confirm PR</th> -->
+            <th colspan="2" data-options="field:'',width:100,halign:'center'">Confirm PR</th>
             <th colspan="3" data-options="field:'',width:100,halign:'center'">Approved</th>
             <th colspan="2" data-options="field:'',width:100,halign:'center'">Created</th>
         </tr>
         <tr>
             <th data-options="field:'send',width:120,align:'center',formatter:BtnSend">Create</th>
             <th data-options="field:'create_po',width:150,align:'center'">Date</th>
-            <!-- <th data-options="field:'confirm',width:100,align:'center', styler:cellStylerConfirm, formatter:cellFormatterConfirm">Status</th> -->
-            <!-- <th data-options="field:'confirm_date',width:150,align:'center'">Date</th> -->
+            <th data-options="field:'confirm',width:100,align:'center',formatter:BtnConfirm">Send</th>
+            <th data-options="field:'confirm_date',width:150,align:'center'">Date</th>
             <th data-options="field:'approved_to',width:80,align:'center', styler:cellStylerApproval, formatter:cellFormatterApproval">Status</th>
             <th data-options="field:'approved_by',width:100,align:'center'">By</th>
             <th data-options="field:'approved_date',width:120,align:'center'">Date</th>
@@ -83,7 +67,7 @@
     <a href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true" onclick="removeit()"><i class="fa fa-times"></i> Remove</a>
 </div>
 
-<div id="toolbar" style="height: 195px; padding:10px;">
+<div id="toolbar" style="height: 230px; padding:10px;">
     <div style="width: 100%; display: grid; grid-template-columns: auto auto auto; grid-gap: 5px; display: flex;">
         <fieldset style="width: 60%; border:2px solid #d0d0d0; margin-bottom: 5px; margin-top: 5px; border-radius:4px;">
             <legend><b>Filter Data</b></legend>
@@ -105,17 +89,29 @@
                     </select>
                 </div>
                 <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Plant</span>
+                    <input style="width:60%;" id="filter_plant" class="easyui-combobox">
+                </div>
+                <div class="fitem">
                     <span style="width:35%; display:inline-block;"></span>
                     <a href="javascript:;" class="easyui-linkbutton" onclick="filter()"><i class="fa fa-search"></i> Filter Data</a>
                 </div>
             </div>
             <div style="width: 50%; float: left;">
                 <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Supplier</span>
+                    <input style="width:60%;" id="filter_supplier" class="easyui-combobox">
+                </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Purchase Request</span>
+                    <input style="width:60%;" id="filter_request_no" class="easyui-combobox">
+                </div>
+                <div class="fitem">
                     <span style="width:35%; display:inline-block;">Product Family</span>
                     <input style="width:60%;" id="filter_item_family" class="easyui-combobox">
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Item ID</span>
+                    <span style="width:35%; display:inline-block;">Part No</span>
                     <input style="width:60%;" id="filter_item_rm" class="easyui-combogrid">
                 </div>
             </div>
@@ -126,10 +122,6 @@
             <b>Calculation Share Order</b>
             <div id="p_upload" class="easyui-progressbar" style="width:100%;"></div>
             <center><b id="p_start">0</b> Of <b id="p_finish">0</b></center>
-            <br>
-            <center>
-                <a href="#" onclick="confirmPo()" id="confirmPo" style="text-decoration: none;"><div class="blink">Confirm Edit PO</div></a>
-            </center>
         </fieldset>
     </div>
     <a href="javascript:;" class="easyui-linkbutton" plain="true" onclick="adds()"><i class="fa fa-plus"></i> Additional</a>
@@ -158,11 +150,11 @@
                     </select>
                 </div>
                 <div class="fitem" hidden>
-                    <span style="width:35%; display:inline-block;">Vendor Name</span>
+                    <span style="width:35%; display:inline-block;">Supplier Name</span>
                     <input style="width:60%;" name="supplier_id" disabled class="easyui-combobox">
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Vendor Name</span>
+                    <span style="width:35%; display:inline-block;">Supplier Name</span>
                     <input style="width:60%;" name="supplier_name" disabled class="easyui-textbox">
                 </div>
                 <div class="fitem">
@@ -170,11 +162,11 @@
                     <input style="width:60%;" name="item_family_id" disabled class="easyui-textbox">
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Item ID</span>
+                    <span style="width:35%; display:inline-block;">Part No</span>
                     <input style="width:60%;" name="item_rm_number" disabled class="easyui-combogrid">
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Item Name</span>
+                    <span style="width:35%; display:inline-block;">Part Name</span>
                     <input style="width:60%;" name="item_rm_name" disabled class="easyui-textbox">
                 </div>
             </div>
@@ -201,13 +193,20 @@
                     <input style="width:25%;" name="need" id="need" required="true" readonly class="easyui-numberbox">
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Purchase Request</span>
+                    <span style="width:35%; display:inline-block;">Qty PR</span>
                     <input style="width:25%;" id="qty_edit" required="true" class="easyui-numberbox">
                     <input style="width:25%;" name="qty" id="qty" required="true" readonly class="easyui-numberbox">
                 </div>
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Remarks</span>
-                    <input style="width:50%;" name="remarks" id="remarks" required class="easyui-textbox">
+                    <input style="width:60%;" name="remarks" id="remarks" required class="easyui-textbox">
+                </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Status</span>
+                    <select style="width:60%;" name="flag" id="flag" class="easyui-combobox" panelHeight="auto">
+                        <option value="OK">OK</option>
+                        <option value="CHECK">CHECK</option>
+                    </select>
                 </div>
                 <div class="fitem" hidden>
                     <span style="width:35%; display:inline-block;">Status</span>
@@ -260,6 +259,10 @@
                         <input style="width:60%;" name="attachment" id="attachment" class="easyui-textbox">
                     </div>
                     <div class="fitem">
+                        <span style="width:35%; display:inline-block;">Plant</span>
+                        <input style="width:60%;" name="plant" id="plant" required class="easyui-combobox">
+                    </div>
+                    <div class="fitem">
                         <span style="width:35%; display:inline-block;">Supplier Name</span>
                         <input style="width:60%;" name="supplier_id" id="supplier_id" required class="easyui-combobox">
                     </div>
@@ -276,29 +279,28 @@
     </form>
 </div>
 
-<div id="dlg_purchase_request" class="easyui-dialog" title="Detail Purchase Request" data-options="closed: true,modal:true" style="width: 100%; height: 550px; top: 0px; left: 0px;">
+<div id="dlg_purchase_request" class="easyui-dialog" title="Detail Purchase Request" data-options="closed: true,modal:true, fit:true" style="width: 100%; top: 0px; left: 0px;">
     <table id="dg_purchase_request" class="easyui-datagrid" style="width:100%;" toolbar="#toolbar3" showFooter="true"></table>
 </div>
 
-<div id="dlg_confirm" class="easyui-dialog" title="Confrim Edit PO" data-options="closed: true,modal:true" style="width: 100%; height: 550px; top: 0px; left: 0px;">
-    <table id="dg_confirm" class="easyui-datagrid" style="width:100%;">
-        <thead>
-            <tr>
-                <th data-options="field:'confirm',width:100,halign:'center',formatter:BtnConfirm">Confirm</th>
-                <th data-options="field:'p_month',width:50,halign:'center'">Month</th>
-                <th data-options="field:'p_year',width:50,halign:'center'">Year</th>
-                <th data-options="field:'revision',width:50,halign:'center'">Rev</th>
-                <th data-options="field:'request_no',width:180,halign:'center'">PR No</th>
-                <th data-options="field:'supplier_name',width:250,halign:'center'">Vendor Name</th>
-                <th data-options="field:'item_family_name',width:150,halign:'center'">Product Family</th>
-                <th data-options="field:'item_rm_number',width:200,halign:'center'">Item ID</th>
-                <th data-options="field:'item_rm_name',width:150,halign:'center'">Item Name</th>
-                <th data-options="field:'last_qty',width:100,halign:'center',align:'right',formatter:numberformat">Qty Last</th>
-                <th data-options="field:'total_qty',width:100,halign:'center',align:'right',formatter:numberformat">Qty New</th>
-                <th data-options="field:'remarks',width:250,halign:'center'">Remarks</th>
-            </tr>
-        </thead>
-    </table>
+<!-- Upload -->
+<div id="dlg_upload" class="easyui-dialog" title="Upload Data" data-options="closed: true,modal:true" style="width: 500px; padding:10px; top: 20px;">
+    <form id="frm_upload" method="post" enctype="multipart/form-data" novalidate>
+        <fieldset style="width:100%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
+            <legend><b>Form Data</b></legend>
+            <div class="fitem">
+                <span style="width:35%; display:inline-block;">File Upload</span>
+                <input name="file_upload" style="width: 60%;" required="" accept=".xls" id="file_excel" class="easyui-filebox">
+            </div>
+        </fieldset>
+    </form>
+    <span style="float: left; color:green;">SUCCESS : <b id="p_success2">0</b></span><span style="float: right; color:red;"> FAILED : <b id="p_failed2">0</b></span>
+    <div id="p_upload2" class="easyui-progressbar" style="width:100%; margin-top: 10px;"></div>
+    <center><b id="p_start2">0</b> Of <b id="p_finish2">0</b></center>
+    <div id="p_remarks2" title="History Upload" class="easyui-panel" style="width:100%; height:200px; padding:10px; margin-top: 10px;">
+        <ul id="remarks2">
+        </ul>
+    </div>
 </div>
 
 <!-- PDF -->
@@ -309,10 +311,12 @@
         var filter_month = $("#filter_month").combobox('getValue');
         var filter_year = $("#filter_year").combobox('getValue');
         var filter_revision = $("#filter_revision").combobox('getValue');
+        var filter_plant = $("#filter_plant").combobox('getValue');
+        var filter_supplier = $("#filter_supplier").combobox('getValue');
         var filter_item_family = $("#filter_item_family").combobox('getValue');
         var filter_item_rm = $("#filter_item_rm").combogrid('getValue');
 
-        if (filter_month != "" && filter_year != "" && filter_revision != "") {
+        if (filter_month != "" && filter_year != "" && filter_revision != "" && filter_plant != "") {
             $.messager.prompt('Generate PR', 'Please input Password Generate, Be careful if data is generated for this period it will be deleted', function(r){
                 if (r == "PURCHASEREQUEST"){
                     Swal.fire({
@@ -330,6 +334,8 @@
                         url: "<?= base_url('purchase/purchase_requests/getDataMrp') ?>",
                         data: "filter_month=" + window.btoa(filter_month) +
                             "&filter_year=" + window.btoa(filter_year) +
+                            "&filter_plant=" + window.btoa(filter_plant) +
+                            "&filter_supplier=" + window.btoa(filter_supplier) +
                             "&filter_revision=" + window.btoa(filter_revision) +
                             "&filter_item_family=" + window.btoa(filter_item_family) +
                             "&filter_item_rm=" + window.btoa(filter_item_rm) +
@@ -373,7 +379,7 @@
                                     }
                                 }
                             }else{
-                                toastr.warning("Data MRP Not Found");
+                                Swal.fire('Failed!', 'Data MRP Not Found or Data has been Generated, please check first!', 'error');
                             }
                         },
                         error: function(rows) {
@@ -386,7 +392,7 @@
             $('.messager-input').attr('type', 'password');
         } else {
             Swal.close();
-            toastr.warning("Please Select Period & Revision", "Information");
+            toastr.warning("Please Select Period, Revision & Plant", "Information");
         }
     }
 
@@ -403,29 +409,29 @@
     }
 
     //INSERT ADD ROW
-    function addTable(supplier_id, item_family_id) {
+    function addTable(supplier_id, item_family_id, plant) {
         var lastIndex;
         var dg = $('#dg2').datagrid({
             columns: [
                 [{
                     field: 'item_rm_id',
-                    width: 120,
+                    width: 150,
                     halign: 'center',
-                    title: "Part No",
+                    title: "Part No Original",
                     editor: {
                         type: 'combogrid',
                         options: {
-                            url: '<?= base_url('purchase/purchase_requests/readParts/') ?>' + btoa(supplier_id) + "/" + btoa(item_family_id),
+                            url: '<?= base_url('purchase/purchase_requests/readParts/') ?>' + btoa(supplier_id) + "/" + btoa(item_family_id) + "/" + btoa(plant),
                             panelWidth: 550,
                             idField: 'id',
-                            textField: 'number',
+                            textField: 'id',
                             mode: 'remote',
                             fitColumns: true,
                             prompt: "Select Part No",
                             columns: [
                                 [{
                                     field: 'id',
-                                    title: 'Part No',
+                                    title: 'Part No Original',
                                     width: 120
                                 },{
                                     field: 'number',
@@ -736,12 +742,18 @@
         var filter_month = $("#filter_month").combobox('getValue');
         var filter_year = $("#filter_year").combobox('getValue');
         var filter_revision = $("#filter_revision").combobox('getValue');
+        var filter_plant = $("#filter_plant").combobox('getValue');
+        var filter_supplier = $("#filter_supplier").combobox('getValue');
+        var filter_request_no = $("#filter_request_no").combobox('getValue');
         var filter_item_family = $("#filter_item_family").combobox('getValue');
         var filter_item_rm = $("#filter_item_rm").combogrid('getValue');
 
         var url = "?filter_month=" + window.btoa(filter_month) +
             "&filter_year=" + window.btoa(filter_year) +
             "&filter_revision=" + window.btoa(filter_revision) +
+            "&filter_plant=" + window.btoa(filter_plant) +
+            "&filter_supplier=" + window.btoa(filter_supplier) +
+            "&filter_request_no=" + window.btoa(filter_request_no) +
             "&filter_item_family=" + window.btoa(filter_item_family) +
             "&filter_item_rm=" + window.btoa(filter_item_rm);
 
@@ -765,12 +777,18 @@
         var filter_month = $("#filter_month").combobox('getValue');
         var filter_year = $("#filter_year").combobox('getValue');
         var filter_revision = $("#filter_revision").combobox('getValue');
+        var filter_plant = $("#filter_plant").combobox('getValue');
+        var filter_supplier = $("#filter_supplier").combobox('getValue');
+        var filter_request_no = $("#filter_request_no").combobox('getValue');
         var filter_item_family = $("#filter_item_family").combobox('getValue');
         var filter_item_rm = $("#filter_item_rm").combogrid('getValue');
 
         var url = "?filter_month=" + window.btoa(filter_month) +
             "&filter_year=" + window.btoa(filter_year) +
             "&filter_revision=" + window.btoa(filter_revision) +
+            "&filter_plant=" + window.btoa(filter_plant) +
+            "&filter_supplier=" + window.btoa(filter_supplier) +
+            "&filter_request_no=" + window.btoa(filter_request_no) +
             "&filter_item_family=" + window.btoa(filter_item_family) +
             "&filter_item_rm=" + window.btoa(filter_item_rm);
 
@@ -781,6 +799,16 @@
         }
     }
 
+    // UPLOAD DATA
+    function upload() {
+        $('#dlg_upload').dialog('open');
+    }
+
+    // DOWNLOAD
+    function download_excel() {
+        window.location.assign('<?= base_url('template/tmp_purchase_requests.xls') ?>');
+    }
+
     function reload() {
         window.location.reload();
     }
@@ -788,6 +816,11 @@
     function detailEdit(){
         var row = $('#dg_purchase_request').datagrid('getSelected');
         if (row) {
+            if(row.approved_to == ""){
+                toastr.error("You can't edit the quantity because data has been approved");
+                return false;
+            }
+
             $('#dlg_update').dialog('open');
             $('#frm_update').form('load', row);
 
@@ -868,10 +901,12 @@
             data: "month=" + filter_month + "&year=" + filter_year,
             dataType: "json",
             success: function(monthName) {
+                $('#dg_purchase_request').datagrid('disableFilter');
+
                 $('#dg_purchase_request').datagrid({
                     url: '<?= base_url('purchase/purchase_requests/datatableDetails/') ?>' + btoa(request_no) + "/" + revision + "?filter_item_rm=" + btoa(filter_item_rm) + "&filter_month=" + btoa(filter_month) + "&filter_year=" + btoa(filter_year),
-                    clientPaging: false,
-                    remoteFilter: true,
+                    clientPaging: true,
+                    remoteFilter: false,
                     rownumbers: true,
                     singleSelect: false,
                     fit:true,
@@ -881,14 +916,40 @@
                             checkbox: true,
                             rowspan: 2
                         }, {
+                            field: 'approved_to',
+                            title: 'Approval',
+                            width: 100,
+                            align: 'center',
+                            rowspan: 2,
+                            styler:cellStylerApproval, formatter:cellFormatterApproval
+                        }, {
+                            field: 'flag',
+                            title: 'Status',
+                            width: 80,
+                            align: 'center',
+                            rowspan: 2,
+                            styler:cellStylerFlag
+                        }, {
+                            field: 'po_no',
+                            title: 'PO No',
+                            width: 150,
+                            halign: 'center',
+                            rowspan: 2
+                        }, {
                             field: 'item_rm_number',
-                            title: 'Item ID',
+                            title: 'Part No BEI',
+                            width: 200,
+                            halign: 'center',
+                            rowspan: 2
+                        }, {
+                            field: 'item_supplier',
+                            title: 'Part No Supplier',
                             width: 200,
                             halign: 'center',
                             rowspan: 2
                         }, {
                             field: 'item_rm_name',
-                            title: 'Item Name',
+                            title: 'Part Name',
                             width: 200,
                             halign: 'center',
                             rowspan: 2
@@ -923,6 +984,14 @@
                         },{
                             field: 'need',
                             title: 'Need',
+                            width: 100,
+                            halign: 'center',
+                            align: 'right',
+                            rowspan: 2,
+                            formatter: numberformat
+                        },{
+                            field: 'mrp',
+                            title: 'MRP',
                             width: 100,
                             halign: 'center',
                             align: 'right',
@@ -976,6 +1045,14 @@
                             align: 'right',
                             rowspan: 2,
                             formatter: numberformat
+                        }, {
+                            field: 'ito',
+                            title: 'ITO',
+                            width: 100,
+                            halign: 'center',
+                            align: 'right',
+                            rowspan: 2,
+                            formatter: numberformatdecimal
                         }, {
                             field: 'remarks',
                             title: 'Remarks',
@@ -1075,6 +1152,8 @@
                         }]
                     ]
                 });
+
+                $('#dg_purchase_request').treegrid('enableFilter');
             }
         });
     }
@@ -1135,60 +1214,49 @@
                                 }
                             }
                         }else{
-                            toastr.warning("Data Purchase Requests Not Found");
+                            Swal.close();
+                            Swal.fire('Failed!', 'This PR and the items in it that have been approved have been created.', 'error');
                         }
                     },
                     error: function(rows) {
                         Swal.close();
-                        Swal.fire('Failed!', 'Generate Purchase Requst is Failed, Please Try Again!', 'error');
+                        Swal.fire('Failed!', 'Failed to Create PO, Please Try Again!', 'error');
                     }
                 });
             }
         });
     }
 
-    function checkConfirmPo(){
-        $.ajax({
-            type: "post",
-            url: '<?= base_url('purchase/purchase_requests/datatableConfirm') ?>',
-            dataType: "json",
-            success: function (response) {
-                if(response.total > 0){
-                    $("#confirmPo").show();
-                }else{
-                    $("#confirmPo").hide();
+    function confirm(request_no, created_by) {
+        if(created_by == "<?= $this->session->username ?>"){
+            $.messager.prompt('CONFIRM PR', 'Please input Password confirm, for Send to Approval', function(r){
+                if (r == "CONFIRMPR"){
+                    Swal.fire({
+                        title: 'Please Wait, the process data for sending to approval',
+                        showConfirmButton: false,
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        },
+                    });
+
+                    $.ajax({
+                        type: "post",
+                        url: '<?= base_url('purchase/purchase_requests/updateConfirm') ?>',
+                        data: "request_no=" + request_no,
+                        dataType: "json",
+                        success: function (response) {
+                            Swal.close();
+                            toastr.success("Data has been Confirmed");
+                            $("#dg").datagrid("reload");
+                        }
+                    });
                 }
-            }
-        });
-    }
-
-    checkConfirmPo();
-    setInterval(checkConfirmPo, 10000);
-
-    function confirmPo() {
-        $("#dlg_confirm").dialog('open');
-        
-        $('#dg_confirm').datagrid({
-            url: '<?= base_url('purchase/purchase_requests/datatableConfirm') ?>',
-            clientPaging: false,
-            remoteFilter: true,
-            rownumbers: true,
-            singleSelect: false,
-            fit:true,
-        });
-    }
-
-    function confirm(request_no, item_rm_id) {
-        $.ajax({
-            type: "post",
-            url: '<?= base_url('purchase/purchase_requests/updateConfirm') ?>',
-            data: "request_no=" + request_no + "&item_rm_id=" + item_rm_id,
-            dataType: "json",
-            success: function (response) {
-                toastr.success("Data has been Confirmed");
-                $("#dg_confirm").datagrid("reload");
-            }
-        });
+            });
+        }else{
+            toastr.error("Cannot Confrim by you");
+        }
     }
 
     function BtnPrint(val, row) {
@@ -1219,15 +1287,17 @@
                     var p_month = $("#p_month").combobox('getValue');
                     var p_year = $("#p_year").combobox('getValue');
                     var revision = $("#revision").combobox('getValue');
+                    var plant = $("#plant").combobox('getValue');
                     var supplier_id = $("#supplier_id").combobox('getValue');
                     var request_no = $("#request_no").textbox('getValue');
                     var attachment = $("#attachment").textbox('getValue');
                     var request_date = $("#request_date").datebox('getValue');
                     var item_family_id = $("#item_family_id").combobox('getValue');
 
-                    if (supplier_id == "" || item_family_id == "") {
+                    if (supplier_id == "" || item_family_id == "" || plant == "") {
                         toastr.error("please complete your input data");
                     } else {
+                        $('#dg2').datagrid('acceptChanges');
                         var rows = $('#dg2').datagrid('getRows');
                         var totalrows = rows.length;
                         endEditing();
@@ -1242,6 +1312,7 @@
                                         revision: revision,
                                         request_no: request_no,
                                         request_date: request_date,
+                                        plant: plant,
                                         supplier_id: supplier_id,
                                         attachment: attachment,
                                         item_family_id: item_family_id,
@@ -1297,6 +1368,87 @@
 
                             $('#dlg_update').dialog('close');
                             $('#dg_purchase_request').datagrid('reload');
+                            $('#dg').datagrid('reload');
+                        }
+                    });
+                }
+            }]
+        });
+
+        // UPLOAD DATA
+        $('#dlg_upload').dialog({
+            buttons: [{
+                text: 'List Failed',
+                handler: function() {
+                    window.open('<?= base_url('purchase/purchase_requests/uploadDownloadFailed') ?>', '_blank');
+                }
+            }, {
+                text: 'Upload',
+                iconCls: 'icon-ok',
+                handler: function() {
+                    $('#frm_upload').form('submit', {
+                        url: '<?= base_url('purchase/purchase_requests/upload') ?>',
+                        onSubmit: function() {
+                            if ($(this).form('validate') == false) {
+                                return $(this).form('validate');
+                            } else {
+                                $.messager.progress({
+                                    title: 'Please Wait',
+                                    msg: 'Importing Excel to Database'
+                                });
+                            }
+                        },
+                        success: function(result) {
+                            $.messager.progress('close');
+                            //Clear File
+                            $.ajax({
+                                url: "<?= base_url('purchase/purchase_requests/uploadclearFailed') ?>"
+                            });
+                            var json = eval('(' + result + ')');
+                            requestData(json.total, json);
+
+                            function requestData(total, json, number = 1, value = 0, success = 1, failed = 1) {
+                                if (value < 100) {
+                                    value = Math.floor((number / total) * 100);
+                                    $('#p_upload2').progressbar('setValue', value);
+                                    $('#p_start2').html(number);
+                                    $('#p_finish2').html(total);
+
+                                    $.ajax({
+                                        type: "POST",
+                                        async: true,
+                                        url: "<?= base_url('purchase/purchase_requests/uploadCreate') ?>",
+                                        data: {
+                                            "data": json[number - 1]
+                                        },
+                                        cache: false,
+                                        dataType: "json",
+                                        success: function(result) {
+                                            if (result.theme == "success") {
+                                                $('#p_success2').html(success);
+                                                var title = "<b style='color: green;'>" + result.title + "</b> | " + result.message;
+                                                requestData(total, json, number + 1, value, success + 1, failed + 0);
+                                            } else {
+                                                $('#p_failed2').html(failed);
+                                                var title = "<b style='color: red;'>" + result.title + "</b> | " + result.message;
+                                                //Json Failed
+                                                $.ajax({
+                                                    type: "POST",
+                                                    async: true,
+                                                    url: "<?= base_url('purchase/purchase_requests/uploadcreateFailed') ?>",
+                                                    data: {
+                                                        data: json[number - 1],
+                                                        message: result.message
+                                                    },
+                                                    cache: false
+                                                });
+                                                requestData(total, json, number + 1, value, success + 0, failed + 1);
+                                            }
+                                            $("#p_remarks2").append(title + "<br>");
+                                        }
+                                    });
+                                }
+                            }
                         }
                     });
                 }
@@ -1356,6 +1508,13 @@
             prompt: 'Select Revision',
         });
 
+        $('#plant').combobox({
+            url: '<?php echo base_url('master/plants/reads'); ?>',
+            valueField: 'number',
+            textField: 'name',
+            prompt: 'Select Plant',
+        });
+
         $('#supplier_id').combobox({
             url: '<?php echo base_url('master/suppliers/reads'); ?>',
             valueField: 'id',
@@ -1368,17 +1527,19 @@
                     textField: 'name',
                     prompt: 'Select Product Family',
                     onSelect: function(prodfam){
-                        addTable(supp.id, prodfam.id);
+                        var plant = $('#plant').combobox('getValue');
+
+                        addTable(supp.id, prodfam.id, plant);
 
                         var p_month = $("#p_month").combobox('getValue');
                         var p_year = $("#p_year").combobox('getValue');
                         
-                        // var code = "PR"+supp.number+p_year+p_month+"A"+prodfam.number;
+                        var code = "PR"+supp.number+p_year+p_month+"A"+prodfam.number;
                         
                         $.ajax({
                             type: "post",
-                            // url: "<?= base_url("purchase/purchase_requests/purchaseRequestNo/") ?>"+btoa(code)+"/adds",
-                            url: "<?= base_url("purchase/purchase_requests/purchaseRequestNo/".$id_menu."/adds") ?>",
+                            url: "<?= base_url("purchase/purchase_requests/purchaseRequestNo/") ?>"+btoa(code)+"/adds",
+                            // url: "<?= base_url("purchase/purchase_requests/purchaseRequestNo//adds") ?>",
                             dataType: "html",
                             success: function (response) {
                                 if(response == ""){
@@ -1412,6 +1573,39 @@
             valueField: 'id',
             textField: 'name',
             prompt: 'Select Year',
+            icons: [{
+                iconCls: 'icon-clear',
+                handler: function(e) {
+                    $(e.data.target).combobox('clear').combobox('textbox').focus();
+                }
+            }],
+        });
+
+        $('#filter_plant').combobox({
+            url: '<?php echo base_url('master/plants/reads'); ?>',
+            valueField: 'number',
+            textField: 'name',
+            prompt: 'Select Plant',
+        });
+
+        $('#filter_supplier').combobox({
+            url: '<?php echo base_url('master/suppliers/reads'); ?>',
+            valueField: 'id',
+            textField: 'name',
+            prompt: 'Select Supplier',
+            icons: [{
+                iconCls: 'icon-clear',
+                handler: function(e) {
+                    $(e.data.target).combobox('clear').combobox('textbox').focus();
+                }
+            }],
+        });
+
+        $('#filter_request_no').combobox({
+            url: '<?php echo base_url('purchase/purchase_requests/reads'); ?>',
+            valueField: 'request_no',
+            textField: 'request_no',
+            prompt: 'Select Request No',
             icons: [{
                 iconCls: 'icon-clear',
                 handler: function(e) {
@@ -1540,44 +1734,44 @@
         return formatter.format(value);
     }
 
+    function numberformatdecimal(value, row) {
+        const formatter = new Intl.NumberFormat('ja-JP', {
+            minimumFractionDigits: 4
+        });
+
+        return formatter.format(value);
+    }
+
     function BtnDetail(val, row) {
-        var details = "details('"+row.request_no+"','"+row.supplier_name+"','"+row.item_family_id+"')";
+        var details = "details('"+row.request_no+"','"+row.supplier_name+"','"+row.item_family_name+"')";
         return '<a class="btn btn-primary w-100" style="pointer-events: visible; opacity:1;" onClick="'+details+'"><i class="fa fa-eye"></i> View</a>';
     }
 
     function BtnSend(val, row) {
-        if (row.approved_to == null || row.approved_to == "") {
-            var send = "sendPo('"+row.request_no+"')";
-            return '<a class="btn btn-success w-100" style="pointer-events: visible; opacity:1;" onClick="'+send+'"><i class="fa fa-plus"></i> Create PO</a>';
-        } else {
+        if(row.total_data != row.total_po){
+            if((row.approved_to == null || row.approved_to == "") && row.confirm == "1"){
+                var send = "sendPo('"+row.request_no+"')";
+                return '<a class="btn btn-success w-100" style="pointer-events: visible; opacity:1;" onClick="'+send+'"><i class="fa fa-plus"></i> Create PO</a>';
+            }else{
+                return '-';
+            }
+        }else{
             return '-';
         }
     }
 
     function BtnConfirm(val, row) {
-        var confirm = "confirm('"+row.request_no+"','"+row.item_rm_id+"')";
-        return '<a class="btn btn-success w-100" style="pointer-events: visible; opacity:1;" onClick="'+confirm+'"><i class="fa fa-check"></i> Confirm</a>';
-    }
-
-    function cellStylerConfirm(value, row, index) {
-        if (value == 0) {
-            return 'background: #FF5F5F; color:white;';
-        } else {
-            return 'background: #53D636; color:white;';
+        if(val == 0){
+            var confirm = "confirm('"+row.request_no+"','"+row.created_by+"')";
+            return '<a class="btn btn-success w-100" style="pointer-events: visible; opacity:1;" onClick="'+confirm+'"><i class="fa fa-check"></i> Confirm</a>';
+        }else{
+            return 'CONFIRMED';
         }
     }
-
-    function cellFormatterConfirm(val, row) {
-        if (val == 0) {
-            return 'Not Confirm';
-        } else {
-            return 'Confirmed';
-        }
-    };
 
     function cellStylerApproval(value, row, index) {
         if (row.approved_to == null) {
-            return 'background: #FF5F5F; color:white;';
+            return 'background: #ffc25fff; color:white;';
         } else if(row.approved_to == ""){
             return 'background: #53D636; color:white;';
         } else {
@@ -1585,9 +1779,17 @@
         }
     }
 
+    function cellStylerFlag(value, row, index) {
+        if (row.flag == "OK") {
+            return 'background: #53D636; color:white;';
+        } else {
+            return 'background: #ffc25fff; color:white;';
+        }
+    }
+
     function cellFormatterApproval(val, row) {
         if (row.approved_to == null) {
-            return 'Not Setting';
+            return 'Pending';
         } else if(row.approved_to == ""){
             return 'Approved';
         } else {

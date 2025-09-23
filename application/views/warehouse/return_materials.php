@@ -5,7 +5,7 @@
             <th rowspan="2" data-options="field:'return_no',width:200,halign:'center'">Return No</th>
             <th rowspan="2" data-options="field:'return_date',width:100,halign:'center'">Return Date</th>
             <th rowspan="2" data-options="field:'return_name',width:150,halign:'center'">Return Name</th>
-            <th rowspan="2" data-options="field:'item_rm_id',width:150,halign:'center'">Part No</th>
+            <th rowspan="2" data-options="field:'item_rm_id',width:150,halign:'center'">Part No EBWS</th>
             <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No Supplier </th>
             <th rowspan="2" data-options="field:'item_rm_name',width:200,halign:'center'">Description</th>
             <th rowspan="2" data-options="field:'workorder',width:150,align:'center'">Workorder</th>
@@ -99,7 +99,7 @@
                 <input style="width:60%;" name="id" id="id" required class="easyui-textbox">
             </div>
             <div class="fitem">
-                <span style="width:35%; display:inline-block;">Part No</span>
+                <span style="width:35%; display:inline-block;">Part No EBWS</span>
                 <input style="width:60%;" name="item_rm_id" id="item_rm_id" disabled class="easyui-textbox">
             </div>
             <div class="fitem">
@@ -165,7 +165,7 @@
                     field: 'item_rm_id',
                     width: 150,
                     halign: 'center',
-                    title: "Part No",
+                    title: "Part No EBWS",
                     editor: {
                         type: 'combogrid',
                         options: {
@@ -180,7 +180,7 @@
                             columns: [
                                 [{
                                     field: 'id',
-                                    title: 'Part No',
+                                    title: 'Part No EBWS',
                                     width: 150
                                 },{
                                     field: 'number',

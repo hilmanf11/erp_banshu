@@ -637,7 +637,7 @@ class Supply_sheets extends CI_Controller
                             <table id="customers">
                                 <tr>
                                     <th>No</th>
-                                    <th>Part No</th>
+                                    <th>Part No EBWS</th>
                                     <th>Part No Supplier</th>
                                     <th>Description</th>
                                     <th>Maker</th>
@@ -813,7 +813,7 @@ class Supply_sheets extends CI_Controller
                 <th>Product EBWS</th>
                 <th>Product Customer</th>
                 <th>Description</th>
-                <th>Part No</th>
+                <th>Part No EBWS</th>
                 <th>Part No Supplier</th>
                 <th>Description</th>
                 <th>Uom</th>

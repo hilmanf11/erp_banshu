@@ -148,7 +148,7 @@
                     columns: [
                         [{
                             field: 'id',
-                            title: 'Part No',
+                            title: 'Part No EBWS',
                             width: 150
                         }, {
                             field: 'number',
@@ -306,7 +306,7 @@
                     columns: [
                         [{
                             field: 'id',
-                            title: 'Part No',
+                            title: 'Part No EBWS',
                             width: 150
                         }, {
                             field: 'number',

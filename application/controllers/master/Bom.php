@@ -39,14 +39,6 @@ class Bom extends CI_Controller
         echo json_encode($send);
     }
 
-    public function readitemcustomer()
-    {
-        $customer_id = $this->input->get('customer_id');
-        $post = isset($_POST['q']) ? $_POST['q'] : "";
-        $send = $this->crud->query("SELECT * FROM item_fg WHERE (`number` like '%$post%' or number_customer like '%$post%' or `name` like '%$post%') and (approved_to = '' or approved_to is null) and status = 0 and customer_id='$customer_id'");
-        echo json_encode($send);
-    }
-
     //GET DATA
     public function readBom($item_fg_id)
     {
@@ -135,6 +127,7 @@ class Bom extends CI_Controller
             $get = $this->input->get();
             $filter_item_fg_id = @base64_decode($get['filter_item_fg_id']);
             $filter_item_rm_id = @base64_decode($get['filter_item_rm_id']);
+            $filter_plant = @base64_decode($get['filter_plant']);
 
             $page = $this->input->post('page');
             $rows = $this->input->post('rows');
@@ -144,11 +137,12 @@ class Bom extends CI_Controller
             $offset = ($page - 1) * $rows;
             $result = array();
             //Select Query
-            $this->db->select('b.id as item_fg_id, b.number as item_fg_number, b.number_customer, b.name as item_fg_name, a.created_by, a.created_date, a.updated_by, a.updated_date, a.approved_to, a.approved_by, a.approved_date, a.revision');
+            $this->db->select('b.id as item_fg_id, b.number as item_fg_number, b.number_customer, b.name as item_fg_name, a.created_by, a.created_date, a.updated_by, a.updated_date, a.approved_to, a.approved_by, a.approved_date, a.revision, a.plant');
             $this->db->from("(SELECT * FROM bom ORDER BY approved_to desc) a");
             $this->db->join('item_fg b', 'a.item_fg_id = b.id');
             $this->db->like('a.item_fg_id', $filter_item_fg_id);
             $this->db->like('a.item_rm_id', $filter_item_rm_id);
+            $this->db->like('a.plant', $filter_plant);
             $this->db->group_by('b.number');
             $this->db->order_by('b.number', 'ASC');
             //Total Data
@@ -170,6 +164,7 @@ class Bom extends CI_Controller
         if ($this->input->get()) {
             $number = base64_decode($this->input->get('number'));
             $filter_item_rm_id = base64_decode($this->input->get('filter_item_rm_id'));
+            $plant = base64_decode($this->input->get('plant'));
 
             $this->db->select('a.*, b.number as item_fg_number, b.name as item_fg_name, c.number as item_rm_number, c.name as item_rm_name, c.uom as uom, c.item_family_id as product_family, d.name as product_family_name, f.name as supplier_name, g.name as maker_name');
             $this->db->from('bom a');
@@ -181,6 +176,7 @@ class Bom extends CI_Controller
             $this->db->join('makers g', 'c.maker_id = g.id', 'left');
             $this->db->where('b.number', $number);
             $this->db->like('a.item_rm_id', $filter_item_rm_id);
+            $this->db->like('a.plant', $plant);
             $this->db->group_by('a.id');
             $this->db->order_by('d.number', 'ASC');
             $records = $this->db->get()->result_array();
@@ -575,23 +571,27 @@ class Bom extends CI_Controller
     {
         if ($this->input->post()) {
             $data = $this->input->post('data');
+            $plant = $this->input->post('plant');
             $dataFinal = [];
             
-            $bom = $this->crud->reads('bom', [], ["item_fg_id" => $data['item_fg_id']]);
-            if(count($bom) == 0){
-                $send = $this->mrp->master_bom($data['number_customer']);
-                $total = count($send);
-
+            $bom = $this->crud->reads('bom', [], ["item_fg_id" => $data['item_fg_id'], "plant" => $plant]);
+            $send = $this->mrp->master_bom($data['number_customer'], $plant);
+            $total = count($send);
+            
+            if(count($bom) != $total){
                 if ($total > 0) {
                     for ($i = 0; $i < $total; $i++) {
                         $item_rm = $this->crud->read('item_rm', [], ["number" => trim($send[$i]['bom_com_item'])]);
                         $item_fg = $this->crud->read('item_fg', [], ["number_customer" => trim($send[$i]['bom_par_item'])]);
-                        if(!empty($item_rm->id) && !empty($item_fg->id)){
+                        $bom = $this->crud->read('bom', [], ["item_fg_id" => @$item_fg->id, "item_rm_id" => @$item_rm->id, "main_process" => trim($send[$i]['bom_routid']), "plant" => $plant]);
+
+                        if(!empty($item_rm->id) && !empty($item_fg->id) && empty($bom->id)){
                             $dataFinal[] = array(
                                 "item_fg_id" => @$item_fg->id,
                                 "item_rm_id" => @$item_rm->id,
                                 "composition" => trim($send[$i]['bom_qty_perassy']),
                                 "main_process" => trim($send[$i]['bom_routid']),
+                                "plant" => $plant
                             );
                         }
                     }
@@ -606,17 +606,17 @@ class Bom extends CI_Controller
     public function syncPullCreate(){
         if ($this->input->post()) {
             $data = $this->input->post('data');
-            $bom = $this->crud->read('bom', [], ["item_fg_id" => $data['item_fg_id'], "item_rm_id" => $data['item_rm_id']]);
-            if (empty($bom->id)) {
+
+            // $bom = $this->crud->read('bom', [], ["item_fg_id" => $data['item_fg_id'], "item_rm_id" => $data['item_rm_id'], "main_process" => $data['main_process'], "plant" => $data['plant']]);
+            // if (empty($bom->id)) {
                 $send = $this->crud->create('bom', $data, "logs");
                 $this->db->insert("bom_log", array_merge($data, ["created_by" => $this->session->username, "created_date" => date("Y-m-d H:i:s")]));
                 echo $send;
-            }else{
-                die(json_encode(array("title" => "Duplicate", "message" => "Product No ".$data['item_fg_id']." and Part No ".$data['item_rm_id']." already created", "theme" => "error")));
-            }
+            // }else{
+            //     die(json_encode(array("title" => "Duplicate", "message" => "Product No ".$data['item_fg_id']." and Part No ".$data['item_rm_id']." already created", "theme" => "error")));
+            // }
         }
     }
-
     // public function deleteBom(){
     //     $query = $this->db->query("SELECT a.item_fg_id, c.number_customer as item_fg_number, a.item_rm_id, b.number as item_rm_number, COUNT(a.id) as total 
     //         FROM bom a JOIN item_rm b ON a.item_rm_id = b.id 
@@ -657,6 +657,7 @@ class Bom extends CI_Controller
         $get = $this->input->get();
         $filter_item_fg_id = @base64_decode($get['filter_item_fg_id']);
         $filter_item_rm_id = @base64_decode($get['filter_item_rm_id']);
+        $filter_plant = @base64_decode($get['filter_plant']);
 
         //Config
         $this->db->select('*');
@@ -673,6 +674,7 @@ class Bom extends CI_Controller
         $this->db->join('makers g', 'c.maker_id = g.id', 'left');
         $this->db->like('a.item_fg_id', $filter_item_fg_id);
         $this->db->like('a.item_rm_id', $filter_item_rm_id);
+        $this->db->like('a.plant', $filter_plant);
         $this->db->order_by('a.id', 'ASC');
         $records = $this->db->get()->result_array();
         $html = '<html><head><title>Print Data</title></head><style>body {font-family: Arial, Helvetica, sans-serif;}#bom {border-collapse: collapse;width: 100%;font-size: 12px;}#bom td, #bom th {border: 1px solid #ddd;padding: 2px;}#bom tr:nth-child(even){background-color: #f2f2f2;}#bom tr:hover {background-color: #ddd;}#bom th {padding-top: 2px;padding-bottom: 2px;text-align: left;color: black;}</style><body>
@@ -703,6 +705,7 @@ class Bom extends CI_Controller
             <tr>
                 <th width="20">No</th>
                 <th>Status</th>
+                <th>Plant</th>
                 <th>Product No Original</th>
                 <th>Product No Customer</th>
                 <th>Description</th>
@@ -723,11 +726,12 @@ class Bom extends CI_Controller
                 $style = "color:green;";
             } else {
                 $style = "color:red;";
-                $status = "NOT ACTIVE";
+                $status = "IN ACTIVE";
             }
             $html .= '<tr>
                     <td>' . $no . '</td>
                     <td style=' . $style . '>' . $status . '</td>
+                    <td>' . $data['plant'] . '</td>
                     <td>' . $data['item_fg_number'] . '</td>
                     <td style="mso-number-format:\@;">' . $data['number_customer'] . '</td>
                     <td>' . $data['item_fg_name'] . '</td>

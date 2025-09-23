@@ -194,7 +194,7 @@ class Wip_balances extends CI_Controller
             <tr>
                 <th width="20">No</th>
                 <th>Status</th>
-                <th>Part No</th>
+                <th>Part No EBWS</th>
                 <th>Part No Supplier</th>
                 <th>Description</th>
                 <th>Kanban No</th>

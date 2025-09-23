@@ -1,6 +1,6 @@
 <table id="dg" class="easyui-datagrid" style="width:100%;" toolbar="#toolbar"></table>
 
-<div id="toolbar" style="height: 195px; padding:10px;">
+<div id="toolbar" style="height: 235px; padding:10px;">
     <div style="width: 100%; display: grid; grid-template-columns: auto auto auto; grid-gap: 5px; display: flex;">
         <fieldset style="width: 60%; border:2px solid #d0d0d0; margin-bottom: 5px; margin-top: 5px; border-radius:4px;">
             <legend><b>Filter Data</b></legend>
@@ -22,6 +22,10 @@
                     </select>
                 </div>
                 <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Supplier</span>
+                    <input style="width:60%;" id="filter_supplier" class="easyui-combogrid">
+                </div>
+                <div class="fitem">
                     <span style="width:35%; display:inline-block;"></span>
                     <a href="javascript:;" class="easyui-linkbutton" onclick="filter()"><i class="fa fa-search"></i> Filter Data</a>
                 </div>
@@ -36,7 +40,7 @@
                     <input style="width:60%;" id="filter_item_family" class="easyui-combobox">
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Item ID</span>
+                    <span style="width:35%; display:inline-block;">Part No</span>
                     <input style="width:60%;" id="filter_item_rm" class="easyui-combogrid">
                 </div>
             </div>
@@ -51,7 +55,7 @@
     <a href="javascript:;" class="easyui-linkbutton" data-options="plain:true" onclick="excel2()"><i class="fa fa-file"></i> Export Excel 2</a>
 </div>
 
-<div id="dlg_insert" class="easyui-dialog" title="Update Data" data-options="closed: true,modal:true" style="width: 800px; padding:10px; top: 20px; left:10px;">
+<div id="dlg_insert" class="easyui-dialog" title="Update Data" data-options="closed: true,modal:true" style="width: 800px; height: 550px; padding:10px; top: 20px; left:10px;">
     <form id="frm_insert" method="post" novalidate>
         <fieldset style="width:100%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
             <legend><b>Form Data</b></legend>
@@ -71,16 +75,17 @@
             </div>
             <div style="width: 50%; float: left;">
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Item ID</span>
-                    <input style="width:60%;" name="part_no" id="part_no" disabled class="easyui-textbox">
+                    <span style="width:35%; display:inline-block;">Part No</span>
+                    <input style="width:60%;" name="item_rm_number" id="item_rm_number" disabled class="easyui-textbox">
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Item Name</span>
-                    <input style="width:60%;" name="part_name" id="part_name" disabled class="easyui-textbox">
+                    <span style="width:35%; display:inline-block;">Part Name</span>
+                    <input style="width:60%;" name="item_rm_name" id="item_rm_name" disabled class="easyui-textbox">
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Qty</span>
+                    <span style="width:35%; display:inline-block;">Qty/MPQ</span>
                     <input style="width:30%;" name="qty" id="qty" readonly class="easyui-numberbox" data-options="groupSeparator:'.'">
+                    <input style="width:30%;" name="mpq" id="mpq" readonly class="easyui-numberbox" data-options="groupSeparator:'.'">
                 </div>
             </div>
             <div style="width: 100%; float: left; margin-top: 20px;">
@@ -91,12 +96,12 @@
                         <input style="width:60%;" name="delivey_qty_1" id="delivey_qty_1" class="easyui-numberbox" data-options="groupSeparator:'.'">
                     </div>
                     <div class="fitem">
-                        <span style="width:35%; display:inline-block;">ETA</span>
-                        <input style="width:60%;" name="delivey_date_1" id="delivey_date_1" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
-                    </div>
-                    <div class="fitem">
                         <span style="width:35%; display:inline-block;">ETD</span>
                         <input style="width:60%;" name="etd_1" id="etd_1" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">ETA</span>
+                        <input style="width:60%;" name="delivey_date_1" id="delivey_date_1" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
                     </div>
                 </fieldset>
                 <fieldset style="width:32%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
@@ -106,12 +111,12 @@
                         <input style="width:60%;" name="delivey_qty_2" id="delivey_qty_2" class="easyui-numberbox" data-options="groupSeparator:'.'">
                     </div>
                     <div class="fitem">
-                        <span style="width:35%; display:inline-block;">ETA</span>
-                        <input style="width:60%;" name="delivey_date_2" id="delivey_date_2" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
-                    </div>
-                    <div class="fitem">
                         <span style="width:35%; display:inline-block;">ETD</span>
                         <input style="width:60%;" name="etd_2" id="etd_2" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">ETA</span>
+                        <input style="width:60%;" name="delivey_date_2" id="delivey_date_2" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
                     </div>
                 </fieldset>
                 <fieldset style="width:32%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
@@ -121,12 +126,12 @@
                         <input style="width:60%;" name="delivey_qty_3" id="delivey_qty_3" class="easyui-numberbox" data-options="groupSeparator:'.'">
                     </div>
                     <div class="fitem">
-                        <span style="width:35%; display:inline-block;">ETA</span>
-                        <input style="width:60%;" name="delivey_date_3" id="delivey_date_3" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
-                    </div>
-                    <div class="fitem">
                         <span style="width:35%; display:inline-block;">ETD</span>
                         <input style="width:60%;" name="etd_3" id="etd_3" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">ETA</span>
+                        <input style="width:60%;" name="delivey_date_3" id="delivey_date_3" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
                     </div>
                 </fieldset>
                 <fieldset style="width:32%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
@@ -136,12 +141,12 @@
                         <input style="width:60%;" name="delivey_qty_4" id="delivey_qty_4" class="easyui-numberbox" data-options="groupSeparator:'.'">
                     </div>
                     <div class="fitem">
-                        <span style="width:35%; display:inline-block;">ETA</span>
-                        <input style="width:60%;" name="delivey_date_4" id="delivey_date_4" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
-                    </div>
-                    <div class="fitem">
                         <span style="width:35%; display:inline-block;">ETD</span>
                         <input style="width:60%;" name="etd_4" id="etd_4" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">ETA</span>
+                        <input style="width:60%;" name="delivey_date_4" id="delivey_date_4" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
                     </div>
                 </fieldset>
                 <fieldset style="width:32%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
@@ -151,12 +156,12 @@
                         <input style="width:60%;" name="delivey_qty_5" id="delivey_qty_5" class="easyui-numberbox" data-options="groupSeparator:'.'">
                     </div>
                     <div class="fitem">
-                        <span style="width:35%; display:inline-block;">ETA</span>
-                        <input style="width:60%;" name="delivey_date_5" id="delivey_date_5" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
-                    </div>
-                    <div class="fitem">
                         <span style="width:35%; display:inline-block;">ETD</span>
                         <input style="width:60%;" name="etd_5" id="etd_5" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">ETA</span>
+                        <input style="width:60%;" name="delivey_date_5" id="delivey_date_5" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
                     </div>
                 </fieldset>
                 <fieldset style="width:32%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
@@ -166,12 +171,27 @@
                         <input style="width:60%;" name="delivey_qty_6" id="delivey_qty_6" class="easyui-numberbox" data-options="groupSeparator:'.'">
                     </div>
                     <div class="fitem">
+                        <span style="width:35%; display:inline-block;">ETD</span>
+                        <input style="width:60%;" name="etd_6" id="etd_6" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
+                    </div>
+                    <div class="fitem">
                         <span style="width:35%; display:inline-block;">ETA</span>
                         <input style="width:60%;" name="delivey_date_6" id="delivey_date_6" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
                     </div>
+                </fieldset>
+                <fieldset style="width:32%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
+                    <legend><b><span id="p7">> 6 Month</span></b></legend>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">Qty</span>
+                        <input style="width:60%;" name="delivey_qty_7" id="delivey_qty_7" class="easyui-numberbox" data-options="groupSeparator:'.'">
+                    </div>
                     <div class="fitem">
                         <span style="width:35%; display:inline-block;">ETD</span>
-                        <input style="width:60%;" name="etd_6" id="etd_6" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
+                        <input style="width:60%;" name="etd_7" id="etd_7" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
+                    </div>
+                    <div class="fitem">
+                        <span style="width:35%; display:inline-block;">ETA</span>
+                        <input style="width:60%;" name="delivey_date_7" id="delivey_date_7" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
                     </div>
                 </fieldset>
             </div>
@@ -184,7 +204,83 @@
 
 <script>
     function add() {
-        toastr.info("Create Delivery Schedule is in The Purchase Order Module");
+        toastr.info("Generate Schedule Delivery only from Purchase Order Module");
+        // var filter_month = $("#filter_month").combobox('getValue');
+        // var filter_year = $("#filter_year").combobox('getValue');
+        // var filter_revision = $("#filter_revision").combobox('getValue');
+        // var filter_item_family = $("#filter_item_family").combobox('getValue');
+        // var filter_item_rm = $("#filter_item_rm").combogrid('getValue');
+        // var filter_po_no = $("#filter_po_no").combogrid('getValue');
+
+        // if (filter_month != "" && filter_year != "" && filter_revision != "") {
+        //     $.messager.confirm('Generate', 'Are you sure, you want generate this data', function(r){
+        //         if (r){
+        //             Swal.fire({
+        //                 title: 'Please Wait for Generating Data',
+        //                 showConfirmButton: false,
+        //                 allowOutsideClick: false,
+        //                 allowEscapeKey: false,
+        //                 didOpen: () => {
+        //                     Swal.showLoading();
+        //                 },
+        //             });
+
+        //             $.ajax({
+        //                 type: "get",
+        //                 url: "<?= base_url('purchase/delivery_schedules/getData') ?>",
+        //                 data: "filter_month=" + window.btoa(filter_month) +
+        //                     "&filter_year=" + window.btoa(filter_year) +
+        //                     "&filter_revision=" + window.btoa(filter_revision) +
+        //                     "&filter_item_family=" + window.btoa(filter_item_family) +
+        //                     "&filter_product_no=" + window.btoa(filter_item_rm) +
+        //                     "&filter_po_no=" + window.btoa(filter_po_no),
+        //                 dataType: "json",
+        //                 success: function(rows) {
+        //                     Swal.close();
+
+        //                     if(rows['total'] > 0){
+        //                         requestData(rows['total'], rows);
+
+        //                         function requestData(total, json, number = 1, value = 0, success = 1, failed = 1) {
+        //                             if (value < 100) {
+        //                                 value = Math.floor((number / total) * 100);
+        //                                 $('#p_upload').progressbar('setValue', value);
+        //                                 $('#p_start').html(number);
+        //                                 $('#p_finish').html(total);
+
+        //                                 $.post('<?= base_url('purchase/delivery_schedules/create') ?>', {
+        //                                     data: json[number - 1]
+        //                                 }, function(note) {
+        //                                     var result = eval('(' + note + ')');
+
+        //                                     if (result.theme == "success") {
+        //                                         requestData(total, json, number + 1, value, success + 1, failed + 0);
+        //                                     } else {
+        //                                         requestData(total, json, number + 1, value, success + 0, failed + 1);
+        //                                     }
+
+        //                                     if (value == 100) {
+        //                                         Swal.fire('Good job!', 'Process Generate Data Completed!', 'success');
+        //                                     }
+        //                                 }).fail(function(jqXHR, textStatus) {
+        //                                     if (textStatus == "error") {
+        //                                         toastr.error("Connection time out");
+
+        //                                         requestData(total, json, number, value, success + 0, failed + 1);
+        //                                     }
+        //                                 });
+        //                             }
+        //                         }
+        //                     }else{
+        //                         toastr.warning("Please Generate Purchase Request & Purchase Order First");
+        //                     }
+        //                 }
+        //             });
+        //         }
+        //     });
+        // } else {
+        //     toastr.warning("Please Select Period & Revision", "Information");
+        // }
     }
 
     //Edit Data
@@ -193,48 +289,7 @@
         if (row) {
             $('#dlg_insert').dialog('open');
             $('#frm_insert').form('load', row);
-
-            $("#delivey_qty_1").numberbox({
-                onChange: function(val){
-                    var total = (Math.ceil(val / row.mpq) * row.mpq);
-                    $("#delivey_qty_1").numberbox('setValue', total);
-                }
-            });
-
-            $("#delivey_qty_2").numberbox({
-                onChange: function(val){
-                    var total = (Math.ceil(val / row.mpq) * row.mpq);
-                    $("#delivey_qty_2").numberbox('setValue', total);
-                }
-            });
-
-            $("#delivey_qty_3").numberbox({
-                onChange: function(val){
-                    var total = (Math.ceil(val / row.mpq) * row.mpq);
-                    $("#delivey_qty_3").numberbox('setValue', total);
-                }
-            });
-
-            $("#delivey_qty_4").numberbox({
-                onChange: function(val){
-                    var total = (Math.ceil(val / row.mpq) * row.mpq);
-                    $("#delivey_qty_4").numberbox('setValue', total);
-                }
-            });
-
-            $("#delivey_qty_5").numberbox({
-                onChange: function(val){
-                    var total = (Math.ceil(val / row.mpq) * row.mpq);
-                    $("#delivey_qty_5").numberbox('setValue', total);
-                }
-            });
-
-            $("#delivey_qty_6").numberbox({
-                onChange: function(val){
-                    var total = (Math.ceil(val / row.mpq) * row.mpq);
-                    $("#delivey_qty_6").numberbox('setValue', total);
-                }
-            });
+            $("#mpq").numberbox('setValue', row.mpq2);
 
             url_save = '<?= base_url('purchase/delivery_schedules/update') ?>?id=' + btoa(row.id);
         } else {
@@ -246,18 +301,10 @@
     function deleted() {
         var rows = $('#dg').datagrid('getSelections');
         if (rows.length > 0) {
-            Swal.fire({
-                title: 'Delete Data',
-                text: "Are you sure? You want to delete this data!",
-                icon: 'warning',
-                showCancelButton: true,
-                allowOutsideClick: false,
-                allowEscapeKey: false,
-                confirmButtonText: 'Yes, delete it!'
-            }).then((result) => {
-                if (result.isConfirmed) {
+            $.messager.confirm('Warning', 'Are you sure you want to delete this data?', function(r) {
+                if (r) {
                     Swal.fire({
-                        title: 'Please Wait...',
+                        title: 'Please Wait for Delete Data',
                         showConfirmButton: false,
                         allowOutsideClick: false,
                         allowEscapeKey: false,
@@ -266,43 +313,32 @@
                         },
                     });
 
-                    requestDelete(rows.length, rows);
-                    function requestDelete(total, json, number = 1, value = 0) {
-                        if (value < 100) {
-                            var row = json[number-1];
-                            value = Math.floor((number / total) * 100);
-
-                            $.ajax({
-                                method: 'post',
-                                url: '<?= base_url('purchase/delivery_schedules/deleted') ?>',
-                                data: {
-                                    id: row.id
-                                },
-                                success: function(result) {
-                                    var result = eval('(' + result + ')');
-                                    requestDelete(total, json, number + 1, value);
-
-                                    if (number == total) {
-                                        $('#dg').datagrid('reload');
-                                        Swal.close();
-                                        Swal.fire(
-                                            'Delete Completed',
-                                            'Delete Data has been completed, You cannot restore data that has been deleted',
-                                            'success'
-                                        );
-                                    }
-                                },
-                                error: function(jqXHR, textStatus, errorThrown) {
-                                    toastr.error("Cannot Process your request");
-                                    Swal.close();
-                                },
-                            });
-                        }
+                    for (var i = 0; i < rows.length; i++) {
+                        var row = rows[i];
+                        $.ajax({
+                            method: 'post',
+                            url: '<?= base_url('purchase/delivery_schedules/deleted') ?>',
+                            data: {
+                                id: row.id
+                            },
+                            success: function(result) {
+                                var result = eval('(' + result + ')');
+                                toastr.success(result.message);
+                                Swal.close();
+                            },
+                            error: function(jqXHR, textStatus, errorThrown) {
+                                toastr.error(jqXHR.statusText);
+                                $.messager.alert("Error", jqXHR.statusText, 'error');
+                            },
+                            complete: function(data) {
+                                $('#dg').datagrid('reload');
+                            }
+                        });
                     }
                 }
             });
         } else {
-            toastr.info("Please select one of the data in the table first");
+            toastr.warning("Please select one of the data in the table first!", "Information");
         }
     }
 
@@ -313,12 +349,14 @@
         var filter_item_family = $("#filter_item_family").combobox('getValue');
         var filter_item_rm = $("#filter_item_rm").combogrid('getValue');
         var filter_po_no = $("#filter_po_no").combogrid('getValue');
+        var filter_supplier = $("#filter_supplier").combogrid('getValue');
 
         var url = "?filter_month=" + window.btoa(filter_month) +
             "&filter_year=" + window.btoa(filter_year) +
             "&filter_revision=" + window.btoa(filter_revision) +
             "&filter_item_family=" + window.btoa(filter_item_family) +
             "&filter_po_no=" + window.btoa(filter_po_no) +
+            "&filter_supplier=" + window.btoa(filter_supplier) +
             "&filter_item_rm=" + window.btoa(filter_item_rm);
 
         if (filter_month == "" || filter_year == "" || filter_revision == "") {
@@ -344,12 +382,37 @@
                         remoteFilter: true,
                         rownumbers: true,
                         fit:true,
-                        columns: [
-                            [{
+                        frozenColumns:[[
+                            {
                                 field: 'ck',
                                 checkbox: true,
-                                rowspan: 2
                             }, {
+                                field: 'item_rm_number',
+                                title: 'Part No',
+                                width: 200,
+                                halign: 'center',
+                            }, {
+                                field: 'item_rm_name',
+                                title: 'Part Name',
+                                width: 150,
+                                halign: 'center',
+                            }, {
+                                field: 'qty',
+                                title: 'Qty',
+                                width: 80,
+                                halign: 'center',
+                                align: 'right',
+                                formatter: numberformat
+                            }, 
+                        ]],
+                        columns: [
+                            [{
+                                field: 'product_family',
+                                title: 'Item Family',
+                                width: 120,
+                                halign: 'center',
+                                rowspan: 2
+                            },{
                                 field: 'po_no',
                                 title: 'PO No',
                                 width: 150,
@@ -368,56 +431,7 @@
                                 width: 250,
                                 halign: 'center',
                                 rowspan: 2
-                            }, {
-                                field: 'item_rm_number',
-                                title: 'Part No',
-                                width: 200,
-                                halign: 'center',
-                                rowspan: 2
-                            }, {
-                                field: 'item_rm_name',
-                                title: 'Part Name',
-                                width: 150,
-                                halign: 'center',
-                                rowspan: 2
-                            }, {
-                                field: 'item_family_name',
-                                title: 'Product Family',
-                                width: 150,
-                                halign: 'center',
-                                rowspan: 2
-                            }, {
-                                field: 'mpq',
-                                title: 'MPQ',
-                                width: 80,
-                                halign: 'center',
-                                align: 'right',
-                                rowspan: 2,
-                                formatter: numberformat
                             },{
-                                field: 'moq',
-                                title: 'MOQ',
-                                width: 80,
-                                halign: 'center',
-                                align: 'right',
-                                rowspan: 2,
-                                formatter: numberformat
-                            },{
-                                field: 'leadtime',
-                                title: 'Leadtime',
-                                width: 80,
-                                halign: 'center',
-                                align: 'right',
-                                rowspan: 2
-                            },{
-                                field: 'qty',
-                                title: 'Qty',
-                                width: 100,
-                                halign: 'center',
-                                align: 'right',
-                                rowspan: 2,
-                                formatter: numberformat
-                            }, {
                                 field: '',
                                 title: monthName[0],
                                 width: 200,
@@ -453,6 +467,18 @@
                                 width: 200,
                                 align: 'center',
                                 colspan: 3
+                            }, {
+                                field: '',
+                                title: '> 6 Month',
+                                width: 200,
+                                align: 'center',
+                                colspan: 3
+                            },{
+                                field: 'remarks',
+                                title: 'Reason',
+                                width: 200,
+                                halign: 'center',
+                                rowspan: 2,
                             }, {
                                 field: '',
                                 title: 'Created',
@@ -580,6 +606,25 @@
                                 align: 'center',
                                 formatter: formatDate
                             }, {
+                                field: 'delivey_qty_7',
+                                title: "Qty",
+                                width: 80,
+                                halign: 'center',
+                                align: 'right',
+                                formatter: numberformat
+                            }, {
+                                field: 'etd_7',
+                                title: "ETD",
+                                width: 100,
+                                align: 'center',
+                                formatter: formatDate
+                            }, {
+                                field: 'delivey_date_7',
+                                title: "ETA",
+                                width: 80,
+                                align: 'center',
+                                formatter: formatDate
+                            },{
                                 field: 'created_by',
                                 title: 'By',
                                 width: 100,
@@ -606,7 +651,7 @@
             });
 
             $("#printout").contents().find('html').html("<center><br><br><br><b style='font-size:20px;'>Please Wait...</b></center>");
-            $("#printout").attr('src', '<?= base_url('purchase/delivery_schedules/print2') ?>' + url);
+            $("#printout").attr('src', '<?= base_url('purchase/delivery_schedules/print') ?>' + url);
         }
     }
 
@@ -621,12 +666,14 @@
         var filter_item_family = $("#filter_item_family").combobox('getValue');
         var filter_item_rm = $("#filter_item_rm").combogrid('getValue');
         var filter_po_no = $("#filter_po_no").combogrid('getValue');
+        var filter_supplier = $("#filter_supplier").combogrid('getValue');
 
         var url = "?filter_month=" + window.btoa(filter_month) +
             "&filter_year=" + window.btoa(filter_year) +
             "&filter_revision=" + window.btoa(filter_revision) +
             "&filter_item_family=" + window.btoa(filter_item_family) +
             "&filter_po_no=" + window.btoa(filter_po_no) +
+            "&filter_supplier=" + window.btoa(filter_supplier) +
             "&filter_item_rm=" + window.btoa(filter_item_rm);
 
         if (filter_month == "" || filter_year == "" || filter_revision == "") {
@@ -673,21 +720,7 @@
                     $('#frm_insert').form('submit', {
                         url: url_save,
                         onSubmit: function() {
-                            if($(this).form('validate') === true){
-                                $('#dlg_insert').dialog('close');
-                                
-                                Swal.fire({
-                                    title: 'Please Wait...',
-                                    showConfirmButton: false,
-                                    allowOutsideClick: false,
-                                    allowEscapeKey: false,
-                                    didOpen: () => {
-                                        Swal.showLoading();
-                                    },
-                                });
-                            }else{
-                                return $(this).form('validate');
-                            }
+                            return $(this).form('validate');
                         },
                         success: function(result) {
                             var result = eval('(' + result + ')');
@@ -698,8 +731,8 @@
                                 toastr.error(result.message, result.title);
                             }
 
+                            $('#dlg_insert').dialog('close');
                             $('#dg').datagrid('reload');
-                            Swal.close();
                         }
                     });
                 }
@@ -711,15 +744,6 @@
             valueField: 'id',
             textField: 'name',
             prompt: 'Select Month',
-            icons: [{
-                iconCls: 'icon-clear',
-                handler: function(e) {
-                    $(e.data.target).combobox('clear').combobox('textbox').focus();
-                }
-            }],
-            onSelect: function(month){
-                $("#filter_revision").combobox('clear');
-            }
         });
 
         $('#filter_year').combobox({
@@ -727,15 +751,6 @@
             valueField: 'id',
             textField: 'name',
             prompt: 'Select Year',
-            icons: [{
-                iconCls: 'icon-clear',
-                handler: function(e) {
-                    $(e.data.target).combobox('clear').combobox('textbox').focus();
-                }
-            }],
-            onSelect: function(year){
-                $("#filter_revision").combobox('clear');
-            }
         });
 
         $('#filter_revision').combobox({
@@ -782,6 +797,33 @@
             }
         });
 
+        $('#filter_supplier').combogrid({
+            url: '<?= base_url('purchase/purchase_orders/readSupplier') ?>',
+            panelWidth: 400,
+            idField: 'id',
+            textField: 'name',
+            mode: 'remote',
+            fitColumns: true,
+            prompt: "Select Supplier",
+            icons: [{
+                iconCls: 'icon-clear',
+                handler: function(e) {
+                    $(e.data.target).combogrid('clear').combogrid('textbox').focus();
+                }
+            }],
+            columns: [
+                [{
+                    field: 'number',
+                    title: 'ID',
+                    width: 80
+                }, {
+                    field: 'name',
+                    title: 'Name',
+                    width: 250
+                }]
+            ]
+        });
+
         $('#filter_item_family').combobox({
             url: '<?php echo base_url('master/item_familys/readss/C01'); ?>',
             valueField: 'id',
@@ -796,7 +838,7 @@
             onSelect: function(row){
                 $('#filter_item_rm').combogrid({
                     url: '<?= base_url('master/item_rm/reads/') ?>' + row.id,
-                    panelWidth: 400,
+                    panelWidth: 550,
                     idField: 'id',
                     textField: 'number',
                     mode: 'remote',
@@ -810,18 +852,109 @@
                     }],
                     columns: [
                         [{
+                            field: 'id',
+                            title: 'Part No Original',
+                            width: 120
+                        }, {
                             field: 'number',
-                            title: 'Part No',
+                            title: 'Part No Supplier',
                             width: 200
                         }, {
                             field: 'name',
-                            title: 'Part Name',
+                            title: 'Description',
                             width: 200
                         }]
                     ]
                 });
             }
         });
+
+        $('#filter_item_rm').combogrid({
+            url: '<?= base_url('master/item_rm/reads') ?>',
+            panelWidth: 550,
+            idField: 'id',
+            textField: 'number',
+            mode: 'remote',
+            fitColumns: true,
+            prompt: "Select Part No",
+            icons: [{
+                iconCls: 'icon-clear',
+                handler: function(e) {
+                    $(e.data.target).combogrid('clear').combogrid('textbox').focus();
+                }
+            }],
+            columns: [
+                [{
+                    field: 'id',
+                    title: 'Part No Original',
+                    width: 120
+                }, {
+                    field: 'number',
+                    title: 'Part No Supplier',
+                    width: 200
+                }, {
+                    field: 'name',
+                    title: 'Description',
+                    width: 200
+                }]
+            ]
+        });
+
+        // $("#delivey_qty_1").numberbox({
+        //     onChange: function(val){
+        //         var mpq = $("#mpq").numberbox('getValue');
+        //         var total = (Math.ceil(val / mpq) * mpq);
+        //         $("#delivey_qty_1").numberbox('setValue', total);
+        //     }
+        // });
+
+        // $("#delivey_qty_2").numberbox({
+        //     onChange: function(val){
+        //         var mpq = $("#mpq").numberbox('getValue');
+        //         var total = (Math.ceil(val / mpq) * mpq);
+        //         $("#delivey_qty_2").numberbox('setValue', total);
+        //     }
+        // });
+
+        // $("#delivey_qty_3").numberbox({
+        //     onChange: function(val){
+        //         var mpq = $("#mpq").numberbox('getValue');
+        //         var total = (Math.ceil(val / mpq) * mpq);
+        //         $("#delivey_qty_3").numberbox('setValue', total);
+        //     }
+        // });
+
+        // $("#delivey_qty_4").numberbox({
+        //     onChange: function(val){
+        //         var mpq = $("#mpq").numberbox('getValue');
+        //         var total = (Math.ceil(val / mpq) * mpq);
+        //         $("#delivey_qty_4").numberbox('setValue', total);
+        //     }
+        // });
+
+        // $("#delivey_qty_5").numberbox({
+        //     onChange: function(val){
+        //         var mpq = $("#mpq").numberbox('getValue');
+        //         var total = (Math.ceil(val / mpq) * mpq);
+        //         $("#delivey_qty_5").numberbox('setValue', total);
+        //     }
+        // });
+
+        // $("#delivey_qty_6").numberbox({
+        //     onChange: function(val){
+        //         var mpq = $("#mpq").numberbox('getValue');
+        //         var total = (Math.ceil(val / mpq) * mpq);
+        //         $("#delivey_qty_6").numberbox('setValue', total);
+        //     }
+        // });
+
+        // $("#delivey_qty_7").numberbox({
+        //     onChange: function(val){
+        //         var mpq = $("#mpq").numberbox('getValue');
+        //         var total = (Math.ceil(val / mpq) * mpq);
+        //         $("#delivey_qty_7").numberbox('setValue', total);
+        //     }
+        // });
     });
 
     //Format Datepicker

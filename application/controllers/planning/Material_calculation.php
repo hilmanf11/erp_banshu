@@ -11,6 +11,7 @@ class Material_calculation extends CI_Controller
         $this->load->library('form_validation');
         $this->load->library('session');
         $this->load->model('crud');
+        $this->load->model('mrp');
         //$this->load->model('banshu');
         //$this->pg = $this->load->database('pg', TRUE);
 
@@ -45,31 +46,14 @@ class Material_calculation extends CI_Controller
 
     public function readProducts($pfm_id = ""){
         $post = isset($_POST['q']) ? $_POST['q'] : "";
-        $items = $this->crud->query("SELECT * FROM item_rm WHERE item_family_id like '%$pfm_id%' and item_category_id = 'C01' and (`number` like '%$post%' or id like '%$post%')");
+        $items = $this->crud->query("SELECT * FROM item_rm WHERE item_family_id like '%$pfm_id%' and item_category_id = 'C01' and (`number` like '%$post%' or id like '%$post%') ORDER BY number asc limit 100");
         echo json_encode($items);
-    }
-
-    public function getDataMpp(){
-        //Filter Data
-        $filter_month = base64_decode($this->input->get('filter_month'));
-        $filter_year = base64_decode($this->input->get('filter_year'));
-        $filter_revision = base64_decode($this->input->get('filter_revision'));
-
-        $this->db->select("*");
-        $this->db->from('generate_mpp');
-        $this->db->where('p_month', $filter_month);
-        $this->db->where('p_year', $filter_year);
-        $this->db->where('revision', $filter_revision);
-        $this->db->group_by('item_rm_id');
-        $records = $this->db->get()->result_array();
-
-        echo json_decode($records);
     }
 
     public function datatables()
     {
         //Database Server MRP
-        // $this->db = $this->load->database('db', TRUE);
+        $this->dummy = $this->load->database('export', TRUE);
         
         if ($this->input->get()) {
             $page = $this->input->post('page');
@@ -87,6 +71,8 @@ class Material_calculation extends CI_Controller
             $filter_item_id = base64_decode($this->input->get('filter_item_id'));
             $filter_status = $this->input->get('filter_status');
             $filter_date = base64_decode($this->input->get('filter_date'));
+            $end = date("Y-m-t", strtotime($filter_year . "-" . $filter_month . "-01"));
+            $start = date("Y-m-01", strtotime($filter_year . "-" . $filter_month . "-01"));
 
             $this->db->select("a.*, c.number as item_rm_number, b.name as item_rm_name, b.name as item_family_name");
             $this->db->from('generate_item_calculation a');
@@ -108,35 +94,61 @@ class Material_calculation extends CI_Controller
 
             $dataFinal = array();
             foreach ($records as $record) {
-                $item_id = $record['item_rm_id'];
-                $firstDate = date('01 M Y', strtotime($filter_year . "-" . $filter_month . "-01"));
-                $endDate = date('t M Y', strtotime($filter_year . "-" . $filter_month . "-01"));
-                
+                $item_rm_id = $record['item_rm_id'];
+                $item_rm_number = $record['item_rm_number'];
                 $balances = ($record['stock_hand'] + $record['eta'] - $record['total']);
+
+                $sqlPor = $this->dummy->query("SELECT item_id, por_date, SUM(por_receiveqty) as qty
+                    FROM por
+                    WHERE por_date between '$start' and '$end' and item_id = '$item_rm_number'
+                    GROUP BY item_id, por_date");
+                $dPor = $sqlPor->result_array();
+
+                $dPorMap = [];
+                foreach ($dPor as $por) {
+                    $dPorMap[$por['por_date']] = $por['qty'];
+                }
+
+                $sqlSupply = $this->dummy->query("SELECT a.item_id, b.ith_date, SUM(abs(b.ith_qty)) as qty_out 
+                    FROM serial_detail_kanbanrm a 
+                    JOIN ith b ON a.kanbanrm_id = b.ith_docno and a.item_id = b.ith_item_id 
+                    WHERE b.ith_item_id = '$item_rm_number' and b.ith_date between '$start' and '$end'
+                    GROUP BY a.item_id, b.ith_date");
+                $dSupply = $sqlSupply->result_array();
+
+                $dSupplyMap = [];
+                foreach ($dSupply as $supply) {
+                    $dSupplyMap[$supply['ith_date']] = $supply['qty_out'];
+                }
+
+                $firstDate = date('Y-m-d', strtotime($filter_year . "-" . $filter_month . "-01"));
+                $endDate = date('Y-m-t', strtotime($filter_year . "-" . $filter_month . "-01"));
 
                 $day = 1;
                 $balance = $record['stock_hand'];
                 while (strtotime($firstDate) <= strtotime($endDate)) {
                     $working_date = date("Y-m-d", strtotime($firstDate));
+                    $etaqty = ($dPorMap[$working_date] ?? 0);
+                    $supplyqty = ($dPorMap[$working_date] ?? 0);
                     
                     //ETA
-                    $delivery_schedule = $this->db->query("SELECT item_rm_id, SUM(qty_receipt) as total FROM purchase_order_receipts WHERE item_rm_id = '$item_id' and receipt_date = '$working_date' GROUP BY item_rm_id");
-                    $totalRow = $delivery_schedule->row();
-                    $etaqty = empty(@$totalRow->total) ? 0 : @$totalRow->total;
+                    // $delivery_schedule = $this->db->query("SELECT item_rm_id, SUM(qty_receipt) as total FROM purchase_order_receipts WHERE item_rm_id = '$item_id' and receipt_date = '$working_date' GROUP BY item_rm_id");
+                    // $totalRow = $delivery_schedule->row();
+                    // $etaqty = empty(@$totalRow->total) ? 0 : @$totalRow->total;
                     
                     //Supply
-                    $ithSupply = $this->db->query("SELECT a.item_rm_id, COALESCE(SUM(a.qty), 0) as supply FROM issued_material_details a WHERE a.item_rm_id = '$item_id' and DATE_FORMAT(a.created_date, '%Y-%m-%d') = '$working_date' and a.request_no NOT LIKE '%PR-%' GROUP BY a.item_rm_id");
-                    $ithSupplyRow = $ithSupply->row();
+                    // $ithSupply = $this->db->query("SELECT a.item_rm_id, COALESCE(SUM(a.qty), 0) as supply FROM issued_material_details a WHERE a.item_rm_id = '$item_id' and DATE_FORMAT(a.created_date, '%Y-%m-%d') = '$working_date' and a.request_no NOT LIKE '%PR-%' GROUP BY a.item_rm_id");
+                    // $ithSupplyRow = $ithSupply->row();
     
                     $date_qty = $record["date_".$day];
                     $balance += round($etaqty - $date_qty);
                     
                     $arr["eta_".$day] = (int) $etaqty;
                     $arr["date_".$day] = round($date_qty);
-                    $arr["supply_".$day] = abs(round(@$ithSupplyRow->supply));
+                    $arr["supply_".$day] = abs(round(@$supplyqty));
                     $arr["bal_".$day] = round($balance);
     
-                    $firstDate = date("d M Y", strtotime("+1 day", strtotime($firstDate)));
+                    $firstDate = date("Y-m-d", strtotime("+1 day", strtotime($firstDate)));
                     $day++;
                 }
 
@@ -147,7 +159,7 @@ class Material_calculation extends CI_Controller
                 }
 
                 $data = array_merge($arr, [
-                    "item_rm_id" => $item_id,
+                    "item_rm_id" => $item_rm_id,
                     "item_rm_number" => $record['item_rm_number'],
                     "item_rm_name" => $record['item_rm_name'],
                     "product_family_name" => $record['item_family_name'],
@@ -192,86 +204,110 @@ class Material_calculation extends CI_Controller
     }
 
     public function getData(){
+        $this->dummy = $this->load->database('export', TRUE);
+
         //Filter Data
         $filter_month = base64_decode($this->input->get('filter_month'));
         $filter_year = base64_decode($this->input->get('filter_year'));
         $filter_revision = base64_decode($this->input->get('filter_revision'));
+        $filter_plant = base64_decode($this->input->get('filter_plant'));
+        $filter_date = base64_decode($this->input->get('filter_date'));
+        $end = date("Y-m-t", strtotime($filter_year . "-" . $filter_month . "-01"));
+        $start = date("Y-m-01", strtotime($filter_year . "-" . $filter_month . "-01"));
 
-        $query = $this->db->query("SELECT z.p_month, z.p_year, z.revision, z.item_rm_id, 
-            SUM(total_date_1) as date_1,
-            SUM(total_date_2) as date_2,
-            SUM(total_date_3) as date_3,
-            SUM(total_date_4) as date_4,
-            SUM(total_date_5) as date_5,
-            SUM(total_date_6) as date_6,
-            SUM(total_date_7) as date_7,
-            SUM(total_date_8) as date_8,
-            SUM(total_date_9) as date_9,
-            SUM(total_date_10) as date_10,
-            SUM(total_date_11) as date_11,
-            SUM(total_date_12) as date_12,
-            SUM(total_date_13) as date_13,
-            SUM(total_date_14) as date_14,
-            SUM(total_date_15) as date_15,
-            SUM(total_date_16) as date_16,
-            SUM(total_date_17) as date_17,
-            SUM(total_date_18) as date_18,
-            SUM(total_date_19) as date_19,
-            SUM(total_date_20) as date_20,
-            SUM(total_date_21) as date_21,
-            SUM(total_date_22) as date_22,
-            SUM(total_date_23) as date_23,
-            SUM(total_date_24) as date_24,
-            SUM(total_date_25) as date_25,
-            SUM(total_date_26) as date_26,
-            SUM(total_date_27) as date_27,
-            SUM(total_date_28) as date_28,
-            SUM(total_date_29) as date_29,
-            SUM(total_date_30) as date_30,
-            SUM(total_date_31) as date_31
-        FROM (
-            SELECT a.p_month, a.p_year, a.revision, a.item_fg_id, b.item_rm_id,
-            (a.date_1 * b.composition) as total_date_1,
-            (a.date_2 * b.composition) as total_date_2,
-            (a.date_3 * b.composition) as total_date_3,
-            (a.date_4 * b.composition) as total_date_4,
-            (a.date_5 * b.composition) as total_date_5,
-            (a.date_6 * b.composition) as total_date_6,
-            (a.date_7 * b.composition) as total_date_7,
-            (a.date_8 * b.composition) as total_date_8,
-            (a.date_9 * b.composition) as total_date_9,
-            (a.date_10 * b.composition) as total_date_10,
-            (a.date_11 * b.composition) as total_date_11,
-            (a.date_12 * b.composition) as total_date_12,
-            (a.date_13 * b.composition) as total_date_13,
-            (a.date_14 * b.composition) as total_date_14,
-            (a.date_15 * b.composition) as total_date_15,
-            (a.date_16 * b.composition) as total_date_16,
-            (a.date_17 * b.composition) as total_date_17,
-            (a.date_18 * b.composition) as total_date_18,
-            (a.date_19 * b.composition) as total_date_19,
-            (a.date_20 * b.composition) as total_date_20,
-            (a.date_21 * b.composition) as total_date_21,
-            (a.date_22 * b.composition) as total_date_22,
-            (a.date_23 * b.composition) as total_date_23,
-            (a.date_24 * b.composition) as total_date_24,
-            (a.date_25 * b.composition) as total_date_25,
-            (a.date_26 * b.composition) as total_date_26,
-            (a.date_27 * b.composition) as total_date_27,
-            (a.date_28 * b.composition) as total_date_28,
-            (a.date_29 * b.composition) as total_date_29,
-            (a.date_30 * b.composition) as total_date_30,
-            (a.date_31 * b.composition) as total_date_31
-        FROM generate_mpp a
-        JOIN bom b ON a.item_fg_id = b.item_fg_id
-        WHERE a.p_month = '$filter_month' and a.p_year = '$filter_year' and a.revision = '$filter_revision'
-        GROUP BY a.item_fg_id, b.item_rm_id, a.customer_id
-        ORDER BY a.item_fg_id, b.item_rm_id asc) z
-        GROUP BY z.item_rm_id");
-        $records = $query->result_array();
+        $dwip = $this->mrp->wip($filter_date, $filter_plant);
+        $dwipMap = [];
+        foreach ($dwip as $wip) {
+            $dwipMap[$wip['item_id']] = $wip['stock'];
+        }
 
-        $this->db->delete('generate_item_calculation', ["p_month" => $filter_month, "p_year" => $filter_year, "revision" => $filter_revision]);
-        echo json_encode($records);
+        $dStock = $this->mrp->stock($filter_date, $filter_plant);
+        $dStockMap = [];
+        foreach ($dStock as $stock) {
+            $dStockMap[$stock['item']] = $stock['qty'];
+        }
+
+        $sqlPor = $this->dummy->query("SELECT item_id, SUM(por_receiveqty) as qty
+            FROM por
+            WHERE por_date = '$start' and '$end'
+            GROUP BY item_id");
+        $dPor = $sqlPor->result_array();
+
+        $dPorMap = [];
+        foreach ($dPor as $por) {
+            $dPorMap[$por['item_id']] = $por['qty'];
+        }
+
+        $data = $this->mrp->material_calculation($filter_plant, $filter_year.$filter_month);
+        $arr = array();
+        for ($i = 0; $i < count($data); $i++) {
+            $item_rm = $this->crud->read('item_rm', [], ["number" => trim($data[$i]['item_id'])]);
+            $dataWip = ($dwipMap[$data[$i]['item_id']] ?? 0);
+            $dataStock = ($dStockMap[$data[$i]['item_id']] ?? 0);
+            $dataEta = ($dPorMap[$data[$i]['item_id']] ?? 0);
+
+            if(@$dataWip > 0){
+                $qty_wip = 0;
+                $os_supply = abs($dataWip);
+                $os_wo = 0;
+            }else{
+                $qty_wip = abs($dataWip);
+                $os_supply = 0;
+                $os_wo = 0;
+            }
+
+            $stock_hand = round(@$dataStock - $os_supply - $os_wo);
+
+            if (@$item_rm->id != "") {
+                $arr[] = array(
+                    "item_rm_id" => @$item_rm->id,
+                    "plant" => $filter_plant,
+                    "p_month" => $filter_month,
+                    "p_year" => $filter_year,
+                    "revision" => $filter_revision,
+                    "os_supply" => $os_supply,
+                    "os_wo" => $os_wo,
+                    "balance_wip" => $qty_wip,
+                    "stock_whs" => $dataStock,
+                    "stock_hand" => $stock_hand,
+                    "eta" => $dataEta,
+                    "date_1" => $data[$i]['date_1'],
+                    "date_2" => $data[$i]['date_2'],
+                    "date_3" => $data[$i]['date_3'],
+                    "date_4" => $data[$i]['date_4'],
+                    "date_5" => $data[$i]['date_5'],
+                    "date_6" => $data[$i]['date_6'],
+                    "date_7" => $data[$i]['date_7'],
+                    "date_8" => $data[$i]['date_8'],
+                    "date_9" => $data[$i]['date_9'],
+                    "date_10" => $data[$i]['date_10'],
+                    "date_11" => $data[$i]['date_11'],
+                    "date_12" => $data[$i]['date_12'],
+                    "date_13" => $data[$i]['date_13'],
+                    "date_14" => $data[$i]['date_14'],
+                    "date_15" => $data[$i]['date_15'],
+                    "date_16" => $data[$i]['date_16'],
+                    "date_17" => $data[$i]['date_17'],
+                    "date_18" => $data[$i]['date_18'],
+                    "date_19" => $data[$i]['date_19'],
+                    "date_20" => $data[$i]['date_20'],
+                    "date_21" => $data[$i]['date_21'],
+                    "date_22" => $data[$i]['date_22'],
+                    "date_23" => $data[$i]['date_23'],
+                    "date_24" => $data[$i]['date_24'],
+                    "date_25" => $data[$i]['date_25'],
+                    "date_26" => $data[$i]['date_26'],
+                    "date_27" => $data[$i]['date_27'],
+                    "date_28" => $data[$i]['date_28'],
+                    "date_29" => $data[$i]['date_29'],
+                    "date_30" => $data[$i]['date_30'],
+                    "date_31" => $data[$i]['date_31']
+                );
+            }
+        }
+
+        $this->db->delete('generate_item_calculation', ["p_month" => $filter_month, "p_year" => $filter_year, "revision" => $filter_revision, "plant" => $filter_plant]);
+        echo json_encode($arr);
     }
 
     public function create(){
@@ -279,95 +315,40 @@ class Material_calculation extends CI_Controller
             $post = $this->input->post('data');
             
             $cutoff = $this->input->post('cutoff');
-            $month1 = date("Y-m-01", strtotime("-1 month", strtotime($cutoff)));
             $end = date("Y-m-t", strtotime($post['p_year'] . "-" . $post['p_month'] . "-01"));
             $start = date("Y-m-01", strtotime($post['p_year'] . "-" . $post['p_month'] . "-01"));
             $next = date("Y-m-01", strtotime("+1 month", strtotime($start)));
             $item_rm_id = $post['item_rm_id'];
-            
-            $qmps = $this->db->query("SELECT a.id, a.number AS item_rm_number, a.name AS item_rm_name, b.total
-                FROM item_rm a 
-                JOIN (SELECT b.item_rm_id, SUM(b.composition * a.need) AS total FROM generate_mps_details a JOIN bom b ON a.item_fg_id = b.item_fg_id WHERE a.ltpp_month2 = '$next' AND a.p_month = '$post[p_month]' AND a.p_year = '$post[p_year]' AND a.revision = '$post[revision]' GROUP BY b.item_rm_id) b ON a.id = b.item_rm_id 
-                WHERE a.id = '$item_rm_id'
-                GROUP BY a.id");
-            $dmps = $qmps->row();
+            // $item_rm = $this->crud->read('item_rm', [], ["id" => $item_rm_id]);
 
-            $wip = $this->db->query("SELECT a.item_rm_id, (SUM(a.total) - COALESCE(b.issued, 0)) AS balance FROM (
-                    SELECT b.item_rm_id, a.item_fg_id, SUM(a.qty), b.composition, (SUM(a.qty) * b.composition) AS total
-                    FROM production_schedules a
-                    JOIN bom b ON a.item_fg_id = b.item_fg_id
-                    WHERE a.trans_date BETWEEN '$month1' AND '$cutoff' 
-                    GROUP BY a.item_fg_id, b.item_rm_id) a
-                LEFT JOIN (SELECT item_rm_id, SUM(qty) AS issued FROM issued_material_details WHERE DATE_FORMAT(created_date, '%Y-%m-%d') BETWEEN '$month1' AND '$cutoff' and request_no NOT LIKE '%PR-%' GROUP BY item_rm_id) b ON a.item_rm_id = b.item_rm_id
-                JOIN item_rm c ON a.item_rm_id = c.id
-                JOIN item_familys d ON c.item_family_id = d.id
-                WHERE a.item_rm_id = '$item_rm_id'
-                GROUP BY a.item_rm_id
-                ORDER BY c.item_family_id, c.id asc");
-            $dwip = $wip->row();
+            // $dwip = $this->mrp->wip($cutoff, $post['plant'], $item_rm->number);
 
-            if(@$dwip->balance > 0){
-                $qty_wip = 0;
-                $os_supply = abs(@$dwip->balance);
-                $os_wo = 0;
-            }else{
-                $qty_wip = @$dwip->balance;
-                $os_supply = 0;
-                $os_wo = 0;
-            }
+            // if(@$dwip[0]['stock'] > 0){
+            //     $qty_wip = 0;
+            //     $os_supply = abs(@$dwip[0]['stock']);
+            //     $os_wo = 0;
+            // }else{
+            //     $qty_wip = abs(@$dwip[0]['stock']);
+            //     $os_supply = 0;
+            //     $os_wo = 0;
+            // }
 
-            $ospo = $this->db->query("SELECT a.id, (COALESCE(SUM(b.qty), 0) - COALESCE(c.qty_receipt, 0)) AS balance
-                FROM item_rm a
-                JOIN purchase_orders b ON a.id = b.item_rm_id
-                LEFT JOIN (SELECT item_rm_id, SUM(qty_receipt) AS qty_receipt FROM purchase_order_receipts WHERE receipt_date <= '$cutoff' GROUP BY item_rm_id) c ON a.id = c.item_rm_id
-                WHERE b.po_date <= '$cutoff' and a.id = '$item_rm_id' and b.status = 0
-                GROUP BY a.id");
-            $ospoRow = $ospo->row();
+            // $eta = $this->db->query("SELECT item_rm_id, SUM(qty_receipt) as total FROM purchase_order_receipts WHERE item_rm_id = '$item_rm_id' and receipt_date between '$start' and '$end' GROUP BY item_rm_id");
+            // $etaRow = $eta->row();
 
-            $eta = $this->db->query("SELECT item_rm_id, SUM(qty_receipt) as total FROM purchase_order_receipts WHERE item_rm_id = '$item_rm_id' and receipt_date between '$start' and '$end' GROUP BY item_rm_id");
-            $etaRow = $eta->row();
-
-            $ith = $this->db->query("SELECT
-                a.id,
-                a.number,
-                a.name,
-                a.uom,
-                b.name as product_family,
-                ((COALESCE(SUM(c.qty_sto),0) + COALESCE(dd.sto_qty_in, 0) + COALESCE(j.qty_rgp_in, 0) + COALESCE(e.qty_receipt, 0) + COALESCE(g.return_qty, 0)) - COALESCE(f.qty, 0) - COALESCE(d.sto_qty_out, 0) - COALESCE(k.qty_rgp_out, 0) - COALESCE(h.qty_reject, 0)) AS end_stock
-                FROM item_rm a 
-                JOIN item_familys b ON a.item_family_id = b.id AND b.number != '006'
-                LEFT JOIN (SELECT a.item_rm_id, COALESCE(SUM(b.qty), 0) AS qty_sto FROM os_rm a JOIN scan_item_receipts b ON a.id  = b.receipt_id WHERE a.trans_date <= '$cutoff' GROUP BY item_rm_id) c ON a.id = c.item_rm_id
-                LEFT JOIN (SELECT a.item_rm_id, COALESCE(SUM(a.qty), 0) as sto_qty_out FROM sto_rm a WHERE a.type = 'OUT' and a.trans_date <= '$cutoff' and a.approved_to = '' GROUP BY item_rm_id) d ON a.id = d.item_rm_id
-                LEFT JOIN (SELECT a.item_rm_id, COALESCE(SUM(a.qty), 0) as sto_qty_in FROM sto_rm a WHERE a.type = 'IN' and a.trans_date <= '$cutoff' and a.approved_to = '' GROUP BY item_rm_id) dd ON a.id = dd.item_rm_id
-                LEFT JOIN (SELECT a.item_rm_id, COALESCE(SUM(b.qty), 0) AS qty_receipt FROM purchase_order_receipts a JOIN scan_item_receipts b ON a.receipt_id  = b.receipt_id WHERE a.receipt_date <= '$cutoff' GROUP BY item_rm_id) e ON a.id = e.item_rm_id
-                LEFT JOIN (SELECT item_rm_id, COALESCE(SUM(qty), 0) AS qty FROM issued_material_details WHERE DATE_FORMAT(created_date, '%Y-%m-%d') <= '$cutoff' GROUP BY item_rm_id) f ON a.id = f.item_rm_id
-                LEFT JOIN (SELECT a.item_rm_id, COALESCE(SUM(b.qty), 0) AS qty_reject FROM purchase_order_receipts a JOIN scan_item_rejections b ON a.receipt_id  = b.receipt_id WHERE DATE_FORMAT(b.created_date, '%Y-%m-%d') <= '$cutoff' GROUP BY item_rm_id) h ON a.id = h.item_rm_id
-                LEFT JOIN (SELECT a.item_id, COALESCE(SUM(b.qty), 0) as qty_rgp_in FROM rgp_transactions a JOIN scan_item_rgp b ON a.number = b.rgp_number and a.item_id = b.item_id WHERE a.type = 'IN' and a.transaction_date <= '$cutoff' GROUP BY a.item_id) j ON a.id = j.item_id
-                LEFT JOIN (SELECT a.item_id, COALESCE(SUM(b.qty), 0) as qty_rgp_out FROM rgp_transactions a JOIN scan_item_rgp b ON a.number = b.rgp_number and a.item_id = b.item_id WHERE a.type = 'OUT' and a.transaction_date <= '$cutoff' GROUP BY a.item_id) k ON a.id = k.item_id
-                LEFT JOIN (SELECT a.item_rm_id, SUM(c.qty) AS return_qty
-                FROM return_materials a 
-                JOIN return_material_labels b ON a.return_id = b.return_id
-                JOIN scan_item_receipts c ON a.return_id = c.receipt_id AND b.label_no = c.label_no
-                WHERE a.return_date <= '$cutoff'
-                GROUP BY a.item_rm_id) g ON a.id = g.item_rm_id
-            WHERE a.id = '$item_rm_id'
-            GROUP BY a.id
-            ORDER BY b.number, a.number");
-            $ithRow = $ith->row();
-
-            $stock_hand = round(@$ithRow->end_stock - $os_supply - $os_wo);
+            // $ithRow = $this->mrp->stock($cutoff, $post['plant'], $item_rm->number);
+            // $stock_hand = round(@$ithRow[0]['qty'] - $os_supply - $os_wo);
 
             $postFinal = array_merge($post, array(
                 "created_date" => date("Y-m-d H:i:s"),
                 "created_by" => $this->session->username,
-                "os_supply" => $os_supply,
-                "os_wo" => $os_wo,
-                "balance_wip" => empty($qty_wip) ? 0 : $qty_wip,
-                "eta" => empty(@$etaRow->total) ? 0 : @$etaRow->total,
-                "stock_whs" => empty(@$ithRow->end_stock) ? 0 : @$ithRow->end_stock,
-                "stock_hand" => $stock_hand,
-                "os_po" => empty(@$ospoRow->balance) ? 0 : @$ospoRow->balance,
-                "need_2" => empty(@$dmps->total) ? 0 : @$dmps->total,
+                "cutoff" => $cutoff,
+                // "os_supply" => $os_supply,
+                // "os_wo" => $os_wo,
+                // "balance_wip" => empty($qty_wip) ? 0 : $qty_wip,
+                // "eta" => empty(@$etaRow->total) ? 0 : @$etaRow->total,
+                // "stock_whs" => empty(@$ithRow[0]['qty']) ? 0 : @$ithRow[0]['qty'],
+                // "stock_hand" => $stock_hand,
                 "total" => ($post['date_1'] + $post['date_2'] + $post['date_3'] + $post['date_4'] + $post['date_5'] + $post['date_6'] + 
                     $post['date_7'] + $post['date_8'] + $post['date_9'] + $post['date_10'] + $post['date_11'] + $post['date_12'] + 
                     $post['date_13'] + $post['date_14'] + $post['date_15'] + $post['date_16'] + $post['date_17'] + $post['date_18'] + 
@@ -619,7 +600,7 @@ class Material_calculation extends CI_Controller
         <table id="customers" border="1" style="width:150%;">
             <tr>
                 <th style="text-align:center;" rowspan="3" width="20">NO</th>
-                <th style="text-align:center;" width="150" rowspan="3">Part No</th>
+                <th style="text-align:center;" width="150" rowspan="3">PART NO EBWS</th>
                 <th style="text-align:center;" width="150" rowspan="3">PART NO SUPPLIER</th>
                 <th style="text-align:center;" width="80" rowspan="3">DESCRIPTION</th>
                 <th style="text-align:center;" width="80" rowspan="3">PRODUCT FAMILY</th>

@@ -242,7 +242,7 @@
                         field: 'item_rm_id',
                         width: 120,
                         halign: 'center',
-                        title: "Part No",
+                        title: "Part No EBWS",
                         editor: {
                             type: 'textbox',
                             options: {

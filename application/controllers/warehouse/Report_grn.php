@@ -125,7 +125,7 @@ class Report_grn extends CI_Controller
                 <th>Receipt Date</th>
                 <th>Supplier Name</th>
                 <th>Invoice No</th>
-                <th>Part No</th>
+                <th>Part No EBWS</th>
                 <th>Part No Supplier</th>
                 <th>Uom</th>
                 <th>Qty</th>

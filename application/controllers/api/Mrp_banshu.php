@@ -1,10 +1,6 @@
 <?php
-
 date_default_timezone_set("Asia/Bangkok");
-
 defined('BASEPATH') or exit('No direct script access allowed');
-
-
 
 class Mrp_banshu extends CI_Controller
 
@@ -104,6 +100,33 @@ class Mrp_banshu extends CI_Controller
         die(json_encode($arr));
     }
 
+    public function getDataAlias()
+    {
+        $plant = $this->input->post('sync_plant');
+        $send = $this->mrp->master_item_alias($plant);
+        $total = count($send);
+
+        if ($total > 0) {
+            for ($i = 0; $i < $total; $i++) {
+                $item_rm = $this->read("item_rm", [], ["number" => trim($send[$i]->item_id)]);
+                $item_rm2 = $this->read("item_rm", [], ["number" => trim($send[$i]->item_alias)]);
+                $item_alias = $this->read('item_alias', [], ["number" => @$item_rm->id, "alias" => @$item_rm2->id]);
+                if (empty($item_rm->id) || empty($item_rm2->id) || !empty($item_alias->id)) {
+                    //
+                } else {
+                    $arr[] = array(
+                        "number" => @$item_rm->id,
+                        "alias" => @$item_rm2->id,
+                        "plant" => trim($plant),
+                    );
+                }
+            }
+        }
+
+        $arr['total'] = @count($arr);
+        die(json_encode($arr));
+    }
+
 
     public function getDataCustomers()
     {
@@ -136,22 +159,23 @@ class Mrp_banshu extends CI_Controller
         $total = count($send);
 
         if ($total > 0) {
+            $arr = [];
             for ($i = 0; $i < $total; $i++) {
-                if (trim($send[$i]->pfm_id) == '06' && trim($send[$i]->stscode_id) == '01') { // type finishgoods dan yang aktif
+                if (trim($send[$i]->pfm_id) == '06' && trim($send[$i]->stscode_id) == '01') {
                     $item_fg = $this->read('item_fg', [], ["number_customer" => trim($send[$i]->item_id)]);
-                    $customers = $this->read('customers', [], ["number" => trim($send[$i]->cust_id)]);
-                    $uom = $this->read('uom', [], ["number" => trim($send[$i]->um_id)]);
+                    // $customers = $this->read('customers', [], ["number" => trim($send[$i]->cust_id)]);
+                    // $uom = $this->read('uom', [], ["number" => trim($send[$i]->um_id)]);
                     if (
                         @$item_fg->number_customer == trim($send[$i]->item_id) &&
-                        @$item_fg->name == trim($send[$i]->item_name) &&
-                        @$item_fg->uom == @$uom->name &&
-                        @$item_fg->cct == trim($send[$i]->item_cct) &&
-                        @$item_fg->mpq == trim($send[$i]->item_muloq) &&
-                        @$item_fg->moq == trim($send[$i]->item_minoq) &&
-                        @$item_fg->leadtime == trim($send[$i]->item_prcldtm) &&
-                        @$item_fg->customer_id == @$customers->id &&
-                        @$item_fg->weight == trim($send[$i]->weight) &&
-                        @$item_fg->lot == trim($send[$i]->lotqty)
+                        @$item_fg->name == trim($send[$i]->item_name)
+                        // @$item_fg->uom == @$uom->name &&
+                        // @$item_fg->cct == trim($send[$i]->item_cct) &&
+                        // @$item_fg->mpq == trim($send[$i]->item_muloq) &&
+                        // @$item_fg->moq == trim($send[$i]->item_minoq) &&
+                        // @$item_fg->leadtime == trim($send[$i]->item_prcldtm) &&
+                        // @$item_fg->customer_id == @$customers->id &&
+                        // @$item_fg->weight == trim($send[$i]->weight) &&
+                        // @$item_fg->lot == trim($send[$i]->lotqty)
                     ) {
                     } else {
                         $arr[] = array(
@@ -179,7 +203,7 @@ class Mrp_banshu extends CI_Controller
     public function getDataBoms()
     {
         $item_fg_id = $this->input->post('sync_item_fg_id');
-        $customer = $this->input->post('sync_customer_id');
+        $plant = $this->input->post('sync_plant');
 
         $this->db->select('b.number_customer, b.id as item_fg_id');
         $this->db->from('mrp_ltpp a');
@@ -187,38 +211,13 @@ class Mrp_banshu extends CI_Controller
         if (!empty($item_fg_id)) {
             $this->db->where('b.id', $item_fg_id);
         }
-        if (!empty($customer)) {
-            $this->db->where('b.customer_id', $customer);
+        if (!empty($plant)) {
+            $this->db->where('a.plant', $plant);
         }
         $this->db->group_by('a.item_fg_id');
         $this->db->order_by('b.id', 'ASC');
         // $this->db->limit(100, 300);
         $items = $this->db->get()->result_array();
-
-        // $arr = [];
-        // foreach ($items as $item) {
-        //     $send = $this->mrp->master_bom($item['number_customer']);
-        //     $total = count($send);
-
-        //     if ($total > 0) {
-        //         for ($i = 0; $i < $total; $i++) {
-        //             $item_rm = $this->read('item_rm', [], ["number" => trim($send[$i]['bom_com_item'])]);
-        //             $item_fg = $this->read('item_fg', [], ["number_customer" => trim($send[$i]['bom_par_item'])]);
-        //             $bom = $this->read('bom', [], ["item_fg_id" => @$item_fg->id, "item_rm_id" => @$item_rm->id]);
-        //             if(!empty($item_rm->id) && !empty($item_fg->id)){
-        //                 if (empty($bom->id)) {
-        //                     $arr[] = array(
-        //                         "bom_par_item" => trim($send[$i]['bom_par_item']),
-        //                         "bom_com_item" => trim($send[$i]['bom_com_item']),
-        //                         "bom_qty_perassy" => trim($send[$i]['bom_qty_perassy']),
-        //                         "bom_revision" => trim($send[$i]['bom_revision']),
-        //                         "bom_routid" => trim($send[$i]['bom_routid']),
-        //                     );
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
 
         $arr = $items;
         $arr['total'] = @count($items);
@@ -233,35 +232,35 @@ class Mrp_banshu extends CI_Controller
             $filter_year = $this->input->post('filter_year');
             $filter_revision = $this->input->post('filter_revision');
             $filter_cutoff = $this->input->post('filter_cutoff');
+            $filter_plant = $this->input->post('filter_plant');
             $period = $filter_year . $filter_month;
-
-            $data = $this->mrp->lttp($period);
+            
+            $data = $this->mrp->lttp($period, $filter_plant, 3);
+            // die(json_encode($data));
+            $this->db->delete("mrp_ltpp", ["plant" => $filter_plant, "p_month" => $filter_month, "p_year" => $filter_year, "revision" => $filter_revision]);
 
             $arr = array();
             for ($i = 0; $i < count($data); $i++) {
-                $customer = $this->read('customers', [], ["number" => trim($data[$i]['cust_id'])]);
-                $item_fg = $this->read('item_fg', [], ["number_customer" => trim($data[$i]['assy_no'])]);
+                // $customer = $this->read('customers', [], ["number" => trim($data[$i]['cust_id'])]);
+                $item_rm = $this->read('item_rm', [], ["number" => trim($data[$i]['item_id'])]);
 
-                if (@$item_fg->id != "" && @$customer->id != "") {
-                    $arr[] = array(
-                        "item_fg_id" => @$item_fg->id,
-                        "customer_id" => @$customer->id,
-                        "p_month" => $filter_month,
-                        "p_year" => $filter_year,
-                        "revision" => $filter_revision,
-                        "prod_plan_1" => $data[$i]['prod_plan_1'],
-                        "prod_plan_2" => $data[$i]['prod_plan_2'],
-                        "prod_plan_3" => $data[$i]['prod_plan_3'],
-                        "prod_plan_4" => $data[$i]['prod_plan_4'],
-                        "prod_plan_5" => $data[$i]['prod_plan_5'],
-                        "prod_plan_6" => $data[$i]['prod_plan_6'],
-                        "fc_1" => $data[$i]['fc_1'],
-                        "fc_2" => $data[$i]['fc_2'],
-                        "fc_3" => $data[$i]['fc_3'],
-                        "fc_4" => $data[$i]['fc_4'],
-                        "fc_5" => $data[$i]['fc_5'],
-                        "fc_6" => $data[$i]['fc_6'],
-                    );
+                if (@$item_rm->id != "") {
+                    if($data[$i]['prod_plan_1'] > 0 || $data[$i]['prod_plan_2'] > 0 || $data[$i]['prod_plan_3'] > 0 || $data[$i]['prod_plan_4'] > 0 || $data[$i]['prod_plan_5'] > 0 || $data[$i]['prod_plan_6'] > 0){
+                        $arr[] = array(
+                            "item_rm_id" => @$item_rm->id,
+                            // "customer_id" => @$customer->id,
+                            "plant" => $filter_plant,
+                            "p_month" => $filter_month,
+                            "p_year" => $filter_year,
+                            "revision" => $filter_revision,
+                            "prod_plan_1" => $data[$i]['prod_plan_1'],
+                            "prod_plan_2" => $data[$i]['prod_plan_2'],
+                            "prod_plan_3" => $data[$i]['prod_plan_3'],
+                            "prod_plan_4" => $data[$i]['prod_plan_4'],
+                            "prod_plan_5" => $data[$i]['prod_plan_5'],
+                            "prod_plan_6" => $data[$i]['prod_plan_6']
+                        );
+                    }
                 }
             }
 
@@ -276,10 +275,12 @@ class Mrp_banshu extends CI_Controller
             $filter_month = $this->input->post('filter_month');
             $filter_year = $this->input->post('filter_year');
             $filter_revision = $this->input->post('filter_revision');
+            $filter_plant = $this->input->post('filter_plant');
             $filter_cutoff = $this->input->post('filter_cutoff');
             $period = $filter_year . $filter_month;
 
-            $data = $this->mrp->ospo();
+            $data = $this->mrp->ospo($filter_cutoff, $filter_plant);
+            $this->db->delete("mrp_ospo", ["plant" => $filter_plant, "p_month" => $filter_month, "p_year" => $filter_year, "revision" => $filter_revision]);
 
             $arr = array();
             for ($i = 0; $i < count($data); $i++) {
@@ -288,6 +289,7 @@ class Mrp_banshu extends CI_Controller
                 if (@$item_rm->id != "" && $data[$i]['qty_open'] > 0) {
                     $arr[] = array(
                         "item_rm_id" => @$item_rm->id,
+                        "plant" => $filter_plant,
                         "p_month" => $filter_month,
                         "p_year" => $filter_year,
                         "revision" => $filter_revision,
@@ -307,10 +309,12 @@ class Mrp_banshu extends CI_Controller
             $filter_month = $this->input->post('filter_month');
             $filter_year = $this->input->post('filter_year');
             $filter_revision = $this->input->post('filter_revision');
+            $filter_plant = $this->input->post('filter_plant');
             $filter_cutoff = $this->input->post('filter_cutoff');
             $period = $filter_year . $filter_month;
 
-            $data = $this->mrp->wip($filter_cutoff);
+            $data = $this->mrp->wip($filter_cutoff, $filter_plant);
+            $this->db->delete("mrp_wip", ["plant" => $filter_plant, "p_month" => $filter_month, "p_year" => $filter_year, "revision" => $filter_revision]);
 
             $arr = array();
             for ($i = 0; $i < count($data); $i++) {
@@ -319,6 +323,7 @@ class Mrp_banshu extends CI_Controller
                 if (@$item_rm->id != "") {
                     $arr[] = array(
                         "item_rm_id" => @$item_rm->id,
+                        "plant" => $filter_plant,
                         "p_month" => $filter_month,
                         "p_year" => $filter_year,
                         "revision" => $filter_revision,
@@ -338,10 +343,13 @@ class Mrp_banshu extends CI_Controller
             $filter_month = $this->input->post('filter_month');
             $filter_year = $this->input->post('filter_year');
             $filter_revision = $this->input->post('filter_revision');
+            $filter_plant = $this->input->post('filter_plant');
             $filter_cutoff = $this->input->post('filter_cutoff');
-            $period = $filter_year . $filter_month;
+            // $period = $filter_year . $filter_month;
+            $period = date("Ym", strtotime($filter_cutoff));
 
-            $data = $this->mrp->mpp($filter_cutoff);
+            $data = $this->mrp->mpp($period, $filter_plant);
+            $this->db->delete("mrp_mpp", ["plant" => $filter_plant, "p_month" => $filter_month, "p_year" => $filter_year, "revision" => $filter_revision]);
 
             $arr = array();
             for ($i = 0; $i < count($data); $i++) {
@@ -350,6 +358,7 @@ class Mrp_banshu extends CI_Controller
                 if (@$item_rm->id != "") {
                     $arr[] = array(
                         "item_rm_id" => @$item_rm->id,
+                        "plant" => $filter_plant,
                         "p_month" => $filter_month,
                         "p_year" => $filter_year,
                         "revision" => $filter_revision,
@@ -369,10 +378,12 @@ class Mrp_banshu extends CI_Controller
             $filter_month = $this->input->post('filter_month');
             $filter_year = $this->input->post('filter_year');
             $filter_revision = $this->input->post('filter_revision');
+            $filter_plant = $this->input->post('filter_plant');
             $filter_cutoff = $this->input->post('filter_cutoff');
             $period = $filter_year . $filter_month;
 
-            $data = $this->mrp->stock($filter_cutoff);
+            $data = $this->mrp->stock($filter_cutoff, $filter_plant);
+            $this->db->delete("mrp_stock", ["plant" => $filter_plant, "p_month" => $filter_month, "p_year" => $filter_year, "revision" => $filter_revision]);
 
             $arr = array();
             for ($i = 0; $i < count($data); $i++) {
@@ -381,10 +392,49 @@ class Mrp_banshu extends CI_Controller
                 if (@$item_rm->id != "" && $data[$i]['qty'] > 0) {
                     $arr[] = array(
                         "item_rm_id" => @$item_rm->id,
+                        "plant" => $filter_plant,
                         "p_month" => $filter_month,
                         "p_year" => $filter_year,
                         "revision" => $filter_revision,
                         "qty" => $data[$i]['qty'],
+                    );
+                }
+            }
+
+            $arr['total'] = count($arr);
+            die(json_encode($arr));
+        }
+    }
+
+    public function getDataWo()
+    {
+        if ($this->input->post()) {
+            $filter_month = $this->input->post('filter_month');
+            $filter_year = $this->input->post('filter_year');
+            $filter_revision = $this->input->post('filter_revision');
+            $filter_plant = $this->input->post('filter_plant');
+            $filter_cutoff = $this->input->post('filter_cutoff');
+            $periode_1 = date("Ym", strtotime("-1 month", strtotime($filter_year ."-". $filter_month."-01")));
+            $periode_2 = date("Ym", strtotime("-2 month", strtotime($filter_year ."-". $filter_month."-01")));
+            $periode_3 = date("Ym", strtotime("-3 month", strtotime($filter_year ."-". $filter_month."-01")));
+
+            $data = $this->mrp->wo($periode_1, $periode_2, $periode_3, $filter_plant);
+            $this->db->delete("mrp_workorder", ["plant" => $filter_plant, "p_month" => $filter_month, "p_year" => $filter_year, "revision" => $filter_revision]);
+
+            $arr = array();
+            for ($i = 0; $i < count($data); $i++) {
+                $item_rm = $this->read('item_rm', [], ["number" => trim($data[$i]['item_id'])]);
+
+                if (@$item_rm->id != "") {
+                    $arr[] = array(
+                        "item_rm_id" => @$item_rm->id,
+                        "plant" => $filter_plant,
+                        "p_month" => $filter_month,
+                        "p_year" => $filter_year,
+                        "revision" => $filter_revision,
+                        "period_1" => $data[$i]['period_1'],
+                        "period_2" => $data[$i]['period_2'],
+                        "period_3" => $data[$i]['period_3'],
                     );
                 }
             }

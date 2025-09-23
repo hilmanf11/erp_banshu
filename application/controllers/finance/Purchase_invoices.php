@@ -909,7 +909,7 @@ class Purchase_invoices extends CI_Controller
                                         <th rowspan="2">No</th>
                                         <th rowspan="2">POR No</th>
                                         <th rowspan="2">PO No</th>
-                                        <th rowspan="2">Part No</th>
+                                        <th rowspan="2">Part No EBWS</th>
                                         <th rowspan="2">Part No Supplier</th>
                                         <th rowspan="2">Uom</th>
                                         <th rowspan="2">Qty</th>
@@ -1348,7 +1348,7 @@ class Purchase_invoices extends CI_Controller
                     <th>Invoice No</th>
                     <th>Invoice Date</th>
                     <th>Posting Date</th>
-                    <th>Part No</th>
+                    <th>Part No EBWS</th>
                     <th>Asset Code</th>
                     <th>Part Description</th>
                     <th>Material Type</th>

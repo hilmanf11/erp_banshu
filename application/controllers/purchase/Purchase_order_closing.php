@@ -13,7 +13,7 @@ class Purchase_order_closing extends CI_Controller
         $this->load->library('Ciqrcode');
         $this->load->model('crud');
         //Validasi Form
-        $this->form_validation->set_rules('item_rm_id', 'Part No', 'required|min_length[1]|max_length[100]');
+        $this->form_validation->set_rules('item_rm_id', 'Part No EBWS', 'required|min_length[1]|max_length[100]');
     }
 
     public function index()
@@ -564,7 +564,7 @@ class Purchase_order_closing extends CI_Controller
                                 <table class="customers" style="width:100%;">
                                     <tr>
                                         <th style="text-align:center;">No</th>
-                                        <th style="text-align:center;">Part No</th>
+                                        <th style="text-align:center;">Part No EBWS</th>
                                         <th style="text-align:center;">Part No Supplier</th>
                                         <th style="text-align:center;">Part Name</th>
                                         <th style="text-align:center;">ETA</th>
@@ -784,7 +784,7 @@ class Purchase_order_closing extends CI_Controller
                     <th>Del. Sch Period</th>
                     <th>PO No</th>
                     <th>Supplier</th>
-                    <th>Part No</th>
+                    <th>Part No EBWS</th>
                     <th>Part No Supplier</th>
                     <th>Description</th>
                     <th>Qty</th>

@@ -141,14 +141,12 @@ class Supplier_item_others extends CI_Controller
 
         $this->db->select('a.*, c.number as item_rm_number, 
             c.name as item_rm_name, a.item_supplier, b.number as supplier_number, b.origin, b.name as supplier_name,
-            d.name as item_family_name, b.type, b.supplier_po, c.uom, e.name as maker_name, e.type as maker_type,
-            f.number as hsn_number, f.name as hsn_name, f.igst, f.sgst, f.cgst');
+            d.name as item_family_name, b.type, b.supplier_po, c.uom, e.name as maker_name, e.type as maker_type');
         $this->db->from('supplier_items a');
         $this->db->join('suppliers b', 'b.id = a.supplier_id');
         $this->db->join('item_rm c', 'c.id = a.item_rm_id');
         $this->db->join('item_familys d', "c.item_family_id = d.id and d.item_category_id NOT IN ('C01','C08')");
         $this->db->join('makers e', 'c.maker_id = e.id', 'left');
-        $this->db->join('hsn f', 'c.hsn_code = f.number', 'left');
         if($filter_check == "true"){
             $this->db->join("(SELECT item_rm_id FROM supplier_items GROUP BY item_rm_id HAVING COUNT(*) > 1) h", 'a.item_rm_id = h.item_rm_id');
         }
@@ -171,7 +169,7 @@ class Supplier_item_others extends CI_Controller
             $this->db->where('a.share_order', $filter_share_order);
         }
         if($filter_status_price == "Approved"){
-            $this->db->where("a.approved_to is null or f.approved_to = ''");
+            $this->db->where("a.approved_to is null or a.approved_to = ''");
         }elseif($filter_status_price == "Checking"){
             $this->db->where("a.approved_to != ''");
         }
@@ -479,14 +477,12 @@ class Supplier_item_others extends CI_Controller
 
         $this->db->select('a.*, c.number as item_rm_number, 
             c.name as item_rm_name, a.item_supplier, b.number as supplier_number, b.origin, b.name as supplier_name,
-            d.name as item_family_name, b.type, c.uom, e.name as maker_name, e.type as maker_type,
-            f.number as hsn_number, f.name as hsn_name, f.igst, f.sgst, f.cgst');
+            d.name as item_family_name, b.type, c.uom, e.name as maker_name, e.type as maker_type');
         $this->db->from('supplier_items a');
         $this->db->join('suppliers b', 'b.id = a.supplier_id');
         $this->db->join('item_rm c', 'c.id = a.item_rm_id');
         $this->db->join('item_familys d', "c.item_family_id = d.id and d.item_category_id NOT IN ('C01','C08')");
         $this->db->join('makers e', 'c.maker_id = e.id', 'left');
-        $this->db->join('hsn f', 'c.hsn_code = f.number', 'left');
         if($filter_check == "true"){
             $this->db->join("(SELECT item_rm_id FROM supplier_items GROUP BY item_rm_id HAVING COUNT(*) > 1) h", 'a.item_rm_id = h.item_rm_id');
         }
@@ -509,7 +505,7 @@ class Supplier_item_others extends CI_Controller
             $this->db->where('a.share_order', $filter_share_order);
         }
         if($filter_status_price == "Approved"){
-            $this->db->where("a.approved_to is null or f.approved_to = ''");
+            $this->db->where("a.approved_to is null or a.approved_to = ''");
         }elseif($filter_status_price == "Checking"){
             $this->db->where("a.approved_to != ''");
         }
@@ -549,7 +545,7 @@ class Supplier_item_others extends CI_Controller
                 <th>Approved By</th>
                 <th>Approved Date</th>
                 <th>Supplier Name</th>
-                <th>Part No</th>
+                <th>Part No EBWS</th>
                 <th>Part No Supplier</th>
                 <th>Description</th>
                 <th>Supplier Type</th>
@@ -694,7 +690,7 @@ class Supplier_item_others extends CI_Controller
                 <th width="20">No</th>
                 <th>Supplier ID</th>
                 <th>Supplier Name</th>
-                <th>Part No</th>
+                <th>Part No EBWS</th>
                 <th>Part No Supplier</th>
                 <th>Description</th>
                 <th>Supplier Type</th>

@@ -25,7 +25,7 @@
     <table id="dg_details" class="easyui-datagrid" style="width:100%;">
         <thead>
             <tr>
-                <th data-options="field:'item_rm_id',width:100,halign:'center'">Part No</th>
+                <th data-options="field:'item_rm_id',width:100,halign:'center'">Part No EBWS</th>
                 <th data-options="field:'item_rm_number',width:250,halign:'center'">Part No Supplier</th>
                 <th data-options="field:'item_rm_name',width:200,halign:'center'">Part Name</th>
                 <!-- <th data-options="field:'maker',width:100,halign:'center'">Maker</th>

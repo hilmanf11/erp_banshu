@@ -326,7 +326,7 @@ class Supply_materials extends CI_Controller
             if(empty($item_fg->id) > 0){
                 echo json_encode(array("title" => "Not Found", "message" => "Product No EBWS " . $data['item_fg_number'] . " Not Found", "theme" => "error"));
             }elseif(empty($item_rm->id)){
-                echo json_encode(array("title" => "Not Found", "message" => "Part No " . $data['item_rm_id'] . " Not Found", "theme" => "error"));
+                echo json_encode(array("title" => "Not Found", "message" => "Part No EBWS " . $data['item_rm_id'] . " Not Found", "theme" => "error"));
             }else {
                 $supply_materials = $this->crud->read('supply_materials', [], ["request_no" => $data['request_no'], "item_fg_id" => @$item_fg->id, "item_rm_id" => @$item_rm->id]);
 
@@ -476,7 +476,7 @@ class Supply_materials extends CI_Controller
                                 <table id="customers">
                                     <tr>
                                         <th>No</th>
-                                        <th>Part No</th>
+                                        <th>Part No EBWS</th>
                                         <th>Part No Supplier</th>
                                         <th>Description</th>
                                         <th>Uom</th>
@@ -618,7 +618,7 @@ class Supply_materials extends CI_Controller
                 <th>Product No EBWS</th>
                 <th>Product No Customer</th>
                 <th>Product Name</th>
-                <th>Part No</th>
+                <th>Part No EBWS</th>
                 <th>Part No Supplier</th>
                 <th>Part Name</th>
                 <th>Qty</th>

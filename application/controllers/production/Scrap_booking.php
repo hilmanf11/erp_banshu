@@ -194,7 +194,7 @@ class Scrap_booking extends CI_Controller
                     <th width="20">No</th>
                     <th>Trans Date</th>
                     <th>Document No</th>
-                    <th>Part No</th>
+                    <th>Part No EBWS</th>
                     <th>Part No Supplier</th>
                     <th>Description</th>
                     <th>UoM</th>

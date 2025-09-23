@@ -4,7 +4,7 @@
         <th field="ck" checkbox="true"></th>
         <th data-options="field:'foto',width:35,halign:'center',formatter:FormatterImage">Foto</th>
         <th data-options="field:'id',width:120,halign:'center'">Original Part No</th>
-        <th data-options="field:'number',width:200,halign:'center'">Part No Supplier</th>
+        <th data-options="field:'number',width:200,halign:'center'">Part No BEI</th>
     </thead>
     <thead>
         <tr>
@@ -136,7 +136,7 @@
                         <a href="javascript:;" class="easyui-linkbutton" title="Generate ID" data-options="plain:false" onclick="autoid()"><i class="fa fa-history"></i></a>
                     </div>
                     <div class="fitem">
-                        <span style="width:35%; display:inline-block;">Part No Supplier</span>
+                        <span style="width:35%; display:inline-block;">Part No BEI</span>
                         <input style="width:60%;" name="number" id="number" required="" class="easyui-textbox">
                     </div>
                     <div class="fitem">

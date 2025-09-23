@@ -269,7 +269,7 @@ class Item_mpq extends CI_Controller
                 <th width="20">No</th>
                 <th>Supplier ID</th>
                 <th>Supplier Name</th>
-                <th>Part No</th>
+                <th>Part No EBWS</th>
                 <th>Part No Supplier</th>
                 <th>Description</th>
                 <th>MPQ</th>

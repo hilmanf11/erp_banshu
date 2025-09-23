@@ -13,7 +13,7 @@ class purchase_order_services extends CI_Controller
         $this->load->library('Ciqrcode');
         $this->load->model('crud');
         //Validasi Form
-        $this->form_validation->set_rules('item_rm_id', 'Part No', 'required|min_length[1]|max_length[100]');
+        $this->form_validation->set_rules('item_rm_id', 'Part No EBWS', 'required|min_length[1]|max_length[100]');
     }
 
     public function index()

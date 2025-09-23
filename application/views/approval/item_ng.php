@@ -16,7 +16,7 @@
             <th data-options="field:'item_fg_number',width:150,halign:'center'">Product No EBWS</th>
             <th data-options="field:'number_customer',width:150,halign:'center'">Product No Customer</th> -->
             <!-- <th data-options="field:'item_fg_name',width:150,halign:'center'">Product Name</th> -->
-            <th data-options="field:'item_rm_id',width:150,halign:'center'">Part No</th>
+            <th data-options="field:'item_rm_id',width:150,halign:'center'">Part No EBWS</th>
             <th data-options="field:'item_rm_number',width:150,halign:'center'">Part No Supplier</th>
             <th data-options="field:'item_rm_name',width:150,halign:'center'">Part Name</th>
             <th data-options="field:'uom',width:80,halign:'center'">Uom</th>

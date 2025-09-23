@@ -10,7 +10,7 @@
             <th field="ck" checkbox="true"></th>
             <th data-options="field:'trans_date',width:120,halign:'center'">Trans Date</th>
             <th data-options="field:'number',width:120,halign:'center'">Document No</th>
-            <th data-options="field:'item_id',width:120,halign:'center'">Part No</th>
+            <th data-options="field:'item_id',width:120,halign:'center'">Part No EBWS</th>
             <th data-options="field:'item_rm_number',width:150,halign:'center'">Part No Customer</th>
             <th data-options="field:'item_rm_name',width:100,halign:'center'">Description</th>
             <th data-options="field:'uom',width:80,align:'center'">Uom</th>

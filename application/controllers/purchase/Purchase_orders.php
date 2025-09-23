@@ -84,7 +84,7 @@ class Purchase_orders extends CI_Controller
 
     public function readSupplier(){
         $post = isset($_POST['q']) ? $_POST['q'] : "";
-        $data = $this->crud->query("SELECT DISTINCT b.id, b.number, b.name FROM purchase_orders a JOIN suppliers b ON a.supplier_id = b.id WHERE a.status = 0 and b.name like '%$post%' ORDER BY b.name asc");
+        $data = $this->crud->query("SELECT DISTINCT b.id, b.number, b.name, b.type FROM purchase_orders a JOIN suppliers b ON a.supplier_id = b.id WHERE a.status = 0 and b.name like '%$post%' ORDER BY b.name asc");
         echo json_encode($data);
     }
 
@@ -141,7 +141,7 @@ class Purchase_orders extends CI_Controller
             $offset = ($page - 1) * $rows;
             $result = array();
             //Select Query
-            $this->db->select('a.*, SUM(a.qty) as total_qty, SUM(a.total) as total_amount, COUNT(c.po_no) as print_sd, d.number as supplier_no, d.name as supplier_name, d.type as supplier_type, d.supplier_po, e.name as item_family_name, d.state');
+            $this->db->select('a.*, SUM(a.qty) as total_qty, SUM(a.total) as total_amount, COUNT(c.po_no) as print_sd, d.number as supplier_no, d.name as supplier_name, d.type as supplier_type, d.supplier_po, e.name as item_family_name, d.state, d.email');
             $this->db->from('purchase_orders a');
             $this->db->join('item_rm b', "a.item_rm_id = b.id");
             $this->db->join('(select DISTINCT po_no from delivery_schedules) c', "a.po_no = c.po_no", 'left');
@@ -189,26 +189,24 @@ class Purchase_orders extends CI_Controller
 
         //Select Query
         $this->db->select("a.*, g.purchase_order as mrp_qty, b.number as supplier_no, b.name as supplier_name, f.mpq, f.moq, b.state,
-            b.email, d.number as item_rm_number, d.name as item_rm_name, d.item_family_id, e.name as product_family, b.type as supplier_type, 
-            ((a.qty * a.price) * COALESCE(i.igst, 0) / 100) as digst,
-            ((a.qty * a.price) * COALESCE(i.sgst, 0) / 100) as dsgst,
-            ((a.qty * a.price) * COALESCE(i.cgst, 0) / 100) as dcgst,
-            (CASE WHEN a.price = f.price THEN 'OK' ELSE 'SYNC' END) as sync, f.price as new_price");
+            b.email, d.number as item_rm_number, d.name as item_rm_name, d.item_family_id, e.name as product_family, b.type as supplier_type,
+            (CASE WHEN a.price = f.price THEN 'OK' ELSE 'SYNC' END) as sync, f.price as new_price, f.item_supplier");
         $this->db->from('purchase_orders a');
         $this->db->join('suppliers b', 'a.supplier_id = b.id');
         $this->db->join('purchase_requests c', 'a.request_no = c.request_no and a.item_rm_id = c.item_rm_id', 'left');
         $this->db->join('item_rm d', 'a.item_rm_id = d.id');
+        $this->db->join('item_rm ia', "TRIM(LEADING '+' FROM d.number) = ia.number");
         $this->db->join('item_familys e', 'd.item_family_id = e.id');
-        $this->db->join('supplier_items f', 'a.supplier_id = f.supplier_id and a.item_rm_id = f.item_rm_id', 'left');
+        $this->db->join('supplier_items f', 'a.supplier_id = f.supplier_id and ia.id = f.item_rm_id and a.plant = f.plant', 'left');
         $this->db->join('generate_mrp_finals g', 'a.p_month = g.p_month and a.p_year = g.p_year and a.revision = g.revision and a.item_rm_id = g.item_rm_id and a.supplier_id = g.supplier_id', 'left');
         $this->db->join('purchase_requests h', 'a.request_no = h.request_no', 'left');
-        $this->db->join('hsn i', "d.hsn_code = i.number", 'left');
+        // $this->db->join('hsn i', "d.hsn_code = i.number", 'left');
         $this->db->where('a.type', "PO");
         $this->db->where('a.po_no', $po_no);
         $this->db->where('a.revision', $revision);
         $this->db->like('a.item_rm_id', $filter_item_rm);
         $this->db->group_by('a.item_rm_id');
-        $this->db->order_by('a.item_rm_id');
+        $this->db->order_by('d.number');
         //Total Data
         $totalRows = $this->db->count_all_results('', false);
         //Get Data Array
@@ -217,46 +215,10 @@ class Purchase_orders extends CI_Controller
         $data = array();
         $total_qty = 0;
         $total_amount = 0;
-        $total_igst = 0;
-        $total_cgst = 0;
-        $total_sgst = 0;
-        $total_amount_tax = 0;
         foreach ($records as $record) {
-
-            if($record['state'] == $config->state){
-                $total2 = ($record['total'] + $record['dcgst'] + $record['dsgst']);
-                $total_igst += 0;
-                $total_cgst += $record['dcgst'];
-                $total_sgst += $record['dsgst'];
-                $digst = 0;
-                $dsgst = $record['dsgst'];
-                $dcgst = $record['dcgst'];
-            }else{
-                if($record['supplier_type'] == "LOCAL"){
-                    $total2 = ($record['total'] + $record['digst']);
-                    $total_igst += $record['digst'];
-                    $total_cgst += 0;
-                    $total_sgst += 0;
-                    $digst = $record['digst'];
-                    $dsgst = 0;
-                    $dcgst = 0;
-                }else{
-                    $total2 = ($record['total']);
-                    $total_igst += 0;
-                    $total_cgst += 0;
-                    $total_sgst += 0;
-                    $digst = 0;
-                    $dsgst = 0;
-                    $dcgst = 0;
-                }
-            }
-
-            $data_amount = array("total_amount" => $total2, "igst" => $digst, "cgst" => $dcgst, "sgst" => $dsgst);
-
             $total_qty += $record['qty'];
             $total_amount += $record['total'];
-            $total_amount_tax += $total2;
-            array_push($data, array_merge($record, $data_amount));
+            array_push($data, $record);
         }
 
         //Mapping Data
@@ -269,10 +231,6 @@ class Purchase_orders extends CI_Controller
                 "price" => 0,
                 "sync" => 0,
                 "total" => $total_amount,
-                "igst" => $total_igst,
-                "sgst" => $total_sgst,
-                "cgst" => $total_cgst,
-                "total_amount" => $total_amount_tax,
             ])
         ]);
         echo json_encode($result);
@@ -283,6 +241,7 @@ class Purchase_orders extends CI_Controller
         $mrp_month = base64_decode($get['mrp_month']);
         $mrp_year = base64_decode($get['mrp_year']);
         $mrp_revision = base64_decode($get['mrp_revision']);
+        $mrp_plant = base64_decode($get['mrp_plant']);
         $mrp_profam = base64_decode($get['mrp_profam']);
         $mrp_supplier = base64_decode($get['mrp_supplier']);
         $mrp_item_rm_id = base64_decode($get['mrp_item_rm_id']);
@@ -292,14 +251,17 @@ class Purchase_orders extends CI_Controller
         $this->db->from('generate_mrp_finals a');
         $this->db->join('item_rm b', 'a.item_rm_id = b.id');
         $this->db->join('item_familys c', 'b.item_family_id = c.id');
-        $this->db->join('generate_mrp_abcclass d', 'a.item_rm_id = d.item_rm_id and a.p_month = d.p_month and a.p_year = d.p_year and a.revision = d.revision', 'left');
+        $this->db->join('generate_mrp_abcclass d', 'a.item_rm_id = d.item_rm_id and a.p_month = d.p_month and a.p_year = d.p_year and a.revision = d.revision and a.plant = d.plant', 'left');
         $this->db->join('suppliers e', 'a.supplier_id = e.id');
-        $this->db->join('supplier_items f', "a.item_rm_id = f.item_rm_id and a.supplier_id = f.supplier_id and (f.approved_to = '' or f.approved_to is null)");
+        $this->db->join('item_rm ia', "TRIM(LEADING '+' FROM b.number) = ia.number");
+        $this->db->join('supplier_items f', "ia.id = f.item_rm_id and a.supplier_id = f.supplier_id and (f.approved_to = '' or f.approved_to is null) and a.plant = f.plant");
+        $this->db->where('(a.purchase_order + d.safety_stock) >', 0);
         $this->db->where('a.status', 0);
         $this->db->where("(a.approved_to = '' or a.approved_to is null)");
         $this->db->where('a.p_month', $mrp_month);
         $this->db->where('a.p_year', $mrp_year);
         $this->db->where('a.revision', $mrp_revision);
+        $this->db->where('a.plant', $mrp_plant);
         $this->db->where('a.supplier_id', $mrp_supplier);
         $this->db->like('b.item_family_id', $mrp_profam);
         $this->db->like('b.id', $mrp_item_rm_id);
@@ -335,13 +297,13 @@ class Purchase_orders extends CI_Controller
             $m22 = "m".date('n', strtotime($date, strtotime('+1 month', strtotime($leadtime))));
             $m33 = "m".date('n', strtotime($date, strtotime('+2 month', strtotime($leadtime))));
 
-            $qmps1 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m1' and item_rm_id = '$item_rm_id' and revision = '$revision'");
+            $qmps1 = $this->db->query("SELECT qty FROM generate_mrp WHERE CONCAT(p_month, p_year) = '$m1' and item_rm_id = '$item_rm_id' and revision = '$revision'");
             $rpms1 = $qmps1->row();
 
-            $qmps2 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m2' and item_rm_id = '$item_rm_id' and revision = '$revision'");
+            $qmps2 = $this->db->query("SELECT qty FROM generate_mrp WHERE CONCAT(p_month, p_year) = '$m2' and item_rm_id = '$item_rm_id' and revision = '$revision'");
             $rpms2 = $qmps2->row();
 
-            $qmps3 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m3' and item_rm_id = '$item_rm_id' and revision = '$revision'");
+            $qmps3 = $this->db->query("SELECT qty FROM generate_mrp WHERE CONCAT(p_month, p_year) = '$m3' and item_rm_id = '$item_rm_id' and revision = '$revision'");
             $rpms3 = $qmps3->row();
 
             $forecast = $this->forecast($item_rm_id, $record['p_month'], $record['p_year'], @$revision);
@@ -376,6 +338,7 @@ class Purchase_orders extends CI_Controller
             }
 
             $finals[] = array(
+                "plant" => $record['plant'],
                 "p_month" => $record['p_month'],
                 "p_year" => $record['p_year'],
                 "revision" => $record['revision'],
@@ -405,66 +368,41 @@ class Purchase_orders extends CI_Controller
         echo json_encode($result);
     }
 
-    // public function datatableConfirm(){
-    //     //Select Query
-    //     $this->db->select('a.*, b.name as supplier_name, c.po_no, c.po_date, 
-    //         SUM(a.qty) as total_pr, 
-    //         SUM(c.qty) as total_po,
-    //         SUM(c.total) as total_amount');
-    //     $this->db->from('purchase_requests a');
-    //     $this->db->join('suppliers b', 'a.supplier_id = b.id');
-    //     $this->db->join('purchase_orders c', 'a.item_rm_id = c.item_rm_id and a.supplier_id = c.supplier_id and a.request_no = c.request_no');
-    //     $this->db->where('a.confirm', 0);
-    //     $this->db->group_by('a.request_no');
-    //     $this->db->order_by('a.updated_date');
-    //     $this->db->order_by('a.created_date');
-    //     //Total Data
-    //     $totalRows = $this->db->count_all_results('', false);
-    //     //Get Data Array
-    //     $records = $this->db->get()->result_array();
+    public function purchaseOrderNo($supplier_no, $plant = ""){
+        // $datenow = date("Y-m-d");
+        // $sql_menu = $this->db->query("SELECT * FROM menus_no WHERE menus_id = '$id_menu' and `status` = '0' and `start_date` <= '$datenow' and end_date >= '$datenow'");
+        // $row_menu = $sql_menu->row();
 
-    //     //Mapping Data
-    //     $result['total'] = $totalRows;
-    //     $result = array_merge($result, [
-    //         'rows' => $records
-    //     ]);
-    //     echo json_encode($result);
-    // }
+        // if(@$row_menu->number == ""){
+        //     //
+        // }else{
+            // $number = @$row_menu->number;
+            // $yearnow = date("y", strtotime($row_menu->start_date));
+            // $yearend = date("y", strtotime($row_menu->end_date));
+            $period = date("Ym");
 
-    public function purchaseOrderNo($id_menu, $add = ""){
-        $datenow = date("Y-m-d");
-        $sql_menu = $this->db->query("SELECT * FROM menus_no WHERE menus_id = '$id_menu' and `status` = '0' and `start_date` <= '$datenow' and end_date >= '$datenow'");
-        $row_menu = $sql_menu->row();
-
-        if(@$row_menu->number == ""){
-            //
-        }else{
-            $number = @$row_menu->number;
-            $yearnow = date("y", strtotime($row_menu->start_date));
-            $yearend = date("y", strtotime($row_menu->end_date));
-
-            $whereDate = $number.$yearnow.$yearend."1";
+            $whereDate = $plant."-".$supplier_no."-".$period;
 
             $sqlGetID	= $this->db->query("SELECT max(po_no) as kode FROM purchase_orders WHERE po_no like '%$whereDate%'");
             $rowID = $sqlGetID->row();
             $kode = $rowID->kode;
             
             if ($kode == NULL) {
-                $autoID = sprintf("%0".$row_menu->sequence."s", $kode + 1);
+                $autoID = sprintf("%02s", $kode + 1);
                 $autoNo = $whereDate.$autoID;
             } else {
-                $urutan = (int) substr($kode, -6);
+                $urutan = (int) substr($kode, -2);
                 $urutan++;
-                $autoID	= sprintf("%0".$row_menu->sequence."s", $urutan);
+                $autoID	= sprintf("%02s", $urutan);
                 $autoNo = $whereDate.$autoID;
             }
 
-            if($add == ""){
+            // if($add == ""){
                 return $autoNo;
-            }else{
-                die(json_encode(array("code" => $autoNo)));
-            }
-        }
+            // }else{
+            //     die(json_encode(array("code" => $autoNo)));
+            // }
+        // }
     }
 
     public function getData()
@@ -474,21 +412,24 @@ class Purchase_orders extends CI_Controller
             $request_no = base64_decode($this->input->get('request_no'));
             $id_menu = $this->input->get('id_menu');
 
-            $pr = $this->crud->read("purchase_requests", ["request_no" => $request_no]);
-            $this->crud->delete("purchase_orders", ["request_no" => $request_no]);
+            // $pr = $this->crud->read("purchase_requests", ["request_no" => $request_no]);
+            // $this->crud->delete("purchase_orders", ["request_no" => $request_no]);
 
             //Select Query
             $this->db->select('a.*, b.number as pfm_number, c.uom,
                 d.item_supplier, d.price, d.currency, d.leadtime,
-                f.name as supplier_name, f.number as supplier_no');
+                f.name as supplier_name, f.number as supplier_no, e.item_rm_id as item_po');
             $this->db->from('purchase_requests a');
             $this->db->join('item_familys b', 'a.item_family_id = b.id');
             $this->db->join('item_rm c', 'a.item_rm_id = c.id');
-            $this->db->join('supplier_items d', "c.id = d.item_rm_id and a.supplier_id = d.supplier_id and d.share_order > 0", 'left');
+            $this->db->join('item_rm ia', "TRIM(LEADING '+' FROM c.number) = ia.number");
+            $this->db->join('supplier_items d', "ia.id = d.item_rm_id and a.supplier_id = d.supplier_id and a.plant = d.plant and d.share_order > 0", 'left');
+            $this->db->join("purchase_orders e", 'a.request_no = e.request_no and a.item_rm_id = e.item_rm_id', 'left');
             $this->db->join('suppliers f', 'a.supplier_id = f.id');
             $this->db->where("(a.approved_to = '' or a.approved_to is null)");
             $this->db->where('a.request_no', $request_no);
             $this->db->where('a.qty >', 0);
+            $this->db->where("e.item_rm_id is null");
             $this->db->order_by('d.currency', 'asc');
             $purchase_requests = $this->db->get()->result_array();
 
@@ -500,39 +441,33 @@ class Purchase_orders extends CI_Controller
                 $item_rm_id = $purchase_request['item_rm_id'];
                 $leadtime = $purchase_request['leadtime'];
                 $revision = $purchase_request['revision'];
+                $plant = $purchase_request['plant'];
 
-                $m1 = date('Y-m-01', strtotime($date, strtotime($leadtime)));
-                $m2 = date('Y-m-01', strtotime($date, strtotime('+1 month', strtotime($leadtime))));
-                $m3 = date('Y-m-01', strtotime($date, strtotime('+2 month', strtotime($leadtime))));
+                $m1 = date('mY', strtotime($date, strtotime($leadtime)));
                 $m11 = "m".date('n', strtotime($date, strtotime($leadtime)));
                 $m22 = "m".date('n', strtotime($date, strtotime('+1 month', strtotime($leadtime))));
                 $m33 = "m".date('n', strtotime($date, strtotime('+2 month', strtotime($leadtime))));
+                $rowPlant = $this->crud->read("plants", [], ["number" => $plant]);
 
-                $qmps1 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m1' and item_rm_id = '$item_rm_id' and revision = '$revision'");
+                $qmps1 = $this->db->query("SELECT prod_plan_1, prod_plan_2, prod_plan_3 FROM mrp_ltpp WHERE CONCAT(p_month, p_year) = '$m1' and item_rm_id = '$item_rm_id' and revision = '$revision' and plant='$plant'");
                 $rpms1 = $qmps1->row();
-
-                $qmps2 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m2' and item_rm_id = '$item_rm_id' and revision = '$revision'");
-                $rpms2 = $qmps2->row();
-
-                $qmps3 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m3' and item_rm_id = '$item_rm_id' and revision = '$revision'");
-                $rpms3 = $qmps3->row();
 
                 $forecast = $this->forecast($item_rm_id, $purchase_request['p_month'], $purchase_request['p_year'], @$revision);
 
                 if(@$rpms1->qty > 0){
-                    $prod1 = @$rpms1->qty;
+                    $prod1 = @$rpms1->prod_plan_1;
                 }else{
                     $prod1 = @$forecast->$m11;
                 }
 
                 if(@$rpms2->qty > 0){
-                    $prod2 = @$rpms2->qty;
+                    $prod2 = @$rpms1->prod_plan_2;
                 }else{
                     $prod2 = @$forecast->$m22;
                 }
 
                 if(@$rpms3->qty > 0){
-                    $prod3 = @$rpms3->qty;
+                    $prod3 = @$rpms1->prod_plan_3;
                 }else{
                     $prod3 = @$forecast->$m33;
                 }
@@ -546,13 +481,13 @@ class Purchase_orders extends CI_Controller
                 if($purchase_request['currency'] == $end_currency){
                     $po_no = $end_po_no;
                 }else{
-                    // $po_no = $this->purchaseOrderNo("MC".@trim($supplier_no).$period. "-" .trim($purchase_request['pfm_number']));
-                    $po_no = $this->purchaseOrderNo($id_menu);
+                    $po_no = $this->purchaseOrderNo($supplier_no, $rowPlant->type);
                 }
 
                 $arr[] = array(
                     "supplier_id" => $purchase_request['supplier_id'],
                     "item_rm_id" => $purchase_request['item_rm_id'],
+                    "plant" => $purchase_request['plant'],
                     "p_month" => $purchase_request['p_month'],
                     "p_year" => $purchase_request['p_year'],
                     "revision" => $purchase_request['revision'],
@@ -579,7 +514,8 @@ class Purchase_orders extends CI_Controller
             }
 
             if(count($arr) > 0){
-                $this->db->update("purchase_requests", ["create_po" => date("Y-m-d H:i:s"), "confirm" => 0, "confirm_date" => null], ["request_no" => $request_no]);
+                // $this->db->update("purchase_requests", ["create_po" => date("Y-m-d H:i:s"), "confirm" => 0, "confirm_date" => null], ["request_no" => $request_no]);
+                $this->db->update("purchase_requests", ["create_po" => date("Y-m-d H:i:s")], ["request_no" => $request_no]);
             }
 
             $arr['total'] = @count($arr);
@@ -600,6 +536,7 @@ class Purchase_orders extends CI_Controller
                 "p_month" => $post['p_month'],
                 "p_year" => $post['p_year'],
                 "revision" => $post['revision'],
+                "plant" => $post['plant'],
                 "item_rm_id" => $post['item_rm_id'],
                 "supplier_id" => $post['supplier_id']
             ]);
@@ -617,6 +554,7 @@ class Purchase_orders extends CI_Controller
                     "p_month" => $post['p_month'],
                     "p_year" => $post['p_year'],
                     "revision" => $post['revision'],
+                    "plant" => $post['plant'],
                     "item_rm_id" => $post['item_rm_id'],
                     "supplier_id" => $post['supplier_id']
                 ]);
@@ -626,6 +564,7 @@ class Purchase_orders extends CI_Controller
                 $postFinal = array(
                     "supplier_id" => $post['supplier_id'],
                     "item_rm_id" => $post['item_rm_id'],
+                    "plant" => $post['plant'],
                     "p_month" => $post['p_month'],
                     "p_year" => $post['p_year'],
                     "revision" => $post['revision'],
@@ -645,9 +584,9 @@ class Purchase_orders extends CI_Controller
                     "month_3" => $post['month_3'],
                 );
 
-                $this->db->update('generate_mrp_finals', ["status" => 1], ["p_month" => $post['p_month'], "p_year" => $post['p_year'], "revision" => $post['revision'], "item_rm_id" => $post['item_rm_id'], "supplier_id" => $post['supplier_id']]);
-                $send = $this->crud->create('purchase_orders', $postFinal);
-                $this->db->update('purchase_orders', ["approved_to" => ""], ["po_no" => $po_no, "item_rm_id" => $post['item_rm_id']]);
+                $this->db->update('generate_mrp_finals', ["status" => 1], ["p_month" => $post['p_month'], "p_year" => $post['p_year'], "revision" => $post['revision'], "plant" => $post['plant'], "item_rm_id" => $post['item_rm_id'], "supplier_id" => $post['supplier_id']]);
+                $send = $this->crud->create('purchase_orders', $postFinal, "logs");
+                // $this->db->update('purchase_orders', ["approved_to" => ""], ["po_no" => $po_no, "item_rm_id" => $post['item_rm_id']]);
                 echo $send;
             }
         }
@@ -662,6 +601,7 @@ class Purchase_orders extends CI_Controller
                 "p_month" => $post['p_month'],
                 "p_year" => $post['p_year'],
                 "revision" => $post['revision'],
+                "plant" => $post['plant'],
                 "item_rm_id" => $post['item_rm_id'],
                 "supplier_id" => $post['supplier_id']
             ]);
@@ -679,6 +619,7 @@ class Purchase_orders extends CI_Controller
                     "p_month" => $post['p_month'],
                     "p_year" => $post['p_year'],
                     "revision" => $post['revision'],
+                    "plant" => $post['plant'],
                     "item_rm_id" => $post['item_rm_id'],
                     "supplier_id" => $post['supplier_id']
                 ]);
@@ -688,6 +629,7 @@ class Purchase_orders extends CI_Controller
                 $postFinal = array(
                     "supplier_id" => $post['supplier_id'],
                     "item_rm_id" => $post['item_rm_id'],
+                    "plant" => $post['plant'],
                     "p_month" => $post['p_month'],
                     "p_year" => $post['p_year'],
                     "revision" => $post['revision'],
@@ -709,7 +651,9 @@ class Purchase_orders extends CI_Controller
                     "month_3" => $post['month_3'],
                 );
 
-                $send = $this->crud->create('purchase_orders', $postFinal);
+                
+                $this->db->update('generate_mrp_finals', ["status" => 1], ["p_month" => $post['p_month'], "p_year" => $post['p_year'], "revision" => $post['revision'], "item_rm_id" => $post['item_rm_id'], "supplier_id" => $post['supplier_id']]);
+                $send = $this->crud->create('purchase_orders', $postFinal, "logs");
                 echo $send;
             }
         }
@@ -950,7 +894,8 @@ class Purchase_orders extends CI_Controller
                 "supplier_id" => $read->supplier_id, 
             ]);
         }
-
+        
+        $this->db->update("purchase_requests", ["confirm" => 1], ["request_no" => @$reads[0]->request_no]);
         $send = $this->crud->delete('purchase_orders', ["po_no" => $data['po_no']]);
         echo $send;
     }
@@ -1060,8 +1005,8 @@ class Purchase_orders extends CI_Controller
         $supplier = $this->crud->read('suppliers', [], ["id" => @$purchase_orders->supplier_id]);
         $approval = $this->crud->read('approvals', [], ["table_name" => "purchase_orders"]);
 
-        $user_3 = $this->crud->read('users', [], ["username" => @$approval->user_approval_2]);
-        $user_4 = $this->crud->read('users', [], ["username" => @$approval->user_approval_3]);
+        $user_3 = $this->crud->read('users', [], ["username" => $approval->user_approval_2]);
+        $user_4 = $this->crud->read('users', [], ["username" => $approval->user_approval_3]);
         
         $qr_user_3 = "";
         $qr_user_4 = "";
@@ -1083,27 +1028,33 @@ class Purchase_orders extends CI_Controller
         $rows = 20;
         $page = ceil(count($purchase_orders_total) / $rows);
         //Generate QRcode
-        // $this->createQrcode($purchase_orders->po_no, "assets/image/qrcode/");
+        $this->createQrcode($purchase_orders->po_no, "assets/image/qrcode/");
 
         $this->createQrcode(@$user_3->name, "assets/image/qrcode/");
         $this->createQrcode(@$user_4->name, "assets/image/qrcode/");
 
-        $media = "@media screen {
-                        .print {
-                            display: none !important;
+        if($export == ""){
+            $media = "@media screen {
+                            .print {
+                                display: none !important;
+                            }
                         }
-                    }
-                    @media print {
-                        .noprint {
-                            display: none !important;
-                        }
+                        @media print {
+                            .noprint {
+                                display: none !important;
+                            }
+                        }";
+            $media2 = ' <div style="margin:20%;" class="noprint">
+                            <center>
+                                <h1>Press CTRL + P for Print</h1>
+                            </center>
+                        </div>';
+        }else{
+            $media = ".print {
+                        zoom: 0.5;
                     }";
-        $media2 = ' <div style="margin:20%;" class="noprint">
-                        <center>
-                            <h1>Press CTRL + P for Print</h1>
-                        </center>
-                    </div>';
-        
+            $media2 = "";
+        }
 
         $html = '<html>
                     <head>
@@ -1116,7 +1067,7 @@ class Purchase_orders extends CI_Controller
                         }
                         .customers {
                             border-collapse: collapse;
-                            font-size: 12px;
+                            font-size: 11px;
                         }
                         .customers td, .customers th {
                             border: 1px solid black;padding: 2px;
@@ -1140,19 +1091,16 @@ class Purchase_orders extends CI_Controller
                 b.number as item_rm_number, 
                 b.name as item_rm_name,
                 c.item_supplier,
-                d.type,
-                ((a.qty * a.price) * COALESCE(e.igst, 0) / 100) as digst,
-                ((a.qty * a.price) * COALESCE(e.sgst, 0) / 100) as dsgst,
-                ((a.qty * a.price) * COALESCE(e.cgst, 0) / 100) as dcgst,
-                d.state');
+                d.type as maker_type,
+                d.name as maker_name');
             $this->db->from('purchase_orders a');
             $this->db->join('item_rm b', 'a.item_rm_id = b.id');
-            $this->db->join('supplier_items c', 'a.supplier_id = c.supplier_id and a.item_rm_id = c.item_rm_id', 'left');
-            $this->db->join('suppliers d', 'a.supplier_id = d.id', 'left');
-            $this->db->join('hsn e', "b.hsn_code = e.number", 'left');
+            $this->db->join('item_rm ia', "TRIM(LEADING '+' FROM b.number) = ia.number");
+            $this->db->join('supplier_items c', "ia.id = c.item_rm_id and a.supplier_id = c.supplier_id and a.plant = c.plant", 'left');
+            $this->db->join('makers d', 'c.maker_id = d.id', 'left');
             $this->db->where('a.po_no', base64_decode($po_no));
             $this->db->where('a.qty >', 0);
-            $this->db->order_by('a.item_rm_id');
+            $this->db->order_by('b.number', 'asc');
             $this->db->limit(20, ($i * 20));
             $records = $this->db->get()->result_array();
 
@@ -1164,102 +1112,145 @@ class Purchase_orders extends CI_Controller
             $html .= '  <table style="width:100%;">
                             <tr>
                                 <th width="10">
-                                    <img src="' . $config->favicon . '" width="60" />
+                                    <img src="' . $config->favicon . '" width="40" />
                                 </th>
                                 <td width="300" style="padding:10px;">
                                     <b style="font-size:14px;">' . $config->name . '</b><br>
                                     <span style="font-size:10px;">' . $config->address . '</span><br>
                                 </td>
                                 <th width="100" style="text-align:right;">
-                                    
+                                    <table style="width:100%; font-size:10px;">
+                                        <tr>
+                                            <td width="50" rowspan="4"><img src="' . base_url('assets/image/qrcode/' . $purchase_orders->po_no . '.png') . '" width="60"/></td>
+                                            <td width="60">Doc No</td>
+                                            <td width="5">:</td>
+                                            <td width="100"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Form</td>
+                                            <td>:</td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Print Date</td>
+                                            <td>:</td>
+                                            <td>' . date("Y-m-d H:i") . '</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Print By</td>
+                                            <td>:</td>
+                                            <td>' . $this->session->name . '</td>
+                                        </tr>
+                                    </table>
                                 </th>
                             </tr>
                         </table>
-                        <div style="border: 1px solid black; width:100%; float:left;">
+                        <div style="border: 1px solid black; width:100%;">
                             <div style="padding:10px;">
                                 <center>
                                     <br>
-                                    <h3 style="margin:0;">DELIVERY SCHEDULE</h3>
+                                    <h3 style="margin:0;"><u>PURCHASE ORDER</u></h3>
+                                    <small>NO : ' . @$purchase_orders->po_no . '</small>
                                 </center>
-                                <br>
-                                <div style="width:45%; float:left;">
-                                    <table style="width:100%; font-size:11px; margin-bottom:10px;">
-                                        <tr>
-                                            <td width="20" style="vertical-align: top;"><b>To</b></td>
-                                            <td width="5" style="vertical-align: top;">:</td>
-                                            <td><b>' . @$supplier->name . '</b><br>'.@$supplier->address.'<br>GST No : '.@$supplier->gst.'</td>
-                                        </tr>
-                                    </table>
-                                </div>
-                                <div style="width:10%; float:left;"><br></div>
-                                <div style="width:45%; float:left;">
-                                    <table style="width:100%; font-size:11px; margin-bottom:10px;">
-                                        <tr>
-                                            <td width="50" style="vertical-align: top;"></td>
-                                            <td width="30" style="vertical-align: top;"></td>
-                                            <td>PO No : ' . $supplier->supplier_po . '<br>
-                                                Register No : ' . $purchase_orders->po_no . '<br>
-                                                Date : ' . $purchase_orders->po_date . '<br>
-                                                Revision : ' . $purchase_orders->revision . '<br><br>
-                                                <b>ELCON BANSHU WIRING SYSTEM PVT. LTD.</b><br>
-                                                Factory / Shipping Address : <br>
-                                                '.@$config->address2.'<br>
-                                                GST No : '.@$config->gst_no.'
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </div>
-                                
+                                <table style="width:100%; font-size:11px; margin-bottom:10px;">
+                                    <tr>
+                                        <td width="50">Supplier</td>
+                                        <td width="10">:</td>
+                                        <td width="65%">
+                                            <b>' . @$supplier->name . '</b>
+                                        </td>
+                                        <td style="text-align:left; padding-right: 20px;" rowspan="7">
+                                            PO Date: <b>' . date("d F Y", strtotime($purchase_orders->po_date)) . '</b><br>
+                                            Revision: <b>' . $purchase_orders->rev . '</b><br>
+                                            Revision Date: <b>' . date("d F Y", strtotime($revision_date)) . '</b><br>
+                                            Payment Terms: <b>' . @$supplier->payment_term . ' Days</b>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td width="50">Attention</td>
+                                        <td width="10">:</td>
+                                        <td><b>' . @$supplier->contact_person . '</b></td>
+                                    </tr>
+                                    <tr>
+                                        <td width="50">Page</td>
+                                        <td width="10">:</td>
+                                        <td><b>' . $hal  . '</b> of <b> ' . $page . '</b></td>
+                                    </tr>
+                                </table>
                                 <table class="customers" style="width:100%;">
                                     <tr>
-                                        <th style="text-align:center;">No</th>
-                                        <th style="text-align:center;">Part No</th>
-                                        <th style="text-align:center;">Part No Supplier</th>
-                                        <th style="text-align:center;">Part Name</th>
-                                        <th style="text-align:center;">ETD</th>
-                                        <th style="text-align:center;">Currency</th>
-                                        <th style="text-align:center;">Price</th>
-                                        <th style="text-align:center;">Qty</th>
-                                        <th style="text-align:center;">UOM</th>
-                                        <th style="text-align:center;">Total Price</th>
-                                        <th style="text-align:center;">CGST</th>
-                                        <th style="text-align:center;">SGST</th>
-                                        <th style="text-align:center;">IGST</th>
-                                        <th style="text-align:center;">Total Amount</th>
+                                        <th rowspan="2" style="text-align:center;">No</th>
+                                        <th rowspan="2" style="text-align:center;">Part No Original</th>
+                                        <th rowspan="2" style="text-align:center;">Part No BEI</th>
+                                        <th rowspan="2" style="text-align:center;">Part No Supplier</th>
+                                        <th rowspan="2" style="text-align:center;">Description</th>
+                                        <th rowspan="2" style="text-align:center;">Maker</th>
+                                        <th rowspan="2" style="text-align:center;">ETA</th>
+                                        <th rowspan="2" style="text-align:center;">ETD</th>
+                                        <th rowspan="2" style="text-align:center;">Qty</th>
+                                        <th rowspan="2" style="text-align:center;">Unit</th>
+                                        <th rowspan="2" style="text-align:center;">Unit<br>Price</th>
+                                        <th rowspan="2" style="text-align:center;">Currency</th>
+                                        <th rowspan="2" style="text-align:center;">Amount</th>
+                                        <th colspan="3" style="text-align:center;">Forecast</th>
+                                    </tr>
+                                    <tr>
+                                        <th style="text-align:center;">M1</th>
+                                        <th style="text-align:center;">M2</th>
+                                        <th style="text-align:center;">M3</th>
                                     </tr>';
             $row = 0;
-            $total_igst = 0;
-            $total_cgst = 0;
-            $total_sgst = 0;
             foreach ($records as $record) {
-                $subtotal += ($record['total']);
-
-                if($record['state'] == $config->state){
-                    $total2 = ($record['total'] + $record['dcgst'] + $record['dsgst']);
-                    $total_igst += 0;
-                    $total_cgst += $record['dcgst'];
-                    $total_sgst += $record['dsgst'];
-                    $digst = 0;
-                    $dsgst = $record['dsgst'];
-                    $dcgst = $record['dcgst'];
+                $plant = $record['plant'];
+                $item_rm_id = $record['item_rm_id'];
+                $revision = $record['rev'];
+                $p_month = $record['p_month'];
+                $p_year = $record['p_year'];
+                $ending = date("Y-m-t", strtotime($record['p_year'] . "-" . $record['p_month'] . "-01"));
+                $leadtime = date('Y-m-01', strtotime('+'.$record['leadtime'].' days', strtotime($ending)));
+                if($record['maker_type'] == "LOCAL"){
+                    $etd = date("Y-m-d", strtotime("-14 days", strtotime($record['delivery_date'])));
                 }else{
-                    if($record['type'] == "LOCAL"){
-                        $total2 = ($record['total'] + $record['digst']);
-                        $total_igst += $record['digst'];
-                        $total_cgst += 0;
-                        $total_sgst += 0;
-                        $digst = $record['digst'];
-                        $dsgst = 0;
-                        $dcgst = 0;
-                    }else{
-                        $total2 = ($record['total']);
-                        $total_igst += 0;
-                        $total_cgst += 0;
-                        $total_sgst += 0;
-                        $digst = 0;
-                        $dsgst = 0;
-                        $dcgst = 0;
-                    }
+                    $etd = date("Y-m-d", strtotime("-21 days", strtotime($record['delivery_date'])));
+                }
+                
+                $m1 = date('mY', strtotime($leadtime));
+                $m2 = date('Y-m-01', strtotime('+1 month', strtotime($leadtime)));
+                $m3 = date('Y-m-01', strtotime('+2 month', strtotime($leadtime)));
+                $m11 = "m".date('n', strtotime($leadtime));
+                $m22 = "m".date('n', strtotime('+1 month', strtotime($leadtime)));
+                $m33 = "m".date('n', strtotime('+2 month', strtotime($leadtime)));
+
+                $qmps1 = $this->db->query("SELECT prod_plan_1, prod_plan_2, prod_plan_3 FROM mrp_ltpp WHERE CONCAT(p_month, p_year) = '$m1' and item_rm_id = '$item_rm_id' and revision = '$revision' and plant='$plant'");
+                $rpms1 = $qmps1->row();
+
+                // $forecast = $this->forecast($item_rm_id, $record['p_month'], $record['p_year'], @$revision);
+
+                // if(@$rpms1->qty > 0){
+                    $prod1 = @$rpms1->prod_plan_1;
+                // }else{
+                //     $prod1 = @$forecast->$m11;
+                // }
+
+                // if(@$rpms2->qty > 0){
+                    $prod2 = @$rpms1->prod_plan_2;
+                // }else{
+                //     $prod2 = @$forecast->$m22;
+                // }
+
+                // if(@$rpms3->qty > 0){
+                    $prod3 = @$rpms1->prod_plan_3;
+                // }else{
+                //     $prod3 = @$forecast->$m33;
+                // }
+
+                $subtotal += ($record['total']);
+                if ($record['currency'] == "USD") {
+                    $digits = 2;
+                } elseif ($record['currency'] == "JPY") {
+                    $digits = 2;
+                } else {
+                    $digits = 0;
                 }
 
                 if(!empty($record['reason'])){
@@ -1272,17 +1263,19 @@ class Purchase_orders extends CI_Controller
                                 <td  style="text-align:center;">' . $no . '</td>
                                 <td>' . $record['item_rm_id'] . '</td>
                                 <td>' . $record['item_rm_number'] . '</td>
+                                <td>' . $record['item_supplier'] . '</td>
                                 <td>' . $record['item_rm_name'] . '</td>
-                                <td>' . $record['delivery_date'] . '</td>
-                                <td>' . $record['currency'] . '</td>
-                                <td style="text-align:right;">' . number_format($record['price'], 4) . '</td>
+                                <td>' . $record['maker_name'] . '</td>
+                                <td style="text-align:center;">' . $record['delivery_date'] . '</td>
+                                <td style="text-align:center;">' . $etd . '</td>
                                 <td style="text-align:right;">' . number_format($record['qty']) . '</td>
                                 <td style="text-align:center;">' . $record['uom'] . '</td>
-                                <td style="text-align:right;">' . number_format($record['total'], 4) . '</td>
-                                <td style="text-align:right;">' . number_format($dcgst, 2) . '</td>
-                                <td style="text-align:right;">' . number_format($dsgst, 2) . '</td>
-                                <td style="text-align:right;">' . number_format($digst, 2) . '</td>
-                                <td style="text-align:right;">' . number_format($total2, 2) . '</td>
+                                <td style="text-align:right;">' . number_format($record['price'], $digits) . '</td>
+                                <td style="text-align:center;">' . $record['currency'] . '</td>
+                                <td style="text-align:right;">' . number_format($record['total'], $digits) . '</td>
+                                <td style="text-align:right;">' . number_format($prod1) . '</td>
+                                <td style="text-align:right;">' . number_format($prod2) . '</td>
+                                <td style="text-align:right;">' . number_format($prod3) . '</td>
                             </tr>';
                 $row++;
                 $no++;
@@ -1290,29 +1283,26 @@ class Purchase_orders extends CI_Controller
 
             if (($i + 1) == $page) {
                 $html .= '  <tr>
-                                <td style="vertical-align: top; text-align:left;" colspan="10" rowspan="6">
-                                    <b>Note :</b> <br>' . @$purchase_orders->note;
+                                <td style="vertical-align: top; text-align:left;" colspan="9" rowspan="5">
+                                    <b>Note :</b> <br>';
                 $html .= '      </td>
                             </tr>
                             <tr>
-                                <th style="text-align:left" colspan="3">Sub Total</th>
-                                <th style="text-align:right;">' . number_format($subtotal, 4) . '</th>
+                                <th style="text-align:left" colspan="2">Sub Total</th>
+                                <th style="text-align:right;">' . number_format($subtotal, $digits) . '</th>
+                                <th style="text-align:left" colspan="3" rowspan="4"></th>
                             </tr>
                             <tr>
-                                <th style="text-align:left" colspan="3">CGST</th>
-                                <th style="text-align:right;">' . number_format($total_cgst, 2) . '</th>
+                                <th style="text-align:left" colspan="2">VAT (' . @$supplier->vat . '%)</th>
+                                <th style="text-align:right;">' . number_format(round((@$subtotal * @$supplier->vat) / 100), $digits) . '</th>
                             </tr>
                             <tr>
-                                <th style="text-align:left" colspan="3">SGST</th>
-                                <th style="text-align:right;">' . number_format($total_sgst, 2) . '</th>
+                                <th style="text-align:left" colspan="2">Down Payment</th>
+                                <th style="text-align:right;">-</th>
                             </tr>
                             <tr>
-                                <th style="text-align:left" colspan="3">IGST</th>
-                                <th style="text-align:right;">' . number_format($total_igst, 2) . '</th>
-                            </tr>
-                            <tr>
-                                <th style="text-align:left" colspan="3">Total Amount</th>
-                                <th style="text-align:right;">' . number_format(($subtotal + ($total_cgst + $total_sgst + $total_igst)), 4) . '</th>
+                                <th style="text-align:left" colspan="2">Total Amount</th>
+                                <th style="text-align:right;">' . number_format($subtotal + ((@$subtotal * @$supplier->vat) / 100), $digits) . '</th>
                             </tr>
                         </table>';
             } else {
@@ -1320,32 +1310,59 @@ class Purchase_orders extends CI_Controller
             }
             
             if (($i + 1) == $page) {
-                $html .= '  <div style="width:100%">
-                                <div style="width:70%; float:left;">
-                                    <br><br>
-                                    <div style="font-size:12px !important;">
-                                        <b style="font-size:16px !important;">Term & Condition</b><br><br>
-                                        '.$purchase_orders->terms.'
-                                    </div>
-                                </div>
-                                <div style="width:30%; float:left; right: 50px;">
-                                    <br><br><br>
+                $html .= '  <div style="width:100%; display: grid; grid-template-columns: auto auto auto;">
+                                <div style="width:50%;">
                                     <table style="margin-top:20px; font-size:12px;">
                                         <tr>
-                                            <th colspan="2" width="800" style="text-align:left;">'.$config->name.'</th>
+                                            <th width="200" style="text-align:center;">Supplier Approval</th>
+                                        </tr>
+                                        <tr>
+                                            <th style="height:80px;"></th>
+                                        </tr>
+                                        <tr>
+                                            <th style="height:20px; text-align:center;">(...................................)</th>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div style="width:50%; position: absolute; right: 50px;">
+                                    <table style="margin-top:20px; font-size:12px;">
+                                        <tr>
+                                            <th colspan="2" width="800" style="text-align:center;">Approved By</th>
                                         </tr>
                                         <tr>
                                             <th style="height:80px;"><img '.$qr_user_3.' width="80"/></th>
+                                            <th style="height:80px;"><img '.$qr_user_4.' width="80"/></th>
                                         </tr>
                                         <tr>
-                                            <th style="height:20px; text-align:left;">Authorized Signatory <br>Vishal Sharma</th>
+                                            <th style="height:20px; text-align:center;">'.@$user_3->name.'<br>'.@$user_3->position.'</th>
+                                            <th style="height:20px; text-align:center;">'.@$user_4->name.'<br>'.@$user_4->position.'</th>
                                         </tr>
                                     </table>
                                     <br>
+                                    <i style="font-size:8px;">Electronic Auto Generating Approval No Need Signature</i>
                                 </div>
                             </div>
-                        </div>
-                    </div>';
+
+                        <br>
+                        <b style="font-size:12px;">Term & Condition</b>
+                        <br>
+                        <table style="width:100%; font-size:12px; margin-top:20px;">
+                            <tr>
+                                <td width="20">1.</td>
+                                <td>Please Acknowledge us in one week of time upon Receipt of PO <br>email to : takao.masahiko@tb-banshu.com, procurement01@banshu-ind.com, procurement02@banshu-ind.com</td>
+                            </tr>
+                            <tr>
+                                <td width="20">2.</td>
+                                <td>We will buy the next month confirmed FC in this PO</td>
+                            </tr>
+                            <tr>
+                                <td width="20">3.</td>
+                                <td>The PO quantity and forecast quantity is as per our customer demand</td>
+                            </tr>
+                        </table><br>
+                        PLEASE PROCESS OUR PO FORECAST
+                    </div>
+                </div>';
             }else{
                 $html .= "</div></div>";
             }
@@ -1358,8 +1375,25 @@ class Purchase_orders extends CI_Controller
             // <img '.$qr_user_4.' width="80"/>
         }
         
-        $html .= '<script>window.print()</script>';
-        die($html);
+        if($export == ""){
+            $html .= '<script>window.print()</script>';
+            die($html);
+        }else{
+            // Load HTML content
+            $this->dompdf_gen->loadHtml($html);
+
+            // (Optional) Set paper size and orientation
+            $this->dompdf_gen->setPaper('A4', 'potrait');
+
+            // Render the HTML as PDF
+            $this->dompdf_gen->render();
+
+            // Output the generated PDF (1 = download and 0 = preview)
+            // $this->dompdf_gen->stream("sample.pdf", array("Attachment" => 0));
+
+            $filePath = FCPATH . 'assets/po/'.base64_decode($po_no).'.pdf'; // FCPATH ensures the path is relative to the project root
+            $this->dompdf_gen->save($filePath);
+        }
     }
 
     public function print_delivery($po_no)
@@ -1421,12 +1455,14 @@ class Purchase_orders extends CI_Controller
                         </div>
                         <div class="print">';
 
-        $this->db->select('a.*, b.number as item_rm_number, b.name as item_rm_name, c.mpq, c.moq, c.leadtime');
+        $this->db->select('a.*, b.number as item_rm_number, b.name as item_rm_name, c.mpq, c.moq, c.leadtime, c.item_supplier');
         $this->db->from('delivery_schedules a');
         $this->db->join('item_rm b', 'a.item_rm_id = b.id');
-        $this->db->join('supplier_items c', 'a.item_rm_id = c.item_rm_id and a.supplier_id = c.supplier_id');
+        $this->db->join('item_rm ia', "TRIM(LEADING '+' FROM b.number) = ia.number");
+        $this->db->join('supplier_items c', "ia.id = c.item_rm_id and a.supplier_id = c.supplier_id and a.plant = c.plant", 'left');
         $this->db->where('a.po_no', $po_no);
-        $this->db->order_by('a.item_rm_id');
+        $this->db->group_by('a.id');
+        $this->db->order_by('b.number');
         $records = $this->db->get()->result_array();
 
         $html .= '  <table style="width:100%;">
@@ -1467,7 +1503,8 @@ class Purchase_orders extends CI_Controller
                             <table id="customers">
                                 <tr>
                                     <th rowspan="2" width="10" style="text-align:center;">No</th>
-                                    <th rowspan="2" width="100" style="text-align:center;">Part No</th>
+                                    <th rowspan="2" width="100" style="text-align:center;">Part No BEI</th>
+                                    <th rowspan="2" width="100" style="text-align:center;">Part No Supplier</th>
                                     <th rowspan="2" width="50" style="text-align:center;">Part Name</th>
                                     <th rowspan="2" width="30" style="text-align:center;">LT</th>
                                     <th rowspan="2" width="50" style="text-align:center;">MPQ</th>
@@ -1479,8 +1516,12 @@ class Purchase_orders extends CI_Controller
                                     <th colspan="3" width="50" style="text-align:center;">'.$period_4.'</th>
                                     <th colspan="3" width="50" style="text-align:center;">'.$period_5.'</th>
                                     <th colspan="3" width="50" style="text-align:center;">'.$period_6.'</th>
+                                    <th colspan="3" width="50" style="text-align:center;">> 6 Month</th>
                                 </tr>
                                 <tr>
+                                    <th width="50" style="text-align:center;">Qty</th>
+                                    <th width="50" style="text-align:center;">ETD</th>
+                                    <th width="50" style="text-align:center;">ETA</th>
                                     <th width="50" style="text-align:center;">Qty</th>
                                     <th width="50" style="text-align:center;">ETD</th>
                                     <th width="50" style="text-align:center;">ETA</th>
@@ -1508,16 +1549,19 @@ class Purchase_orders extends CI_Controller
             if($record['delivey_date_4'] == "0000-00-00"){ $eta_4 = "-"; }else{ $eta_4 = $record['delivey_date_4']; }
             if($record['delivey_date_5'] == "0000-00-00"){ $eta_5 = "-"; }else{ $eta_5 = $record['delivey_date_5']; }
             if($record['delivey_date_6'] == "0000-00-00"){ $eta_6 = "-"; }else{ $eta_6 = $record['delivey_date_6']; }
+            if($record['delivey_date_7'] == "0000-00-00"){ $eta_7 = "-"; }else{ $eta_7 = $record['delivey_date_7']; }
             if($record['etd_1'] == "0000-00-00"){ $etd_1 = "-"; }else{ $etd_1 = $record['etd_1']; }
             if($record['etd_2'] == "0000-00-00"){ $etd_2 = "-"; }else{ $etd_2 = $record['etd_2']; }
             if($record['etd_3'] == "0000-00-00"){ $etd_3 = "-"; }else{ $etd_3 = $record['etd_3']; }
             if($record['etd_4'] == "0000-00-00"){ $etd_4 = "-"; }else{ $etd_4 = $record['etd_4']; }
             if($record['etd_5'] == "0000-00-00"){ $etd_5 = "-"; }else{ $etd_5 = $record['etd_5']; }
             if($record['etd_6'] == "0000-00-00"){ $etd_6 = "-"; }else{ $etd_6 = $record['etd_6']; }
+            if($record['etd_7'] == "0000-00-00"){ $etd_7 = "-"; }else{ $etd_7 = $record['etd_7']; }
 
             $html .= '  <tr>
                             <td  style="text-align:center;">' . $no . '</td>
                             <td>' . $record['item_rm_number'] . '</td>
+                            <td>' . $record['item_supplier'] . '</td>
                             <td>' . $record['item_rm_name'] . '</td>
                             <td style="text-align:right;">' . number_format($record['leadtime']) . '</td>
                             <td style="text-align:right;">' . number_format($record['mpq']) . '</td>
@@ -1541,6 +1585,9 @@ class Purchase_orders extends CI_Controller
                             <td style="text-align:right;">' . number_format($record['delivey_qty_6']) . '</td>
                             <td style="text-align:center;">'.$etd_6.'</td>
                             <td style="text-align:center;">'.$eta_6.'</td>
+                            <td style="text-align:right;">' . number_format($record['delivey_qty_7']) . '</td>
+                            <td style="text-align:center;">'.$etd_7.'</td>
+                            <td style="text-align:center;">'.$eta_7.'</td>
                         </tr>';
             $no++;
         }
@@ -1578,15 +1625,14 @@ class Purchase_orders extends CI_Controller
             c.supplier_po,
             c.type,
             c.state,
-            ((a.qty * a.price) * COALESCE(e.igst, 0) / 100) as digst,
-            ((a.qty * a.price) * COALESCE(e.sgst, 0) / 100) as dsgst,
-            ((a.qty * a.price) * COALESCE(e.cgst, 0) / 100) as dcgst,
-            d.name as item_family_name');
+            d.name as item_family_name,
+            e.item_supplier');
         $this->db->from('purchase_orders a');
         $this->db->join('item_rm b', 'a.item_rm_id = b.id');
         $this->db->join('suppliers c', 'a.supplier_id = c.id');
         $this->db->join('item_familys d', 'b.item_family_id = d.id');
-        $this->db->join('hsn e', "b.hsn_code = e.number", 'left');
+        $this->db->join('supplier_items e', 'a.item_rm_id = e.item_rm_id and a.supplier_id = e.supplier_id and a.plant = e.plant');
+        $this->db->group_by('a.id');
         $this->db->where('a.type', "PO");
         $this->db->like('a.p_month', $filter_month);
         $this->db->like('a.p_year', $filter_year);
@@ -1611,7 +1657,7 @@ class Purchase_orders extends CI_Controller
         }
         $this->db->order_by('c.name', 'asc');
         $this->db->order_by('d.name', 'asc');
-        $this->db->order_by('a.item_rm_id', 'asc');
+        $this->db->order_by('b.number', 'asc');
         $records = $this->db->get()->result_array();
 
         $html = '<html><head><title>Print Data</title></head><style>body {font-family: Arial, Helvetica, sans-serif;}#customers {border-collapse: collapse;width: 100%;font-size: 12px;}#customers td, #customers th {border: 1px solid #ddd;padding: 2px;}#customers tr:nth-child(even){background-color: #f2f2f2;}#customers tr:hover {background-color: #ddd;}#customers th {padding-top: 2px;padding-bottom: 2px;text-align: left;color: black;}</style><body>
@@ -1657,7 +1703,8 @@ class Purchase_orders extends CI_Controller
                 <th style="text-align:center;">PO No</th>
                 <th style="text-align:center;">Register No</th>
                 <th style="text-align:center;">Register Date</th>
-                <th style="text-align:center;">Part No</th>
+                <th style="text-align:center;">Part No Original</th>
+                <th style="text-align:center;">Part No BEI</th>
                 <th style="text-align:center;">Part No Supplier</th>
                 <th style="text-align:center;">Part Name</th>
                 <th style="text-align:center;">Product Family</th>
@@ -1667,10 +1714,6 @@ class Purchase_orders extends CI_Controller
                 <th style="text-align:center;">Qty</th>
                 <th style="text-align:center;">Price</th>
                 <th style="text-align:center;">Total</th>
-                <th style="text-align:center;">IGST</th>
-                <th style="text-align:center;">SGST</th>
-                <th style="text-align:center;">CGST</th>
-                <th style="text-align:center;">Total After Tax</th>
                 <th style="text-align:center;">Currency</th>
                 <th style="text-align:center;">Uom</th>
                 <th style="text-align:center;">Leadtime</th>
@@ -1681,24 +1724,6 @@ class Purchase_orders extends CI_Controller
 
         $no = 1;
         foreach ($records as $data) {
-            if($data['state'] == $config->state){
-                $digst = 0;
-                $dsgst = round($data['dsgst'], 2);
-                $dcgst = round($data['dcgst']);
-            }else{
-                if($data['type'] == "LOCAL"){
-                    $digst = round($data['digst'], 2);
-                    $dsgst = 0;
-                    $dcgst = 0;
-                }else{
-                    $digst = 0;
-                    $dsgst = 0;
-                    $dcgst = 0;
-                }
-            }
-
-            $total2 = ($data['total'] + $digst + $dcgst + $dsgst);
-            
             if($data['status'] == "0"){
                 $status = "OPEN";
             }else{
@@ -1725,18 +1750,15 @@ class Purchase_orders extends CI_Controller
                             <td>' . $data['po_date'] . '</td>
                             <td style="mso-number-format:\@;">' . $data['item_rm_id'] . '</td>
                             <td style="mso-number-format:\@;">' . $data['item_rm_number'] . '</td>
+                            <td style="mso-number-format:\@;">' . $data['item_supplier'] . '</td>
                             <td>' . $data['item_rm_name'] . '</td>
                             <td>' . $data['item_family_name'] . '</td>
                             <td>' . $data['supplier_id'] . '</td>
                             <td>' . $data['supplier_name'] . '</td>
                             <td>' . $data['type'] . '</td>
                             <td style="text-align:right;">' . $data['qty'] . '</td>
-                            <td style="text-align:right;">' . $data['price'] . '</td>
-                            <td style="text-align:right;">' . $data['total'] . '</td>
-                            <td style="text-align:right;">' . $digst . '</td>
-                            <td style="text-align:right;">' . $dsgst . '</td>
-                            <td style="text-align:right;">' . $dcgst . '</td>
-                            <td style="text-align:right;">' . $total2 . '</td>
+                            <td style="text-align:right; mso-number-format:0.0000;">' . $data['price'] . '</td>
+                            <td style="text-align:right; mso-number-format:0.0000;">' . $data['total'] . '</td>
                             <td>' . $data['currency'] . '</td>
                             <td>' . $data['uom'] . '</td>
                             <td>' . $data['leadtime'] . '</td>
@@ -1749,6 +1771,21 @@ class Purchase_orders extends CI_Controller
 
         $html .= '</table></body></html>';
         echo $html;
+    }
+
+    public function sendMail(){
+        $po_no = $this->input->post('po_no');
+        $status = $this->input->post('status');
+
+        if($status == "SENT"){
+            $this->db->where("po_no", $po_no);
+            $this->db->update('purchase_orders', ["email_date" => date("Y-m-d H:i:s"), "email_status" => "SENT"]);
+            echo json_encode(array("title" => "Successs", "message" => "Email Sending Successfully", "theme" => "success"));
+        }else{
+            $this->db->where("po_no", $po_no);
+            $this->db->update('purchase_orders', ["email_date" => null, "email_status" => "PENDING"]);
+            echo json_encode(array("title" => "Successs", "message" => "Email Cancel Successfully", "theme" => "success"));
+        }
     }
 
     // public function sendMail(){

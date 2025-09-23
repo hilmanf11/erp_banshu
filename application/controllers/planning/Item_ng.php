@@ -276,7 +276,7 @@ class Item_ng extends CI_Controller
                     <th>Process</th>
                     <th>NG Type</th>
                     <th>Work Order</th>
-                    <th>Part No</th>
+                    <th>Part No EBWS</th>
                     <th>Part No Supplier</th>
                     <th>Description</th>
                     <th>Rejection</th>

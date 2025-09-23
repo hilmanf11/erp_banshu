@@ -2,7 +2,7 @@
     <thead data-options="frozen:true">
         <tr>
             <th field="ck" checkbox="true"></th>
-            <th data-options="field:'item_rm_id',width:120,halign:'center'">Part No</th>
+            <th data-options="field:'item_rm_id',width:120,halign:'center'">Part No EBWS</th>
             <th data-options="field:'item_rm_number',width:200,halign:'center'">Part No Supplier</th>
         </tr>
     </thead>
@@ -18,6 +18,7 @@
             <th rowspan="2" data-options="field:'total_bal',width:80,halign:'center',align:'right',styler:cellStyler, formatter:numberformat">Total Bal</th>
             <?php 
                 if($this->input->get('filter_month')){
+                    $filter_plant = base64_decode($this->input->get('filter_plant'));
                     $filter_month = base64_decode($this->input->get('filter_month'));
                     $filter_year = base64_decode($this->input->get('filter_year'));
                     $filter_revision = base64_decode($this->input->get('filter_revision'));
@@ -26,13 +27,14 @@
                     $filter_status = $this->input->get('filter_status');
                     $filter_date = base64_decode($this->input->get('filter_date'));
                 }else{
+                    $filter_plant = "";
                     $filter_month = date("m");
                     $filter_year = date("Y");
                     $filter_revision = "0";
                     $filter_item_family = "";
                     $filter_item_id = "";
                     $filter_status = "";
-                    $filter_date = "";
+                    $filter_date = date("Y-m-d");
                 }
 
                 $next_month = date("F", strtotime("+1 month", strtotime($filter_year."-".$filter_month."-01")));
@@ -110,8 +112,8 @@
                             <input style="width:60%;" name="filter_revision" id="filter_revision" value="<?= $filter_revision ?>" class="easyui-combobox" data-options="prompt:'Revision'" panelHeight="auto">
                         </div>
                         <div class="fitem">
-                            <span style="width:35%; display:inline-block;">Inventory Cutoff</span>
-                            <input style="width:28%;" id="filter_date" class="easyui-datebox" value="<?= $filter_date ?>" data-options="formatter:myformatter,parser:myparser, editable:false">
+                            <span style="width:35%; display:inline-block;">Plant</span>
+                            <input style="width:60%;" name="filter_plant" id="filter_plant" value="<?= $filter_plant ?>" class="easyui-combobox" panelHeight="auto">
                         </div>
                         <div class="fitem">
                             <span style="width:35%; display:inline-block;"></span>
@@ -121,11 +123,15 @@
                     </div>
                     <div style="width: 50%; float: left;">
                         <div class="fitem">
+                            <span style="width:35%; display:inline-block;">Inventory Cutoff</span>
+                            <input style="width:60%;" id="filter_date" class="easyui-datebox" value="<?= $filter_date ?>" data-options="formatter:myformatter,parser:myparser, editable:false">
+                        </div>
+                        <div class="fitem">
                             <span style="width:35%; display:inline-block;">Product Family</span>
                             <input style="width:60%;" id="filter_item_family" value="<?= $filter_item_family ?>" class="easyui-combobox">
                         </div>
                         <div class="fitem">
-                            <span style="width:35%; display:inline-block;">Product No</span>
+                            <span style="width:35%; display:inline-block;">Part No</span>
                             <input style="width:60%;" id="filter_item_id" value="<?= $filter_item_id ?>" class="easyui-combogrid">
                         </div>
                         <div class="fitem">
@@ -177,7 +183,7 @@
         <thead>
             <tr>
                 <th data-options="field:'number_customer',width:150,halign:'center'">Product No</th>
-                <th data-options="field:'item_rm_id',width:120,halign:'center'">Part No</th>
+                <th data-options="field:'item_rm_id',width:120,halign:'center'">Part No EBWS</th>
                 <th data-options="field:'item_rm_number',width:180,halign:'center'">Part No Supplier</th>
                 <th data-options="field:'total',width:80,halign:'center',align:'right',formatter:numberformat">Qty</th>
             </tr>
@@ -211,13 +217,14 @@
 
      //Add Data
     function add() {
+        var filter_plant = $("#filter_plant").combobox('getValue');
         var filter_month = $("#filter_month").combobox('getValue');
         var filter_year = $("#filter_year").textbox('getValue');
         var filter_revision = $("#filter_revision").combobox('getValue');
         var filter_date = $("#filter_date").datebox('getValue');
 
-        if (filter_month == "" || filter_year == "" || filter_revision == "") {
-            toastr.warning("Please select filter month, year and revision", "Information");
+        if (filter_month == "" || filter_year == "" || filter_revision == "" || filter_plant == "") {
+            toastr.warning("Please select filter plant, month, year and revision", "Information");
         }else{
             $.messager.prompt('Material Calculation', 'Please input "YES" for Generate', function(r){
                 if (r == "YES"){
@@ -237,7 +244,8 @@
                         data: "filter_month=" + window.btoa(filter_month) +
                             "&filter_year=" + window.btoa(filter_year) +
                             "&filter_revision=" + window.btoa(filter_revision) +
-                            "&filter_date=" + window.btoa(filter_date),
+                            "&filter_date=" + window.btoa(filter_date) +
+                            "&filter_plant=" + window.btoa(filter_plant),
                         dataType: "json",
                         success: function(rows) {
                             Swal.close();
@@ -306,6 +314,10 @@
                                     });
                                 }
                             }
+                        },
+                        error: function(){
+                            Swal.close();
+                            Swal.fire('Failed!', 'Get data LTTP Not Found!', 'error');
                         }
                     });
                 }
@@ -314,6 +326,7 @@
     }
 
     function filter() {
+        var filter_plant = $("#filter_plant").combobox('getValue');
         var filter_month = $("#filter_month").combobox('getValue');
         var filter_year = $("#filter_year").textbox('getValue');
         var filter_revision = $("#filter_revision").combobox('getValue');
@@ -324,14 +337,15 @@
 
         var url = "?filter_month=" + window.btoa(filter_month) +
             "&filter_year=" + window.btoa(filter_year) +
+            "&filter_plant=" + window.btoa(filter_plant) +
             "&filter_revision=" + window.btoa(filter_revision) +
             "&filter_item_family=" + window.btoa(filter_item_family) +
             "&filter_item_id=" + window.btoa(filter_item_id) +
             "&filter_date=" + window.btoa(filter_date) +
             "&filter_status=" + filter_status;
 
-        if (filter_month == "" || filter_year == "" || filter_revision == "") {
-            toastr.warning("Please select Period, Revision and Product Family!", "Information");
+        if (filter_month == "" || filter_year == "" || filter_revision == "" || filter_plant == "") {
+            toastr.warning("Please select Plant, Period, Revision and Product Family!", "Information");
         } else {
             window.location.assign(url);
         }
@@ -343,6 +357,7 @@
     }
 
     function excel() {
+        var filter_plant = $("#filter_plant").combobox('getValue');
         var filter_month = $("#filter_month").combobox('getValue');
         var filter_year = $("#filter_year").textbox('getValue');
         var filter_revision = $("#filter_revision").combobox('getValue');
@@ -353,13 +368,14 @@
 
         var url = "?filter_month=" + window.btoa(filter_month) +
             "&filter_year=" + window.btoa(filter_year) +
+            "&filter_plant=" + window.btoa(filter_plant) +
             "&filter_revision=" + window.btoa(filter_revision) +
             "&filter_item_family=" + window.btoa(filter_item_family) +
             "&filter_item_id=" + window.btoa(filter_item_id) +
             "&filter_date=" + window.btoa(filter_date) +
             "&filter_status=" + filter_status;
 
-        if (filter_month == "" || filter_year == "" || filter_revision == "") {
+        if (filter_month == "" || filter_year == "" || filter_revision == "" || filter_plant == "") {
             toastr.warning("Please select Period, Revision and Product Family!", "Information");
         } else {
             $.messager.alert('Info','Please Wait to Export to Excel');
@@ -367,50 +383,53 @@
         }
     }
 
-    function material(){
-        var filter_month = $("#filter_month").combobox('getValue');
-        var filter_year = $("#filter_year").textbox('getValue');
-        var filter_revision = $("#filter_revision").combobox('getValue');
-        var filter_item_family = $("#filter_item_family").combobox('getValue');
-        var filter_item_id = $("#filter_item_id").combogrid('getValue');
-        var filter_status = $("#filter_status").combobox('getValue');
-        var filter_date = $("#filter_date").datebox('getValue');
+    // function material(){
+    //     var filter_plant = $("#filter_month").combobox('filter_plant');
+    //     var filter_month = $("#filter_month").combobox('getValue');
+    //     var filter_year = $("#filter_year").textbox('getValue');
+    //     var filter_revision = $("#filter_revision").combobox('getValue');
+    //     var filter_item_family = $("#filter_item_family").combobox('getValue');
+    //     var filter_item_id = $("#filter_item_id").combogrid('getValue');
+    //     var filter_status = $("#filter_status").combobox('getValue');
+    //     var filter_date = $("#filter_date").datebox('getValue');
 
-        var url = "?filter_month=" + window.btoa(filter_month) +
-            "&filter_year=" + window.btoa(filter_year) +
-            "&filter_revision=" + window.btoa(filter_revision) +
-            "&filter_item_family=" + window.btoa(filter_item_family) +
-            "&filter_item_id=" + window.btoa(filter_item_id) +
-            "&filter_date=" + window.btoa(filter_date) +
-            "&filter_status=" + window.btoa(filter_status);
+    //     var url = "?filter_month=" + window.btoa(filter_month) +
+    //         "&filter_year=" + window.btoa(filter_year) +
+    //         "&filter_plant=" + window.btoa(filter_plant) +
+    //         "&filter_revision=" + window.btoa(filter_revision) +
+    //         "&filter_item_family=" + window.btoa(filter_item_family) +
+    //         "&filter_item_id=" + window.btoa(filter_item_id) +
+    //         "&filter_date=" + window.btoa(filter_date) +
+    //         "&filter_status=" + filter_status;
 
-        if (filter_month == "" || filter_year == "" || filter_revision == "" || filter_item_family == "") {
-            toastr.warning("Please select Period, Revision and Product Family!", "Information");
-        } else {
-            $.messager.alert('Info','Please Wait to Export to Excel');
-            window.location.assign('<?= base_url('planning/material_calculation/printMaterialShortage/excel') ?>' + url);
-        }
-    }
+    //     if (filter_month == "" || filter_year == "" || filter_revision == "" || filter_plant == "") {
+    //         toastr.warning("Please select Period, Revision and Product Family!", "Information");
+    //     } else {
+    //         $.messager.alert('Info','Please Wait to Export to Excel');
+    //         window.location.assign('<?= base_url('planning/material_calculation/printMaterialShortage/excel') ?>' + url);
+    //     }
+    // }
 
     function reload() {
         window.location.reload();
     }
 
-    function cutoffDate(month, year){
-        $.ajax({
-            type: "post",
-            url: "<?= base_url('planning/material_calculation/cutoffDate') ?>",
-            data: "month=" + month + "&year=" + year,
-            dataType: "html",
-            success: function (response) {
-                $("#filter_date").datebox('setValue', response);
-            }
-        });
-    }
+    // function cutoffDate(month, year){
+    //     $.ajax({
+    //         type: "post",
+    //         url: "<?= base_url('planning/material_calculation/cutoffDate') ?>",
+    //         data: "month=" + month + "&year=" + year,
+    //         dataType: "html",
+    //         success: function (response) {
+    //             $("#filter_date").datebox('setValue', response);
+    //         }
+    //     });
+    // }
 
     $(function() {
         $("#add").html('Generate');
 
+        var filter_plant = $("#filter_plant").combobox('getValue');
         var filter_month = $("#filter_month").combobox('getValue');
         var filter_year = $("#filter_year").textbox('getValue');
         var filter_revision = $("#filter_revision").combobox('getValue');
@@ -421,6 +440,7 @@
 
         var url = "?filter_month=" + window.btoa(filter_month) +
             "&filter_year=" + window.btoa(filter_year) +
+            "&filter_plant=" + window.btoa(filter_plant) +
             "&filter_revision=" + window.btoa(filter_revision) +
             "&filter_item_family=" + window.btoa(filter_item_family) +
             "&filter_item_id=" + window.btoa(filter_item_id) +
@@ -447,15 +467,9 @@
             valueField: 'id',
             textField: 'name',
             prompt: 'Select Month',
-            icons: [{
-                iconCls: 'icon-clear',
-                handler: function(e) {
-                    $(e.data.target).combobox('clear').combobox('textbox').focus();
-                }
-            }],
             onSelect: function(row){
                 var year = $('#filter_year').combobox('getValue');
-                cutoffDate(row.id, year);
+                // cutoffDate(row.id, year);
             }
         });
 
@@ -464,15 +478,9 @@
             valueField: 'id',
             textField: 'name',
             prompt: 'Select Year',
-            icons: [{
-                iconCls: 'icon-clear',
-                handler: function(e) {
-                    $(e.data.target).combobox('clear').combobox('textbox').focus();
-                }
-            }],
             onSelect: function(row){
                 var month = $('#filter_month').combobox('getValue');
-                cutoffDate(month, row.id);
+                // cutoffDate(month, row.id);
             }
         });
 
@@ -481,12 +489,13 @@
             valueField: 'id',
             textField: 'name',
             prompt: 'Select Revision',
-            icons: [{
-                iconCls: 'icon-clear',
-                handler: function(e) {
-                    $(e.data.target).combobox('clear').combobox('textbox').focus();
-                }
-            }]
+        });
+
+        $('#filter_plant').combobox({
+            url: '<?php echo base_url('master/plants/reads'); ?>',
+            valueField: 'id',
+            textField: 'name',
+            prompt: 'Select Plant'
         });
 
         $('#filter_status').combobox({
@@ -537,7 +546,7 @@
                     columns: [
                         [{
                             field: 'id',
-                            title: 'Part No',
+                            title: 'Part No EBWS',
                             width: 100
                         }, {
                             field: 'number',
@@ -570,7 +579,7 @@
             columns: [
                 [{
                     field: 'id',
-                    title: 'Part No',
+                    title: 'Part No EBWS',
                     width: 100
                 }, {
                     field: 'number',

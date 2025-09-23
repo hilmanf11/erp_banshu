@@ -143,7 +143,7 @@
                     columns: [
                         [{
                             field: 'item_fg_number',
-                            title: 'Part No',
+                            title: 'Part No EBWS',
                             width: 120
                         }, {
                             field: 'number_customer',

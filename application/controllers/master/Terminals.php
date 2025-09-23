@@ -183,9 +183,9 @@ class Terminals extends CI_Controller
             $terminals = $this->crud->read('terminals', [], ["item_rm_id" => $data['item_rm_id']]);
 
             if (!empty($terminals->number)) {
-                echo json_encode(array("title" => "Duplicated", "message" => " Part No " . $data['item_rm_id'] . " is Duplicate Data", "theme" => "error"));
+                echo json_encode(array("title" => "Duplicated", "message" => " Part No EBWS " . $data['item_rm_id'] . " is Duplicate Data", "theme" => "error"));
             } elseif(empty($item_rm)){
-                echo json_encode(array("title" => "Not Found", "message" => " Part No " . $data['item_rm_id'] . " Not Found in Master", "theme" => "error"));
+                echo json_encode(array("title" => "Not Found", "message" => " Part No EBWS " . $data['item_rm_id'] . " Not Found in Master", "theme" => "error"));
             } else {
                 $send = $this->crud->create('terminals', $data);
                 echo $send;
@@ -240,7 +240,7 @@ class Terminals extends CI_Controller
         <table id="customers" border="1">
             <tr>
                 <th width="20">No</th>
-                <th>Part No</th>
+                <th>Part No EBWS</th>
                 <th>Part No Supplier</th>
                 <th>Description</th>
                 <th>Maker Name</th>

@@ -431,7 +431,7 @@ class Supply_requestions extends CI_Controller
                                 <table id="customers">
                                     <tr>
                                         <th>No</th>
-                                        <th>Part No</th>
+                                        <th>Part No EBWS</th>
                                         <th>Part No Supplier</th>
                                         <th>Uom</th>
                                         <th>Qty</th>
@@ -574,7 +574,7 @@ class Supply_requestions extends CI_Controller
                 <th>Request Date</th>
                 <th>Requester</th>
                 <th>Workorder</th>
-                <th>Part No</th>
+                <th>Part No EBWS</th>
                 <th>Part Supplier</th>
                 <th>Qty</th>
                 <th>Uom</th>

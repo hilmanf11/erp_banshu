@@ -3,7 +3,7 @@
     <thead>
         <tr>
             <!-- <th field="ck" checkbox="true"></th> -->
-            <th data-options="field:'id',width:120,halign:'center'">Part No</th>
+            <th data-options="field:'id',width:120,halign:'center'">Part No EBWS</th>
             <th data-options="field:'number',width:200,halign:'center'">Part No Supplier</th>
             <th data-options="field:'item_family_name',width:120,halign:'center'">Product Family</th>
             <th data-options="field:'uom',width:80,align:'center'">Uom</th>

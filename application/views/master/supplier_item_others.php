@@ -8,7 +8,7 @@
             <th rowspan="2" data-options="field:'supplier_id',width:100,halign:'center'">Supplier ID</th>
             <th rowspan="2" data-options="field:'supplier_po',width:150,halign:'center'">Supplier PO</th>
             <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Supplier Name</th>
-            <th rowspan="2" data-options="field:'item_rm_id',width:100,halign:'center'">Part No</th>
+            <th rowspan="2" data-options="field:'item_rm_id',width:100,halign:'center'">Original Part No</th>
             <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No Supplier</th>
             <th rowspan="2" data-options="field:'item_rm_name',width:150,halign:'center'">Description</th>
             <!-- <th rowspan="2" data-options="field:'item_supplier',width:150,halign:'center'">Part Supplier</th> -->
@@ -26,10 +26,6 @@
             <th rowspan="2" data-options="field:'attachment',width:100,halign:'center',formatter:BtnAttachment">Attachment 1</th>
             <th rowspan="2" data-options="field:'attachment2',width:100,halign:'center',formatter:BtnAttachment2">Attachment 2</th>
             <th rowspan="2" data-options="field:'attachment3',width:100,halign:'center',formatter:BtnAttachment3">Attachment 3</th>
-            <th rowspan="2" data-options="field:'hsn_number',width:100,halign:'center'">HSN Code</th>
-            <th rowspan="2" data-options="field:'igst',width:80,align:'center'">IGST %</th>
-            <th rowspan="2" data-options="field:'sgst',width:80,align:'center'">SGST %</th>
-            <th rowspan="2" data-options="field:'cgst',width:80,align:'center'">CGST %</th>
             <th rowspan="2" data-options="field:'leadtime',width:80,align:'center'">Mfg L/T<br>(Days)</th>
             <th rowspan="2" data-options="field:'transit',width:80,align:'center'">Transit<br>(Days)</th>
             <th rowspan="2" data-options="field:'share_order',width:80,align:'center'">Share Order %<br></th>
@@ -924,7 +920,7 @@
             columns: [
                 [{
                     field: 'id',
-                    title: 'Part No',
+                    title: 'Original Part No',
                     width: 100
                 }, {
                     field: 'number',

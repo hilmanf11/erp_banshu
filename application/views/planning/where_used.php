@@ -5,7 +5,7 @@
             <legend><b>Form Filter Data</b></legend>
             <div style="width: 50%; float:left;">
                 <div class="fitem">
-                    <span style="width:30%; display:inline-block;">Part No</span>
+                    <span style="width:30%; display:inline-block;">Part No BEI</span>
                     <input style="width:60%;" id="filter_item_rm_id" name="filter_item_rm_id" class="easyui-combogrid">
                 </div>
                 <div class="fitem">
@@ -59,11 +59,11 @@
             columns: [
                 [{
                     field: 'id',
-                    title: 'Part No',
+                    title: 'Part No Original',
                     width: 150
                 }, {
                     field: 'number',
-                    title: 'Part No Supplier',
+                    title: 'Part No BEI',
                     width: 150
                 }, {
                     field: 'name',

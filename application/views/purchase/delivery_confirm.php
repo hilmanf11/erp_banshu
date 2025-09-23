@@ -3,20 +3,23 @@
         <tr>
             <th rowspan="2" field="ck" checkbox="true"></th>
             <th rowspan="2" data-options="field:'status',width:80,align:'center', styler:cellStyler, formatter:cellFormatter">Status</th>
+            <th rowspan="2" data-options="field:'receipt_no',width:150,halign:'center'">POR No</th>
+            <th rowspan="2" data-options="field:'plant',width:80,halign:'center'">Plant</th>
             <th rowspan="2" data-options="field:'supplier_id',width:100,halign:'center'">Supplier ID</th>
             <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Supplier Name</th>
             <th rowspan="2" data-options="field:'delivery_no',width:150,halign:'center'">Delivery No</th>
             <th rowspan="2" data-options="field:'invoice_no',width:150,halign:'center'">Invoice No</th>
             <th rowspan="2" data-options="field:'invoice_date',width:100,halign:'center'">Invoice Date</th>
-            <th rowspan="2" data-options="field:'po_no',width:120,halign:'center'">PO No</th>
-            <th rowspan="2" data-options="field:'po_date',width:100,halign:'center'">PO Date</th>
-            <th rowspan="2" data-options="field:'item_rm_id',width:100,halign:'center'">Part No</th>
-            <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No Supplier</th>
-            <th rowspan="2" data-options="field:'item_rm_name',width:200,halign:'center'">Description</th>
-            <th rowspan="2" data-options="field:'item_family_name',width:100,halign:'center'">Product<br>Family</th>
-            <th rowspan="2" data-options="field:'uom',width:80,halign:'center'">UoM</th>
-            <th rowspan="2" data-options="field:'qty',width:100,halign:'center',align:'right',formatter:numberformat">Qty PO</th>
-            <th rowspan="2" data-options="field:'delivery',width:100,halign:'center',align:'right',formatter:numberformat">Plan Delivery</th>
+            <th rowspan="2" data-options="field:'shipping',width:120,halign:'center'">Shipping</th>
+            <!-- <th rowspan="2" data-options="field:'po_no',width:120,halign:'center'">PO No</th> -->
+            <!-- <th rowspan="2" data-options="field:'po_date',width:100,halign:'center'">PO Date</th> -->
+            <!-- <th rowspan="2" data-options="field:'item_rm_id',width:100,halign:'center'">Part No Original</th> -->
+            <!-- <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No Supplier</th> -->
+            <!-- <th rowspan="2" data-options="field:'item_rm_name',width:200,halign:'center'">Description</th> -->
+            <!-- <th rowspan="2" data-options="field:'item_family_name',width:100,halign:'center'">Product<br>Family</th> -->
+            <!-- <th rowspan="2" data-options="field:'uom',width:80,halign:'center'">UoM</th> -->
+            <!-- <th rowspan="2" data-options="field:'qty',width:100,halign:'center',align:'right',formatter:numberformat">Qty PO</th> -->
+            <!-- <th rowspan="2" data-options="field:'delivery',width:100,halign:'center',align:'right',formatter:numberformat">Plan Delivery</th> -->
             <!-- <th rowspan="2" data-options="field:'receipt',width:100,halign:'center',align:'right',formatter:numberformat">Receipt</th> -->
             <th rowspan="2" data-options="field:'etd',width:100,align:'center'">ETD</th>
             <th rowspan="2" data-options="field:'eta',width:100,align:'center'">ETA</th>
@@ -38,7 +41,7 @@
     <a href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true" onclick="removeit()"><i class="fa fa-times"></i> Remove</a>
 </div>
 
-<div id="toolbar" style="height: 200px; padding: 10px;">
+<div id="toolbar" style="height: 230px; padding: 10px;">
     <fieldset style="width:100%; border:2px solid #d0d0d0; margin-bottom: 5px; margin-top: 5px; border-radius:4px; display: grid; grid-template-columns: auto auto auto; grid-gap: 5px; display: flex;">
         
     <legend><b>Filter Data</b></legend>
@@ -47,6 +50,10 @@
                 <span style="width:35%; display:inline-block;">Create Date</span>
                 <input style="width:28%;" id="filter_from" class="easyui-datebox" value="<?= date("Y-m-01") ?>" data-options="formatter:myformatter,parser:myparser, editable:false"> To
                 <input style="width:28%;" id="filter_to" class="easyui-datebox" value="<?= date("Y-m-t") ?>" data-options="formatter:myformatter,parser:myparser, editable:false">
+            </div>
+            <div class="fitem">
+                <span style="width:35%; display:inline-block;">Plant</span>
+                <input style="width:60%;" id="filter_plant" class="easyui-combobox">
             </div>
             <div class="fitem">
                 <span style="width:35%; display:inline-block;">Supplier</span>
@@ -97,14 +104,14 @@
     <form id="frm_insert" method="post" enctype="multipart/form-data" novalidate>
         <fieldset style="width:100%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
             <legend><b>Form Data</b></legend>
-            <div style="width: 30%; float: left;">
+            <div style="width: 25%; float: left;">
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Plant</span>
+                    <input style="width:60%;" name="plant" id="plant" required class="easyui-combobox">
+                </div>
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Supplier name</span>
                     <input style="width:60%;" name="supplier_id" id="supplier_id" required class="easyui-combobox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Delivery Note</span>
-                    <input style="width:60%;" name="delivery_no" id="delivery_no" required class="easyui-textbox">
                 </div>
                 <div class="fitem" hidden>
                     <span style="width:35%; display:inline-block;">Attachment</span>
@@ -115,7 +122,11 @@
                     <input style="width:60%;" name="u_attachment" id="u_attachment" class="easyui-filebox" data-options="prompt:'Choose Attachment', accept:'.png, .jpg, .jpeg, .pdf'">
                 </div>
             </div>
-            <div style="width: 30%; float: left;">
+            <div style="width: 25%; float: left;">
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Delivery Note</span>
+                    <input style="width:60%;" name="delivery_no" id="delivery_no" required class="easyui-textbox">
+                </div>
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Invoice No</span>
                     <input style="width:60%;" name="invoice_no" id="invoice_no" required class="easyui-textbox">
@@ -125,7 +136,21 @@
                     <input style="width:60%;" name="invoice_date" id="invoice_date" required="" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
                 </div>
             </div>
-            <div style="width: 30%; float: left;">
+            <div style="width: 25%; float: left;">
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Shipping</span>
+                    <input style="width:60%;" name="shipping" id="shipping" required class="easyui-combogrid">
+                </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">ETD</span>
+                    <input style="width:60%;" name="etd" id="etd" required readonly class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
+                </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">ETA</span>
+                    <input style="width:60%;" name="eta" id="eta" required readonly class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
+                </div>
+            </div>
+            <div style="width: 25%; float: left;">
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">AWB No</span>
                     <input style="width:60%;" name="awb_no" id="awb_no" class="easyui-textbox">
@@ -137,86 +162,6 @@
             </div>
         </fieldset>
         <table id="dg2" class="easyui-datagrid" style="width:100%;" title="Delivery Confirmation Lists" toolbar="#toolbar2"></table>
-    </form>
-</div>
-
-<div id="dlg_update" class="easyui-dialog" title="Add New" data-options="closed: true,modal:true" style="width: 60%; max-height: 550px; padding:10px; top: 10px; left: 10px;">
-    <form id="frm_update" method="post" enctype="multipart/form-data" novalidate>
-        <fieldset style="width:100%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
-            <legend><b>Form Data</b></legend>
-            <div style="width: 50%; float: left;">
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">ID</span>
-                    <input style="width:60%;" name="id" id="id" readonly class="easyui-textbox">
-                </div>
-                <div class="fitem" hidden>
-                    <span style="width:35%; display:inline-block;">Supplier ID</span>
-                    <input style="width:60%;" name="supplier_id" id="supplier_id" disabled class="easyui-textbox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Supplier name</span>
-                    <input style="width:60%;" name="supplier_name" id="supplier_name" disabled class="easyui-textbox">
-                </div>
-                <div class="fitem" hidden>
-                    <span style="width:35%; display:inline-block;">Part No</span>
-                    <input style="width:60%;" name="item_rm_id" id="item_rm_id" disabled class="easyui-textbox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Part No Supplier</span>
-                    <input style="width:60%;" name="item_rm_number" id="item_rm_number" disabled class="easyui-textbox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Invoice No</span>
-                    <input style="width:60%;" name="invoice_no" id="invoice_no" class="easyui-textbox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Invoice Date</span>
-                    <input style="width:60%;" name="invoice_date" id="invoice_date" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">PO No</span>
-                    <input style="width:60%;" name="po_no" id="po_no" readonly class="easyui-textbox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">PO Date</span>
-                    <input style="width:60%;" name="po_date" id="invoice_date" readonly class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
-                </div>
-            </div>
-            <div style="width: 50%; float: left;">
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Delivery No</span>
-                    <input style="width:60%;" name="delivery_no" id="delivery_no" class="easyui-textbox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">BOE No</span>
-                    <input style="width:60%;" name="awb_no" id="awb_no" class="easyui-textbox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">BOE Date</span>
-                    <input style="width:60%;" name="awb_date" id="awb_date" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Uom</span>
-                    <input style="width:60%;" name="uom" id="uom" readonly class="easyui-textbox">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Qty PO</span>
-                    <input style="width:60%;" name="qty_po" id="qty_po" class="easyui-numberbox" disabled data-options="precision: 2">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Qty Remain</span>
-                    <input style="width:60%;" name="qty_remain" id="qty_remain" class="easyui-numberbox" disabled data-options="precision: 2">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Invoice Qty</span>
-                    <input style="width:60%;" name="delivery" id="delivery" class="easyui-numberbox" data-options="precision: 2">
-                </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Balance Qty</span>
-                    <input style="width:60%;" name="balance" id="balance" class="easyui-numberbox" disabled data-options="precision: 2">
-                </div>
-            </div>
-        </fieldset>
     </form>
 </div>
 
@@ -249,9 +194,15 @@
         $('#dlg_insert').dialog('open');
         $('#frm_insert').form('clear');
         $('#dg2').datagrid('loadData', []);
+        $("#plant").combobox('enable');
         $("#supplier_id").combogrid('enable');
         $("#delivery_no").textbox('enable');
+        $("#invoice_no").textbox('enable');
         $("#awb_date").datebox("setValue", "<?= date("Y-m-d") ?>");
+        process = "ADD";
+        if($("#awb_date").datebox("getValue") == ""){
+            add();
+        }
         // $("#invoice_no").textbox('enable');
         // $("#invoice_date").datebox('enable');
     }
@@ -284,13 +235,16 @@
                                 var ed3 = dg.datagrid('getEditor', {index: rowIndex, field: 'item_rm_name'});
                                 var ed4 = dg.datagrid('getEditor', {index: rowIndex, field: 'po_date'});
                                 var ed5 = dg.datagrid('getEditor', {index: rowIndex, field: 'uom'});
-                                var ed6 = dg.datagrid('getEditor', {index: rowIndex, field: 'eta'});
-                                var ed7 = dg.datagrid('getEditor', {index: rowIndex, field: 'etd'});
+                                // var ed6 = dg.datagrid('getEditor', {index: rowIndex, field: 'eta'});
+                                // var ed7 = dg.datagrid('getEditor', {index: rowIndex, field: 'etd'});
                                 var ed8 = dg.datagrid('getEditor', {index: rowIndex, field: 'qty'});
                                 var ed9 = dg.datagrid('getEditor', {index: rowIndex, field: 'delivery'});
                                 var ed10 = dg.datagrid('getEditor', {index: rowIndex, field: 'actual'});
                                 var ed11 = dg.datagrid('getEditor', {index: rowIndex, field: 'balance'});
                                 var ed12 = dg.datagrid('getEditor', {index: rowIndex, field: 'qty_po'});
+                                var ed13 = dg.datagrid('getEditor', {index: rowIndex, field: 'currency'});
+                                var ed14 = dg.datagrid('getEditor', {index: rowIndex, field: 'price'});
+                                var ed15 = dg.datagrid('getEditor', {index: rowIndex, field: 'total'});
 
                                 $(ed4.target).textbox('setValue', po.po_date);
                                 $(ed.target).combogrid({
@@ -301,11 +255,11 @@
                                     textField: 'number',
                                     mode: 'remote',
                                     fitColumns: true,
-                                    prompt: 'Choose Part No',
+                                    prompt: 'Choose Part No Original',
                                     columns: [
                                         [{
                                             field: 'id',
-                                            title: 'Part No',
+                                            title: 'Part No Original',
                                             width: 150
                                         },{
                                             field: 'number',
@@ -325,13 +279,16 @@
                                         $(ed2.target).textbox('setValue', item.number);
                                         $(ed3.target).textbox('setValue', item.name);
                                         $(ed5.target).textbox('setValue', item.uom);
-                                        $(ed6.target).textbox('setValue', item.delivery_date);
-                                        $(ed7.target).datebox('setValue', item.today);
+                                        // $(ed6.target).textbox('setValue', item.delivery_date);
+                                        // $(ed7.target).datebox('setValue', item.today);
                                         $(ed8.target).numberbox('setValue', item.qty);
                                         $(ed9.target).numberbox('setValue', item.delivery);
                                         $(ed10.target).numberbox('setValue', item.actual);
                                         $(ed11.target).numberbox('setValue', (parseInt(item.qty) - parseInt(item.delivery)));
                                         $(ed12.target).numberbox('setValue', item.qty_po);
+                                        $(ed13.target).textbox('setValue', item.currency);
+                                        $(ed14.target).numberbox('setValue', item.price);
+                                        $(ed15.target).numberbox('setValue', (parseFloat(item.qty) * parseFloat(item.price)));
                                         $(ed9.target).numberbox({
                                             onChange: function(val){
                                                 if((parseInt(item.qty) - val) <= 0){
@@ -340,6 +297,7 @@
                                                     $(ed9.target).numberbox('setValue', 0);
                                                 }else{
                                                     $(ed11.target).numberbox('setValue', (parseInt(item.qty) - val));
+                                                    $(ed15.target).numberbox('setValue', (parseFloat(val) * parseFloat(item.price)));
                                                 }
                                             }
                                         });
@@ -402,30 +360,6 @@
                             readonly: true
                         }
                     }
-                },{
-                    field: 'eta',
-                    width: 100,
-                    halign: 'center',
-                    title: "ETA",
-                    editor: {
-                        type: 'textbox',
-                        options: {
-                            readonly: true
-                        }
-                    }
-                }, {
-                    field: 'etd',
-                    width: 120,
-                    halign: 'center',
-                    title: "ETD",
-                    editor: {
-                        type: 'datebox',
-                        options: {
-                            formatter:myformatter,
-                            parser:myparser,
-                            required: true
-                        }
-                    }
                 }, {
                     field: 'qty_po',
                     width: 80,
@@ -475,25 +409,6 @@
                         type: 'numberbox',
                         options: {
                             precision: 0,
-                            onChange: function(val){
-                                var dg = $('#dg2');
-                                var row = dg.datagrid('getSelected');
-                                var rowIndex = dg.datagrid('getRowIndex', row);
-
-                                var ed1 = dg.datagrid('getEditor', {index: rowIndex, field: 'qty'});
-                                var ed2 = dg.datagrid('getEditor', {index: rowIndex, field: 'balance'});
-                                var ed3 = dg.datagrid('getEditor', {index: rowIndex, field: 'delivery'});
-
-                                var item = $(ed1.target).numberbox('getValue');
-
-                                if((parseInt(item) - val) <= 0){
-                                    toastr.info("You cannot exceed qty remain and qty invoice");
-                                    $(ed2.target).numberbox('setValue', 0);
-                                    // $(ed3.target).numberbox('setValue', 0);
-                                }else{
-                                    $(ed2.target).numberbox('setValue', (parseInt(item) - val));
-                                }
-                            }
                         }
                     }
                 },{
@@ -510,6 +425,42 @@
                         }
                     }
                 },{
+                    field: 'currency',
+                    width: 80,
+                    align: 'center',
+                    title: "Currency",
+                    editor: {
+                        type: 'textbox',
+                        options: {
+                            readonly: true,
+                        }
+                    }
+                },{
+                    field: 'price',
+                    width: 100,
+                    halign: 'center',
+                    align: 'right',
+                    title: "Price",
+                    editor: {
+                        type: 'numberbox',
+                        options: {
+                            precision: 4
+                        }
+                    }
+                },{
+                    field: 'total',
+                    width: 100,
+                    halign: 'center',
+                    align: 'right',
+                    title: "Total",
+                    editor: {
+                        type: 'numberbox',
+                        options: {
+                            precision: 2,
+                            readonly: true,
+                        }
+                    }
+                },{
                     field: 'id',
                     width: 80,
                     hidden: true,
@@ -520,7 +471,20 @@
                     }
                 }]
             ],
-            onClickCell: onClickCell
+            onClickCell: function(index, field) {
+                if(link == ""){
+                    if (editIndex != index) {
+                        if (endEditing()) {
+                            $('#dg2').datagrid('selectRow', index).datagrid('beginEdit', index);
+                            editIndex = index;
+                        } else {
+                            setTimeout(function() {
+                                $('#dg2').datagrid('selectRow', editIndex);
+                            }, 0);
+                        }
+                    }
+                }
+            }
         });
     }
 
@@ -536,19 +500,6 @@
             return true;
         } else {
             return false;
-        }
-    }
-
-    function onClickCell(index, field) {
-        if (editIndex != index) {
-            if (endEditing()) {
-                $('#dg2').datagrid('selectRow', index).datagrid('beginEdit', index);
-                editIndex = index;
-            } else {
-                setTimeout(function() {
-                    $('#dg2').datagrid('selectRow', editIndex);
-                }, 0);
-            }
         }
     }
 
@@ -583,21 +534,14 @@
             if(row.status == "1"){
                 toastr.error("Cannot Update for this data because the status is CLOSED");
             }else{
-                $('#dlg_update').dialog('open');
-                $('#frm_update').form('load', row);
-
-                $("#delivery").numberbox({
-                    onChange: function(val){
-                        var qty_remain = $("#qty_remain").numberbox('getValue');
-
-                        if((parseFloat(qty_remain) - parseFloat(val)) >= 0){
-                            $("#balance").numberbox("setValue", (parseFloat(qty_remain) - parseFloat(val)));
-                        }else{
-                            toastr.error("Qty Cannot > Qty Remain");
-                            $("#delivery").numberbox('setValue', 0);
-                        }
-                    }
-                });
+                $('#dlg_insert').dialog('open');
+                $('#frm_insert').form('load', row);
+                addTable(row.supplier_id, "<?= base_url("purchase/delivery_confirm/datatableUpdates?invoice_no=") ?>" + btoa(row.invoice_no));
+                process = "UPDATE";
+                $("#plant").combobox('disable');
+                $("#supplier_id").combogrid('disable');
+                $("#delivery_no").textbox('disable');
+                $("#invoice_no").textbox('disable');
             }
         } else {
             toastr.warning("Please select one of the data in the table first!", "Information");
@@ -634,33 +578,36 @@
                             var row = json[number-1];
                             value = Math.floor((number / total) * 100);
 
-                            $.ajax({
-                                method: 'post',
-                                url: '<?= base_url('purchase/delivery_confirm/delete') ?>',
-                                data: {
-                                    id: row.id,
-                                    po_no: row.po_no,
-                                    item_rm_id: row.item_rm_id
-                                },
-                                success: function(result) {
-                                    var result = eval('(' + result + ')');
-                                    requestDelete(total, json, number + 1, value);
+                            if(row.status == "1"){
+                                toastr.error("Cannot Delete for this data because the status is CLOSED");
+                            }else{
+                                $.ajax({
+                                    method: 'post',
+                                    url: '<?= base_url('purchase/delivery_confirm/delete') ?>',
+                                    data: {
+                                        invoice_no: row.invoice_no,
+                                        supplier_id: row.supplier_id
+                                    },
+                                    success: function(result) {
+                                        var result = eval('(' + result + ')');
+                                        requestDelete(total, json, number + 1, value);
 
-                                    if (number == total) {
-                                        $('#dg').datagrid('reload');
-                                        Swal.close();
-                                        Swal.fire(
-                                            'Delete Completed',
-                                            'Delete Data has been completed, You cannot restore data that has been deleted',
-                                            'success'
-                                        );
-                                    }
-                                },
-                                error: function(jqXHR, textStatus, errorThrown) {
-                                    toastr.error("Delete Failed, Please Check Data Relations");
-                                    swal.close();
-                                },
-                            });
+                                        if (number == total) {
+                                            $('#dg').datagrid('reload');
+                                            Swal.close();
+                                            Swal.fire(
+                                                'Delete Completed',
+                                                'Delete Data has been completed, You cannot restore data that has been deleted',
+                                                'success'
+                                            );
+                                        }
+                                    },
+                                    error: function(jqXHR, textStatus, errorThrown) {
+                                        toastr.error("Delete Failed, Please Check Data Relations");
+                                        swal.close();
+                                    },
+                                });
+                            }
                         }
                     }
                 }
@@ -701,6 +648,105 @@
 
         $('#dg').datagrid({
             url: '<?= base_url('purchase/delivery_confirm/datatables') ?>' + url,
+            pagination: true,
+            rownumbers: true,
+            singleSelect: true,
+            fit: true,
+            pageList: [10, 50, 100, 500, 1000],
+            pageSize: 10,
+            view: detailview,
+            detailFormatter: function(index, row) {
+                return '<div style="padding:2px;position:relative;"><table class="ddv" title="Detail Of ' + row.invoice_no + '"></table></div>';
+            },
+            onExpandRow: function(index, row) {
+                var ddv = $(this).datagrid('getRowDetail', index).find('table.ddv');
+
+                ddv.datagrid({
+                    url: '<?= base_url('purchase/delivery_confirm/datatableDetails?invoice_no=') ?>' + window.btoa(row.invoice_no) + "&supplier_id=" + btoa(row.supplier_id),
+                    singleSelect: true,
+                    rownumbers: true,
+                    columns: [
+                        [{
+                            field: 'po_no',
+                            title: 'PO No',
+                            halign: 'center',
+                            width: 150
+                        },{
+                            field: 'po_date',
+                            title: 'PO Date',
+                            halign: 'center',
+                            width: 120
+                        },{
+                            field: 'item_rm_id',
+                            title: 'Part No Original',
+                            halign: 'center',
+                            width: 150
+                        }, {
+                            field: 'item_rm_number',
+                            title: 'Part No Supplier',
+                            halign: 'center',
+                            width: 150
+                        }, {
+                            field: 'item_rm_name',
+                            title: 'Description',
+                            halign: 'center',
+                            width: 200
+                        }, {
+                            field: 'item_family_name',
+                            title: 'Product Family',
+                            halign: 'center',
+                            width: 150
+                        }, {
+                            field: 'uom',
+                            title: 'UoM',
+                            align: 'center',
+                            width: 80
+                        }, {
+                            field: 'qty',
+                            title: 'Qty PO',
+                            halign: 'center',
+                            align: 'right',
+                            width: 80,
+                            formatter: numberformat
+                        }, {
+                            field: 'delivery',
+                            title: 'Delivery',
+                            halign: 'center',
+                            align: 'right',
+                            width: 80,
+                            formatter: numberformat
+                        }, {
+                            field: 'currency',
+                            title: 'Currency',
+                            align: 'center',
+                            width: 80,
+                        },{
+                            field: 'price',
+                            title: 'Price',
+                            halign: 'center',
+                            align: 'right',
+                            width: 100,
+                            formatter: numberformatprice
+                        }, {
+                            field: 'total',
+                            title: 'Total',
+                            halign: 'center',
+                            align: 'right',
+                            width: 100,
+                            formatter: numberformatprice
+                        }]
+                    ],
+                    onResize: function() {
+                        $('#dg').datagrid('fixDetailRowHeight', index);
+                    },
+                    onLoadSuccess: function() {
+                        setTimeout(function() {
+                            $('#dg').datagrid('fixDetailRowHeight', index);
+                        }, 0);
+                    }
+                });
+                $('#dg').datagrid('fixDetailRowHeight', index);
+            }
         });
 
         $("#printout").attr('src', '<?= base_url('purchase/delivery_confirm/print') ?>' + url);
@@ -738,13 +784,6 @@
     }
 
     $(function() {
-        $('#dg').datagrid({
-            // url: '<?= base_url('purchase/delivery_confirm/datatables') ?>',
-            pagination: true,
-            rownumbers: true,
-            fit: true
-        });
-
         filter();
 
         $("#u_attachment").filebox({
@@ -776,22 +815,26 @@
                 text: 'Save All',
                 iconCls: 'icon-ok',
                 handler: function() {
+                    var plant = $("#plant").combobox('getValue');
                     var supplier_id = $("#supplier_id").combogrid('getValue');
                     var delivery_no = $("#delivery_no").textbox('getValue');
                     var invoice_no = $("#invoice_no").textbox('getValue');
                     var invoice_date = $("#invoice_date").datebox('getValue');
+                    var etd = $("#etd").datebox('getValue');
+                    var eta = $("#eta").datebox('getValue');
+                    var shipping = $("#shipping").combogrid('getValue');
                     var awb_no = $("#awb_no").textbox('getValue');
                     var awb_date = $("#awb_date").datebox('getValue');
                     var attachment = $("#attachment").textbox('getValue');
 
-                    if(supplier_id != "" && delivery_no != "" && invoice_no != "" && invoice_date != ""){
+                    if(supplier_id != "" && delivery_no != "" && invoice_no != "" && invoice_date != "" && plant != "" && etd != "" && eta != "" && shipping != ""){
                         $.ajax({
                             type: "post",
                             url: "<?= base_url('purchase/delivery_confirm/checkInvoice') ?>",
                             data: "invoice_no=" + invoice_no,
                             dataType: "html",
                             success: function (data) {
-                                if(data == "NG"){
+                                if(data == "NG" && process == "ADD"){
                                     toastr.error("Invoice No already created, Please check again");
                                     return false;
                                 }
@@ -837,10 +880,14 @@
                                                 type: "post",
                                                 url: '<?= base_url('purchase/delivery_confirm/create') ?>',
                                                 data: {
+                                                    plant: plant,
                                                     supplier_id: supplier_id,
                                                     delivery_no: delivery_no,
                                                     invoice_no: invoice_no,
                                                     invoice_date: invoice_date,
+                                                    etd: etd,
+                                                    eta: eta,
+                                                    shipping: shipping,
                                                     awb_no: awb_no,
                                                     awb_date: awb_date,
                                                     attachment: attachment,
@@ -848,8 +895,9 @@
                                                     po_date: json[i].po_date,
                                                     item_rm_id: json[i].item_rm_id,
                                                     uom: json[i].uom,
-                                                    eta: json[i].eta,
-                                                    etd: json[i].etd,
+                                                    currency: json[i].currency,
+                                                    price: json[i].price,
+                                                    total: json[i].total,
                                                     qty: json[i].qty,
                                                     delivery: json[i].delivery,
                                                     balance: json[i].balance,
@@ -866,8 +914,8 @@
                                                             allowOutsideClick: false,
                                                         }).then((result) => {
                                                             if (result.isConfirmed) {
-                                                                // window.location.reload();
-                                                                $('#dg').datagrid('reload');
+                                                                window.location.reload();
+                                                                // $('#dg').datagrid('reload');
                                                             }
                                                         });
                                                     }
@@ -884,53 +932,6 @@
                         });
                     }else{
                         toastr.error("Please Complete Your input");    
-                    }
-                }
-            }]
-        });
-
-        $('#dlg_update').dialog({
-            buttons: [{
-                text: 'Update Data',
-                iconCls: 'icon-ok',
-                handler: function() {
-                    var delivery = $("#delivery").numberbox("getValue");
-
-                    if(delivery > 0){
-                        $('#frm_update').form('submit', {
-                            url: '<?= base_url('purchase/delivery_confirm/update') ?>',
-                            onSubmit: function() {
-                                if($(this).form('validate') === true){
-                                    $('#dlg_update').dialog('close');
-                                    
-                                    Swal.fire({
-                                        title: 'Please Wait...',
-                                        showConfirmButton: false,
-                                        allowOutsideClick: false,
-                                        allowEscapeKey: false,
-                                        didOpen: () => {
-                                            Swal.showLoading();
-                                        },
-                                    });
-                                }else{
-                                    return $(this).form('validate');
-                                }
-                            },
-                            success: function(result) {
-                                var result = eval('(' + result + ')');
-
-                                if (result.theme == "success") {
-                                    toastr.success(result.message, result.title);
-                                } else {
-                                    toastr.error(result.message, result.title);
-                                }
-
-                                $('#dg').datagrid('reload');
-                                Swal.close();
-                            }
-                        });
-                    }else{
-                        toastr.error("Qty Delivery Cannot 0");
                     }
                 }
             }]
@@ -1022,11 +1023,11 @@
             textField: 'number',
             mode: 'remote',
             fitColumns: true,
-            prompt: "Choose Part No",
+            prompt: "Choose Part No Original",
             columns: [
                 [{
                     field: 'id',
-                    title: 'Part No',
+                    title: 'Part No Original',
                     width: 150
                 }, {
                     field: 'number',
@@ -1044,6 +1045,13 @@
                     $(e.data.target).combogrid('clear').combogrid('textbox').focus();
                 }
             }],
+        });
+
+        $('#filter_plant').combobox({
+            url: '<?php echo base_url('master/plants/reads'); ?>',
+            valueField: 'number',
+            textField: 'name',
+            prompt: 'Select Plant',
         });
 
         $("#filter_supplier").combogrid({
@@ -1107,6 +1115,61 @@
             }
         });
 
+        $('#plant').combobox({
+            url: '<?php echo base_url('master/plants/reads'); ?>',
+            valueField: 'number',
+            textField: 'name',
+            prompt: 'Select Plant',
+        });
+
+        $("#shipping").combogrid({
+            url: '<?php echo base_url('master/shipping/reads'); ?>',
+            panelWidth: 500,
+            idField: 'name',
+            textField: 'name',
+            mode: 'remote',
+            fitColumns: true,
+            prompt: "Choose Shipping Method",
+            columns: [
+                [{
+                    field: 'number',
+                    title: 'Code',
+                    width: 100
+                }, {
+                    field: 'name',
+                    title: 'Name',
+                    width: 150
+                }, {
+                    field: 'country',
+                    title: 'Country of Origin',
+                    width: 150
+                }, {
+                    field: 'estimate',
+                    title: 'Estimate (Days)',
+                    width: 80
+                }]
+            ],
+            onSelect: function(val, ship){
+                var day = ship.estimate;
+
+                $("#etd").datebox({
+                    readonly: false,
+                    onChange: function(etd){
+                        let etdDate = new Date(etd);
+
+                        if(day > 0){
+                            etdDate.setDate(etdDate.getDate() + day);
+                        }
+
+                        let etaStr = etdDate.toISOString().split('T')[0];
+
+                        // Set nilai ETA
+                        $("#eta").datebox('setValue', etaStr);
+                    }
+                });
+            }
+        });
+
         $("#supplier_id").combogrid({
             url: '<?php echo base_url('purchase/purchase_orders/readSupplier'); ?>',
             panelWidth: 300,
@@ -1127,6 +1190,19 @@
                 }]
             ],
             onSelect: function(val, supp){
+                if(supp.type == "LOCAL"){
+                    $.ajax({
+                        type: "post",
+                        url: "<?= base_url("purchase/delivery_confirm/autoInvoice") ?>",
+                        data: "plant=" + plant.number,
+                        dataType: "json",
+                        success: function (response) {
+                            $("#invoice_no").textbox('setValue', response.invoice_no);
+                            $("#delivery_no").textbox('setValue', response.delivery_no);
+                        }
+                    });
+                }
+
                 addTable(supp.id);
             }
         });
@@ -1183,6 +1259,14 @@
     function numberformat(value, row) {
         const formatter = new Intl.NumberFormat('ja-JP', {
             minimumFractionDigits: 0
+        });
+
+        return "<b>" + formatter.format(value) + "</b>";
+    }
+
+    function numberformatprice(value, row) {
+        const formatter = new Intl.NumberFormat('ja-JP', {
+            minimumFractionDigits: 4
         });
 
         return "<b>" + formatter.format(value) + "</b>";

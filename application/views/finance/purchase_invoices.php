@@ -207,7 +207,7 @@
                     <th hidden rowspan="2" data-options="field:'asset_code',width:150, editor: {type: 'textbox'}">Asset Code</th>
                     <th rowspan="2" data-options="field:'por_no',width:150,editor: {type: 'textbox'}">POR. No</th>
                     <th rowspan="2" data-options="field:'po_no',width:180,editor: {type: 'textbox'}">PO. No</th>
-                    <th rowspan="2" data-options="field:'item_rm_id',width:120,editor: {type: 'textbox', options: {readonly: true}}">Part No</th>
+                    <th rowspan="2" data-options="field:'item_rm_id',width:120,editor: {type: 'textbox', options: {readonly: true}}">Part No EBWS</th>
                     <th rowspan="2" data-options="field:'item_rm_number',width:150,editor: {type: 'textbox', options: {required: true}}">Part No Supplier</th>
                     <th rowspan="2" data-options="field:'item_family_name',width:120,editor: {type: 'textbox', options: {readonly: true}}">Product Family</th>
                     <th rowspan="2" data-options="field:'hsn_code',width:100,editor: {type: 'textbox', options: {readonly: true}}">HSN Code</th>
@@ -1581,7 +1581,7 @@
                             width: 180
                         }, {
                             field: 'item_rm_id',
-                            title: 'Part No',
+                            title: 'Part No EBWS',
                             halign: 'center',
                             width: 120
                         }, {

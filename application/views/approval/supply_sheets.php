@@ -13,7 +13,7 @@
             <th data-options="field:'request_name',width:150,halign:'center'">Request Name</th>
             <th data-options="field:'number_customer',width:150,halign:'center'">Product No</th>
             <th data-options="field:'workorder',width:150,halign:'center'">Workorder</th>
-            <th data-options="field:'item_rm_id',width:150,halign:'center'">Part No</th>
+            <th data-options="field:'item_rm_id',width:150,halign:'center'">Part No EBWS</th>
             <th data-options="field:'item_rm_number',width:150,halign:'center'">Part No Supplier</th>
             <th data-options="field:'item_rm_name',width:150,halign:'center'">Part Name</th>
             <th data-options="field:'qty_act',width:80,halign:'center',align:'right',formatter: numberformat">Qty</th>

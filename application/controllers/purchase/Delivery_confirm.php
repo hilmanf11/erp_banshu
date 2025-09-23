@@ -56,18 +56,20 @@ class Delivery_confirm extends CI_Controller
         $post = isset($_POST['q']) ? $_POST['q'] : "";
         $po_no = base64_decode($po_no);
 
-        $data = $this->crud->query("SELECT b.id, b.number, b.name, a.qty as qty_po, 
+        $data = $this->crud->query("SELECT b.id, b.number, b.name, a.qty as qty_po,
+                a.price,
+                a.currency,
                 (a.qty - COALESCE(SUM(c.delivery), 0)) as qty, 
                 a.uom, 
-                a.delivery_date, 
-                DATE_FORMAT(now(), '%Y-%m-%d') as today, 
+                a.delivery_date as today, 
+                (CASE WHEN a.plant = 'GE' THEN DATE_ADD(a.delivery_date, INTERVAL 45 DAY) ELSE  DATE_ADD(a.delivery_date, INTERVAL 7 DAY) END) as delivery_date,
                 (a.qty - COALESCE(SUM(c.delivery), 0)) as delivery, 
                 COALESCE(SUM(c.delivery), 0) as actual
             FROM purchase_orders a 
             JOIN item_rm b ON a.item_rm_id = b.id
             LEFT JOIN purchase_confirm c ON a.po_no = c.po_no and a.item_rm_id = c.item_rm_id and a.supplier_id = c.supplier_id
             LEFT JOIN convertions d ON a.item_rm_id = d.item_rm_id
-            WHERE a.po_no = '$po_no' and a.status = 0 and (b.number LIKE '%$post%' and b.id like '%$post%')
+            WHERE a.po_no = '$po_no' and a.status = 0 and (b.number LIKE '%$post%' or b.id like '%$post%')
             GROUP BY a.item_rm_id
             ORDER BY b.number asc");
         echo json_encode($data);
@@ -114,6 +116,48 @@ class Delivery_confirm extends CI_Controller
         }
     }
 
+    public function autoInvoice(){
+        if($this->input->post()){
+            if($this->input->post('plant') != "GE"){
+                $period = date("Ym");
+                $whereDate = "INV-".$period;
+                $whereDate2 = "DN-".$period;
+
+                $sqlGetID = $this->db->query("SELECT max(invoice_no) as kode FROM purchase_confirm WHERE invoice_no like '%$whereDate%'");
+                $rowID = $sqlGetID->row();
+                $kode = $rowID->kode;
+
+                $sqlGetID2 = $this->db->query("SELECT max(delivery_no) as kode FROM purchase_confirm WHERE delivery_no like '%$whereDate2%'");
+                $rowID2 = $sqlGetID2->row();
+                $kode2 = $rowID2->kode;
+                
+                if ($kode == NULL) {
+                    $autoID = sprintf("%03s", $kode + 1);
+                    $autoNoInv = $whereDate.$autoID;
+                } else {
+                    $urutan = (int) substr($kode, -2);
+                    $urutan++;
+                    $autoID	= sprintf("%03s", $urutan);
+                    $autoNoInv = $whereDate.$autoID;
+                }
+
+                if ($kode2 == NULL) {
+                    $autoID2 = sprintf("%03s", $kode2 + 1);
+                    $autoNoDn = $whereDate2.$autoID2;
+                } else {
+                    $urutan2 = (int) substr($kode2, -2);
+                    $urutan2++;
+                    $autoID2 = sprintf("%03s", $urutan2);
+                    $autoNoDn = $whereDate2.$autoID2;
+                }
+
+                die(json_encode(array("invoice_no" => $autoNoInv, "delivery_no" => $autoNoDn)));
+            }else{
+                die(json_encode(array("invoice_no" => "", "delivery_no" => "")));
+            }
+        }
+    }
+
     public function datatables()
     {
         if ($this->input->post()) {
@@ -135,15 +179,11 @@ class Delivery_confirm extends CI_Controller
             $offset = ($page - 1) * $rows;
             $result = array();
             //Select Query
-            // $this->db->select("a.*, b.name as supplier_name, c.number as item_rm_number, c.name as item_rm_name, d.name as item_family_name, e.receipt");
-            $this->db->select("a.*, (CASE WHEN a.uom = '' THEN c.uom ELSE a.uom END) as uom, b.name as supplier_name, c.number as item_rm_number, c.name as item_rm_name, d.name as item_family_name, f.qty_confirm, (e.qty + (f.qty_confirm - a.delivery)) as qty_remain, e.qty as qty_po, (e.qty + (f.qty_confirm - a.delivery) - a.delivery) as balance");
+            $this->db->select("a.*, b.name as supplier_name, d.receipt_no");
             $this->db->from('purchase_confirm a');
             $this->db->join('suppliers b', 'a.supplier_id = b.id');
             $this->db->join('item_rm c', 'a.item_rm_id = c.id');
-            $this->db->join('item_familys d', 'c.item_family_id = d.id');
-            $this->db->join('purchase_orders e', 'a.supplier_id = e.supplier_id and a.item_rm_id = e.item_rm_id and a.po_no = e.po_no');
-            $this->db->join("(SELECT supplier_id, item_rm_id, po_no, SUM(delivery) as qty_confirm FROM purchase_confirm GROUP BY supplier_id, item_rm_id, po_no) f", 'a.supplier_id = f.supplier_id and a.item_rm_id = f.item_rm_id and a.po_no = f.po_no');
-            // $this->db->join("(SELECT po_no, bc_document, item_rm_id, supplier_id, SUM(qty_receipt) as receipt FROM purchase_order_receipts GROUP BY po_no, bc_document, item_rm_id, supplier_id) e", 'a.po_no = e.po_no and a.invoice_no = e.bc_document and a.item_rm_id = e.item_id and a.supplier_id = e.supplier_id', 'left');            
+            $this->db->join('purchase_order_receipts d', 'a.invoice_no = d.bc_document and a.item_rm_id = d.item_rm_id and a.supplier_id = d.supplier_id', 'left');
             if ($filter_from != "" and $filter_to != "") {
                 $this->db->where("DATE_FORMAT(a.created_date, '%Y-%m-%d') >=", $filter_from);
                 $this->db->where("DATE_FORMAT(a.created_date, '%Y-%m-%d') <=", $filter_to);
@@ -158,10 +198,11 @@ class Delivery_confirm extends CI_Controller
             $this->db->like('a.po_no', $filter_po_no);
             $this->db->like('c.item_family_id', $filter_product_family);
             $this->db->like('a.item_rm_id', $filter_item_rm_id);
+            $this->db->group_by('a.invoice_no');
+            $this->db->group_by('a.supplier_id');
             $this->db->order_by('a.status', 'ASC');
             $this->db->order_by('a.supplier_id', 'ASC');
-            $this->db->order_by('a.delivery_no', 'ASC');
-            $this->db->order_by('a.item_rm_id', 'ASC');
+            $this->db->order_by('a.invoice_no', 'ASC');
             //Total Data
             $totalRows = $this->db->count_all_results('', false);
             //Limit 1 - 10
@@ -175,23 +216,50 @@ class Delivery_confirm extends CI_Controller
         }
     }
 
-    // UPDATE DATA
-    // public function datatableUpdates()
-    // {
-    //     if ($this->input->get()) {
-    //         $delivery_no = base64_decode($this->input->get('delivery_no'));
+    public function datatableDetails(){
+        $invoice_no = base64_decode($this->input->get('invoice_no'));
+        $supplier_id = base64_decode($this->input->get('supplier_id'));
 
-    //         $this->db->select("a.*, b.name as supplier_name, c.number as item_rm_number, '0' as actual, (a.qty - a.delivery) as balance, c.name as item_rm_name, d.name as item_family_name");
-    //         $this->db->from('purchase_confirm a');
-    //         $this->db->join('suppliers b', 'a.supplier_id = b.id');
-    //         $this->db->join('item_rm c', 'a.item_rm_id = c.id');
-    //         $this->db->join('item_familys d', 'c.item_family_id = d.id');
-    //         $this->db->where('a.delivery_no', $delivery_no);
-    //         $records = $this->db->get()->result_array();
+        $this->db->select("a.*, (CASE WHEN a.uom = '' THEN c.uom ELSE a.uom END) as uom, b.name as supplier_name, c.number as item_rm_number, c.name as item_rm_name, d.name as item_family_name, f.qty_confirm, (e.qty + (f.qty_confirm - a.delivery)) as qty_remain, e.qty as qty_po, (e.qty + (f.qty_confirm - a.delivery) - a.delivery) as balance");
+        $this->db->from('purchase_confirm a');
+        $this->db->join('suppliers b', 'a.supplier_id = b.id');
+        $this->db->join('item_rm c', 'a.item_rm_id = c.id');
+        $this->db->join('item_familys d', 'c.item_family_id = d.id');
+        $this->db->join('purchase_orders e', 'a.supplier_id = e.supplier_id and a.item_rm_id = e.item_rm_id and a.po_no = e.po_no');
+        $this->db->join("(SELECT supplier_id, item_rm_id, po_no, SUM(delivery) as qty_confirm FROM purchase_confirm GROUP BY supplier_id, item_rm_id, po_no) f", 'a.supplier_id = f.supplier_id and a.item_rm_id = f.item_rm_id and a.po_no = f.po_no');      
+        $this->db->where('a.invoice_no', $invoice_no);
+        $this->db->where('a.supplier_id', $supplier_id);
+        $this->db->group_by('a.id');
+        $this->db->order_by('a.status', 'ASC');
+        $this->db->order_by('a.supplier_id', 'ASC');
+        $this->db->order_by('a.delivery_no', 'ASC');
+        $this->db->order_by('a.item_rm_id', 'ASC');
+        $records = $this->db->get()->result_array();
 
-    //         echo json_encode($records);
-    //     }
-    // }
+        //Mapping Data
+        $result['total'] = count($records);
+        $result = array_merge($result, ['rows' => $records]);
+        echo json_encode($result);
+    }
+
+    //UPDATE DATA
+    public function datatableUpdates()
+    {
+        if ($this->input->get()) {
+            $invoice_no = base64_decode($this->input->get('invoice_no'));
+
+            $this->db->select("a.*, b.name as supplier_name, c.number as item_rm_number, e.qty as qty_po, '0' as actual, (a.qty - a.delivery) as balance, c.name as item_rm_name, d.name as item_family_name");
+            $this->db->from('purchase_confirm a');
+            $this->db->join('suppliers b', 'a.supplier_id = b.id');
+            $this->db->join('item_rm c', 'a.item_rm_id = c.id');
+            $this->db->join('item_familys d', 'c.item_family_id = d.id');
+            $this->db->join('purchase_orders e', 'a.po_no = e.po_no and a.item_rm_id = e.item_rm_id');
+            $this->db->where('a.invoice_no', $invoice_no);
+            $records = $this->db->get()->result_array();
+
+            echo json_encode($records);
+        }
+    }
 
     //UPLOAD IMAGE
     public function uploadAttachment($file_bf = ""){
@@ -223,6 +291,7 @@ class Delivery_confirm extends CI_Controller
             $post = $this->input->post();
             $id = $post['id'];
             $dataFinals = array(
+                "plant" => $post['plant'],
                 "supplier_id" => $post['supplier_id'],
                 "delivery_no" => $post['delivery_no'],
                 "invoice_no" => trim($post['invoice_no']),
@@ -237,18 +306,21 @@ class Delivery_confirm extends CI_Controller
                 "eta" => $post['eta'],
                 "etd" => $post['etd'],
                 "qty" => $post['qty'],
+                "currency" => $post['currency'],
+                "price" => $post['price'],
+                "total" => $post['total'],
                 "delivery" => $post['delivery'],
             );
  
             if($id != ""){
-                if($post['balance'] > 0){
-                    $status = 0;
-                }else{
-                    $status = 1;
-                }
-
-                $send = $this->crud->update('purchase_confirm', ["id" => $id], ["delivery" => $post['delivery'], "invoice_date" => $post['invoice_date'], "awb_no" => $post['awb_no'], "awb_date" => $post['awb_date']]);
-                $this->db->update('purchase_orders', ["status" => $status], ["po_no" => $post['po_no'], "item_rm_id" => $post['item_rm_id']]);
+                $send = $this->crud->update('purchase_confirm', ["id" => $id], [
+                    "shipping" => $post['shipping'], 
+                    "etd" => $post['etd'], 
+                    "eta" => $post['eta'], 
+                    "invoice_date" => $post['invoice_date'], 
+                    "awb_no" => $post['awb_no'], 
+                    "awb_date" => $post['awb_date']
+                ]);
                 echo $send;
             }else{
                 if($post['balance'] > 0){
@@ -266,23 +338,15 @@ class Delivery_confirm extends CI_Controller
         }
     }
 
-    public function update()
-    {
-        if ($this->input->post()) {
-            // $id   = base64_decode($this->input->get('id'));
-            $post = $this->input->post();
-            $send = $this->crud->update('purchase_confirm', ["id" => $post['id']], $post);
-            echo $send;
-        } else {
-            show_error("Cannot Process your request");
-        }
-    }
-
     public function delete()
     {
         $data = $this->input->post();
-        $send = $this->crud->delete('purchase_confirm', $data);
-        $this->db->update('purchase_orders', ["status" => 0], ["po_no" => $data['po_no'], "item_rm_id" => $data['item_rm_id']]);
+        $reads = $this->crud->reads('purchase_confirm', [], $data);
+        foreach ($reads as $read) {
+            $send = $this->crud->delete('purchase_confirm', ["id" => $read->id]);
+            $this->db->update('purchase_orders', ["status" => 0], ["po_no" => $read->po_no, "item_rm_id" => $read->item_rm_id]);
+        }
+        
         echo $send;
     }
 
@@ -299,16 +363,20 @@ class Delivery_confirm extends CI_Controller
 
         for ($i = 3; $i <= $total_row; $i++) {
             $datas[] = array(
-                'delivery_no' => $data->val($i, 2),
-                'invoice_no' => $data->val($i, 3),
-                'invoice_date' => $data->val($i, 4),
-                'awb_no' => $data->val($i, 5),
-                'awb_date' => $data->val($i, 6),
-                'po_no' => $data->val($i, 7),
-                'supplier_id' => $data->val($i, 8),
-                'item_rm_id' => $data->val($i, 9),
-                'etd' => $data->val($i, 10),
-                'delivery' => $data->val($i, 11)
+                'plant' => $data->val($i, 2),
+                'supplier_id' => $data->val($i, 3),
+                'delivery_no' => $data->val($i, 4),
+                'invoice_no' => $data->val($i, 5),
+                'invoice_date' => $data->val($i, 6),
+                'shipping' => $data->val($i, 7),
+                'etd' => $data->val($i, 8),
+                'awb_no' => $data->val($i, 9),
+                'awb_date' => $data->val($i, 10),
+                'po_no' => $data->val($i, 11),
+                'item_rm_number' => $data->val($i, 12),
+                'delivery' => $data->val($i, 13),
+                'currency' => $data->val($i, 14),
+                'price' => $data->val($i, 15),
             );
         }
 
@@ -350,29 +418,41 @@ class Delivery_confirm extends CI_Controller
         if ($this->input->post()) {
             $post = $this->input->post('data');
 
-            $item_rm = $this->crud->read("item_rm", [], ["id" => $post['item_rm_id']]);
+            $item_rm = $this->crud->read("item_rm", [], ["number" => trim($post['item_rm_number'])]);
             $supplier = $this->crud->read("suppliers", [], ["id" => $post['supplier_id']]);
-            $purchase_order = $this->crud->read("purchase_orders", [], ["item_rm_id" => $post['item_rm_id'], "po_no" => $post['po_no'], "supplier_id" => $post['supplier_id']]);
-            $purchase_confirm = $this->crud->read("purchase_confirm", [], ["item_rm_id" => $post['item_rm_id'], "po_no" => $post['po_no'], "supplier_id" => $post['supplier_id'], "invoice_no" => $post['invoice_no']]);
+            $shipping = $this->crud->read("shipping", [], ["number" => $post['shipping']]);
+            $purchase_order = $this->crud->read("purchase_orders", [], ["item_rm_id" => @$item_rm->id, "po_no" => $post['po_no'], "supplier_id" => $post['supplier_id'], "price" => $post['price']]);
+            $purchase_confirm = $this->crud->read("purchase_confirm", [], ["item_rm_id" => @$item_rm->id, "po_no" => $post['po_no'], "supplier_id" => $post['supplier_id'], "invoice_no" => $post['invoice_no']]);
 
             if(empty($item_rm)){
-                echo json_encode(array("title" => "Not Found", "message" => "Part No ".$post['item_rm_id']." Not Found in Master Items", "theme" => "error"));
+                echo json_encode(array("title" => "Not Found", "message" => "Part No ".$post['item_rm_number']." Not Found in Master Items", "theme" => "error"));
             }elseif(empty($supplier)){
-                echo json_encode(array("title" => "Not Found", "message" => "Supplier ID ".$post['supplier_id']." Not Found in Master Suppliers", "theme" => "error"));
+                echo json_encode(array("title" => "Not Found", "message" => "Part No ".$post['item_rm_number']." on Supplier ID ".$post['supplier_id']." Not Found in Master Suppliers", "theme" => "error"));
             }elseif(empty($purchase_order)){
-                echo json_encode(array("title" => "Not Found", "message" => "PO No ".$post['po_no']." Not Match", "theme" => "error"));
+                echo json_encode(array("title" => "Not Found", "message" => "Part No ".$post['item_rm_number']." in PO No ".$post['po_no']." Price or PO No not Match", "theme" => "error"));
+            }elseif(empty($shipping)){
+                echo json_encode(array("title" => "Not Found", "message" => "Part No ".$post['item_rm_number']." Shipping Code ".$post['shipping']." Not Match", "theme" => "error"));
+            }elseif(!preg_match('/^\d{4}-\d{2}-\d{2}$/', $post['etd'])){
+                echo json_encode(array("title" => "Not Match", "message" => "Part No ".$post['item_rm_number']." on ETD ".$post['etd']." Format Not Match", "theme" => "error"));
             }elseif(!empty($purchase_confirm)){
-                echo json_encode(array("title" => "Duplicate", "message" => "Part No ".$post['item_rm_id']." and ".$post['po_no']." is already Exists", "theme" => "error"));
+                echo json_encode(array("title" => "Duplicate", "message" => "Part No ".$post['item_rm_number']." and ".$post['po_no']." is already Exists", "theme" => "error"));
             }else{
                 if(@$purchase_order->qty > $post['delivery']){
                     $status = "0";
                 }elseif(@$purchase_order->qty == $post['delivery']){
                     $status = "1";
                 }else{
-                    die(json_encode(array("title" => "More Qty", "message" => "Part No ".$post['item_rm_id']." in the PO ".$post['po_no']." qty is less than qty your input", "theme" => "error")));
+                    die(json_encode(array("title" => "More Qty", "message" => "Part No ".$post['item_rm_number']." in the PO ".$post['po_no'].", qty delivery more than qty PO", "theme" => "error")));
+                }
+
+                if($shipping->estimate > 0){
+                    $eta = date("Y-m-d", strtotime("+".$shipping->estimate." day", strtotime($post['etd'])));
+                }else{
+                    $eta = $post['etd'];
                 }
 
                 $postFinal = array(
+                    "plant" => $post['plant'],
                     "supplier_id" => $post['supplier_id'],
                     "delivery_no" => $post['delivery_no'],
                     "invoice_no" => $post['invoice_no'],
@@ -381,15 +461,19 @@ class Delivery_confirm extends CI_Controller
                     "awb_date" => $post['awb_date'],
                     "po_no" => $post['po_no'],
                     "po_date" => $purchase_order->po_date,
-                    "item_rm_id" => $post['item_rm_id'],
-                    "uom" => $item_rm->uom,
-                    "eta" => $purchase_order->delivery_date,
+                    "item_rm_id" => @$item_rm->id,
+                    "uom" => @$item_rm->uom,
+                    "eta" => $eta,
                     "etd" => $post['etd'],
+                    "shipping" => $shipping->name,
+                    "currency" => $post['currency'],
+                    "price" => $post['price'],
+                    "total" => ($post['price'] * $post['delivery']),
                     "qty" => $purchase_order->qty,
                     "delivery" => $post['delivery'],
                 );
                 
-                $this->db->update('purchase_orders', ["status" => $status], ["po_no" => $post['po_no'], "item_rm_id" => $post['item_rm_id']]);
+                $this->db->update('purchase_orders', ["status" => $status], ["po_no" => $post['po_no'], "item_rm_id" => @$item_rm->id]);
                 $send = $this->crud->create('purchase_confirm', $postFinal);
                 echo $send;
             }
@@ -474,7 +558,7 @@ class Delivery_confirm extends CI_Controller
                 <th>Invoice No</th>
                 <th>PO No</th>
                 <th>PO Date</th>
-                <th>Part No</th>
+                <th>Part No Original</th>
                 <th>Part No Supplier</th>
                 <th>Description</th>
                 <th>Product Family</th>
@@ -483,6 +567,10 @@ class Delivery_confirm extends CI_Controller
                 <th>Plan Delivery</th>
                 <th>ETD</th>
                 <th>ETA</th>
+                <th>Shipping</th>
+                <th>Currency</th>
+                <th>Price</th>
+                <th>Total</th>
             </tr>';
         $no = 1;
         foreach ($records as $data) {
@@ -509,6 +597,10 @@ class Delivery_confirm extends CI_Controller
                             <td>' . $data['delivery'] . '</td>
                             <td>' . $data['etd'] . '</td>
                             <td>' . $data['eta'] . '</td>
+                            <td>' . $data['shipping'] . '</td>
+                            <td>' . $data['currency'] . '</td>
+                            <td>' . $data['price'] . '</td>
+                            <td>' . $data['total'] . '</td>
                         </tr>';
             $no++;
         }

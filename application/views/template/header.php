@@ -35,7 +35,7 @@ $config = $this->db->get()->row();
     <script type="text/javascript" src="<?= base_url('assets/datagrid-scrollview.js') ?>"></script>
     <script type="text/javascript" src="<?= base_url('assets/datagrid-detailview.js') ?>"></script>
     <script type="text/javascript" src="<?= base_url('assets/datagrid-filter.js') ?>"></script>
-    <script type="text/javascript" src="<?= base_url('assets/datagrid-export.js') ?>"></script>
+    <script type="text/javascript" src="<?= base_url('assets/datagrid-export.js?') . time() ?>"></script>
     <!-- Fontawesome -->
     <link rel="stylesheet" type="text/css" href="<?= base_url('assets/icons/fontawesome/css/font-awesome.min.css') ?>">
 
@@ -48,6 +48,14 @@ $config = $this->db->get()->row();
     <script type="text/javascript" src="<?= base_url('assets/vendors/sweetalert2.all.min.js') ?>"></script>
     <script type="text/javascript" src="<?= base_url('assets/vendors/summernote/summernote-lite.js') ?>"></script>
     <!-- <script type="text/javascript" src="<?= base_url('assets/bootstrap/js/bootstrap.min.js?3') ?>"></script> -->
+    <!-- <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script> -->
+
+    <!-- <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
+        }
+    </script> -->
+
     <style type="text/css">
         .preloader {
             position: fixed;

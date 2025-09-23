@@ -4,7 +4,7 @@
             <th rowspan="2" field="ck" checkbox="true"></th>
             <th rowspan="2" data-options="field:'number',width:180,halign:'center'">Sample No.</th>
             <!-- <th rowspan="2" data-options="field:'status',width:80,align:'center',formatter:statusformat,styler:statusStyle">Status</th> -->
-            <th rowspan="2" data-options="field:'item_rm_number',width:150,halign:'center'">Part No</th>
+            <th rowspan="2" data-options="field:'item_rm_number',width:150,halign:'center'">Part No EBWS</th>
             <th rowspan="2" data-options="field:'item_rm_number',width:150,halign:'center'">Part No Supplier</th>
             <th rowspan="2" data-options="field:'item_rm_name',width:200,halign:'center'">Description</th>
             <th rowspan="2" data-options="field:'item_category_name',width:200,halign:'center'">Category</th>
@@ -103,7 +103,7 @@
                 <input style="width:60%;" name="number" readonly class="easyui-textbox">
             </div>
             <div class="fitem">
-                <span style="width:35%; display:inline-block;">Part No</span>
+                <span style="width:35%; display:inline-block;">Part No EBWS</span>
                 <input style="width:60%;" name="item_rm_id" readonly class="easyui-textbox">
             </div>
             <div class="fitem">
@@ -230,7 +230,7 @@
                     field: 'item_rm_id',
                     width: 150,
                     halign: 'center',
-                    title: "Part No",
+                    title: "Part No EBWS",
                     editor: {
                         type: 'combogrid',
                         options: {
@@ -245,7 +245,7 @@
                             columns: [
                                 [{
                                     field: 'item_rm_id',
-                                    title: 'Part No',
+                                    title: 'Part No EBWS',
                                     width: 100
                                 }, {
                                     field: 'item_number',
@@ -877,7 +877,7 @@
                 columns: [
                     [{
                         field: 'id',
-                        title: 'Part No',
+                        title: 'Part No EBWS',
                         width: 150
                     }, {
                         field: 'number',

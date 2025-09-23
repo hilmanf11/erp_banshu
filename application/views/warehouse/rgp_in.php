@@ -368,7 +368,7 @@
                     field: 'item_id',
                     width: 160,
                     halign: 'center',
-                    title: "Part No",
+                    title: "Part No EBWS",
                     editor: {
                         type: 'combogrid',
                         options: {
@@ -380,11 +380,11 @@
                             textField: 'id',
                             mode: 'remote',
                             fitColumns: true,
-                            prompt: 'Choose Part No',
+                            prompt: 'Choose Part No EBWS',
                             columns: [
                                 [{
                                     field: 'id',
-                                    title: 'Part No',
+                                    title: 'Part No EBWS',
                                     width: 150
                                 }, {
                                     field: 'number',
@@ -1092,7 +1092,7 @@
                             width: 160
                         }, {
                             field: 'item_id',
-                            title: 'Part No',
+                            title: 'Part No EBWS',
                             halign: 'center',
                             width: 150
                         }, {

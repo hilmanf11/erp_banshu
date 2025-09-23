@@ -386,7 +386,7 @@ class Inventory_rm extends CI_Controller
             $html .= '<table id="customers" border="1" style="width: 100%">
                             <tr>
                                 <th width="10" rowspan="2"width="20">No</th>
-                                <th width="100" rowspan="2">Part No</th>
+                                <th width="100" rowspan="2">Part No EBWS</th>
                                 <th width="200" rowspan="2">Part No Supplier</th>
                                 <th width="200" rowspan="2">Description</th>
                                 <th width="50" rowspan="2">Uom</th>
@@ -780,7 +780,7 @@ class Inventory_rm extends CI_Controller
             $html .= '<table id="customers" style="width: 100%">
                         <tr>
                             <th rowspan="2" width="20">No</th>
-                            <th rowspan="2">Part No</th>
+                            <th rowspan="2">Part No EBWS</th>
                             <th rowspan="2">Part No Supplier</th>
                             <th rowspan="2">Description</th>
                             <th rowspan="2">Trans Type</th>

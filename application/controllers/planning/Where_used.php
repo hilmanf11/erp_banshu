@@ -80,16 +80,16 @@ class Where_used extends CI_Controller
                     </center>
                     <br><br><br>
                     <center>
-                        <b style="font-size:20px;">WHERE USED</b><br><small>Part No '.$filter_item_rm_id.'</small><br><br>
+                        <b style="font-size:20px;">WHERE USED</b><br><small>Part No Original '.$filter_item_rm_id.'</small><br><br>
                     </center>
                     <table id="customers" border="1">
                         <tr>
                             <th width="30">No</th>
-                            <th style="text-align:center;">Part No</th>
-                            <th style="text-align:center;">Part No Supplier</th>
+                            <th style="text-align:center;">Part No Original</th>
+                            <th style="text-align:center;">Part No BEI</th>
                             <th style="text-align:center;">Description</th>
-                            <th style="text-align:center;">Product No EBWS</th>
-                            <th style="text-align:center;">Product No Supplier</th>
+                            <th style="text-align:center;">Product No</th>
+                            <th style="text-align:center;">Part No Customer</th>
                             <th style="text-align:center;">Description</th>
                             <th style="text-align:center;">Qty</th>
                             <th style="text-align:center;">Customer</th>

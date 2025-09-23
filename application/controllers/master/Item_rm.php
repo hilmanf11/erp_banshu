@@ -485,28 +485,28 @@ class Item_rm extends CI_Controller
                 echo json_encode(array("title" => "Not Found", "message" => "Product Family " . $data['item_family_number'] . " Not Found", "theme" => "error"));
                 // } elseif ($data['item_category_number'] == "FA") {
                 //     echo json_encode(array("title" => "Fixed Asset", "message" => "Category " . $data['item_category_number'] . " Cannot Create in Master RM", "theme" => "error"));
-            }
+            // }
             //  elseif (empty(@$account_coa->account_number) && $product_family->number != "FA") {
             //     echo json_encode(array("title" => "Not Found", "message" => "COA No " . @$data['account_number'] . " Not Found", "theme" => "error"));
             // } 
-            elseif (empty($hsn->name)) {
-                echo json_encode(array("title" => "Not Found", "message" => "HSN Code " . $data['hsn_code'] . " Not Found", "theme" => "error"));
-            } elseif (empty($kind->name)) {
-                echo json_encode(array("title" => "Not Found", "message" => "Kind Code " . $data['kind'] . " Not Found", "theme" => "error"));
-            } elseif (empty($size->name)) {
-                echo json_encode(array("title" => "Not Found", "message" => "Size Code " . $data['size'] . " Not Found", "theme" => "error"));
-            } elseif (empty($color1->name)) {
-                echo json_encode(array("title" => "Not Found", "message" => "Color 1 Code " . $data['color_1'] . " Not Found", "theme" => "error"));
-            } elseif (empty($color2->name)) {
-                echo json_encode(array("title" => "Not Found", "message" => "Color 2 Code " . $data['color_2'] . " Not Found", "theme" => "error"));
-            } elseif (empty($platting->name)) {
-                echo json_encode(array("title" => "Not Found", "message" => "Platting Code " . $data['platting'] . " Not Found", "theme" => "error"));
-            } elseif (empty($maker->name)) {
-                echo json_encode(array("title" => "Not Found", "message" => "Maker Code " . $data['maker_code'] . " Not Found", "theme" => "error"));
+            // elseif (empty($hsn->name)) {
+            //     echo json_encode(array("title" => "Not Found", "message" => "HSN Code " . $data['hsn_code'] . " Not Found", "theme" => "error"));
+            // } elseif (empty($kind->name)) {
+            //     echo json_encode(array("title" => "Not Found", "message" => "Kind Code " . $data['kind'] . " Not Found", "theme" => "error"));
+            // } elseif (empty($size->name)) {
+            //     echo json_encode(array("title" => "Not Found", "message" => "Size Code " . $data['size'] . " Not Found", "theme" => "error"));
+            // } elseif (empty($color1->name)) {
+            //     echo json_encode(array("title" => "Not Found", "message" => "Color 1 Code " . $data['color_1'] . " Not Found", "theme" => "error"));
+            // } elseif (empty($color2->name)) {
+            //     echo json_encode(array("title" => "Not Found", "message" => "Color 2 Code " . $data['color_2'] . " Not Found", "theme" => "error"));
+            // } elseif (empty($platting->name)) {
+            //     echo json_encode(array("title" => "Not Found", "message" => "Platting Code " . $data['platting'] . " Not Found", "theme" => "error"));
+            // } elseif (empty($maker->name)) {
+            //     echo json_encode(array("title" => "Not Found", "message" => "Maker Code " . $data['maker_code'] . " Not Found", "theme" => "error"));
             } elseif (!empty($item_rm->number)) {
                 echo json_encode(array("title" => "Duplicated", "message" => " Part No. " . $data['number'] . " is Duplicate Data", "theme" => "error"));
-            } elseif (!empty($item_rm_name->name)) {
-                echo json_encode(array("title" => "Duplicated", "message" => " Part Name " . $data['name'] . " Similar Data in Item master", "theme" => "error"));
+            // } elseif (!empty($item_rm_name->name)) {
+            //     echo json_encode(array("title" => "Duplicated", "message" => " Part Name " . $data['name'] . " Similar Data in Item master", "theme" => "error"));
             } else {
                 $item_family_number = $product_family->number;
                 $y = date("y");
@@ -528,20 +528,20 @@ class Item_rm extends CI_Controller
                     "uom" => $data['uom'],
                     "item_category_id" => $category->id,
                     "item_family_id" => $product_family->id,
-                    "maker_id" => $maker->id,
-                    "kind" => $data['kind'],
-                    "size" => $data['size'],
-                    "color_1" => $data['color_1'],
-                    "color_2" => $data['color_2'],
-                    "male" => $data['male'],
-                    "waterproof" => $data['waterproof'],
-                    "platting" => $data['platting'],
-                    "hsn_code" => $data['hsn_code'],
-                    "account_number" => $product_family->account_number,
-                    "account_name" => $product_family->account_name,
-                    "description" => $data['description'],
-                    "supply" => $data['supply'],
-                    "type" => $data['type'],
+                    // "maker_id" => $maker->id,
+                    // "kind" => $data['kind'],
+                    // "size" => $data['size'],
+                    // "color_1" => $data['color_1'],
+                    // "color_2" => $data['color_2'],
+                    // "male" => $data['male'],
+                    // "waterproof" => $data['waterproof'],
+                    // "platting" => $data['platting'],
+                    // "hsn_code" => $data['hsn_code'],
+                    // "account_number" => $product_family->account_number,
+                    // "account_name" => $product_family->account_name,
+                    // "description" => $data['description'],
+                    // "supply" => $data['supply'],
+                    // "type" => $data['type'],
                     "status" => $data['status'],
                 );
 
@@ -601,8 +601,8 @@ class Item_rm extends CI_Controller
         <table id="item_rm" border="1">
             <tr>
                 <th width="20">No</th>
-                <th>Part ID</th>
                 <th>Original Part No</th>
+                <th>Part No Supplier</th>
                 <th>Description</th>
                 <th>Maker</th>
                 <th>Type</th>

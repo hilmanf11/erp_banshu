@@ -4,36 +4,39 @@
         <tr>
             <th rowspan="2" field="ck" checkbox="true"></th>
             <th rowspan="2" data-options="field:'detail',width:80,halign:'center',formatter:BtnDetail">History</th>
-            <th rowspan="2" data-options="field:'plant',width:80,halign:'center'">Plant</th>
-            <th rowspan="2" data-options="field:'supplier_id',width:100,halign:'center'">Supplier ID</th>
+            <th rowspan="2" data-options="field:'plant',width:50,halign:'center'">Plant</th>
+            <th rowspan="2" data-options="field:'supplier_id',width:80,halign:'center'">Supplier ID</th>
             <!-- <th rowspan="2" data-options="field:'supplier_po',width:150,halign:'center'">Supplier PO</th> -->
             <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Supplier Name</th>
-            <th rowspan="2" data-options="field:'item_rm_id',width:150,halign:'center'">Original Part No</th>
-            <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No Supplier</th>
+            <th rowspan="2" data-options="field:'item_rm_id',width:120,halign:'center'">Original Part No</th>
+            <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No BEI</th>
+            <th rowspan="2" data-options="field:'item_supplier',width:150,halign:'center'">Part No Supplier</th>
             <th rowspan="2" data-options="field:'item_rm_name',width:150,halign:'center'">Description</th>
-            <!-- <th rowspan="2" data-options="field:'item_supplier',width:150,halign:'center'">Part Supplier</th> -->
             <th rowspan="2" data-options="field:'type',width:100,align:'center'">Supplier Type</th>
             <th rowspan="2" data-options="field:'origin',width:120,halign:'center'">Supplier Origin</th>
             <th rowspan="2" data-options="field:'item_family_name',width:120,halign:'center'">Product Family</th>
             <th rowspan="2" data-options="field:'maker_name',width:150,halign:'center'">Maker</th>
             <th rowspan="2" data-options="field:'maker_type',width:100,halign:'center'">Maker Type</th>
+            <th rowspan="2" data-options="field:'coo_name',width:120,halign:'center'">COO Name</th>
             <th rowspan="2" data-options="field:'spq',width:80,halign:'center',align:'right',formatter:numberformatComa">SPQ</th>
             <th rowspan="2" data-options="field:'mpq',width:80,halign:'center',align:'right',formatter:numberformatComa">MPQ</th>
             <th rowspan="2" data-options="field:'moq',width:80,halign:'center',align:'right',formatter:numberformatComa">MOQ</th>
             <th rowspan="2" data-options="field:'uom',width:80,align:'center'">UoM</th>
             <th rowspan="2" data-options="field:'currency',width:80,align:'center'">Currency</th>
             <th rowspan="2" data-options="field:'price',width:80,halign:'center',align:'right',formatter:numberformat">Price</th>
+            <th rowspan="2" data-options="field:'start_date',width:100,align:'center'">Start Date</th>
             <th rowspan="2" data-options="field:'valid_date',width:100,align:'center'">Valid Date</th>
             <th rowspan="2" data-options="field:'attachment',width:100,halign:'center',formatter:BtnAttachment">Attachment</th>
             <th rowspan="2" data-options="field:'attachment2',width:100,halign:'center',formatter:BtnAttachment2">Attachment 2</th>
             <th rowspan="2" data-options="field:'attachment3',width:100,halign:'center',formatter:BtnAttachment3">Attachment 3</th>
             <th rowspan="2" data-options="field:'landed_cost',width:80,align:'center'">Landed<br>Cost</th>
             <th rowspan="2" data-options="field:'import_duty',width:80,align:'center'">Import<br>Duty</th>
-            <th rowspan="2" data-options="field:'leadtime',width:80,align:'center'">Mfg L/T<br>(Days)</th>
-            <th rowspan="2" data-options="field:'transit',width:80,align:'center'">Transit<br>(Days)</th>
+            <th rowspan="2" data-options="field:'leadtime',width:80,align:'center'">Leadtime</th>
+            <!-- <th rowspan="2" data-options="field:'transit',width:80,align:'center'">Transit<br>(Days)</th> -->
             <th rowspan="2" data-options="field:'share_order',width:80,align:'center'">Share Order %<br></th>
             <th rowspan="2" data-options="field:'safety_stock',width:80,halign:'center',align:'right',formatter:numberformatComa">Safety <br>Stock<br>(%)</th>
             <th rowspan="2" data-options="field:'calculate',width:80,align:'center'">Calculate<br>MPQ</th>
+            <th rowspan="2" data-options="field:'rounded',width:80,align:'center'">Rounded<br>MPQ/MOQ</th>
             <th rowspan="2" data-options="field:'remarks',width:250,halign:'center'">Remarks</th>
             <th colspan="4" data-options="field:'',width:100,halign:'center'">Approved</th>
             <th colspan="2" data-options="field:'',width:100,halign:'center'"> Created</th>
@@ -135,21 +138,25 @@
                     <span style="width:35%; display:inline-block;">Supplier</span>
                     <input style="width:60%;" name="supplier_id" id="supplier_id" required="" class="easyui-combogrid">
                 </div>
-                <div class="fitem">
+                <div class="fitem" hidden>
                     <span style="width:35%; display:inline-block;">PO No</span>
                     <input style="width:60%;" name="supplier_po" id="supplier_po" disabled class="easyui-textbox">
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Part No</span>
+                    <span style="width:35%; display:inline-block;">Part No BEI</span>
                     <input style="width:60%;" name="item_rm_id" id="item_rm_id" required="" class="easyui-combogrid">
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Part Vendor</span>
+                    <span style="width:35%; display:inline-block;">Part No Supplier</span>
                     <input style="width:60%;" name="item_supplier" id="item_supplier" class="easyui-textbox">
                 </div>
                 <div class="fitem">
+                    <span style="width:35%; display:inline-block;">COO Name</span>
+                    <input style="width:60%;" name="coo_name" id="coo_name" class="easyui-textbox">
+                </div>
+                <div class="fitem">
                     <span style="width:35%; display:inline-block;">Maker</span>
-                    <input style="width:60%;" name="maker_id" id="maker_id" readonly class="easyui-combogrid">
+                    <input style="width:60%;" name="maker_id" id="maker_id" class="easyui-combogrid">
                 </div>
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">SPQ</span>
@@ -183,12 +190,12 @@
                     <input style="width:60%;" name="safety_stock" required="" class="easyui-numberbox" data-options="precision:2">
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Mfg L/T (Days)</span>
+                    <span style="width:35%; display:inline-block;">Leadtime</span>
                     <input style="width:60%;" name="leadtime" id="leadtime" required="" class="easyui-numberbox">
                 </div>
-                <div class="fitem">
+                <div class="fitem" hidden>
                     <span style="width:35%; display:inline-block;">Transit (Days)</span>
-                    <input style="width:60%;" name="transit" id="transit" required="" class="easyui-numberbox">
+                    <input style="width:60%;" name="transit" id="transit" class="easyui-numberbox">
                 </div>
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Currency</span>
@@ -199,24 +206,36 @@
                     <input style="width:60%;" name="price" id="price" class="easyui-numberbox" required data-options="precision:4">
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Valid Date</span>
-                    <input style="width:60%;" name="valid_date" id="valid_date" class="easyui-datebox" required data-options="formatter:myformatter,parser:myparser, editable:false">
+                    <span style="width:35%; display:inline-block;">Start Date</span>
+                    <input style="width:60%;" name="start_date" id="start_date" class="easyui-datebox" required data-options="formatter:myformatter,parser:myparser, editable:false">
                 </div>
             </div>
             <div style="width: 30%; float: left;">
                 <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Valid Date</span>
+                    <input style="width:60%;" name="valid_date" id="valid_date" class="easyui-datebox" required data-options="formatter:myformatter,parser:myparser, editable:false">
+                </div>
+                <div class="fitem" hidden>
                     <span style="width:35%; display:inline-block;">COA No</span>
                     <input style="width:60%;" name="account_number" id="account_number" class="easyui-combogrid">
                 </div>
-                <div class="fitem">
+                <div class="fitem" hidden>
                     <span style="width:35%; display:inline-block;">COA Name</span>
-                    <input style="width:60%;" name="account_name" id="account_name" class="easyui-textbox" readonly>
+                    <input style="width:60%;" id="account_name" class="easyui-textbox" readonly>
                 </div>
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Calculate MPQ</span>
                     <select style="width:60%;" name="calculate" class="easyui-combobox" panelHeight="auto">
                         <option value="YES">YES</option>
                         <option value="NO">NO</option>
+                    </select>
+                </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Rounded</span>
+                    <select style="width:60%;" name="rounded" class="easyui-combobox" panelHeight="auto">
+                        <option value="MPQ">MPQ</option>
+                        <option value="MOQ">MOQ</option>
+                        <option value="SPQ">SPQ</option>
                     </select>
                 </div>
                 <div class="fitem">
@@ -240,45 +259,41 @@
     </form>
 </div>
 
-<div id="dlg_history" class="easyui-dialog" title="History Supplier Contract" data-options="closed: true,modal:true" style="width: 60%; height: 500px; top: 0px; left: 0px;">
-    <table id="dg_history" class="easyui-datagrid" style="width:100%;">
-        <thead>
-            <tr>
-                <th data-options="field:'created_date',width:150,halign:'center'">Created Date</th>
-                <th data-options="field:'created_by',width:150,halign:'center'">Created By</th>
-                <!-- <th data-options="field:'item_rm_number',width:200,halign:'center'">Part No</th> -->
-                <!-- <th data-options="field:'mpq',width:80,halign:'center',align:'right',formatter:numberformatComa">MPQ</th> -->
-                <!-- <th data-options="field:'moq',width:80,halign:'center',align:'right',formatter:numberformatComa">MOQ</th> -->
-                <!-- <th data-options="field:'uom',width:80,align:'center'">UoM</th> -->
-                <th data-options="field:'price',width:80,halign:'center',align:'right',formatter:numberformat">Price</th>
-                <th data-options="field:'currency',width:80,align:'center'">Currency</th>
-                <th data-options="field:'valid_date',width:120,align:'center'">Valid Date</th>
-                <!-- <th data-options="field:'leadtime',width:80,align:'center'">Leadtime</th> -->
-                <!-- <th data-options="field:'share_order',width:80,align:'center'">Share Order</th> -->
-                <th data-options="field:'remarks',width:200,halign:'center'">Remarks</th>
-            </tr>
-        </thead>
-    </table>
-</div>
-
-<div id="dlg_price" class="easyui-dialog" title="Add New Price" data-options="closed: true,modal:true" style="width: 70%; height: 450px; top: 0px; left: 0px;" toolbar="#toolbar2">
-    <table id="dg_price" class="easyui-datagrid" style="width:100%;">
-        <thead>
-            <tr>
-                <th field="ck" checkbox="true"></th>
-                <th data-options="field:'start_date',width:100,align:'center'">Start Date</th>
-                <th data-options="field:'valid_date',width:100,align:'center'">Valid Date</th>
-                <th data-options="field:'price',width:100,halign:'center',align:'right',formatter:numberformat">Price</th>
-                <th data-options="field:'currency',width:80,align:'center'">Currency</th>
-                <th data-options="field:'remarks',width:250,halign:'center'">Remarks</th>
-                <th data-options="field:'created_date',width:150,halign:'center'">Created Date</th>
-                <th data-options="field:'created_by',width:150,halign:'center'">Created By</th>
-                <th data-options="field:'approved_to',width:80,align:'center', styler:cellStylerApproval, formatter:cellFormatterApproval">Approved</th>
-                <th data-options="field:'approved_by',width:100,align:'center'">Approved By</th>
-                <th data-options="field:'approved_date',width:120,align:'center'">Approved Date</th>
-            </tr>
-        </thead>
-    </table>
+<div id="dlg_history" class="easyui-dialog" title="History Supplier Contract" data-options="closed: true,modal:true" style="width: 70%; height: 500px; top: 0px; left: 0px;">
+    <div id="tt" class="easyui-tabs" data-options="fit:true" style="width:100%;">
+        <div title="Historical Price">
+            <table id="dg_history" class="easyui-datagrid" style="width:100%;">
+                <thead>
+                    <tr>
+                        <th data-options="field:'created_date',width:150,halign:'center'">Created Date</th>
+                        <th data-options="field:'created_by',width:150,halign:'center'">Created By</th>
+                        <th data-options="field:'price',width:80,halign:'center',align:'right',formatter:numberformat">Price</th>
+                        <th data-options="field:'currency',width:80,align:'center'">Currency</th>
+                        <th data-options="field:'start_date',width:120,align:'center'">Start Date</th>
+                        <th data-options="field:'valid_date',width:120,align:'center'">Valid Date</th>
+                        <th data-options="field:'remarks',width:200,halign:'center'">Remarks</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+        <div title="Historical MPQ, MOQ">
+            <table id="dg_history2" class="easyui-datagrid" style="width:100%;">
+                <thead>
+                    <tr>
+                        <th data-options="field:'created_date',width:150,halign:'center'">Created Date</th>
+                        <th data-options="field:'created_by',width:150,halign:'center'">Created By</th>
+                        <th data-options="field:'item_supplier',width:200,halign:'center'">Part No Supplier</th>
+                        <th data-options="field:'mpq',width:80,halign:'center',align:'right',formatter:numberformatComa">SPQ</th>
+                        <th data-options="field:'mpq',width:80,halign:'center',align:'right',formatter:numberformatComa">MPQ</th>
+                        <th data-options="field:'moq',width:80,halign:'center',align:'right',formatter:numberformatComa">MOQ</th>
+                        <th data-options="field:'leadtime',width:80,align:'center'">Leadtime</th>
+                        <th data-options="field:'share_order',width:80,align:'center'">Share Order</th>
+                        <th data-options="field:'remarks',width:200,halign:'center'">Remarks</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
 </div>
 
 <!-- UPLOAD DATA -->
@@ -312,6 +327,7 @@
         $('#frm_insert').form('clear');
 
         valid_date = "";
+        $("#plant").combobox('enable');
         $("#supplier_id").combogrid('enable');
         $("#item_rm_id").combogrid('enable');
         $("#item_family").combobox('enable');
@@ -325,6 +341,7 @@
             $('#frm_insert').form('load', row);
             $("#item_family").combobox('setValue', row.item_family_name);
             $("#item_rm_id").combogrid('setValue', row.item_rm_number);
+            $("#plant").combobox('disable');
             $("#supplier_id").combogrid('disable');
             $("#item_rm_id").combogrid('disable');
             $("#item_family").combobox('disable');
@@ -578,6 +595,15 @@
         $("#dlg_history").dialog('open');
 
         $('#dg_history').datagrid({
+            url: '<?= base_url('master/supplier_items/datatableHistory/yes') ?>?supplier_id=' + btoa(supplier_id) + "&item_rm_id=" + btoa(item_rm_id),
+            clientPaging: false,
+            remoteFilter: true,
+            rownumbers: true,
+            singleSelect: false,
+            fit:true,
+        });
+
+        $('#dg_history2').datagrid({
             url: '<?= base_url('master/supplier_items/datatableHistory') ?>?supplier_id=' + btoa(supplier_id) + "&item_rm_id=" + btoa(item_rm_id),
             clientPaging: false,
             remoteFilter: true,
@@ -637,8 +663,8 @@
                                 var leadtime = $("#leadtime").numberbox('getValue');
                                 var transit = $("#transit").numberbox('getValue');
 
-                                if(mpq <= 0 || moq <= 0 || price <= 0 || leadtime <= 0 || transit <= 0){
-                                    toastr.error("MPQ, MOQ, Price, Leadtime / Transit Cannot be 0");
+                                if(mpq <= 0 || moq <= 0 || price <= 0 || leadtime <= 0){
+                                    toastr.error("MPQ, MOQ, Price, Leadtime Cannot be 0");
                                     return false;
                                 }
 
@@ -880,8 +906,8 @@
             }],
             onSelect: function(row) {
                 $('#filter_item_rm').combogrid({
-                    url: '<?= base_url('planning/item_rm/reads/') ?>' + row.id,
-                    panelWidth: 320,
+                    url: '<?= base_url('master/item_rm/reads/') ?>' + row.id,
+                    panelWidth: 420,
                     idField: 'id',
                     textField: 'number',
                     mode: 'remote',
@@ -897,7 +923,7 @@
                         [{
                             field: 'number',
                             title: 'Part No',
-                            width: 100
+                            width: 200
                         }, {
                             field: 'name',
                             title: 'Part Name',
@@ -939,11 +965,11 @@
             onSelect: function(val, row) {
                 $("#supplier_po").textbox("setValue", row.supplier_po);
                 $("#currency").textbox("setValue", row.currency);
-                if(row.commodity == "NO"){
-                    $("#valid_date").datebox("disable");
-                }else{
-                    $("#valid_date").datebox("enable");
-                }
+                //if(row.commodity == "NO"){
+                    //$("#valid_date").datebox("disable");
+                //}else{
+                    //$("#valid_date").datebox("enable");
+                //}
             }
         });
 

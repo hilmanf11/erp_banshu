@@ -36,6 +36,7 @@
 
 	<!-- MAIN MENU -->
 	<div data-options="region:'west',split:false, collapsed:true, hideCollapsedContent:false, title:'Main Menu'" style="width:250px; padding:10px;">
+		<!-- <div id="google_translate_element"></div> -->
 		<input id="searchMenu" placeholder="Search Menus" onkeypress="searchMenu(this.value)" style="width:100%; padding: 5px;">
 		<br><br>
 		<ul class="easyui-tree" id="menu" data-options="url:'<?= base_url('home/menus') ?>', method:'get',animate:true, lines:true"></ul>

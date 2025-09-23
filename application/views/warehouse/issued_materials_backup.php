@@ -18,7 +18,7 @@
             <th rowspan="2" data-options="field:'wp',width:80,halign:'center'">WP</th>
             <th rowspan="2" data-options="field:'workorder',width:150,halign:'center'">WO ID</th>
             <th rowspan="2" data-options="field:'item_fg_number',width:150,halign:'center'">Product No</th>
-            <th rowspan="2" data-options="field:'item_rm_id',width:150,halign:'center'">Part No</th>
+            <th rowspan="2" data-options="field:'item_rm_id',width:150,halign:'center'">Part No EBWS</th>
             <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No Supplier</th>
             <th rowspan="2" data-options="field:'item_rm_name',width:200,halign:'center'">Description</th>
             <th colspan="3" data-options="field:'',width:100,halign:'center',align:'right',formatter:numberformat"> Quantity</th>

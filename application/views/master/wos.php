@@ -3,7 +3,7 @@
     <thead>
         <tr>
             <th rowspan="2" field="ck" checkbox="true"></th>
-            <th rowspan="2" data-options="field:'item_fg_number',width:150,halign:'center'">Part No</th>
+            <th rowspan="2" data-options="field:'item_fg_number',width:150,halign:'center'">Part No EBWS</th>
             <th rowspan="2" data-options="field:'number_customer',width:200,halign:'center'">Part No Customer</th>
             <th rowspan="2" data-options="field:'item_fg_name',width:200,halign:'center'">Description</th>
             <th rowspan="2" data-options="field:'circuit_no',width:100,align:'center'">CCT</th>

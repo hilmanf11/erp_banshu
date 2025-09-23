@@ -6,7 +6,7 @@
             <th rowspan="2" data-options="field:'status',width:80,align:'center',formatter:statusformat,styler:statusStyle">Status</th>
             <th rowspan="2" data-options="field:'trans_date',width:100,align:'center'">Trans Date</th>
             <th rowspan="2" data-options="field:'document',width:120,halign:'center'">Document No</th>
-            <th rowspan="2" data-options="field:'item_rm_id',width:100,halign:'center'">Part No</th>
+            <th rowspan="2" data-options="field:'item_rm_id',width:100,halign:'center'">Part No EBWS</th>
             <th rowspan="2" data-options="field:'item_rm_number',width:150,halign:'center'">Part No Supplier</th>
             <th rowspan="2" data-options="field:'item_rm_name',width:200,halign:'center'">Description</th>
             <th rowspan="2" data-options="field:'workorder',width:120,halign:'center'">Rejection No</th>
@@ -212,7 +212,7 @@
                         field: 'item_rm_id',
                         width: 120,
                         halign: 'center',
-                        title: "Part No",
+                        title: "Part No EBWS",
                         editor: {
                             type: 'textbox',
                             options: {
@@ -381,7 +381,7 @@
     //                 field: 'item_rm_id',
     //                 width: 250,
     //                 halign: 'center',
-    //                 title: "Part No",
+    //                 title: "Part No EBWS",
     //                 editor: {
     //                     type: 'combogrid',
     //                     options: {
@@ -396,7 +396,7 @@
     //                         columns: [
     //                             [{
     //                                 field: 'id',
-    //                                 title: 'Part No',
+    //                                 title: 'Part No EBWS',
     //                                 width: 100
     //                             }, {
     //                                 field: 'number',
@@ -904,7 +904,7 @@
                     columns: [
                         [{
                             field: 'id',
-                            title: 'Part No',
+                            title: 'Part No EBWS',
                             width: 150
                         },{
                             field: 'number',
