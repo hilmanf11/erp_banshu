@@ -118,14 +118,15 @@ class Setting_users extends CI_Controller
         }
         //Config
         $config = $this->crud->read('config');
-        $name = $this->input->get('name');
-        $this->db->select('a.*, b.name as menu_name');
-        $this->db->from('setting_users a');
-        $this->db->join('menus b', 'a.menus_id = b.id', 'join');
-        $this->db->where('a.deleted', 0);
-        $this->db->like('b.name', $name);
-        $this->db->order_by('b.name', 'ASC');
-        $records = $this->db->get()->result_array();
+        $username = $this->input->get('username');
+
+        $query  = $this->db->query("SELECT a.m_view,a.m_add,a.m_edit,a.m_delete,a.m_upload,a.m_download,a.m_print,a.m_excel,b.v_view, b.v_add,b.v_edit,b.v_delete,b.v_upload,b.v_download,b.v_print,b.v_excel, c.name, c.id, b.id as id_user_set 
+        FROM setting_menus a 
+        JOIN setting_users b on a.menus_id = b.menus_id 
+        JOIN menus c on a.menus_id = c.id 
+        WHERE b.users_id = '$username' ORDER BY c.sort asc");
+        $records = $query->result_array();
+
         $html = '<html><head><title>Print Data</title></head><style>body {font-family: Arial, Helvetica, sans-serif;}#customers {border-collapse: collapse;width: 100%;font-size: 12px;}#customers td, #customers th {border: 1px solid #ddd;padding: 2px;}#customers tr:nth-child(even){background-color: #f2f2f2;}#customers tr:hover {background-color: #ddd;}#customers th {padding-top: 2px;padding-bottom: 2px;text-align: left;color: black;}</style><body>
         <center>
             <div style="float: left; font-size: 12px; text-align: left;">
@@ -165,15 +166,15 @@ class Setting_users extends CI_Controller
         foreach ($records as $data) {
             $html .= '<tr>
                         <td>' . $no . '</td>
-                        <td>' . $data['menu_name'] . '</td>
-                        <td>' . $data['m_view'] . '</td>
-                        <td>' . $data['m_add'] . '</td>
-                        <td>' . $data['m_edit'] . '</td>
-                        <td>' . $data['m_delete'] . '</td>
-                        <td>' . $data['m_upload'] . '</td>
-                        <td>' . $data['m_download'] . '</td>
-                        <td>' . $data['m_print'] . '</td>
-                        <td>' . $data['m_excel'] . '</td>
+                        <td>' . $data['name'] . '</td>
+                        <td>' . $data['v_view'] . '</td>
+                        <td>' . $data['v_add'] . '</td>
+                        <td>' . $data['v_edit'] . '</td>
+                        <td>' . $data['v_delete'] . '</td>
+                        <td>' . $data['v_upload'] . '</td>
+                        <td>' . $data['v_download'] . '</td>
+                        <td>' . $data['v_print'] . '</td>
+                        <td>' . $data['v_excel'] . '</td>
                     </tr>';
             $no++;
         }

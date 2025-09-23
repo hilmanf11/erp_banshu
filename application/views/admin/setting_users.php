@@ -10,6 +10,7 @@
                     <div class="fitem">
                         <span style="width:150px; display:inline-block;">Name</span>
                         <input style="width:300px;" id="users_id" class="easyui-textbox">
+                        <a onclick="export_excel()" class="easyui-linkbutton">Export Excel</a>
                     </div>
                 </div>
             </div>
@@ -244,5 +245,14 @@
                 toastr.error("This data is already used in other modules, You must delete it First", "Error");
             }
         });
+    }
+
+    function export_excel(){
+        var users_id = $("#users_id").combogrid('getValue');
+        if(users_id != ""){
+            window.location.assign("<?= base_url('admin/setting_users/print/excel?username=') ?>" + users_id);
+        }else{
+            toastr.info("Please Choose Name first!");
+        }
     }
 </script>
