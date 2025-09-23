@@ -1246,9 +1246,9 @@ class Purchase_orders extends CI_Controller
 
                 $subtotal += ($record['total']);
                 if ($record['currency'] == "USD") {
-                    $digits = 2;
+                    $digits = 4;
                 } elseif ($record['currency'] == "JPY") {
-                    $digits = 2;
+                    $digits = 4;
                 } else {
                     $digits = 0;
                 }
@@ -1270,9 +1270,9 @@ class Purchase_orders extends CI_Controller
                                 <td style="text-align:center;">' . $etd . '</td>
                                 <td style="text-align:right;">' . number_format($record['qty']) . '</td>
                                 <td style="text-align:center;">' . $record['uom'] . '</td>
-                                <td style="text-align:right;">' . number_format($record['price'], $digits) . '</td>
+                                <td style="text-align:right;">' . number_format($record['price'], 4) . '</td>
                                 <td style="text-align:center;">' . $record['currency'] . '</td>
-                                <td style="text-align:right;">' . number_format($record['total'], $digits) . '</td>
+                                <td style="text-align:right;">' . number_format($record['total'], 2) . '</td>
                                 <td style="text-align:right;">' . number_format($prod1) . '</td>
                                 <td style="text-align:right;">' . number_format($prod2) . '</td>
                                 <td style="text-align:right;">' . number_format($prod3) . '</td>
@@ -1289,12 +1289,12 @@ class Purchase_orders extends CI_Controller
                             </tr>
                             <tr>
                                 <th style="text-align:left" colspan="2">Sub Total</th>
-                                <th style="text-align:right;">' . number_format($subtotal, $digits) . '</th>
+                                <th style="text-align:right;">' . number_format($subtotal, 2) . '</th>
                                 <th style="text-align:left" colspan="3" rowspan="4"></th>
                             </tr>
                             <tr>
                                 <th style="text-align:left" colspan="2">VAT (' . @$supplier->vat . '%)</th>
-                                <th style="text-align:right;">' . number_format(round((@$subtotal * @$supplier->vat) / 100), $digits) . '</th>
+                                <th style="text-align:right;">' . number_format(round((@$subtotal * @$supplier->vat) / 100), 2) . '</th>
                             </tr>
                             <tr>
                                 <th style="text-align:left" colspan="2">Down Payment</th>
@@ -1302,7 +1302,7 @@ class Purchase_orders extends CI_Controller
                             </tr>
                             <tr>
                                 <th style="text-align:left" colspan="2">Total Amount</th>
-                                <th style="text-align:right;">' . number_format($subtotal + ((@$subtotal * @$supplier->vat) / 100), $digits) . '</th>
+                                <th style="text-align:right;">' . number_format($subtotal + ((@$subtotal * @$supplier->vat) / 100), 2) . '</th>
                             </tr>
                         </table>';
             } else {

@@ -634,9 +634,9 @@ class Generate_mrp extends CI_Controller
                 $need_6 = $generate['prod_plan_6'];
 
                 if($filter_revision == 0){
-                    $need_11 += $need_1;
+                    $need_11 = $need_1;
                 }else{
-                    $need_11 += 0;
+                    $need_11 = 0;
                 }
 
                 // $this->db->select('item_rm_id, period, SUM(qty) as need');

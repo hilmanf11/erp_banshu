@@ -109,6 +109,34 @@ class Setting_users extends CI_Controller
             show_error("Cannot Process your request");
         }
     }
+
+    public function displayTreeTable($username, $menus_id = "", $level = 0){
+        $query = $this->db->query("SELECT a.menus_id, b.v_view, b.v_add, b.v_edit, b.v_delete, b.v_upload, b.v_download, b.v_print, b.v_excel, c.name, c.id, b.id as id_user_set 
+            FROM setting_menus a 
+            JOIN setting_users b on a.menus_id = b.menus_id 
+            JOIN menus c on a.menus_id = c.id 
+            WHERE b.users_id = '$username' and c.menus_id = '$menus_id' ORDER BY c.sort asc");
+        $records = $query->result_array();
+
+        foreach ($records as $data) {
+            $indent = str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $level);
+            echo '<tr>
+                        <td>' . $indent . $data['name'] . '</td>
+                        <td>' . $data['v_view'] . '</td>
+                        <td>' . $data['v_add'] . '</td>
+                        <td>' . $data['v_edit'] . '</td>
+                        <td>' . $data['v_delete'] . '</td>
+                        <td>' . $data['v_upload'] . '</td>
+                        <td>' . $data['v_download'] . '</td>
+                        <td>' . $data['v_print'] . '</td>
+                        <td>' . $data['v_excel'] . '</td>
+                    </tr>';
+            if (!empty($data['menus_id'])) {
+                $this->displayTreeTable($username, $data['menus_id'], $level + 1);
+            }
+        }
+    }
+    
     public function print($option = "")
     {
         if ($option == "excel") {
@@ -119,22 +147,13 @@ class Setting_users extends CI_Controller
         //Config
         $config = $this->crud->read('config');
         $username = $this->input->get('username');
+        $user = $this->crud->read("users", [], ["username" => $username]);
 
-        $query  = $this->db->query("SELECT a.m_view,a.m_add,a.m_edit,a.m_delete,a.m_upload,a.m_download,a.m_print,a.m_excel,b.v_view, b.v_add,b.v_edit,b.v_delete,b.v_upload,b.v_download,b.v_print,b.v_excel, c.name, c.id, b.id as id_user_set 
-        FROM setting_menus a 
-        JOIN setting_users b on a.menus_id = b.menus_id 
-        JOIN menus c on a.menus_id = c.id 
-        WHERE b.users_id = '$username' ORDER BY c.sort asc");
-        $records = $query->result_array();
-
-        $html = '<html><head><title>Print Data</title></head><style>body {font-family: Arial, Helvetica, sans-serif;}#customers {border-collapse: collapse;width: 100%;font-size: 12px;}#customers td, #customers th {border: 1px solid #ddd;padding: 2px;}#customers tr:nth-child(even){background-color: #f2f2f2;}#customers tr:hover {background-color: #ddd;}#customers th {padding-top: 2px;padding-bottom: 2px;text-align: left;color: black;}</style><body>
+        echo '<html><head><title>Print Data</title></head><style>body {font-family: Arial, Helvetica, sans-serif;}#customers {border-collapse: collapse;width: 100%;font-size: 12px;}#customers td, #customers th {border: 1px solid #ddd;padding: 2px;}#customers tr:nth-child(even){background-color: #f2f2f2;}#customers tr:hover {background-color: #ddd;}#customers th {padding-top: 2px;padding-bottom: 2px;text-align: left;color: black;}</style><body>
         <center>
             <div style="float: left; font-size: 12px; text-align: left;">
                 <table style="width: 100%;">
                     <tr>
-                        <td width="50" style="font-size: 12px; vertical-align: top; text-align: center; vertical-align:jus margin-right:10px;">
-                            <img src="' . $config->favicon . '" width="30">
-                        </td>
                         <td style="font-size: 14px; text-align: left; margin:2px;">
                             <b>' . $config->name . '</b><br>
                             <small>USER SETTING</small>
@@ -142,16 +161,21 @@ class Setting_users extends CI_Controller
                     </tr>
                 </table>
             </div>
-            <div style="float: right; font-size: 12px; text-align: right;">
-                Print Date ' . date("d M Y H:m:s") . ' <br>
-                Print By ' . $this->session->username . '  
-            </div>
         </center>
-        <br><br><br>
-        
+        <br>
+        <table style="font-size:12px;">
+            <tr>
+                <td>Fullname</td>
+                <td>: '.$user->name.'</td>
+            </tr>
+            <tr>
+                <td>Position</td>
+                <td>: '.$user->position.'</td>
+            </tr>
+        </table>
+        <br>
         <table id="customers" border="1">
             <tr>
-                <th width="20">No</th>
                 <th>Menu Name</th>
                 <th>View</th>
                 <th>Add</th>
@@ -162,23 +186,9 @@ class Setting_users extends CI_Controller
                 <th>Print</th>
                 <th>Excel</th>
             </tr>';
-        $no = 1;
-        foreach ($records as $data) {
-            $html .= '<tr>
-                        <td>' . $no . '</td>
-                        <td>' . $data['name'] . '</td>
-                        <td>' . $data['v_view'] . '</td>
-                        <td>' . $data['v_add'] . '</td>
-                        <td>' . $data['v_edit'] . '</td>
-                        <td>' . $data['v_delete'] . '</td>
-                        <td>' . $data['v_upload'] . '</td>
-                        <td>' . $data['v_download'] . '</td>
-                        <td>' . $data['v_print'] . '</td>
-                        <td>' . $data['v_excel'] . '</td>
-                    </tr>';
-            $no++;
-        }
-        $html .= '</table></body></html>';
-        echo $html;
+            
+        $this->displayTreeTable($username);
+        echo '</table></body></html>';
+        // echo $html;
     }
 }
