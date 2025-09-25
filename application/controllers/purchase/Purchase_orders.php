@@ -484,6 +484,22 @@ class Purchase_orders extends CI_Controller
                     $po_no = $this->purchaseOrderNo($supplier_no, $rowPlant->type);
                 }
 
+                $convert = $this->api->read("convertions", [], ["item_rm_id" => $purchase_request['item_rm_id']]);
+                if(empty($convert->uom_po)){
+                    $uom = $purchase_request['uom'];
+                    $qty = $purchase_request['qty'];
+                    $total = ($purchase_request['qty'] * $purchase_request['price']);
+                }else{
+                    $uom = $convert->uom_soft;
+                    if($convert->type == "Divided"){
+                        $qty = ($purchase_request['qty'] / $convert->convertion);
+                        $total = ($qty * $purchase_request['price']);
+                    }else{
+                        $qty = ($purchase_request['qty'] * $convert->convertion);
+                        $total = ($qty * $purchase_request['price']);
+                    }
+                }
+
                 $arr[] = array(
                     "supplier_id" => $purchase_request['supplier_id'],
                     "item_rm_id" => $purchase_request['item_rm_id'],
@@ -498,10 +514,10 @@ class Purchase_orders extends CI_Controller
                     "po_date" => date("Y-m-d"),
                     "po_name" => $this->session->name,
                     "delivery_date" => $delivery_date,
-                    "uom" => $purchase_request['uom'],
+                    "uom" => $uom,
                     "qty" => $purchase_request['qty'],
                     "price" => $purchase_request['price'],
-                    "total" => ($purchase_request['qty'] * $purchase_request['price']),
+                    "total" => $total,
                     "currency" => $purchase_request['currency'],
                     "leadtime" => $purchase_request['leadtime'],
                     "month_1" => $prod1,

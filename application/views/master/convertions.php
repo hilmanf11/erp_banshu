@@ -5,9 +5,12 @@
             <th rowspan="2" field="ck" checkbox="true"></th>
             <th rowspan="2" data-options="field:'item_rm_number',width:150,align:'center'">Part No</th>
             <th rowspan="2" data-options="field:'item_rm_name',width:200,halign:'center'">Part Name</th>
-            <th rowspan="2" data-options="field:'uom_po',width:150,halign:'center'">UOM PO</th>
-            <th rowspan="2" data-options="field:'uom_soft',width:150,halign:'center'">UOM Soft</th>
+            <th rowspan="2" data-options="field:'uom_po',width:80,halign:'center'">UOM From</th>
+            <th rowspan="2" data-options="field:'uom_soft',width:80,halign:'center'">UOM To</th>
             <th rowspan="2" data-options="field:'convertion',width:150,halign:'center'">Convertion</th>
+            <th rowspan="2" data-options="field:'mpq',width:80,halign:'center'">MPQ</th>
+            <th rowspan="2" data-options="field:'moq',width:80,halign:'center'">MOQ</th>
+            <th rowspan="2" data-options="field:'description',width:150,halign:'center'">Description</th>
             <th colspan="2" data-options="field:'',width:100,halign:'center'"> Created</th>
             <th colspan="2" data-options="field:'',width:100,halign:'center'"> Updated</th>
         </tr>
@@ -26,25 +29,37 @@
 </div>
 
 <!-- DIALOG SAVE AND UPDATE -->
-<div id="dlg_insert" class="easyui-dialog" title="Add New" data-options="closed: true,modal:true" style="width: 500px; padding:10px; top: 20px;">
+<div id="dlg_insert" class="easyui-dialog" title="Add New" data-options="closed: true,modal:true" style="width: 400px; padding:10px; top: 20px;">
     <form id="frm_insert" method="post" novalidate>
         <fieldset style="width:100%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
             <legend><b>Form Data</b></legend>
             <div class="fitem">
-                <span style="width:35%; display:inline-block;">Part No.</span>
+                <span style="width:35%; display:inline-block;">Part No</span>
                 <input style="width:60%;" name="item_rm_id" id="item_rm_id" required="" class="easyui-combobox">
             </div>
             <div class="fitem">
-                <span style="width:35%; display:inline-block;">UOM PO</span>
+                <span style="width:35%; display:inline-block;">UOM From</span>
                 <input style="width:60%;" name="uom_po" id="uom_po" required="" class="easyui-combobox">
             </div>
             <div class="fitem">
-                <span style="width:35%; display:inline-block;">UOM Soft</span>
+                <span style="width:35%; display:inline-block;">UOM To</span>
                 <input style="width:60%;" name="uom_soft" id="uom_soft" required="" class="easyui-combobox">
             </div>
             <div class="fitem">
                 <span style="width:35%; display:inline-block;">Convertion</span>
                 <input style="width:60%;" name="convertion" id="convertion" class="easyui-numberbox" data-options="precision:2">
+            </div>
+            <div class="fitem">
+                <span style="width:35%; display:inline-block;">MPQ</span>
+                <input style="width:60%;" name="mpq" id="mpq" class="easyui-numberbox" data-options="precision:0">
+            </div>
+            <div class="fitem">
+                <span style="width:35%; display:inline-block;">MOQ</span>
+                <input style="width:60%;" name="moq" id="moq" class="easyui-numberbox" data-options="precision:0">
+            </div>
+            <div class="fitem">
+                <span style="width:35%; display:inline-block;">Description</span>
+                <input style="width:60%;" name="description" id="description" class="easyui-textbox">
             </div>
         </fieldset>
     </form>
