@@ -139,9 +139,9 @@
                         <span style="width:35%; display:inline-block;">Part No BEI</span>
                         <input style="width:60%;" name="number" id="number" required="" class="easyui-textbox">
                     </div>
-                    <div class="fitem">
+                    <div class="fitem" hidden>
                         <span style="width:35%; display:inline-block;">Maker</span>
-                        <input style="width:60%;" name="maker_id" id="maker_id" required="" class="easyui-combobox">
+                        <input style="width:60%;" name="maker_id" id="maker_id" class="easyui-combobox">
                     </div>
                     <div class="fitem">
                         <span style="width:35%; display:inline-block;">Description</span>
@@ -160,9 +160,9 @@
                         <span style="width:35%; display:inline-block;">Unit of Measure</span>
                         <input style="width:60%;" name="uom" id="uom" required="" class="easyui-combobox">
                     </div>
-                    <div class="fitem">
+                    <div class="fitem" hidden>
                         <span style="width:35%; display:inline-block;">HSN No</span>
-                        <input style="width:60%;" name="hsn_code" id="hsn_code" required class="easyui-combogrid">
+                        <input style="width:60%;" name="hsn_code" id="hsn_code" class="easyui-combogrid">
                     </div>
                     <!-- <div class="fitem">
                         <span style="width:35%; display:inline-block;">COA No</span>
@@ -546,9 +546,9 @@
                 text: 'Send to Approval',
                 iconCls: 'icon-ok',
                 handler: function() {
-                    var hsn_code = $("#hsn_code").combogrid('getValue');
+                    // var hsn_code = $("#hsn_code").combogrid('getValue');
 
-                    if (hsn_code.length >= 6) {
+                    // if (hsn_code.length >= 6) {
                         $('#frm_insert').form('submit', {
                             url: url_save,
                             onSubmit: function() {
@@ -581,9 +581,9 @@
                                 Swal.close();
                             }
                         });
-                    } else {
-                        toastr.error("Please Input HSN Code Correctly");
-                    }
+                    // } else {
+                    //     toastr.error("Please Input HSN Code Correctly");
+                    // }
                 }
             }]
         });

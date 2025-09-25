@@ -283,15 +283,15 @@ class Supplier_items extends CI_Controller
                         $this->crud->create("supplier_item_histories", $history);
                         echo $send;
                     } else {
-                        if($supplier_items->price == $post['price']){
-                            $this->db->update('supplier_items', $post, ["supplier_id" => $post['supplier_id'], "item_rm_id" => $post['item_rm_id']]);
-                            echo json_encode(array("title" => "Good Job", "message" => "Change Data Success, By Pass Approval", "theme" => "success"));
-                        }else{
+                        // if($supplier_items->price == $post['price']){
+                        //     $this->db->update('supplier_items', $post, ["supplier_id" => $post['supplier_id'], "item_rm_id" => $post['item_rm_id']]);
+                        //     echo json_encode(array("title" => "Good Job", "message" => "Change Data Success, By Pass Approval", "theme" => "success"));
+                        // }else{
                             $send = $this->crud->update('supplier_items', ["supplier_id" => $post['supplier_id'], "item_rm_id" => $post['item_rm_id']], $post);
                             echo $send;
 
                             $this->crud->create("supplier_item_histories", $history);
-                        }
+                        // }
                     }   
                 }else{
                     echo json_encode(array("title" => "MPQ 0", "message" => "MPQ, MOQ, Leadtime, Transit for Part No " . $post['item_rm_id'] . " Cannot <= 0", "theme" => "error"));
@@ -343,13 +343,13 @@ class Supplier_items extends CI_Controller
 
             if((@$rowSupItm->share_order + $post['share_order']) <= 100){
                 if($post['mpq'] > 0 && $post['moq'] > 0 && $post['leadtime'] > 0){
-                    if(@$read->price == $post['price']){
-                        $this->db->update('supplier_items', $postFinal, ["id" => $id]);
-                        echo json_encode(array("title" => "Good Job", "message" => "Change Data Success, By Pass Approval", "theme" => "success"));
-                    }else{
+                    // if(@$read->price == $post['price']){
+                    //     $this->db->update('supplier_items', $postFinal, ["id" => $id]);
+                    //     echo json_encode(array("title" => "Good Job", "message" => "Change Data Success, By Pass Approval", "theme" => "success"));
+                    // }else{
                         $send = $this->crud->update('supplier_items', ["id" => $id], $postFinal);
                         echo $send;
-                    }
+                    // }
 
                     $this->crud->create("supplier_item_histories", $history);
                 }else{
@@ -563,9 +563,9 @@ class Supplier_items extends CI_Controller
                         echo json_encode(array("title" => "Share Order", "message" => "Share Order for Part No " . $data['item_rm_number'] . " Cannot >= 100", "theme" => "error"));
                     }elseif($mpq <= 0 || $moq <= 0 || $leadtime <= 0){
                         echo json_encode(array("title" => "MPQ 0", "message" => "MPQ, MOQ, and Leadtime for Part No " . $data['item_rm_number'] . " Cannot <= 0", "theme" => "error"));
-                    }elseif(@$supplier_items->price == $price){
-                        $this->db->update('supplier_items', $dataFinal, ["supplier_id" => @$supplier->id, "item_rm_id" => @$item_rm->id, "plant" => $data['plant']]);
-                        echo json_encode(array("title" => "Good Job", "message" => "Change Data Success, By Pass Approval", "theme" => "success"));
+                    // }elseif(@$supplier_items->price == $price){
+                    //     $this->db->update('supplier_items', $dataFinal, ["supplier_id" => @$supplier->id, "item_rm_id" => @$item_rm->id, "plant" => $data['plant']]);
+                    //     echo json_encode(array("title" => "Good Job", "message" => "Change Data Success, By Pass Approval", "theme" => "success"));
                     }else{
                         $send = $this->crud->update('supplier_items', ["supplier_id" => @$supplier->id, "item_rm_id" => @$item_rm->id, "plant" => $data['plant']], $dataFinal);
                         echo $send;

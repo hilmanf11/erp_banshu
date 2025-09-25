@@ -515,7 +515,7 @@ class Purchase_orders extends CI_Controller
                     "po_name" => $this->session->name,
                     "delivery_date" => $delivery_date,
                     "uom" => $uom,
-                    "qty" => $purchase_request['qty'],
+                    "qty" => $qty,
                     "price" => $purchase_request['price'],
                     "total" => $total,
                     "currency" => $purchase_request['currency'],

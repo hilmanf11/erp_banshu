@@ -36,7 +36,7 @@
             <legend><b>Form Data</b></legend>
             <div class="fitem">
                 <span style="width:35%; display:inline-block;">Part No</span>
-                <input style="width:60%;" name="item_rm_id" id="item_rm_id" required="" class="easyui-combobox">
+                <input style="width:60%;" name="item_rm_id" id="item_rm_id" required="" class="easyui-combogrid">
             </div>
             <div class="fitem">
                 <span style="width:35%; display:inline-block;">UOM From</span>
@@ -250,11 +250,29 @@
         });
     });
 
-    $('#item_rm_id').combobox({
-        url:'<?= base_url('master/item_rm/reads'); ?>',
-        valueField:'id',
-        textField:'number',
-        prompt: 'Choose Part',
+    $('#item_rm_id').combogrid({
+        url: '<?= base_url('master/item_rm/reads') ?>',
+        panelWidth: 550,
+        idField: 'id',
+        textField: 'number',
+        mode: 'remote',
+        fitColumns: true,
+        prompt: "Select Part No",
+        columns: [
+            [{
+                field: 'id',
+                title: 'Part No Original',
+                width: 120
+            }, {
+                field: 'number',
+                title: 'Part No BEI',
+                width: 200
+            }, {
+                field: 'name',
+                title: 'Description',
+                width: 200
+            }]
+        ]
     });
 
     $('#uom_po').combobox({

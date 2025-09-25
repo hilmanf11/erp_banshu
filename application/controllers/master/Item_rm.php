@@ -413,20 +413,9 @@ class Item_rm extends CI_Controller
                 'uom' => $data->val($i, 4),
                 'item_category_number' => $data->val($i, 5),
                 'item_family_number' => $data->val($i, 6),
-                'kind' => $data->val($i, 7),
-                'size' => $data->val($i, 8),
-                'color_1' => $data->val($i, 9),
-                'color_2' => $data->val($i, 10),
-                'male' => $data->val($i, 11),
-                'waterproof' => $data->val($i, 12),
-                'platting' => $data->val($i, 13),
-                'hsn_code' => $data->val($i, 14),
-                // 'account_number' => $data->val($i, 15),
-                'description' => $data->val($i, 16),
-                'supply' => $data->val($i, 17),
-                'type' => $data->val($i, 18),
-                'maker_code' => $data->val($i, 19),
-                'status' => $data->val($i, 20)
+                'description' => $data->val($i, 7),
+                'status' => $data->val($i, 8),
+                'action' => $data->val($i, 9)
             );
         }
         $datas['total'] = count($datas);
@@ -467,86 +456,55 @@ class Item_rm extends CI_Controller
 
             //Cek Process Number          //table       //field        //field excel
             $item_rm = $this->crud->read('item_rm', [], ["number" => $data['number']]);
-            $item_rm_name = $this->crud->read('item_rm', ["name" => $data['name']]);
             $category = $this->crud->read('item_categories', [], ["number" => $data['item_category_number']]);
             $product_family = $this->crud->read('item_familys', [], ["number" => $data['item_family_number']]);
-            $kind = $this->crud->read('item_kinds', [], ["number" => $data['kind']]);
-            $size = $this->crud->read('item_sizes', [], ["number" => $data['size']]);
-            $color1 = $this->crud->read('item_colors', [], ["number" => $data['color_1']]);
-            $color2 = $this->crud->read('item_colors', [], ["number" => $data['color_2']]);
-            $platting = $this->crud->read('item_platting', [], ["number" => $data['platting']]);
-            $hsn = $this->crud->read('hsn', [], ["number" => $data['hsn_code']]);
-            $maker = $this->crud->read('makers', [], ["number" => $data['maker_code']]);
-            // $account_coa = $this->crud->read('account_coa', [], ["account_number" => @$product_family->account_number]);
 
             if (empty($category->number)) {
                 echo json_encode(array("title" => "Not Found", "message" => "Category " . $data['item_category_number'] . " Not Found", "theme" => "error"));
             } elseif (empty($product_family->number)) {
                 echo json_encode(array("title" => "Not Found", "message" => "Product Family " . $data['item_family_number'] . " Not Found", "theme" => "error"));
-                // } elseif ($data['item_category_number'] == "FA") {
-                //     echo json_encode(array("title" => "Fixed Asset", "message" => "Category " . $data['item_category_number'] . " Cannot Create in Master RM", "theme" => "error"));
-            // }
-            //  elseif (empty(@$account_coa->account_number) && $product_family->number != "FA") {
-            //     echo json_encode(array("title" => "Not Found", "message" => "COA No " . @$data['account_number'] . " Not Found", "theme" => "error"));
-            // } 
-            // elseif (empty($hsn->name)) {
-            //     echo json_encode(array("title" => "Not Found", "message" => "HSN Code " . $data['hsn_code'] . " Not Found", "theme" => "error"));
-            // } elseif (empty($kind->name)) {
-            //     echo json_encode(array("title" => "Not Found", "message" => "Kind Code " . $data['kind'] . " Not Found", "theme" => "error"));
-            // } elseif (empty($size->name)) {
-            //     echo json_encode(array("title" => "Not Found", "message" => "Size Code " . $data['size'] . " Not Found", "theme" => "error"));
-            // } elseif (empty($color1->name)) {
-            //     echo json_encode(array("title" => "Not Found", "message" => "Color 1 Code " . $data['color_1'] . " Not Found", "theme" => "error"));
-            // } elseif (empty($color2->name)) {
-            //     echo json_encode(array("title" => "Not Found", "message" => "Color 2 Code " . $data['color_2'] . " Not Found", "theme" => "error"));
-            // } elseif (empty($platting->name)) {
-            //     echo json_encode(array("title" => "Not Found", "message" => "Platting Code " . $data['platting'] . " Not Found", "theme" => "error"));
-            // } elseif (empty($maker->name)) {
-            //     echo json_encode(array("title" => "Not Found", "message" => "Maker Code " . $data['maker_code'] . " Not Found", "theme" => "error"));
-            } elseif (!empty($item_rm->number)) {
-                echo json_encode(array("title" => "Duplicated", "message" => " Part No. " . $data['number'] . " is Duplicate Data", "theme" => "error"));
-            // } elseif (!empty($item_rm_name->name)) {
-            //     echo json_encode(array("title" => "Duplicated", "message" => " Part Name " . $data['name'] . " Similar Data in Item master", "theme" => "error"));
             } else {
-                $item_family_number = $product_family->number;
-                $y = date("y");
+                if(strtolower($data['action']) == "new"){
+                    $item_family_number = $product_family->number;
+                    $y = date("y");
 
-                $sql = $this->db->query("SELECT max(id) as kode FROM item_rm WHERE id LIKE '%RM" . $item_family_number . $y . "%'");
-                $row = $sql->row();
-                if ($row->kode == null) {
-                    $format = "RM" . $item_family_number . $y . "00001";
-                } else {
-                    $kode = substr($row->kode, -5);
-                    $format = "RM" . $item_family_number . $y . sprintf("%05s", $kode + 1);
+                    $sql = $this->db->query("SELECT max(id) as kode FROM item_rm WHERE id LIKE '%RM" . $item_family_number . $y . "%'");
+                    $row = $sql->row();
+                    if ($row->kode == null) {
+                        $format = "RM" . $item_family_number . $y . "00001";
+                    } else {
+                        $kode = substr($row->kode, -5);
+                        $format = "RM" . $item_family_number . $y . sprintf("%05s", $kode + 1);
+                    }
+
+                    $dataFinal = array(
+                        "id" => $format,
+                        "number" => $data['number'],
+                        "name" => $data['name'],
+                        "uom" => $data['uom'],
+                        "item_category_id" => $category->id,
+                        "item_family_id" => $product_family->id,
+                        "description" => $data['description'],
+                        "status" => $data['status'],
+                    );
+
+                    $send   = $this->crud->create('item_rm', $dataFinal);
+                    echo $send;
+                }elseif(strtolower($data['action']) == "update"){
+                    $dataFinal = array(
+                        "name" => $data['name'],
+                        "uom" => $data['uom'],
+                        "item_category_id" => $category->id,
+                        "item_family_id" => $product_family->id,
+                        "description" => $data['description'],
+                        "status" => $data['status'],
+                    );
+
+                    $send = $this->crud->update('item_rm', ["number" => trim($data['number'])],$dataFinal);
+                    echo $send;
+                }else{
+                    echo json_encode(array("title" => "Not Found", "message" => "Action only NEW or UPDATE for process", "theme" => "error"));
                 }
-
-                $dataFinal = array(
-                    //field
-                    "id" => $format,
-                    "number" => $data['number'],
-                    "name" => $data['name'],
-                    "uom" => $data['uom'],
-                    "item_category_id" => $category->id,
-                    "item_family_id" => $product_family->id,
-                    // "maker_id" => $maker->id,
-                    // "kind" => $data['kind'],
-                    // "size" => $data['size'],
-                    // "color_1" => $data['color_1'],
-                    // "color_2" => $data['color_2'],
-                    // "male" => $data['male'],
-                    // "waterproof" => $data['waterproof'],
-                    // "platting" => $data['platting'],
-                    // "hsn_code" => $data['hsn_code'],
-                    // "account_number" => $product_family->account_number,
-                    // "account_name" => $product_family->account_name,
-                    // "description" => $data['description'],
-                    // "supply" => $data['supply'],
-                    // "type" => $data['type'],
-                    "status" => $data['status'],
-                );
-
-                $send   = $this->crud->create('item_rm', $dataFinal);
-                echo $send;
             }
         }
     }
