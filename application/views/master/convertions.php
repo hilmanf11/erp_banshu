@@ -3,11 +3,12 @@
     <thead>
         <tr>
             <th rowspan="2" field="ck" checkbox="true"></th>
-            <th rowspan="2" data-options="field:'item_rm_number',width:150,align:'center'">Part No</th>
-            <th rowspan="2" data-options="field:'item_rm_name',width:200,halign:'center'">Part Name</th>
+            <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No</th>
+            <th rowspan="2" data-options="field:'item_rm_name',width:150,halign:'center'">Part Name</th>
             <th rowspan="2" data-options="field:'uom_po',width:80,halign:'center'">UOM From</th>
             <th rowspan="2" data-options="field:'uom_soft',width:80,halign:'center'">UOM To</th>
-            <th rowspan="2" data-options="field:'convertion',width:150,halign:'center'">Convertion</th>
+            <th rowspan="2" data-options="field:'type',width:100,halign:'center'">Type</th>
+            <th rowspan="2" data-options="field:'convertion',width:100,halign:'center'">Convertion</th>
             <th rowspan="2" data-options="field:'mpq',width:80,halign:'center'">MPQ</th>
             <th rowspan="2" data-options="field:'moq',width:80,halign:'center'">MOQ</th>
             <th rowspan="2" data-options="field:'description',width:150,halign:'center'">Description</th>
@@ -44,6 +45,13 @@
             <div class="fitem">
                 <span style="width:35%; display:inline-block;">UOM To</span>
                 <input style="width:60%;" name="uom_soft" id="uom_soft" required="" class="easyui-combobox">
+            </div>
+            <div class="fitem">
+                <span style="width:35%; display:inline-block;">Type</span>
+                <select style="width:60%;" name="type" id="type" required="" panelHeight="auto" class="easyui-combobox">
+                    <option value="Divided">Divided (/)</option>
+                    <option value="Multipy">Multiply (x)</option>
+                </select>
             </div>
             <div class="fitem">
                 <span style="width:35%; display:inline-block;">Convertion</span>
