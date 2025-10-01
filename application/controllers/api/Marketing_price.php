@@ -61,14 +61,6 @@ class Marketing_price extends CI_Controller
         $filter_item_vendor = base64_decode($this->input->get('item_vendor'));
         $filter_share_order = base64_decode($this->input->get('share_order'));
         $filter_check = $this->input->get('check');
-
-
-        $page = $this->input->post('page');
-        $rows = $this->input->post('rows');
-        //Pagination 1-10
-        $page   = isset($page) ? intval($page) : 1;
-        $rows   = isset($rows) ? intval($rows) : 10;
-        $offset = ($page - 1) * $rows;
         $result = array();
 
         $this->db->select('a.*, c.number as item_rm_number, (case when g.uom_po is not null then g.uom_po else c.uom end) as uom,
@@ -111,8 +103,6 @@ class Marketing_price extends CI_Controller
         $this->db->order_by('c.number', 'ASC');
         //Total Data
         $totalRows = $this->db->count_all_results('', false);
-        //Limit 1 - 10
-        $this->db->limit($rows, $offset);
         //Get Data Array
         $records = $this->db->get()->result_array();
         //Mapping Data
