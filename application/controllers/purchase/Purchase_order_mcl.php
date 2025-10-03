@@ -31,10 +31,6 @@ class Purchase_order_mcl extends CI_Controller
         }
     }
 
-    public function cekKoneksi(){
-        $this->export = $this->load->database('export', TRUE);
-    }
-
     // public function pushData(){
     //     if ($this->input->post()) {
     //         $this->dummy = $this->load->database('dummy', TRUE);
@@ -253,8 +249,8 @@ class Purchase_order_mcl extends CI_Controller
                                         <th rowspan="2" style="text-align:center;">Part No Supplier</th>
                                         <th rowspan="2" style="text-align:center;">Description</th>
                                         <th rowspan="2" style="text-align:center;">Maker</th>
-                                        <th rowspan="2" style="text-align:center;">ETA</th>
                                         <th rowspan="2" style="text-align:center;">ETD</th>
+                                        <th rowspan="2" style="text-align:center;">ETA</th>
                                         <th rowspan="2" style="text-align:center;">Qty</th>
                                         <th rowspan="2" style="text-align:center;">Unit</th>
                                         <th colspan="3" style="text-align:center;">Forecast</th>
@@ -336,8 +332,8 @@ class Purchase_order_mcl extends CI_Controller
                                 <td>' . $record['item_supplier'] . '</td>
                                 <td>' . $record['item_rm_name'] . '</td>
                                 <td>' . $record['maker_name'] . '</td>
-                                <td style="text-align:center;">' . $record['delivery_date'] . '</td>
                                 <td style="text-align:center;">' . $etd . '</td>
+                                <td style="text-align:center;">' . $record['delivery_date'] . '</td>
                                 <td style="text-align:right;">' . number_format($record['qty']) . '</td>
                                 <td style="text-align:center;">' . $record['uom'] . '</td>
                                 <td style="text-align:right;">' . number_format($prod1) . '</td>

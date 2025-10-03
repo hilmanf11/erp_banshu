@@ -12,6 +12,7 @@ class Purchase_orders extends CI_Controller
         $this->load->library('form_validation');
         $this->load->library('session');
         $this->load->model('crud');
+        $this->load->model('mrp_push');
         $this->load->library('Ciqrcode');
         $this->load->library('email');
 
@@ -78,7 +79,7 @@ class Purchase_orders extends CI_Controller
     function readPono(){
         $post = isset($_POST['q']) ? $_POST['q'] : "";
         $supplier_id = base64_decode($this->input->get('supplier_id'));
-        $datas = $this->crud->query("SELECT DISTINCT a.po_no, a.po_date FROM purchase_orders a WHERE a.supplier_id = '$supplier_id' and a.status = 0 and (a.approved_to = '' or a.approved_to is null) and (po_date like '%$post%' or po_no like '%$post%') ORDER BY a.po_date, a.po_no ASC");
+        $datas = $this->crud->query("SELECT DISTINCT a.po_no, a.po_date FROM purchase_orders a WHERE a.supplier_id = '$supplier_id' and a.status = 0 and (po_date like '%$post%' or po_no like '%$post%') ORDER BY a.po_date, a.po_no ASC");
         echo json_encode($datas);
     }
 
@@ -236,138 +237,6 @@ class Purchase_orders extends CI_Controller
         echo json_encode($result);
     }
 
-    public function datatableMrp(){
-        $get = $this->input->get();
-        $mrp_month = base64_decode($get['mrp_month']);
-        $mrp_year = base64_decode($get['mrp_year']);
-        $mrp_revision = base64_decode($get['mrp_revision']);
-        $mrp_plant = base64_decode($get['mrp_plant']);
-        $mrp_profam = base64_decode($get['mrp_profam']);
-        $mrp_supplier = base64_decode($get['mrp_supplier']);
-        $mrp_item_rm_id = base64_decode($get['mrp_item_rm_id']);
-
-        //Select Query
-        $this->db->select('a.*, b.number as item_rm_number, b.name as item_rm_name, e.name as supplier_name, b.uom, e.currency, c.name as product_family, d.class, d.composition, d.safety, f.price');
-        $this->db->from('generate_mrp_finals a');
-        $this->db->join('item_rm b', 'a.item_rm_id = b.id');
-        $this->db->join('item_familys c', 'b.item_family_id = c.id');
-        $this->db->join('generate_mrp_abcclass d', 'a.item_rm_id = d.item_rm_id and a.p_month = d.p_month and a.p_year = d.p_year and a.revision = d.revision and a.plant = d.plant', 'left');
-        $this->db->join('suppliers e', 'a.supplier_id = e.id');
-        $this->db->join('item_rm ia', "TRIM(LEADING '+' FROM b.number) = ia.number");
-        $this->db->join('supplier_items f', "ia.id = f.item_rm_id and a.supplier_id = f.supplier_id and (f.approved_to = '' or f.approved_to is null) and a.plant = f.plant");
-        $this->db->where('(a.purchase_order + d.safety_stock) >', 0);
-        $this->db->where('a.status', 0);
-        $this->db->where("(a.approved_to = '' or a.approved_to is null)");
-        $this->db->where('a.p_month', $mrp_month);
-        $this->db->where('a.p_year', $mrp_year);
-        $this->db->where('a.revision', $mrp_revision);
-        $this->db->where('a.plant', $mrp_plant);
-        $this->db->where('a.supplier_id', $mrp_supplier);
-        $this->db->like('b.item_family_id', $mrp_profam);
-        $this->db->like('b.id', $mrp_item_rm_id);
-        $this->db->group_by('a.item_rm_id');
-        $this->db->group_by('a.supplier_id');
-        $this->db->order_by('b.number', 'asc');
-        // $this->db->limit(10);
-        $totalRows = $this->db->count_all_results('', false);
-        $records = $this->db->get()->result_array();
-
-        //Mapping Data
-        $result['total'] = $totalRows;
-        $finals = array();
-        foreach ($records as $record) {
-            $convert = $this->crud->read("convertions", [], ["item_rm_id" => $record['item_rm_id']]);
-            if(empty($convert->uom_po)){
-                $uom = $record['uom'];
-                $convertion = 1;
-            }else{
-                $uom = $convert->uom_po;
-                $convertion = $convert->convertion;
-            }
-            
-            $date = $record['p_year'] . "-" . $record['p_month'] . "-01";
-            $item_rm_id = $record['item_rm_id'];
-            $leadtime = $record['leadtime'];
-            $revision = $record['revision'];
-
-            $m1 = date('Y-m-01', strtotime($date, strtotime($leadtime)));
-            $m2 = date('Y-m-01', strtotime($date, strtotime('+1 month', strtotime($leadtime))));
-            $m3 = date('Y-m-01', strtotime($date, strtotime('+2 month', strtotime($leadtime))));
-            $m11 = "m".date('n', strtotime($date, strtotime($leadtime)));
-            $m22 = "m".date('n', strtotime($date, strtotime('+1 month', strtotime($leadtime))));
-            $m33 = "m".date('n', strtotime($date, strtotime('+2 month', strtotime($leadtime))));
-
-            $qmps1 = $this->db->query("SELECT qty FROM generate_mrp WHERE CONCAT(p_month, p_year) = '$m1' and item_rm_id = '$item_rm_id' and revision = '$revision'");
-            $rpms1 = $qmps1->row();
-
-            $qmps2 = $this->db->query("SELECT qty FROM generate_mrp WHERE CONCAT(p_month, p_year) = '$m2' and item_rm_id = '$item_rm_id' and revision = '$revision'");
-            $rpms2 = $qmps2->row();
-
-            $qmps3 = $this->db->query("SELECT qty FROM generate_mrp WHERE CONCAT(p_month, p_year) = '$m3' and item_rm_id = '$item_rm_id' and revision = '$revision'");
-            $rpms3 = $qmps3->row();
-
-            $forecast = $this->forecast($item_rm_id, $record['p_month'], $record['p_year'], @$revision);
-
-            if(@$rpms1->qty > 0){
-                $prod1 = @$rpms1->qty;
-            }else{
-                $prod1 = @$forecast->$m11;
-            }
-
-            if(@$rpms2->qty > 0){
-                $prod2 = @$rpms2->qty;
-            }else{
-                $prod2 = @$forecast->$m22;
-            }
-
-            if(@$rpms3->qty > 0){
-                $prod3 = @$rpms3->qty;
-            }else{
-                $prod3 = @$forecast->$m33;
-            }
-
-            if(round($record['total_need']) > 0 && $record['moq'] > 0){
-                $final = ($record['total_need'] / $convertion);
-                if($final > $record['moq']){
-                    $mrp_result = (ceil($final / $record['mpq']) * $record['mpq']);
-                }else{
-                    $mrp_result = (ceil($final / $record['moq']) * $record['moq']);
-                }
-            }else{
-                $mrp_result = 0;
-            }
-
-            $finals[] = array(
-                "plant" => $record['plant'],
-                "p_month" => $record['p_month'],
-                "p_year" => $record['p_year'],
-                "revision" => $record['revision'],
-                "request_date" => date("Y-m-d"),
-                "request_name" => $this->session->name,
-                "item_rm_id" => $record['item_rm_id'],
-                "item_rm_number" => $record['item_rm_number'],
-                "item_rm_name" => $record['item_rm_name'],
-                "product_family" => $record['product_family'],
-                "supplier_id" => $record['supplier_id'],
-                "supplier_name" => $record['supplier_name'],
-                "leadtime" => $record['leadtime'],
-                "uom" => $uom,
-                "currency" => $record['currency'],
-                "mpq" => $record['mpq'],
-                "moq" => $record['moq'],
-                "price" => $record['price'],
-                "qty" => $mrp_result,
-                "total" => ($mrp_result * $record['price']),
-                "month_1" => $prod1,
-                "month_2" => $prod2,
-                "month_3" => $prod3,
-            );
-        }
-
-        $result['rows'] = $finals;
-        echo json_encode($result);
-    }
-
     public function purchaseOrderNo($supplier_no, $plant = ""){
         // $datenow = date("Y-m-d");
         // $sql_menu = $this->db->query("SELECT * FROM menus_no WHERE menus_id = '$id_menu' and `status` = '0' and `start_date` <= '$datenow' and end_date >= '$datenow'");
@@ -484,7 +353,7 @@ class Purchase_orders extends CI_Controller
                     $po_no = $this->purchaseOrderNo($supplier_no, $rowPlant->type);
                 }
 
-                $convert = $this->api->read("convertions", [], ["item_rm_id" => $purchase_request['item_rm_id']]);
+                $convert = $this->crud->read("convertions", [], ["item_rm_id" => $purchase_request['item_rm_id']]);
                 if(empty($convert->uom_po)){
                     $uom = $purchase_request['uom'];
                     $qty = $purchase_request['qty'];
@@ -601,7 +470,7 @@ class Purchase_orders extends CI_Controller
                 );
 
                 $this->db->update('generate_mrp_finals', ["status" => 1], ["p_month" => $post['p_month'], "p_year" => $post['p_year'], "revision" => $post['revision'], "plant" => $post['plant'], "item_rm_id" => $post['item_rm_id'], "supplier_id" => $post['supplier_id']]);
-                $send = $this->crud->create('purchase_orders', $postFinal, "logs");
+                $send = $this->crud->create('purchase_orders', $postFinal);
                 // $this->db->update('purchase_orders', ["approved_to" => ""], ["po_no" => $po_no, "item_rm_id" => $post['item_rm_id']]);
                 echo $send;
             }
@@ -669,7 +538,7 @@ class Purchase_orders extends CI_Controller
 
                 
                 $this->db->update('generate_mrp_finals', ["status" => 1], ["p_month" => $post['p_month'], "p_year" => $post['p_year'], "revision" => $post['revision'], "item_rm_id" => $post['item_rm_id'], "supplier_id" => $post['supplier_id']]);
-                $send = $this->crud->create('purchase_orders', $postFinal, "logs");
+                $send = $this->crud->create('purchase_orders', $postFinal);
                 echo $send;
             }
         }
@@ -725,61 +594,80 @@ class Purchase_orders extends CI_Controller
         }
     }
 
-    // public function pushData(){
-    //     if ($this->input->post()) {
-    //         $this->dummy = $this->load->database('dummy', TRUE);
+    public function pushData(){
+        if ($this->input->post()) {
+            $this->export = $this->load->database('export', TRUE);
 
-    //         $post = $this->input->post('data');
+            $post = $this->input->post('data');
 
-    //         $this->dummy->select('*');
-    //         $this->dummy->from("mst_item");
-    //         $this->dummy->where("item_id", $post['item_rm_number']);
-    //         $mst_item = $this->dummy->get()->row();
+            $this->export->select('*');
+            $this->export->from("mst_item");
+            $this->export->where("item_id", $post['item_rm_number']);
+            $mst_item = $this->export->get()->row();
 
-    //         $this->dummy->select('*');
-    //         $this->dummy->from("poc");
-    //         $this->dummy->where("poc_id", $post['po_no']);
-    //         $this->dummy->where("item_id", $post['item_rm_number']);
-    //         $poc = $this->dummy->get()->row();
+            // $this->dummy->select('*');
+            // $this->dummy->from("poc");
+            // $this->dummy->where("poc_id", $post['po_no']);
+            // $this->dummy->where("item_id", $post['item_rm_number']);
+            // $poc = $this->dummy->get()->row();
 
-    //         // $gpai = $this->crudSupplier($post['supplier_no']);
-    //         // $supplier = $gpai['data'];
+            // $gpai = $this->crudSupplier($post['supplier_no']);
+            // $supplier = $gpai['data'];
 
-    //         $postFinal = array(
-    //             "poc_id" => $post['po_no'],
-    //             "ven_id" => @$mst_item->ven_id,
-    //             // "ven_id" => @$supplier[0]['alias_code'],
-    //             "poc_date" => $post['po_date'],
-    //             "poc_emp" => $this->session->name,
-    //             "item_id" => $post['item_rm_number'],
-    //             "poc_reqdate" => date("Y-m-d"),
-    //             "poc_reqqty" => $post['qty'],
-    //             "currency" => $post['currency'],
-    //             "periode" => date("Ym"),
-    //             // "poc_remark" => $post['reason'],
-    //         );
+            $convert = $this->crud->read("convertions", [], ["item_rm_id" => $post['item_rm_id']]);
+            if(empty($convert->uom_po)){
+                $qty = $post['qty'];
+            }else{
+                if($convert->type == "Divided"){
+                    $qty = ($post['qty'] * $convert->convertion);
+                }else{
+                    $qty = ($v['qty'] / $convert->convertion);
+                }
+            }
 
-    //         if($poc){
-    //             $this->dummy->where("poc_id", $post['po_no']);
-    //             $this->dummy->where("item_id", $post['item_rm_number']);
-    //             if ($this->dummy->update('poc', ["poc_reqqty" => $post['qty']])) {
-    //                 echo json_encode(array("title" => "Good Job", "message" => $post['item_rm_number'] . " | Data Update Successfully", "theme" => "success"));
-    //             } else {
-    //                 echo json_encode(array("title" => "Error", "message" => $post['item_rm_number'] . " | Data Unsaved", "theme" => "error"));
-    //             }
-    //         }else{
-    //             if ($this->dummy->insert('poc', $postFinal)) {
-    //                 echo json_encode(array("title" => "Good Job", "message" => $post['item_rm_number'] . " | Data Saved Successfully", "theme" => "success"));
-    //             } else {
-    //                 echo json_encode(array("title" => "Error", "message" => $post['item_rm_number'] . " | Data Unsaved", "theme" => "error"));
-    //             }
-    //         }
+            $postFinal = array(
+                "poc_id" => $post['po_no'],
+                "ven_id" => @$mst_item->ven_id,
+                "poc_date" => $post['po_date'],
+                "poc_emp" => $this->session->name,
+                "item_id" => $post['item_rm_number'],
+                "poc_reqdate" => date("Y-m-d"),
+                "poc_reqqty" => $qty,
+                "currency" => $post['currency'],
+                "periode" => date("Ym"),
+                // "etd_date" => $post['delivery_date'],
+                "poc_remark" => $post['reason'],
+                // "poc_status_order" => "REGULAR",
+            );
 
-    //         $this->db->where("item_rm_id", $post['item_rm_id']);
-    //         $this->db->where("po_no", $post['po_no']);
-    //         $this->db->update('purchase_orders', ["push_date" => date("Y-m-d H:i:s"), "push" => "OK"]);
-    //     }
-    // }
+            // if($poc){poc
+            //     $this->dummy->where("poc_id", $post['po_no']);
+            //     $this->dummy->where("item_id", $post['item_rm_number']);
+            //     if ($this->dummy->update('poc', ["poc_reqqty" => $post['qty']])) {
+            //         echo json_encode(array("title" => "Good Job", "message" => $post['item_rm_number'] . " | Data Update Successfully", "theme" => "success"));
+            //     } else {
+            //         echo json_encode(array("title" => "Error", "message" => $post['item_rm_number'] . " | Data Unsaved", "theme" => "error"));
+            //     }
+            // }else{
+            //     if ($this->dummy->insert('poc', $postFinal)) {
+            //         echo json_encode(array("title" => "Good Job", "message" => $post['item_rm_number'] . " | Data Saved Successfully", "theme" => "success"));
+            //     } else {
+            //         echo json_encode(array("title" => "Error", "message" => $post['item_rm_number'] . " | Data Unsaved", "theme" => "error"));
+            //     }
+            // }
+
+            $send = $this->mrp_push->push_purchase_orders($postFinal);
+            die(json_encode($send));
+            if($send){
+                $this->db->where("item_rm_id", $post['item_rm_id']);
+                $this->db->where("po_no", $post['po_no']);
+                $this->db->update('purchase_orders', ["push_date" => date("Y-m-d H:i:s"), "push" => "OK"]);
+                echo json_encode(array("title" => "Good Job", "message" => $post['item_rm_number'] . " | Data Update Successfully", "theme" => "success"));
+            }else{
+                echo json_encode(array("title" => "Error", "message" => $post['item_rm_number'] . " | Data Unsaved", "theme" => "error"));
+            }
+        }
+    }
 
     public function updateDetails(){
         if ($this->input->post()) {
@@ -913,6 +801,8 @@ class Purchase_orders extends CI_Controller
         
         $this->db->update("purchase_requests", ["confirm" => 1], ["request_no" => @$reads[0]->request_no]);
         $send = $this->crud->delete('purchase_orders', ["po_no" => $data['po_no']]);
+        $this->db->delete('delivery_schedule_days', ["po_no" => $data['po_no']]);
+        $this->db->delete('delivery_schedules', ["po_no" => $data['po_no']]);
         echo $send;
     }
 
@@ -1201,8 +1091,8 @@ class Purchase_orders extends CI_Controller
                                         <th rowspan="2" style="text-align:center;">Part No Supplier</th>
                                         <th rowspan="2" style="text-align:center;">Description</th>
                                         <th rowspan="2" style="text-align:center;">Maker</th>
-                                        <th rowspan="2" style="text-align:center;">ETA</th>
                                         <th rowspan="2" style="text-align:center;">ETD</th>
+                                        <th rowspan="2" style="text-align:center;">ETA</th>
                                         <th rowspan="2" style="text-align:center;">Qty</th>
                                         <th rowspan="2" style="text-align:center;">Unit</th>
                                         <th rowspan="2" style="text-align:center;">Unit<br>Price</th>
@@ -1282,8 +1172,8 @@ class Purchase_orders extends CI_Controller
                                 <td>' . $record['item_supplier'] . '</td>
                                 <td>' . $record['item_rm_name'] . '</td>
                                 <td>' . $record['maker_name'] . '</td>
-                                <td style="text-align:center;">' . $record['delivery_date'] . '</td>
                                 <td style="text-align:center;">' . $etd . '</td>
+                                <td style="text-align:center;">' . $record['delivery_date'] . '</td>
                                 <td style="text-align:right;">' . number_format($record['qty']) . '</td>
                                 <td style="text-align:center;">' . $record['uom'] . '</td>
                                 <td style="text-align:right;">' . number_format($record['price'], 4) . '</td>
@@ -1299,7 +1189,7 @@ class Purchase_orders extends CI_Controller
 
             if (($i + 1) == $page) {
                 $html .= '  <tr>
-                                <td style="vertical-align: top; text-align:left;" colspan="9" rowspan="5">
+                                <td style="vertical-align: top; text-align:left;" colspan="10" rowspan="5">
                                     <b>Note :</b> <br>';
                 $html .= '      </td>
                             </tr>

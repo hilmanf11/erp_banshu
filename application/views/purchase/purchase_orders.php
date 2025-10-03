@@ -868,7 +868,7 @@
 
     function syncPrice(id, price, price_old){
         $.messager.prompt('Sync Price to '+price, 'Please input Password for Sync Price', function(r){
-            if (r == "SYNC"){
+            if (r == "PROCUREMENTUMI2025"){
                 $.ajax({
                     type: "post",
                     url: "<?= base_url('purchase/purchase_orders/updatePrice') ?>",
@@ -929,14 +929,14 @@
         $("#qty").numberbox({
             onChange: function(qty){
                 var price = $("#price").numberbox("getValue");
-                $("#total").numberbox("setValue", (parseInt(qty) * parseInt(price)));
+                $("#total").numberbox("setValue", (parseInt(qty) * parseFloat(price)));
             }
         });
 
         $("#price").numberbox({
             onChange: function(price){
                 var qty = $("#qty").numberbox("getValue");
-                $("#total").numberbox("setValue", (parseInt(qty) * parseInt(price)));
+                $("#total").numberbox("setValue", (parseInt(qty) * parseFloat(price)));
             }
         })
 

@@ -74,7 +74,7 @@ class Delivery_schedules extends CI_Controller
             $this->db->join('item_rm ia', "TRIM(LEADING '+' FROM b.number) = ia.number");
             $this->db->join('supplier_items c', 'a.supplier_id = c.supplier_id and c.item_rm_id = ia.id and a.plant = c.plant');
             $this->db->join('makers d', 'c.maker_id = d.id');
-            $this->db->where('d.type', "IMPORT");
+            $this->db->where('d.type !=', "LOCAL");
             $this->db->where('a.po_no', $po_no);
             $this->db->group_by('a.item_rm_id');
             $this->db->group_by('a.supplier_id');
@@ -371,12 +371,12 @@ class Delivery_schedules extends CI_Controller
                 die(json_encode(array("theme" => "error", "message" => "ETA must bigger on $today")));
             }
 
-            if(($post['qty'] - ($post['delivey_qty_1'] + $post['delivey_qty_2'] + $post['delivey_qty_3'] + $post['delivey_qty_4'] + $post['delivey_qty_5'] + $post['delivey_qty_6'] + $post['delivey_qty_7'])) == 0){
+            // if(($post['qty'] - ($post['delivey_qty_1'] + $post['delivey_qty_2'] + $post['delivey_qty_3'] + $post['delivey_qty_4'] + $post['delivey_qty_5'] + $post['delivey_qty_6'] + $post['delivey_qty_7'])) == 0){
                 $send = $this->crud->update('delivery_schedules', ["id" => $id], $post);
                 echo $send;
-            }else{
-                show_error("Period Qty must be the same as Qty Delivery");
-            }
+            // }else{
+            //     show_error("Period Qty must be the same as Qty Delivery");
+            // }
         } else {
             show_error("Cannot Process your request");
         }
@@ -387,6 +387,98 @@ class Delivery_schedules extends CI_Controller
         $data = $this->input->post();
         $send = $this->crud->delete('delivery_schedules', $data);
         echo $send;
+    }
+
+    public function upload()
+    {
+        error_reporting(0);
+        require_once 'assets/vendors/excel_reader2.php';
+        $target = basename($_FILES['file_upload']['name']);
+        move_uploaded_file($_FILES['file_upload']['tmp_name'], $target);
+        chmod($_FILES['file_upload']['name'], 0777);
+        $file = $_FILES['file_upload']['name'];
+        $data = new Spreadsheet_Excel_Reader($file, false);
+        $total_row = $data->rowcount($sheet_index = 0);
+
+        for ($i = 5; $i <= $total_row; $i++) {
+            $datas[] = array(
+                'item_rm_number' => $data->val($i, 2),
+                'po_no' => $data->val($i, 3),
+                'delivey_qty_1' => $data->val($i, 4),
+                'etd_1' => $data->val($i, 5),
+                'delivey_date_1' => $data->val($i, 6),
+                'delivey_qty_2' => $data->val($i, 7),
+                'etd_2' => $data->val($i, 8),
+                'delivey_date_2' => $data->val($i, 9),
+                'delivey_qty_3' => $data->val($i, 10),
+                'etd_3' => $data->val($i, 11),
+                'delivey_date_3' => $data->val($i, 12),
+                'delivey_qty_4' => $data->val($i, 13),
+                'etd_4' => $data->val($i, 14),
+                'delivey_date_4' => $data->val($i, 15),
+                'delivey_qty_5' => $data->val($i, 16),
+                'etd_5' => $data->val($i, 17),
+                'delivey_date_5' => $data->val($i, 18),
+                'delivey_qty_6' => $data->val($i, 19),
+                'etd_6' => $data->val($i, 20),
+                'delivey_date_6' => $data->val($i, 21),
+                'delivey_qty_7' => $data->val($i, 22),
+                'etd_7' => $data->val($i, 23),
+                'delivey_date_7' => $data->val($i, 24),
+            );
+        }
+
+        $datas['total'] = count($datas);
+        echo json_encode($datas);
+
+        unlink($_FILES['file_upload']['name']);
+    }
+
+    public function uploadcreate()
+    {
+        if ($this->input->post()) {
+            $data = $this->input->post('data');
+
+            $item_rm = $this->crud->read("item_rm", [], ["number" => trim($data['item_rm_number'])]);
+            $delivery_schedules = $this->crud->read('delivery_schedules', [], ["item_rm_id" => @$item_rm->id, "po_no" => $data['po_no']]);
+
+            if (empty($delivery_schedules->id)) {
+                echo json_encode(array("title" => "Not Found", "message" => "Part No " . $data['item_rm_number'] . " and PO No " . $data['po_no'] . " Not Found", "theme" => "error"));
+            } else {
+                unset($data['item_rm_number']);
+                $this->crud->update('delivery_schedules', ["item_rm_id" => @$item_rm->id, "po_no" => $data['po_no']], $data);
+                echo json_encode(array("title" => "Good Job", "message" => "Part No" . $data['part_no'] . " Updated Successfully", "theme" => "success"));
+            }
+        }
+    }
+
+    public function uploadclearFailed()
+    {
+        @unlink('excel/failed/delivery_schedules.txt');
+    }
+
+    public function uploadcreateFailed()
+    {
+        if ($this->input->post()) {
+            $message = $this->input->post('message');
+            $textFailed = fopen('excel/failed/delivery_schedules.txt', 'a');
+            fwrite($textFailed, $message . "\n");
+            fclose($textFailed);
+        }
+    }
+
+    public function uploadDownloadFailed()
+    {
+        $file = "excel/failed/delivery_schedules.txt";
+
+        header('Content-Description: File Failed');
+        header('Content-Disposition: attachment; filename=' . basename($file));
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+        header('Content-Length: ' . @filesize($file));
+        header("Content-Type: text/plain");
+        @readfile($file);
     }
 
     public function print2($option = "")

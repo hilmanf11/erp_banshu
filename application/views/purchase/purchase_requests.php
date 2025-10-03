@@ -16,6 +16,7 @@
             <th colspan="2" data-options="field:'',width:100,halign:'center'">Confirm PR</th>
             <th colspan="3" data-options="field:'',width:100,halign:'center'">Approved</th>
             <th colspan="2" data-options="field:'',width:100,halign:'center'">Created</th>
+            <th colspan="2" data-options="field:'',width:100,halign:'center'">Updated</th>
         </tr>
         <tr>
             <th data-options="field:'send',width:120,align:'center',formatter:BtnSend">Create</th>
@@ -27,6 +28,8 @@
             <th data-options="field:'approved_date',width:120,align:'center'">Date</th>
             <th data-options="field:'created_by',width:100,align:'center'">By</th>
             <th data-options="field:'created_date',width:120,align:'center'">Date</th>
+            <th data-options="field:'updated_by',width:100,align:'center'">By</th>
+            <th data-options="field:'updated_date',width:120,align:'center'">Date</th>
         </tr>
     </thead>
 </table>
@@ -1005,6 +1008,13 @@
                             align: 'right',
                             rowspan: 2,
                             formatter: numberformat
+                        },{
+                            field: 'uom',
+                            title: 'Uom',
+                            width: 80,
+                            halign: 'center',
+                            align: 'center',
+                            rowspan: 2
                         },{
                             field: '',
                             title: 'Purchase History',

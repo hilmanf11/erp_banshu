@@ -197,15 +197,17 @@ class Delivery_schedule_days extends CI_Controller
             $filter_revision = base64_decode($this->input->get('filter_revision'));
             $filter_item_family = base64_decode($this->input->get('filter_item_family'));
             $filter_supplier = base64_decode($this->input->get('filter_supplier'));
+            $filter_po = base64_decode($this->input->get('filter_po'));
             $filter_item_id = base64_decode($this->input->get('filter_item_id'));
 
             //Select Query
-            $this->db->select("a.*, b.number as item_rm_number, b.name as item_rm_name, d.mpq, d.moq, d.leadtime, c.name as supplier_name, e.name as product_family_name");
+            $this->db->select("a.*, b.number as item_rm_number, b.name as item_rm_name, (case when f.mpq is not null then f.mpq else d.mpq end) as mpq, (case when f.moq is not null then f.moq else d.moq end) as moq, d.leadtime, c.name as supplier_name, e.name as product_family_name");
             $this->db->from('delivery_schedule_days a');
             $this->db->join('item_rm b', 'a.item_rm_id = b.id');
             $this->db->join('suppliers c', 'a.supplier_id = c.id');
             $this->db->join('supplier_items d', 'a.supplier_id = d.supplier_id and a.item_rm_id = d.item_rm_id', 'left');
             $this->db->join('item_familys e', 'b.item_family_id = e.id');
+            $this->db->join('convertions f', 'a.item_rm_id = f.item_rm_id', 'left');
             $this->db->where('a.plant', $filter_plant);
             $this->db->where('a.p_month', $filter_month);
             $this->db->where('a.p_year', $filter_year);
@@ -215,6 +217,9 @@ class Delivery_schedule_days extends CI_Controller
             }
             if($filter_supplier != ""){
                 $this->db->where('a.supplier_id', $filter_supplier);
+            }
+            if($filter_po != ""){
+                $this->db->where('a.po_no', $filter_po);
             }
             $this->db->like('b.id', $filter_item_id);
             $this->db->group_by('a.id');
@@ -290,6 +295,7 @@ class Delivery_schedule_days extends CI_Controller
         $filter_year = base64_decode($this->input->get('filter_year'));
         $filter_revision = base64_decode($this->input->get('filter_revision'));
         $filter_supplier = base64_decode($this->input->get('filter_supplier'));
+        $filter_po = base64_decode($this->input->get('filter_po'));
         $filter_item_family = base64_decode($this->input->get('filter_item_family'));
         $filter_item_id = base64_decode($this->input->get('filter_item_id'));
 
@@ -304,14 +310,17 @@ class Delivery_schedule_days extends CI_Controller
         $this->db->join('supplier_items b', 'a.supplier_id = b.supplier_id and a.item_rm_id = b.item_rm_id and a.plant = b.plant');
         $this->db->join('suppliers c', 'b.supplier_id = c.id');
         $this->db->join('item_rm d', 'b.item_rm_id = d.id');
-        $this->db->join('makers e', 'b.maker_id = e.id');
-        $this->db->where('e.type', "LOCAL");
+        // $this->db->join('makers e', 'b.maker_id = e.id');
+        // $this->db->where('e.type', "LOCAL");
         $this->db->where('a.plant', $filter_plant);
         $this->db->where('a.p_month', $filter_month);
         $this->db->where('a.p_year', $filter_year);
         $this->db->where('a.revision', $filter_revision);
         if($filter_supplier != ""){
             $this->db->where('a.supplier_id', $filter_supplier);
+        }
+        if($filter_po != ""){
+            $this->db->where('a.po_no', $filter_po);
         }
         if($filter_item_family != ""){
             $this->db->where('d.item_family_id', $filter_item_family);
@@ -492,44 +501,73 @@ class Delivery_schedule_days extends CI_Controller
         $data = new Spreadsheet_Excel_Reader($file, false);
         $total_row = $data->rowcount($sheet_index = 0);
 
-        for ($i = 5; $i <= $total_row; $i++) {
+        for ($i = 6; $i <= $total_row; $i++) {
             $datas[] = array(
-                'p_month' => $data->val(2, 3),
-                'p_year' => $data->val(2, 4),
-                'revision' => $data->val(3, 3),
-                'part_no' => $data->val($i, 2),
-                'part_name' => $data->val($i, 3),
-                'del_1' => $data->val($i, 4),
-                'del_2' => $data->val($i, 5),
-                'del_3' => $data->val($i, 6),
-                'del_4' => $data->val($i, 7),
-                'del_5' => $data->val($i, 8),
-                'del_6' => $data->val($i, 9),
-                'del_7' => $data->val($i, 10),
-                'del_8' => $data->val($i, 11),
-                'del_9' => $data->val($i, 12),
-                'del_10' => $data->val($i, 13),
-                'del_11' => $data->val($i, 14),
-                'del_12' => $data->val($i, 15),
-                'del_13' => $data->val($i, 16),
-                'del_14' => $data->val($i, 17),
-                'del_15' => $data->val($i, 18),
-                'del_16' => $data->val($i, 19),
-                'del_17' => $data->val($i, 20),
-                'del_18' => $data->val($i, 21),
-                'del_19' => $data->val($i, 22),
-                'del_20' => $data->val($i, 23),
-                'del_21' => $data->val($i, 24),
-                'del_22' => $data->val($i, 25),
-                'del_23' => $data->val($i, 26),
-                'del_24' => $data->val($i, 27),
-                'del_25' => $data->val($i, 28),
-                'del_26' => $data->val($i, 29),
-                'del_27' => $data->val($i, 30),
-                'del_28' => $data->val($i, 31),
-                'del_29' => $data->val($i, 32),
-                'del_30' => $data->val($i, 33),
-                'del_31' => $data->val($i, 34)
+                'item_rm_number' => $data->val($i, 2),
+                'po_no' => $data->val($i, 3),
+                'qty_bf' => $data->val($i, 4),
+                'plan_1' => $data->val($i, 5),
+                'del_1' => $data->val($i, 6),
+                'plan_2' => $data->val($i, 7),
+                'del_2' => $data->val($i, 8),
+                'plan_3' => $data->val($i, 9),
+                'del_3' => $data->val($i, 10),
+                'plan_4' => $data->val($i, 11),
+                'del_4' => $data->val($i, 12),
+                'plan_5' => $data->val($i, 13),
+                'del_5' => $data->val($i, 14),
+                'plan_6' => $data->val($i, 15),
+                'del_6' => $data->val($i, 16),
+                'plan_7' => $data->val($i, 17),
+                'del_7' => $data->val($i, 18),
+                'plan_8' => $data->val($i, 19),
+                'del_8' => $data->val($i, 20),
+                'plan_9' => $data->val($i, 21),
+                'del_9' => $data->val($i, 22),
+                'plan_10' => $data->val($i, 23),
+                'del_10' => $data->val($i, 24),
+                'plan_11' => $data->val($i, 25),
+                'del_11' => $data->val($i, 26),
+                'plan_12' => $data->val($i, 27),
+                'del_12' => $data->val($i, 28),
+                'plan_13' => $data->val($i, 29),
+                'del_13' => $data->val($i, 30),
+                'plan_14' => $data->val($i, 31),
+                'del_14' => $data->val($i, 32),
+                'plan_15' => $data->val($i, 33),
+                'del_15' => $data->val($i, 34),
+                'plan_16' => $data->val($i, 35),
+                'del_16' => $data->val($i, 36),
+                'plan_17' => $data->val($i, 37),
+                'del_17' => $data->val($i, 38),
+                'plan_18' => $data->val($i, 39),
+                'del_18' => $data->val($i, 40),
+                'plan_19' => $data->val($i, 41),
+                'del_19' => $data->val($i, 42),
+                'plan_20' => $data->val($i, 43),
+                'del_20' => $data->val($i, 44),
+                'plan_21' => $data->val($i, 45),
+                'del_21' => $data->val($i, 46),
+                'plan_22' => $data->val($i, 47),
+                'del_22' => $data->val($i, 48),
+                'plan_23' => $data->val($i, 49),
+                'del_23' => $data->val($i, 50),
+                'plan_24' => $data->val($i, 51),
+                'del_24' => $data->val($i, 52),
+                'plan_25' => $data->val($i, 53),
+                'del_25' => $data->val($i, 54),
+                'plan_26' => $data->val($i, 55),
+                'del_26' => $data->val($i, 56),
+                'plan_27' => $data->val($i, 57),
+                'del_27' => $data->val($i, 58),
+                'plan_28' => $data->val($i, 59),
+                'del_28' => $data->val($i, 60),
+                'plan_29' => $data->val($i, 61),
+                'del_29' => $data->val($i, 62),
+                'plan_30' => $data->val($i, 63),
+                'del_30' => $data->val($i, 64),
+                'plan_31' => $data->val($i, 65),
+                'del_31' => $data->val($i, 66),
             );
         }
 
@@ -544,14 +582,15 @@ class Delivery_schedule_days extends CI_Controller
         if ($this->input->post()) {
             $data = $this->input->post('data');
 
-            //Cek Data
-            $delivery_schedule_days = $this->crud->read('delivery_schedule_days', [], ["part_no" => $data['part_no'], "p_month" => $data['p_month'], "p_year" => $data['p_year'], "revision" => $data['revision']]);
+            $item_rm = $this->crud->read("item_rm", [], ["number" => trim($data['item_rm_number'])]);
+            $delivery_schedule_days = $this->crud->read('delivery_schedule_days', [], ["item_rm_id" => @$item_rm->id, "po_no" => $data['po_no']]);
 
-            if (empty($delivery_schedule_days->part_no)) {
-                echo json_encode(array("title" => "Not Found", "message" => "Part No " . $data['part_no'] . " Not Found", "theme" => "error"));
+            if (empty($delivery_schedule_days->id)) {
+                echo json_encode(array("title" => "Not Found", "message" => "Part No " . $data['item_rm_number'] . " and PO No " . $data['po_no'] . " Not Found", "theme" => "error"));
             } else {
-                $send = $this->crud->update('delivery_schedule_days', ["part_no" => $data['part_no'], "p_month" => $data['p_month'], "p_year" => $data['p_year'], "revision" => $data['revision']], $data);
-                echo json_encode(array("title" => "Good Job", "message" => "Part No" . $data['part_no'] . " Saved Successfully", "theme" => "success"));
+                unset($data['item_rm_number']);
+                $this->crud->update('delivery_schedule_days', ["item_rm_id" => @$item_rm->id, "po_no" => $data['po_no']], $data);
+                echo json_encode(array("title" => "Good Job", "message" => "Part No" . $data['part_no'] . " Updated Successfully", "theme" => "success"));
             }
         }
     }
@@ -599,7 +638,7 @@ class Delivery_schedule_days extends CI_Controller
         $config = $this->db->get()->row();
 
         //Database Server MRP
-        // $this->dummy = $this->load->database('export', TRUE);
+        $this->dummy = $this->load->database('export', TRUE);
 
         //Filter Data
         $filter_plant = base64_decode($this->input->get('filter_plant'));
@@ -608,6 +647,7 @@ class Delivery_schedule_days extends CI_Controller
         $filter_revision = base64_decode($this->input->get('filter_revision'));
         $filter_item_family = base64_decode($this->input->get('filter_item_family'));
         $filter_supplier = base64_decode($this->input->get('filter_supplier'));
+        $filter_po = base64_decode($this->input->get('filter_po'));
         $filter_item_id = base64_decode($this->input->get('filter_item_id'));
 
         $firstDate = date('01 M Y', strtotime($filter_year . "-" . $filter_month . "-01"));
@@ -615,12 +655,13 @@ class Delivery_schedule_days extends CI_Controller
         $monthBf = date('F', strtotime("-1 month", strtotime($filter_year . "-" . $filter_month . "-01")));
 
         //Select Query
-        $this->db->select("a.*, b.number as item_rm_number, b.name as item_rm_name, d.mpq, d.moq, d.leadtime, c.name as supplier_name, e.name as product_family_name");
+        $this->db->select("a.*, b.number as item_rm_number, b.name as item_rm_name, (case when f.mpq is not null then f.mpq else d.mpq end) as mpq, (case when f.moq is not null then f.moq else d.moq end) as moq, d.leadtime, c.name as supplier_name, e.name as product_family_name");
         $this->db->from('delivery_schedule_days a');
         $this->db->join('item_rm b', 'a.item_rm_id = b.id');
         $this->db->join('suppliers c', 'a.supplier_id = c.id');
         $this->db->join('supplier_items d', 'a.supplier_id = d.supplier_id and a.item_rm_id = d.item_rm_id', 'left');
         $this->db->join('item_familys e', 'b.item_family_id = e.id');
+        $this->db->join('convertions f', 'a.item_rm_id = f.item_rm_id', 'left');
         $this->db->where('a.plant', $filter_plant);
         $this->db->where('a.p_month', $filter_month);
         $this->db->where('a.p_year', $filter_year);
@@ -630,6 +671,9 @@ class Delivery_schedule_days extends CI_Controller
         }
         if($filter_supplier != ""){
             $this->db->where('a.supplier_id', $filter_supplier);
+        }
+        if($filter_po != ""){
+            $this->db->where('a.po_no', $filter_po);
         }
         $this->db->like('b.id', $filter_item_id);
         $this->db->group_by('a.id');

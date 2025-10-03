@@ -154,7 +154,7 @@
                 <th data-options="field:'moq',width:80,align:'center', styler:numberStyle">MOQ</th>
                 <th data-options="field:'leadtime',width:80,align:'center', styler:numberStyle">Leadtime <br>(Days)</th>
                 <th data-options="field:'share_order',width:80,align:'center', styler:numberStyle">Share Order %</th>
-                <th data-options="field:'total_need',width:80,align:'center', styler:numberStyle">Total Need</th>
+                <th data-options="field:'total_need',width:80,align:'center', styler:numberStyle">MRP Result</th>
             </tr>
         </thead>
     </table>

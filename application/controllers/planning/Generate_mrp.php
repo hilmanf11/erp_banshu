@@ -333,7 +333,7 @@ class Generate_mrp extends CI_Controller
         $this->db->from("generate_mrp_finals a");
         $this->db->join('item_rm b', 'a.item_rm_id = b.id');
         $this->db->join('item_rm ia', "TRIM(LEADING '+' FROM b.number) = ia.number");
-        $this->db->join("supplier_items c", "ia.id = c.item_rm_id and a.supplier_id = c.supplier_id and a.plant = c.plant", "left");
+        $this->db->join("supplier_items c", "ia.id = c.item_rm_id and a.plant = c.plant", "left");
         $this->db->where("a.p_month", $filter_month);
         $this->db->where("a.p_year", $filter_year);
         $this->db->where("a.revision", $filter_revision);
@@ -523,7 +523,9 @@ class Generate_mrp extends CI_Controller
                 $where_del_part_no = "";
             }
 
-            $this->db->query("DELETE FROM generate_mrp_finals WHERE p_month = '$filter_month' and p_year = '$filter_year' and plant = '$filter_plant' and revision = '$filter_revision' $where_del_part_no");
+            if($filter_product_family == ""){
+                $this->db->query("DELETE FROM generate_mrp_finals WHERE p_month = '$filter_month' and p_year = '$filter_year' and plant = '$filter_plant' and revision = '$filter_revision' $where_del_part_no");
+            }
 
             //Select Query
             $this->db->select('a.item_rm_id, 
@@ -545,7 +547,7 @@ class Generate_mrp extends CI_Controller
             $this->db->join('item_rm i', "a.item_rm_id = i.id");
             $this->db->join('item_rm ia', "TRIM(LEADING '+' FROM i.number) = ia.number");
             $this->db->join('item_alias ix', 'i.id = ix.number', 'left');
-            $this->db->join("(select * from supplier_items WHERE plant = '$filter_plant' and share_order > 0 order by leadtime desc) b", "ia.id = b.item_rm_id and (b.mpq > 0 and b.moq > 0 and b.leadtime > 0 and b.share_order > 0)", "left");
+            $this->db->join("(select * from supplier_items WHERE plant = '$filter_plant' and share_order > 0 order by leadtime desc) b", "ia.id = b.item_rm_id", "left");
             $this->db->join('makers c', 'b.maker_id = c.id', 'left');
             $this->db->join('suppliers h', 'b.supplier_id = h.id and h.status = 0', "left");
             // $this->db->where('a.p_month', $filter_month);
@@ -711,7 +713,7 @@ class Generate_mrp extends CI_Controller
                 $balance_5 = ($balance_4 - $need_5);
                 $balance_6 = ($balance_5 - $need_6);
                 
-                if(($generate['leadtime'] + $cutoffDate - 1) <= 30){
+                if($generate['leadtime'] > 0 && ($generate['leadtime'] + $cutoffDate - 1) <= 30){
                     if($generate['supplier_type'] == "LOCAL"){
                         if($balance_1 > 0){
                             $total_need = 0;
@@ -789,7 +791,6 @@ class Generate_mrp extends CI_Controller
                     }
                 }
 
-                $qty_wo = ($generate['leadtime'] + $cutoffDate - 1);
                 $leadtimeMonth = ceil(($generate['leadtime'] + $cutoffDate - 1) / 30);
 
                 switch ($leadtimeMonth) {
@@ -973,7 +974,9 @@ class Generate_mrp extends CI_Controller
                 $where_del_part_no = "";
             }
 
-            $this->db->query("DELETE FROM generate_mrp_abcclass WHERE p_month = '$filter_month' and p_year = '$filter_year' and revision = '$filter_revision' and plant = '$filter_plant' $where_del_part_no");
+            if($filter_product_family == ""){
+                $this->db->query("DELETE FROM generate_mrp_abcclass WHERE p_month = '$filter_month' and p_year = '$filter_year' and revision = '$filter_revision' and plant = '$filter_plant' $where_del_part_no");
+            }
 
             //Select Query
             $this->db->select('a.*, b.item_family_id');
@@ -1071,7 +1074,6 @@ class Generate_mrp extends CI_Controller
             $this->db->where('p_year', $post['p_year']);
             $this->db->where('revision', $post['revision']);
             $this->db->where('item_rm_id', $post['item_rm_id']);
-            $this->db->where('supplier_id', $post['supplier_id']);
             $this->db->where('plant', $post['plant']);
             $records = $this->db->get()->result_array();
 
@@ -1081,7 +1083,6 @@ class Generate_mrp extends CI_Controller
                     "p_year" => $post['p_year'],
                     "revision" => $post['revision'],
                     "item_rm_id" => $post['item_rm_id'],
-                    "supplier_id" => $post['supplier_id'],
                     "plant" => $post['plant'],
                 ], $post);
 
@@ -1102,7 +1103,6 @@ class Generate_mrp extends CI_Controller
                 "p_year" => $post['p_year'],
                 "revision" => $post['revision'],
                 "item_rm_id" => $post['item_rm_id'],
-                "supplier_id" => $post['supplier_id'],
                 "plant" => $post['plant'],
             ]);
 
@@ -1112,7 +1112,6 @@ class Generate_mrp extends CI_Controller
                     "p_year" => $post['p_year'],
                     "revision" => $post['revision'],
                     "item_rm_id" => $post['item_rm_id'],
-                    "supplier_id" => $post['supplier_id'],
                     "plant" => $post['plant'],
                 ], $post);
 
@@ -1231,6 +1230,7 @@ class Generate_mrp extends CI_Controller
             $this->db->join('supplier_items h', 'a.item_rm_id = h.item_rm_id and a.supplier_id = h.supplier_id and a.plant = h.plant');
             $this->db->join('makers i', 'h.maker_id = i.id', 'left');
             $this->db->join("(select * from purchase_requests WHERE status_data = 'GENERATE') g", "a.supplier_id = g.supplier_id and a.item_rm_id = g.item_rm_id and a.plant = g.plant and a.p_month = g.p_month and a.p_year = g.p_year and a.revision = g.revision", 'left');
+            $this->db->where("(a.mpq > 0 and a.moq > 0 and a.leadtime > 0 and a.share_order > 0)");
             $this->db->where('a.plant', $filter_plant);
             if($filter_supplier != ""){
                 $this->db->where('a.supplier_id', $filter_supplier);

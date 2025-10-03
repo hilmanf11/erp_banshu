@@ -34,7 +34,7 @@
             <th rowspan="2" data-options="field:'detail',width:80,halign:'center',formatter:BtnDetail">Detail</th>
             <th rowspan="2" data-options="field:'print_po',width:80,halign:'center',formatter:BtnPrint">Print PO</th>
             <!-- <th rowspan="2" data-options="field:'terms',width:100,halign:'center',formatter:btnTerms">Terms<br>Condition</th> -->
-            <th colspan="2" data-options="field:'scedule',width:80,halign:'center'">Schedule Delivery</th>
+            <th colspan="2" data-options="field:'scedule',width:80,halign:'center'">Schedule Delivery Import</th>
             <th rowspan="2" data-options="field:'erp',width:80,align:'center',formatter:BtnPush">Push ERP</th>
             <th rowspan="2" data-options="field:'push_date',width:150,align:'center'">Push Date</th>
             <th colspan="3" data-options="field:'Send_mail',width:100,halign:'center'">Send Mail</th>
@@ -45,7 +45,7 @@
         </tr>
         <tr>
             <th data-options="field:'print_sd1',width:80,align:'center',formatter:BtnCreateSd">Create</th>
-            <th data-options="field:'print_sd2',width:80,align:'center',formatter:BtnPrintSd">Print</th>
+            <th data-options="field:'print_sd2',width:120,align:'center',formatter:BtnPrintSd">Print</th>
             <th data-options="field:'send',width:100,align:'center',formatter:BtnSend">Send</th>
             <th data-options="field:'email_status',width:80,align:'center', styler:cellStylerSend, formatter:cellFormatterSend">Status</th>
             <th data-options="field:'email_date',width:130,align:'center'">Date</th>
@@ -260,52 +260,52 @@
     }
 
     function pushData(){
-        toastr.error("Still Development");
-    //     var rows = $('#dg_purchase_order').datagrid('getSelections');
-    //     if (rows.length > 0) {
-    //         $.messager.prompt('Push Data PO', 'Please input Password to Push', function(r){
-    //             if (r == "PUSHDATA"){
-    //                 $('#dlg_purchase_order').dialog('close');
-    //                 requestData2(rows.length, rows);
+        // toastr.error("Still Development");
+        var rows = $('#dg_purchase_order').datagrid('getSelections');
+        if (rows.length > 0) {
+            $.messager.prompt('Push Data PO', 'Please input Password to Push', function(r){
+                if (r == "PUSHDATA"){
+                    $('#dlg_purchase_order').dialog('close');
+                    requestData2(rows.length, rows);
 
-    //                 function requestData2(total, json, number = 1, value = 0, success = 1, failed = 1) {
-    //                     if (value < 100) {
-    //                         value = Math.floor((number / total) * 100);
-    //                         $('#p_upload').progressbar('setValue', value);
-    //                         $('#p_start').html(number);
-    //                         $('#p_finish').html(total);
+                    function requestData2(total, json, number = 1, value = 0, success = 1, failed = 1) {
+                        if (value < 100) {
+                            value = Math.floor((number / total) * 100);
+                            $('#p_upload').progressbar('setValue', value);
+                            $('#p_start').html(number);
+                            $('#p_finish').html(total);
 
-    //                         $.post('<?= base_url('purchase/purchase_orders/pushData') ?>', {
-    //                             data: json[number - 1]
-    //                         }, function(note) {
-    //                             var result = eval('(' + note + ')');
+                            $.post('<?= base_url('purchase/purchase_orders/pushData') ?>', {
+                                data: json[number - 1]
+                            }, function(note) {
+                                var result = eval('(' + note + ')');
 
-    //                             if (result.theme == "success") {
-    //                                 requestData2(total, json, number + 1, value, success + 1, failed + 0);
-    //                             } else {
-    //                                 requestData2(total, json, number + 1, value, success + 0, failed + 1);
-    //                             }
+                                if (result.theme == "success") {
+                                    requestData2(total, json, number + 1, value, success + 1, failed + 0);
+                                } else {
+                                    requestData2(total, json, number + 1, value, success + 0, failed + 1);
+                                }
 
-    //                             if (value == 100) {
-    //                                 Swal.fire('Good job!', 'Process Generate Data Completed!', 'success');
-    //                                 $("#dg").datagrid('reload');
-    //                             }
-    //                         }).fail(function(jqXHR, textStatus) {
-    //                             if (textStatus == "error") {
-    //                                 toastr.error("Connection time out");
+                                if (value == 100) {
+                                    Swal.fire('Good job!', 'Process Generate Data Completed!', 'success');
+                                    $("#dg").datagrid('reload');
+                                }
+                            }).fail(function(jqXHR, textStatus) {
+                                if (textStatus == "error") {
+                                    toastr.error("Connection time out");
 
-    //                                 requestData2(total, json, number, value, success + 0, failed + 1);
-    //                             }
-    //                         });
-    //                     }
-    //                 }
-    //             }
-    //         });
+                                    requestData2(total, json, number, value, success + 0, failed + 1);
+                                }
+                            });
+                        }
+                    }
+                }
+            });
 
-    //         $('.messager-input').attr('type', 'password');
-    //     }else{
-    //         toastr.warning("Please select one of the data in the table first!");
-    //     }
+            $('.messager-input').attr('type', 'password');
+        }else{
+            toastr.warning("Please select one of the data in the table first!");
+        }
     }
 
     function sendMail(po_no, status){

@@ -49,6 +49,11 @@
             <legend><b>Generating Process</b></legend>
             <div id="p_upload" class="easyui-progressbar" style="width:100%;"></div>
             <center><b id="p_start">0</b> Of <b id="p_finish">0</b></center>
+            <div id="p_remarks" class="easyui-panel" style="width:100%; height:80px; padding:10px; margin-top: 10px; overflow: auto;">
+                <ul id="remarks">
+
+                </ul>
+            </div>
         </fieldset>
     </div>
     <?= $button ?>
@@ -199,6 +204,19 @@
     </form>
 </div>
 
+<!-- Upload -->
+<div id="dlg_upload" class="easyui-dialog" title="Upload Data" data-options="closed: true,modal:true" style="width: 500px; padding:10px; top: 20px;">
+    <form id="frm_upload" method="post" enctype="multipart/form-data" novalidate>
+        <fieldset style="width:100%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
+            <legend><b>Form Data</b></legend>
+            <div class="fitem">
+                <span style="width:35%; display:inline-block;">File Upload</span>
+                <input name="file_upload" style="width: 60%;" required="" accept=".xls" id="file_excel" class="easyui-filebox">
+            </div>
+        </fieldset>
+    </form>
+</div>
+
 <!-- PDF -->
 <iframe id="printout" src="" style="width: 100%;" hidden></iframe>
 
@@ -340,6 +358,15 @@
         } else {
             toastr.warning("Please select one of the data in the table first!", "Information");
         }
+    }
+
+    //Upload Data
+    function upload() {
+        $('#dlg_upload').dialog('open');
+    }
+
+    function download_excel() {
+        window.location.assign('<?= base_url('template/tmp_delivery_schedule_import.xls') ?>');
     }
 
     function filter() {
@@ -733,6 +760,111 @@
 
                             $('#dlg_insert').dialog('close');
                             $('#dg').datagrid('reload');
+                        }
+                    });
+                }
+            }]
+        });
+
+        //Upload Data
+        $('#dlg_upload').dialog({
+            buttons: [{
+                text: 'List Failed',
+                handler: function() {
+                    window.open('<?= base_url('purchase/delivery_schedules/uploadDownloadFailed') ?>', '_blank');
+                }
+            }, {
+                text: 'Upload',
+                iconCls: 'icon-ok',
+                handler: function() {
+                    $('#frm_upload').form('submit', {
+                        url: '<?= base_url('purchase/delivery_schedules/upload') ?>',
+                        onSubmit: function() {
+                            if ($(this).form('validate') == false) {
+                                return $(this).form('validate');
+                            } else {
+                                $.messager.progress({
+                                    title: 'Please Wait',
+                                    msg: 'Importing Excel to Database'
+                                });
+                            }
+                        },
+                        success: function(result) {
+                            $.messager.progress('close');
+                            $('#dlg_upload').dialog('close');
+                            //Clear File
+                            $.ajax({
+                                url: "<?= base_url('purchase/delivery_schedules/uploadclearFailed') ?>"
+                            });
+
+                            var json = eval('(' + result + ')');
+                            requestData(json.total, json);
+
+                            function requestData(total, json, number = 1, value = 0, success = 1, failed = 1) {
+                                if (value < 100) {
+                                    value = Math.floor((number / total) * 100);
+                                    $('#p_upload').progressbar('setValue', value);
+                                    $('#p_start').html(number);
+                                    $('#p_finish').html(total);
+
+                                    $.ajax({
+                                        type: "POST",
+                                        async: true,
+                                        url: "<?= base_url('purchase/delivery_schedules/uploadCreate') ?>",
+                                        data: {
+                                            "data": json[number - 1]
+                                        },
+                                        cache: false,
+                                        dataType: "json",
+                                        success: function(result) {
+                                            if (result.theme == "success") {
+                                                Swal.close();
+                                                $('#p_success').html(success);
+                                                var title = "<b style='color: green;'>" + result.title + "</b> | " + result.message;
+                                                requestData(total, json, number + 1, value, success + 1, failed + 0);
+                                            } else {
+                                                $('#p_failed').html(failed);
+                                                var title = "<b style='color: red;'>" + result.title + "</b> | " + result.message;
+
+                                                //Json Failed
+                                                $.ajax({
+                                                    type: "POST",
+                                                    async: true,
+                                                    url: "<?= base_url('purchase/delivery_schedules/uploadcreateFailed') ?>",
+                                                    data: {
+                                                        data: json[number - 1],
+                                                        message: result.message
+                                                    },
+                                                    cache: false
+                                                });
+
+                                                requestData(total, json, number + 1, value, success + 0, failed + 1);
+                                            }
+
+                                            if (value == 100) {
+                                                $.messager.alert('Done', 'Data upload is complete', 'info');
+                                            }
+
+                                            $("#p_remarks").append(title + "<br>");
+                                        },
+                                        error: function(jqXHR, textStatus) {
+                                            if (textStatus == "error") {
+                                                Swal.fire({
+                                                    title: 'Connection Time Out, Check Your Connection',
+                                                    showConfirmButton: false,
+                                                    allowOutsideClick: false,
+                                                    allowEscapeKey: false,
+                                                    didOpen: () => {
+                                                        Swal.showLoading();
+                                                    },
+                                                });
+
+                                                requestData(total, json, number, value, success + 0, failed + 0);
+                                            }
+                                        }
+                                    });
+                                }
+                            }
                         }
                     });
                 }

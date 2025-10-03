@@ -1290,7 +1290,7 @@ class Approvals extends CI_Controller
         $this->db->where('a.approved_by', $approved_by);
         $this->db->where('a.po_no', $po_no);
         $this->db->group_by('a.id');
-        $this->db->order_by('a.created_date', 'DESC');
+        $this->db->order_by('b.number', 'ASC');
         $records = $this->db->get()->result_array();
 
         die(json_encode($records));

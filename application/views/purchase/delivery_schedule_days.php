@@ -27,6 +27,7 @@
                     $filter_revision = base64_decode($this->input->get('filter_revision'));
                     $filter_item_family = base64_decode($this->input->get('filter_item_family'));
                     $filter_supplier = base64_decode($this->input->get('filter_supplier'));
+                    $filter_po = base64_decode($this->input->get('filter_po'));
                     $filter_item_id = base64_decode($this->input->get('filter_item_id'));
                 }else{
                     $filter_plant = "";
@@ -35,6 +36,7 @@
                     $filter_revision = "0";
                     $filter_item_family = "";
                     $filter_supplier = "";
+                    $filter_po = "";
                     $filter_item_id = "";
                 }
 
@@ -116,6 +118,10 @@
                     <input style="width:60%;" id="filter_supplier" value="<?= $filter_supplier ?>" class="easyui-combobox">
                 </div>
                 <div class="fitem">
+                    <span style="width:35%; display:inline-block;">PO No</span>
+                    <input style="width:60%;" id="filter_po" value="<?= $filter_po ?>" class="easyui-combobox">
+                </div>
+                <div class="fitem">
                     <span style="width:35%; display:inline-block;">Product Family</span>
                     <input style="width:60%;" id="filter_item_family" value="<?= $filter_item_family ?>" class="easyui-combobox">
                 </div>
@@ -126,17 +132,15 @@
             </div>
         </fieldset>
 
-        <fieldset style="width: 35%; border:2px solid #d0d0d0; margin-bottom: 5px; margin-top: 5px; border-radius:4px;">
+        <fieldset style="width: 30%; border:2px solid #d0d0d0; margin-bottom: 5px; margin-top: 5px; border-radius:4px;">
             <legend><b>Result Generate</b></legend>
             <div id="p_upload" class="easyui-progressbar" style="width:100%; margin-top: 10px;"></div>
             <center><b id="p_start">0</b> Of <b id="p_finish">0</b></center>
-            <div id="p_remarks" class="easyui-panel" style="width:100%; height:80px; padding:10px; margin-top: 10px; overflow: auto;" hidden>
+            <div id="p_remarks" class="easyui-panel" style="width:100%; height:80px; padding:10px; margin-top: 10px; overflow: auto;">
                 <ul id="remarks">
 
                 </ul>
             </div>
-            <a href="javascript:;" style="float: left; color:green;" class="easyui-linkbutton" plain="true"><i class="fa fa-check"></i> SUCCESS : <b id="p_success">0</b></a>
-            <a href="javascript:;" style="float: right; color:red;" class="easyui-linkbutton" plain="true" onclick="downloadFailed()"><i class="fa fa-times"></i> FAILED : <b id="p_failed">0</b></a>
         </fieldset>
     </div>
     <?= $button ?>
@@ -155,7 +159,7 @@
                     </div>
                     <div class="fitem">
                         <span style="width:30%; display:inline-block;">Part No</span>
-                        <input style="width:60%;" name="part_no" id="part_no" disabled class="easyui-textbox">
+                        <input style="width:60%;" name="item_rm_number" id="item_rm_number" disabled class="easyui-textbox">
                     </div>
                     <div class="fitem">
                         <span style="width:30%; display:inline-block;">Product Family</span>
@@ -270,6 +274,7 @@
         var filter_year = $("#filter_year").textbox('getValue');
         var filter_revision = $("#filter_revision").combobox('getValue');
         var filter_supplier = $("#filter_supplier").combobox('getValue');
+        var filter_po = $("#filter_po").combobox('getValue');
         var filter_item_family = $("#filter_item_family").combobox('getValue');
         var filter_item_id = $("#filter_item_id").combogrid('getValue');
 
@@ -296,6 +301,7 @@
                             "&filter_revision=" + window.btoa(filter_revision) +
                             "&filter_plant=" + window.btoa(filter_plant) +
                             "&filter_supplier=" + window.btoa(filter_supplier) +
+                            "&filter_po=" + window.btoa(filter_po) +
                             "&filter_item_family=" + window.btoa(filter_item_family) +
                             "&filter_item_id=" + window.btoa(filter_item_id),
                         dataType: "json",
@@ -305,7 +311,7 @@
                             if(rows.total > 0){
                                 requestData(rows.total, rows);
                             }else{
-                                Swal.fire('Not Found!', 'Data MPP not found!', 'error');
+                                Swal.fire('Not Found!', 'Data Purchase Order not found!', 'error');
                             }
 
                             function requestData(total, json, number = 1, value = 0, success = 1, failed = 1) {
@@ -474,6 +480,7 @@
         var filter_year = $("#filter_year").textbox('getValue');
         var filter_revision = $("#filter_revision").combobox('getValue');
         var filter_supplier = $("#filter_supplier").combobox('getValue');
+        var filter_po = $("#filter_po").combobox('getValue');
         var filter_item_family = $("#filter_item_family").combobox('getValue');
         var filter_item_id = $("#filter_item_id").combogrid('getValue');
 
@@ -482,6 +489,7 @@
             "&filter_revision=" + window.btoa(filter_revision) +
             "&filter_plant=" + window.btoa(filter_plant) +
             "&filter_supplier=" + window.btoa(filter_supplier) +
+            "&filter_po=" + window.btoa(filter_po) +
             "&filter_item_family=" + window.btoa(filter_item_family) +
             "&filter_item_id=" + window.btoa(filter_item_id);
 
@@ -509,6 +517,7 @@
         var filter_year = $("#filter_year").textbox('getValue');
         var filter_revision = $("#filter_revision").combobox('getValue');
         var filter_supplier = $("#filter_supplier").combobox('getValue');
+        var filter_po = $("#filter_po").combobox('getValue');
         var filter_item_family = $("#filter_item_family").combobox('getValue');
         var filter_item_id = $("#filter_item_id").combogrid('getValue');
 
@@ -517,6 +526,7 @@
             "&filter_revision=" + window.btoa(filter_revision) +
             "&filter_plant=" + window.btoa(filter_plant) +
             "&filter_supplier=" + window.btoa(filter_supplier) +
+            "&filter_po=" + window.btoa(filter_po) +
             "&filter_item_family=" + window.btoa(filter_item_family) +
             "&filter_item_id=" + window.btoa(filter_item_id);
 
@@ -534,7 +544,7 @@
     }
 
     function download_excel() {
-        window.location.assign('<?= base_url('template/tmp_delivery_schedule_days.xls') ?>');
+        window.location.assign('<?= base_url('template/tmp_delivery_schedule_local.xls') ?>');
     }
 
     function reload() {
@@ -549,6 +559,7 @@
         var filter_year = $("#filter_year").textbox('getValue');
         var filter_revision = $("#filter_revision").combobox('getValue');
         var filter_supplier = $("#filter_supplier").combobox('getValue');
+        var filter_po = $("#filter_po").combobox('getValue');
         var filter_item_family = $("#filter_item_family").combobox('getValue');
         var filter_item_id = $("#filter_item_id").combogrid('getValue');
 
@@ -557,6 +568,7 @@
             "&filter_revision=" + window.btoa(filter_revision) +
             "&filter_plant=" + window.btoa(filter_plant) +
             "&filter_supplier=" + window.btoa(filter_supplier) +
+            "&filter_po=" + window.btoa(filter_po) +
             "&filter_item_family=" + window.btoa(filter_item_family) +
             "&filter_item_id=" + window.btoa(filter_item_id);
 
@@ -739,8 +751,21 @@
                     $(e.data.target).combobox('clear').combobox('textbox').focus();
                 }
             }],
+            onSelect: function(row, val){
+                $('#filter_po').combobox({
+                    url: '<?php echo base_url('purchase/purchase_orders/readPono?supplier_id='); ?>' + btoa(row.id),
+                    valueField: 'po_no',
+                    textField: 'po_no',
+                    prompt: 'Select PO',
+                    icons: [{
+                        iconCls: 'icon-clear',
+                        handler: function(e) {
+                            $(e.data.target).combobox('clear').combobox('textbox').focus();
+                        }
+                    }],
+                });
+            }
         });
-
 
         $('#filter_item_family').combobox({
             url: '<?php echo base_url('master/item_familys/reads'); ?>',

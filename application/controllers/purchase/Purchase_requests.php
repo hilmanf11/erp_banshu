@@ -259,6 +259,7 @@ class Purchase_requests extends CI_Controller
             $this->db->join("(select * from purchase_requests WHERE status_data IN ('GENERATE','EDIT')) h", "a.supplier_id = h.supplier_id and a.item_rm_id = h.item_rm_id and a.plant = h.plant and a.p_month = h.p_month and a.p_year = h.p_year and a.revision = h.revision", 'left');
             $this->db->where("a.item_rm_id NOT IN (SELECT item_rm_alias FROM generate_mrp_finals WHERE p_month='$filter_month' and p_year='$filter_year' and revision='$filter_revision' and plant='$filter_plant' GROUP BY item_rm_alias)");
             $this->db->where("(a.purchase_order > 0 or a.item_rm_alias != '')");
+            $this->db->where("(c.mpq > 0 and c.moq > 0 and c.leadtime > 0)");
             $this->db->where('a.p_month', $filter_month);
             $this->db->where('a.p_year', $filter_year);
             $this->db->where('a.revision', $filter_revision);
@@ -526,7 +527,7 @@ class Purchase_requests extends CI_Controller
         $offset = ($page - 1) * $rows;
         $result = array();
         //Select Query
-        $this->db->select('a.*, d.number as item_rm_number, d.name as item_rm_name, b.name as supplier_name, c.share_order, c.moq, c.mpq, c.leadtime, c.item_supplier, e.po_no');
+        $this->db->select('a.*, d.number as item_rm_number, d.name as item_rm_name, d.uom, b.name as supplier_name, c.share_order, c.moq, c.mpq, c.leadtime, c.item_supplier, e.po_no');
         $this->db->from('purchase_requests a');
         $this->db->join('suppliers b', 'a.supplier_id = b.id');
         $this->db->join('item_rm d', 'a.item_rm_id = d.id');
@@ -759,7 +760,7 @@ class Purchase_requests extends CI_Controller
     {
         if ($this->input->post()) {
             $post = $this->input->post('data');
-            $send = $this->crud->create('purchase_requests', $post, "logs", "approval");
+            $send = $this->crud->create('purchase_requests', $post, "", "approval");
             echo $send;
         }
     }
@@ -883,7 +884,7 @@ class Purchase_requests extends CI_Controller
                     "flag" => $data['flag'],
                 );
 
-                $this->db->update('purchase_requests', $dataFinal, ["id" => $purchase_request->id]);
+                $this->crud->update('purchase_requests', ["id" => $purchase_request->id], $dataFinal);
                 echo json_encode(array("title" => "Updated", "message" => "Part No " . $data['item_rm_number'] . " Update Successfully", "theme" => "success"));
             }
         }
