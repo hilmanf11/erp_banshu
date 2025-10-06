@@ -234,7 +234,7 @@
                                         $("#p_remarks").append(title + "<br>");
                                         requestData(total, json, number + 1, value);
                                     });
-                                }
+                                } else { $('#dg').datagrid('reload'); }
                             }
                         }
                     });

@@ -10,7 +10,7 @@ class LME_ranges extends CI_Controller
         $this->load->helper(array('form', 'url'));
         $this->load->library('form_validation');
         $this->load->library('session');
-        $this->load->model('api');
+        $this->load->model('crud');
 
         //Validasi Form
         $this->form_validation->set_rules('lme_start', 'LME Range', 'required|integer|greater_than_equal_to[1]|less_than_equal_to[99999]');
@@ -19,7 +19,7 @@ class LME_ranges extends CI_Controller
 
     public function index()
     {
-        if (empty($this->session->api_key)) {
+        if (empty($this->session->username)) {
             redirect('error_session');
         } elseif ($this->checkuserAccess($this->id_menu()) > 0) {
             $data['button'] = $this->getbutton($this->id_menu());
@@ -33,7 +33,7 @@ class LME_ranges extends CI_Controller
 
     public function reads()
     {
-        $lme_ranges = $this->api->reads('lme_ranges');
+        $lme_ranges = $this->crud->reads('lme_ranges');
         echo json_encode($lme_ranges);
     }
 
@@ -51,8 +51,8 @@ class LME_ranges extends CI_Controller
             //Select Query
             $this->db->select("a.*, CONCAT(a.lme_start,'-',a.lme_end) AS lme_range, TRIM(b.name) AS c_by, TRIM(c.name) AS u_by");
             $this->db->from('lme_ranges a');
-            $this->db->join('user b', 'a.created_by = b.username', 'left');
-            $this->db->join('user c', 'a.updated_by = c.username', 'left');
+            $this->db->join('users b', 'a.created_by = b.username', 'left');
+            $this->db->join('users c', 'a.updated_by = c.username', 'left');
             // if (@count($filters) > 0) {
             //     foreach ($filters as $filter) {
             //         $this->db->like($filter->field, $filter->value);
@@ -81,7 +81,7 @@ class LME_ranges extends CI_Controller
                 $exists = $this->db->where('lme_start', $post['lme_start'])->where('lme_end', $post['lme_end'])->get('lme_ranges')->row();
                 if ($exists) { show_error("LME Range already available"); }
                 else {
-                    $send = $this->api->create('lme_ranges', $post, "LME", "lme_ranges");
+                    $send = $this->crud->create('lme_ranges', $post, "LME", "lme_ranges");
                     echo $send;
                 }
             } else {
@@ -105,7 +105,7 @@ class LME_ranges extends CI_Controller
             ->get('lme_ranges')->row();
             if ($exists) { show_error("LME Range already available"); }
             else {
-                $send = $this->api->update('lme_ranges', ["id" => $id], $post);
+                $send = $this->crud->update('lme_ranges', ["id" => $id], $post);
                 echo $send;
             }
         } else {
@@ -116,7 +116,7 @@ class LME_ranges extends CI_Controller
     public function delete()
     {
         $data = $this->input->post();
-        $send = $this->api->delete('lme_ranges', $data);
+        $send = $this->crud->delete('lme_ranges', $data);
         echo $send;
     }
 
@@ -157,7 +157,7 @@ class LME_ranges extends CI_Controller
             $start = intval($data['lme_start']);
             $end = intval($data['lme_end']);
 
-            $datas = $this->api->read('lme_ranges', [], [
+            $datas = $this->crud->read('lme_ranges', [], [
                 "lme_start" => $start,
                 "lme_end" => $end
             ]);
@@ -175,7 +175,7 @@ class LME_ranges extends CI_Controller
 
             if (!empty($result['title'])) { echo json_encode($result); }
             else {
-                $send = $this->api->create('lme_ranges', $data, "LME", "LME");
+                $send = $this->crud->create('lme_ranges', $data, "LME", "LME");
                 echo $send;
             }
         }
@@ -194,7 +194,7 @@ class LME_ranges extends CI_Controller
         $this->db->from('config');
         $config = $this->db->get()->row();
 
-        $this->db->select('TRIM(name) AS name')->from('user')->where('username', $this->session->username);
+        $this->db->select('TRIM(name) AS name')->from('users')->where('username', $this->session->username);
         $fullname = $this->db->get()->row()->name;
 
         $this->db->select('*');

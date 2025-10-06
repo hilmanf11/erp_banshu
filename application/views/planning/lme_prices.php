@@ -2,6 +2,7 @@
     <thead>
         <tr>
             <th rowspan="2" field="ck" checkbox="true"></th>
+            <th rowspan="2" data-options="field:'plant',width:'200',halign:'center'">Plant</th>
             <th rowspan="2" data-options="field:'part_no',width:'100',halign:'center'">Item ID</th>
             <th rowspan="2" data-options="field:'supplier',width:'200',halign:'center'">Supplier</th>
             <th rowspan="2" data-options="field:'maker_name',width:'300',halign:'center'">WIRE Name Maker</th>
@@ -28,12 +29,12 @@
                 <input style="width:60%;" name="f_lme_range" id="f_lme_range" class="easyui-combogrid">
             </div>
             <div class="fitem">
-                <span style="width:35%; display:inline-block;">Maker</span>
-                <input style="width:60%;" name="f_maker" id="f_maker" class="easyui-combogrid">
+                <span style="width:35%; display:inline-block;">Plant</span>
+                <input style="width:60%;" name="f_plant" id="f_plant" class="easyui-combogrid">
             </div>
             <div class="fitem">
-                <span style="width:35%; display:inline-block;"></span>
-                <a href="javascript:;" class="easyui-linkbutton" onclick="filter()"><i class="fa fa-search"></i> Filter Data</a>
+                <span style="width:35%; display:inline-block;">Maker</span>
+                <input style="width:60%;" name="f_maker" id="f_maker" class="easyui-combogrid">
             </div>
         </div>
         <div style="width: 30%; float: left;">
@@ -45,6 +46,10 @@
                 <span style="width:35%; display:inline-block;">Part No</span>
                 <input style="width:60%;" name="f_part_no" id="f_part_no" class="easyui-combogrid">
             </div>
+            <div class="fitem">
+                <span style="width:35%; display:inline-block;"></span>
+                <a href="javascript:;" class="easyui-linkbutton" onclick="filter()"><i class="fa fa-search"></i> Filter Data</a>
+            </div>
         </div>
     </fieldset>
     <?= $button ?>
@@ -55,6 +60,10 @@
         <form id="frm_insert" method="post" novalidate>
             <fieldset style="width:100%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px;">
                 <legend><b>Form Data</b></legend>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Plant</span>
+                    <input style="width:60%;" name="plant" id="plant" class="easyui-combogrid">
+                </div>
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Maker</span>
                     <input style="width:60%;" name="maker" id="maker" class="easyui-combogrid">
@@ -102,36 +111,53 @@
 <iframe id="printout" src="<?= base_url('planning/lme_prices/print') ?>" style="width: 100%;" hidden></iframe>
 
 <script>
-    var url_supp = '<?= base_url('planning/lme_prices/readItemsSupplier'); ?>';
-    var url_patno = '<?= base_url('planning/lme_prices/readPartNoBEI'); ?>';
+    var url_supp = '<?= base_url('planning/lme_prices/readSuppliers'); ?>';
+    var url_partno = '<?= base_url('planning/lme_prices/readPartNoBEI'); ?>';
     var url_range = '<?= base_url('planning/lme_prices/readLMERanges'); ?>';
     var url_maker = '<?= base_url('planning/lme_prices/readMakers'); ?>';
+    var url_plant = '<?= base_url('planning/lme_prices/readPlants'); ?>';
 
     function filter() {
-        var f_lme_range = $("#f_lme_range").combogrid('getValue');
-        var f_supp_id = $("#f_supp_id").combogrid('getValue');
-        var f_part_no = $("#f_part_no").combogrid('getValue');
-        var f_maker = $("#f_maker").combogrid('getValue');
+        var f_lme_range = window.btoa($("#f_lme_range").combogrid('getValue'));
+        var f_supp_id = window.btoa($("#f_supp_id").combogrid('getValue'));
+        var f_part_no = window.btoa($("#f_part_no").combogrid('getValue'));
+        var f_maker = window.btoa($("#f_maker").combogrid('getValue'));
+        var f_plant = window.btoa($("#f_plant").combogrid('getValue'));
 
-        var url = "?f_lme_range=" + window.btoa(f_lme_range) +
-            "&f_supp_id=" + window.btoa(f_supp_id) +
-            "&f_part_no=" + window.btoa(f_part_no) +
-            "&f_maker=" + window.btoa(f_maker);
-
-        $('#dg').datagrid({
-            url: '<?= base_url('planning/lme_prices/datatables') ?>' + url
+        $('#dg').datagrid('reload', {
+            f_lme_range: f_lme_range,
+            f_supp_id: f_supp_id,
+            f_part_no: f_part_no,
+            f_maker: f_maker,
+            f_plant: f_plant
         });
 
         $("#printout").contents().find('html').html("<center><br><br><br><b style='font-size:20px;'>Please Wait...</b></center>");
-        $("#printout").attr('src', '<?= base_url('planning/lme_prices/print') ?>' + url);
+        $("#printout").attr('src', '<?= base_url('planning/lme_prices/print') ?>'
+            +'?f_lme_range='+f_lme_range
+            +'&f_supp_id='+f_supp_id
+            +'&f_part_no='+f_part_no
+            +'&f_maker='+f_maker
+        );
     }
 
+    var done_reload = false;
     //Add Data
     function add() {
+        done_reload = false;
         url_save = '<?= base_url('planning/lme_prices/create') ?>';
-        $('#maker').combogrid('enable');
-        $('#part_no').combogrid('disable');
-        $('#supp_id').combogrid('disable');
+        $('#plant').combogrid('enable').combogrid({onLoadSuccess: function (data) {
+            if (done_reload && data.rows.length > 0) { $('#plant').combogrid('enable'); }
+        }});
+        $('#maker').combogrid('disable').combogrid({onLoadSuccess: function (data) {
+            if (done_reload && data.rows.length > 0) { $('#maker').combogrid('enable'); }
+        }});
+        $('#part_no').combogrid('disable').combogrid({onLoadSuccess: function (data) {
+            if (done_reload && data.rows.length > 0) { $('#part_no').combogrid('enable'); }
+        }});
+        $('#supp_id').combogrid('disable').combogrid({onLoadSuccess: function (data) {
+            if (done_reload && data.rows.length > 0) { $('#supp_id').combogrid('enable'); }
+        }});
         $('#bnt_add').linkbutton('disable');
         $('#bnt_del').linkbutton('disable');
         $('#dg_insert').datagrid('loadData', []);
@@ -143,9 +169,11 @@
     function update() {
         var row = $('#dg').datagrid('getSelected');
         if (row) {
+            $('#plant').combogrid('disable').combogrid('grid').datagrid('reload');
             $('#maker').combogrid('disable').combogrid('grid').datagrid('reload');
             $('#part_no').combogrid('disable').combogrid('grid').datagrid('reload');
             $('#supp_id').combogrid('disable').combogrid('grid').datagrid('reload');
+            $('#plant').combogrid({onLoadSuccess: function (data) { $('#plant').combogrid('setValue',row.plant_id); }});
             $('#maker').combogrid({onLoadSuccess: function (data) { $('#maker').combogrid('setValue',row.maker_code); }});
             $('#part_no').combogrid({onLoadSuccess: function (data) { $('#part_no').combogrid('setValue',row.part_no); }});
             $('#supp_id').combogrid({onLoadSuccess: function (data) { $('#supp_id').combogrid('setValue',row.ven_id); }});
@@ -166,6 +194,8 @@
         if (rows.length > 0) {
             $.messager.confirm('Warning', 'Are you sure you want to delete this data?', function(r) {
                 if (r) {
+                    var dones = [];
+                    $('#dg').datagrid('loading');
                     for (var i = 0; i < rows.length; i++) {
                         var row = rows[i];
                         $.ajax({
@@ -182,7 +212,9 @@
                                 $.messager.alert("Error", jqXHR.statusText, 'error');
                             },
                             complete: function(data) {
+                                dones.push(true);
                                 $('#dg').datagrid('reload');
+                                if (dones.length == rows.length) { $('#dg').datagrid('loaded'); }
                             }
                         });
                     }
@@ -309,6 +341,24 @@
             ]]
         });
 
+        $('#f_plant').combogrid({
+            url: url_plant,
+            panelWidth: 550,
+            idField: 'code',
+            textField: 'plant',
+            mode: 'remote',
+            fitColumns: true,
+            prompt: "Select Plant ID",
+            icons: [{
+                iconCls: 'icon-clear',
+                handler: function(e) { $(e.data.target).combogrid('clear').combogrid('textbox').focus(); }
+            }],
+            columns: [[
+                {field: 'code', title: 'Plant ID', halign: 'center', width: '49%'},
+                {field: 'plant', title: 'Plant Name', halign: 'center', width: '49%'}
+            ]]
+        });
+
         $('#f_maker').combogrid({
             url: url_maker,
             panelWidth: 550,
@@ -328,7 +378,7 @@
         });
 
         $('#f_part_no').combogrid({
-            url: url_patno,
+            url: url_partno,
             panelWidth: 550,
             idField: 'item',
             textField: 'item',
@@ -340,6 +390,41 @@
                 handler: function(e) { $(e.data.target).combogrid('clear').combogrid('textbox').focus(); }
             }],
             columns: [[{field: 'item', title: 'Part No', halign: 'center', width: '98%'}]]
+        });
+
+        $('#plant').combogrid({
+            url: url_plant,
+            panelWidth: 550,
+            idField: 'code',
+            textField: 'plant',
+            mode: 'remote',
+            fitColumns: true,
+            prompt: "Select Plant ID",
+            icons: [{
+                iconCls: 'icon-clear',
+                handler: function(e) {
+                    $('#bnt_add').linkbutton('disable');
+                    $('#bnt_del').linkbutton('disable');
+                    $('#dg_insert').datagrid('loadData',[]);
+                    $('#maker').combogrid('clear').combogrid('disable');
+                    $('#supp_id').combogrid('clear').combogrid('disable');
+                    $('#part_no').combogrid('clear').combogrid('disable');
+                    $(e.data.target).combogrid('clear').combogrid('textbox').focus();
+                }
+            }],
+            columns: [[
+                {field: 'code', title: 'Plant ID', halign: 'center', width: '49%'},
+                {field: 'plant', title: 'Plant Name', halign: 'center', width: '49%'}
+            ]],
+            onSelect: function (index, row) {
+                done_reload = true;
+                $('#maker').combogrid('clear').combogrid('disable').combogrid('grid').datagrid('reload', {
+                    plant: window.btoa(row.code)
+                });
+                $('#dg_insert').datagrid('loadData',[]);
+                $('#part_no').combogrid('clear').combogrid('disable');
+                $('#supp_id').combogrid('clear').combogrid('disable');
+            }
         });
 
         $('#maker').combogrid({
@@ -366,15 +451,17 @@
                 {field: 'maker', title: 'Maker Name', halign: 'center', width: '49%'}
             ]],
             onSelect: function (index, row) {
-                $('#part_no').combogrid('clear').combogrid('enable').combogrid('grid')
-                    .datagrid('reload', {maker: window.btoa(row.code)});
-                $('#supp_id').combogrid('clear').combogrid('disable');
+                $('#part_no').combogrid('clear').combogrid('disable').combogrid('grid').datagrid('reload', {
+                    plant: window.btoa($('#plant').combogrid('getValue')),
+                    maker: window.btoa(row.code)
+                });
                 $('#dg_insert').datagrid('loadData',[]);
+                $('#supp_id').combogrid('clear').combogrid('disable');
             }
         });
 
         $('#part_no').combogrid({
-            url: url_patno,
+            url: url_partno,
             panelWidth: 550,
             idField: 'item',
             textField: 'item',
@@ -393,10 +480,11 @@
             }],
             columns: [[{field: 'item', title: 'Part No', halign: 'center', width: '49%'}]],
             onSelect: function (index, row) {
-                $('#supp_id').combogrid('clear').combogrid('enable').combogrid('grid')
+                $('#supp_id').combogrid('clear').combogrid('disable').combogrid('grid')
                     .datagrid('reload', {
                         maker: window.btoa($('#maker').combogrid('getValue')),
-                        supp: window.btoa(row.item)
+                        plant: window.btoa($('#plant').combogrid('getValue')),
+                        item: window.btoa(row.item)
                     });
                 $('#dg_insert').datagrid('loadData',[]);
             }
@@ -460,7 +548,7 @@
                 if (changes.range != undefined) {
                     var success = true;
                     $('#dg_insert').datagrid('getRows').forEach(function (value, key) {
-                        if (key != index && value.range == changes.range) {
+                        if (key != index && value.range != '' && value.range == changes.range) {
                             toastr.warning("LME Range is already in use!", "Information");
                             success = false;
                         }

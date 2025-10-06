@@ -10,12 +10,12 @@ class LME_prices extends CI_Controller
         $this->load->helper(array('form', 'url'));
         $this->load->library('form_validation');
         $this->load->library('session');
-        $this->load->model('api');
+        $this->load->model('crud');
     }
 
     public function index()
     {
-        if (empty($this->session->api_key)) {
+        if (empty($this->session->username)) {
             redirect('error_session');
         } elseif ($this->checkuserAccess($this->id_menu()) > 0) {
             $data['button'] = $this->getbutton($this->id_menu());
@@ -37,7 +37,7 @@ class LME_prices extends CI_Controller
 
     public function reads()
     {
-        $lme_prices = $this->api->reads('lme_prices');
+        $lme_prices = $this->crud->reads('lme_prices');
         echo json_encode($lme_prices);
     }
 
@@ -46,31 +46,11 @@ class LME_prices extends CI_Controller
         $post = isset($_POST['q']) ? $_POST['q'] : "";
 
         $this->db->select("DISTINCT TRIM(a.item_id) AS item")
-        ->from("supplier_items a")->join("mst_item_raw b", "a.item_id = b.item_id")
-        ->where("b.pfm_id", "01");
+        ->from("supplier_items a")->join("item_rm b", "a.item_rm_id = b.id")
+        ->where("b.item_family_id", "P01");
         if (!empty($post)) { $this->db->like('a.item_id', $post); }
         $this->db->order_by("item");
         $get = $this->db->get()->result_object();
-
-        echo json_encode($get);
-    }
-
-    public function readMakers()
-    {
-        $post = isset($_POST['q']) ? $_POST['q'] : "";
-
-        $this->db->select("DISTINCT TRIM(a.maker_code) AS code, TRIM(c.name) AS maker")
-        ->from("supplier_items a")
-            ->join("mst_item_raw b", "a.item_id = b.item_id")
-            ->join("mst_maker c","a.maker_code = c.number")
-        ->where("b.pfm_id", "01");
-        if (!empty($post)) { $this->db->group_start()
-            ->like("a.maker_code", $post)
-            ->or_like("c.name", $post)
-        ->group_end(); }
-        $this->db->order_by("maker");
-        $get = $this->db->get()->result_object();
-        // die($this->db->last_query());
 
         echo json_encode($get);
     }
@@ -88,16 +68,55 @@ class LME_prices extends CI_Controller
         echo json_encode($get);
     }
 
+    public function readPlants()
+    {
+        $post = isset($_POST['q']) ? $_POST['q'] : "";
+
+        $this->db->select("DISTINCT TRIM(a.number) AS code, TRIM(a.name) AS plant")
+        ->from("plants a")->join("supplier_items b", "a.number = b.plant")->order_by("plant");
+        $get = $this->db->get()->result_object();
+
+        echo json_encode($get);
+    }
+
+    public function readMakers()
+    {
+        $plant = isset($_POST['plant']) ? base64_decode($_POST['plant']) : "";
+        $post = isset($_POST['q']) ? $_POST['q'] : "";
+
+        $this->db->select("DISTINCT TRIM(c.number) AS code, TRIM(c.name) AS maker")
+        ->from("supplier_items a")
+            ->join("item_rm b", "a.item_rm_id = b.id")
+            ->join("makers c","a.maker_id = c.id")
+            ->join("suppliers d", "a.supplier_id = d.id")
+        ->where("b.item_family_id", "P01");
+        if (!empty($plant)) { $this->db->where("a.plant", $plant); }
+        if (!empty($post)) { $this->db->group_start()
+            ->like("a.maker_id", $post)
+            ->or_like("c.name", $post)
+        ->group_end(); }
+        $this->db->order_by("maker");
+        $get = $this->db->get()->result_object();
+        // die($this->db->last_query());
+
+        echo json_encode($get);
+    }
+
     public function readPartNoBEI()
     {
         $maker = isset($_POST['maker']) ? base64_decode($_POST['maker']) : "";
+        $plant = isset($_POST['plant']) ? base64_decode($_POST['plant']) : "";
         $post = isset($_POST['q']) ? $_POST['q'] : "";
 
-        $this->db->select("DISTINCT TRIM(a.item_id) AS item")
-        ->from("supplier_items a")->join("mst_item_raw b", "a.item_id = b.item_id")
-            ->where("b.pfm_id", "01");
-        if (!empty($maker)) { $this->db->where("a.maker_code", $maker); }
-        if (!empty($post)) { $this->db->like("a.item_id", $post); }
+        $this->db->select("DISTINCT TRIM(b.number) AS item")
+        ->from("supplier_items a")
+            ->join("item_rm b", "a.item_rm_id = b.id")
+            ->join("makers c", "a.maker_id = c.id")
+            ->join("suppliers d", "a.supplier_id = d.id")
+        ->where("b.item_family_id", "P01");
+        if (!empty($maker)) { $this->db->where("c.number", $maker); }
+        if (!empty($plant)) { $this->db->where("a.plant", $plant); }
+        if (!empty($post)) { $this->db->like("b.number", $post); }
         $this->db->order_by("item");
         $get = $this->db->get()->result_object();
         // die($this->db->last_query());
@@ -105,21 +124,29 @@ class LME_prices extends CI_Controller
         echo json_encode($get);
     }
 
-    public function readItemsSupplier()
+    public function readSuppliers()
     {
+        $maker = isset($_POST['maker']) ? base64_decode($_POST['maker']) : "";
+        $plant = isset($_POST['plant']) ? base64_decode($_POST['plant']) : "";
+        $item = isset($_POST['item']) ? base64_decode($_POST['item']) : "";
         $post = isset($_POST['q']) ? $_POST['q'] : "";
 
-        $this->db->select("DISTINCT TRIM(c.number) AS id, TRIM(c.name) AS name")
+        $this->db->select("DISTINCT TRIM(d.number) AS id, TRIM(d.name) AS name")
         ->from("supplier_items a")
-            ->join("mst_item_raw b", "a.item_id = b.item_id")
-            ->join("suppliers c", "a.supplier_id = c.id")
-        ->where("b.pfm_id", "01");
+            ->join("item_rm b", "a.item_rm_id = b.id")
+            ->join("makers c", "a.maker_id = c.id")
+            ->join("suppliers d", "a.supplier_id = d.id")
+        ->where("b.item_family_id", "P01");
+        if (!empty($maker)) { $this->db->where("c.number", $maker); }
+        if (!empty($plant)) { $this->db->where("a.plant", $plant); }
+        if (!empty($item)) { $this->db->where("b.number", $item); }
         if (!empty($post)) { $this->db->group_start()
-            ->like("c.number", $post)
-            ->or_like("c.name", $post)
+            ->like("d.number", $post)
+            ->or_like("d.name", $post)
         ->group_end(); }
         $this->db->order_by("name");
         $get = $this->db->get()->result_object();
+        // die($this->db->last_query());
 
         echo json_encode($get);
     }
@@ -130,22 +157,22 @@ class LME_prices extends CI_Controller
         $result = ['span' => [], 'data' => []];
         $ranges = [];
 
-        $this->db->select(
+        $this->db->distinct()->select(
              "TRIM(a.id) AS id,"
             ."TRIM(a.data_lme) AS prices,"
             ."TRIM(a.maker_code) AS maker_code,"
             ."TRIM(a.ven_id) AS ven_id,"
             ."TRIM(a.item_id) AS part_no,"
             ."COALESCE(TRIM(d.name), '') AS supplier,"
-            ."COALESCE(TRIM(f.name), '') AS maker_name,"
+            ."COALESCE(TRIM(e.name), '') AS maker_name,"
             ."a.created_date AS u_date,"
             ."TRIM(b.name) AS u_by"
         )->from('lme_price_logs a')
-            ->join('user b', 'a.created_by = b.username', 'left')
+            ->join('users b', 'a.created_by = b.username', 'left')
             ->join('suppliers d', 'a.ven_id = d.number', 'left')
-            ->join('supplier_items e', 'a.item_id = e.item_id', 'left')
-            ->join('mst_maker f', 'a.maker_code = f.number', 'left')
-            ->join('mst_item_raw g', 'a.item_id = g.item_id', 'left')
+            ->join('makers e', 'a.maker_code = e.number', 'left')
+            ->join('item_rm f', 'a.item_id = f.number', 'left')
+            ->join('supplier_items g', 'f.id = g.item_rm_id', 'left')
         ->where("price_id", $id)->order_by("id", 'DESC');
         $get = $this->db->get()->result_object();
         foreach ($get as $index => $column) {
@@ -180,10 +207,11 @@ class LME_prices extends CI_Controller
 
     public function datatables()
     {
-        $f_lme_range = base64_decode($this->input->get('f_lme_range'));
-        $f_supplier = base64_decode($this->input->get('f_supplier'));
-        $f_part_no = base64_decode($this->input->get('f_part_no'));
-        $f_maker = base64_decode($this->input->get('f_maker'));
+        $f_lme_range = base64_decode($this->input->post('f_lme_range'));
+        $f_supplier = base64_decode($this->input->post('f_supplier'));
+        $f_part_no = base64_decode($this->input->post('f_part_no'));
+        $f_maker = base64_decode($this->input->post('f_maker'));
+        $f_plant = base64_decode($this->input->post('f_plant'));
         $result = array('total' => 0, 'rows' => []);
 
         $get = $this->db->select("id, CONCAT(lme_start,'-',lme_end) AS ranges")
@@ -197,32 +225,36 @@ class LME_prices extends CI_Controller
         }
 
         //Select Query
-        $this->db->select(
+        $this->db->distinct()->select(
              "TRIM(a.id) AS id,"
             ."TRIM(a.data_lme) AS prices,"
             ."TRIM(a.maker_code) AS maker_code,"
+            ."TRIM(a.plant_id) AS plant_id,"
             ."TRIM(a.ven_id) AS ven_id,"
+            ."TRIM(h.name) AS plant,"
             ."TRIM(a.item_id) AS part_no,"
             ."COALESCE(TRIM(d.name), '') AS supplier,"
-            ."COALESCE(TRIM(f.name), '') AS maker_name,"
+            ."COALESCE(TRIM(e.name), '') AS maker_name,"
             .$cols
             ."COALESCE(a.updated_date, a.created_date) AS u_date,"
             ."COALESCE(TRIM(c.name), TRIM(b.name)) AS u_by"
         )->from('lme_prices a')
-            ->join('user b', 'a.created_by = b.username', 'left')
-            ->join('user c', 'a.updated_by = c.username', 'left')
+            ->join('users b', 'a.created_by = b.username', 'left')
+            ->join('users c', 'a.updated_by = c.username', 'left')
             ->join('suppliers d', 'a.ven_id = d.number', 'left')
-            ->join('supplier_items e', 'a.item_id = e.item_id', 'left')
-            ->join('mst_maker f', 'a.maker_code = f.number', 'left')
-            ->join('mst_item_raw g', 'a.item_id = g.item_id', 'left');
+            ->join('makers e', 'a.maker_code = e.number', 'left')
+            ->join('item_rm f', 'a.item_id = f.number', 'left')
+            ->join('supplier_items g', 'f.id = g.item_rm_id', 'left')
+            ->join('plants h', 'a.plant_id = h.number', 'left');
         if (!empty($f_lme_range)) { $this->db->like("a.data_lme", $f_lme_range); }
         if (!empty($f_supplier)) { $this->db->where("a.ven_id", $f_supplier); }
         if (!empty($f_part_no)) { $this->db->where("a.item_id", $f_part_no); }
         if (!empty($f_maker)) { $this->db->where("a.maker_code", $f_maker); }
+        if (!empty($f_plant)) { $this->db->where("a.plant_id", $f_plant); }
         $this->db->order_by('id');
         $result['total'] = $this->db->count_all_results('', false);
         $result['rows'] = $this->db->get()->result_array();
-
+        // die($this->db->last_query());
         foreach ($result['rows'] as $key => $value) {
             foreach (json_decode($value['prices']) as $key2 => $value2) {
                 if (isset($ranges[$value2->range]))
@@ -238,16 +270,22 @@ class LME_prices extends CI_Controller
         if ($this->input->post()) {
             $post = $this->input->post();
             $maker = $post['maker'];
+            $plant = $post['plant'];
             $part_no = $post['part_no'];
             $supp_id = $post['supp_id'];
             // die(var_dump($post));
 
-            $exists = $this->db->where('maker_code', $maker)->where('ven_id', $supp_id)->where('item_id', $part_no)
+            $exists = $this->db
+                ->where('plant_id', $plant)
+                ->where('maker_code', $maker)
+                ->where('ven_id', $supp_id)
+                ->where('item_id', $part_no)
             ->get('lme_prices')->row();
             if ($exists) { show_error("Data already available!"); }
             else {
-                $send = $this->api->create('lme_prices', [
+                $send = $this->crud->create('lme_prices', [
                     'maker_code' => $maker,
+                    'plant_id' => $plant,
                     'ven_id' => $supp_id,
                     'item_id' => $part_no,
                     'currency' => 'USD',
@@ -255,9 +293,10 @@ class LME_prices extends CI_Controller
                 ], "LMEP", "lme_prices");
                 $get = json_decode($send, true);
                 if ($get['theme'] == 'success') {
-                    $this->api->create('lme_price_logs', [
+                    $this->crud->create('lme_price_logs', [
                         'price_id' => $get['id'],
                         'maker_code' => $maker,
+                        'plant_id' => $plant,
                         'ven_id' => $supp_id,
                         'item_id' => $part_no,
                         'currency' => 'USD',
@@ -297,10 +336,10 @@ class LME_prices extends CI_Controller
                 { $data[$value->range] = $value; }
             $data = json_encode(array_values($data));
 
-            $send = $this->api->update('lme_prices', ["id" => $id], ['data_lme' => $data]);
+            $send = $this->crud->update('lme_prices', ["id" => $id], ['data_lme' => $data]);
             $get = json_decode($send, true);
             if ($get['theme'] == 'success') {
-                $this->api->create('lme_price_logs', [
+                $this->crud->create('lme_price_logs', [
                     'price_id' => $get['id'],
                     'maker_code' => $maker,
                     'ven_id' => $supp_id,
@@ -318,7 +357,10 @@ class LME_prices extends CI_Controller
     public function delete()
     {
         $data = $this->input->post();
-        $send = $this->api->delete('lme_prices', $data);
+        $send = $this->crud->delete('lme_prices', $data);
+        if (json_decode($send, true)['theme'] == 'success') { $this->crud->delete('lme_price_logs', [
+            'price_id' => $data['id']
+        ]); }
         echo $send;
     }
 
@@ -341,10 +383,11 @@ class LME_prices extends CI_Controller
         foreach ($data as $key => $value) {
             array_push($datas, [
                 'item' => $value[1],
-                'maker' => $value[2],
-                'supp' => $value[3],
-                'range' => $value[4],
-                'price' => number_format($value[5], 4, '.', '')
+                'plant' => $value[2],
+                'maker' => $value[3],
+                'supp' => $value[4],
+                'range' => $value[5],
+                'price' => number_format($value[6], 4, '.', '')
             ]);
         }
 
@@ -361,16 +404,18 @@ class LME_prices extends CI_Controller
             $act = '';
             $data = $this->input->post('data');
             $range = $data['range'];
+            $plant = $data['plant'];
             $maker = $data['maker'];
             $supp = $data['supp'];
             $item = $data['item'];
             $price = $data['price'];
             $range_arr = explode('-', $range);
 
-            $makers = $this->api->read('mst_maker', [], ['number' => $maker]);
-            $suppliers = $this->api->read('suppliers', [], ['number' => $supp]);
-            // $items = $this->api->read('mst_item_raw', [], ['item_id' => $item]);
-            $ranges = $this->api->read('lme_ranges', [], [
+            $plants = $this->crud->read('plants', [], ['number' => $plant]);
+            $makers = $this->crud->read('makers', [], ['number' => $maker]);
+            $suppliers = $this->crud->read('suppliers', [], ['number' => $supp]);
+            // $items = $this->crud->read('item_rm', [], ['item_id' => $item]);
+            $ranges = $this->crud->read('lme_ranges', [], [
                 "lme_start" => $range_arr[0],
                 "lme_end" => $range_arr[1]
             ]);
@@ -379,7 +424,10 @@ class LME_prices extends CI_Controller
             //     $result['title'] = 'Undefine';
             //     $result['message'] = "Item ID $item no found!";
             // } else
-            if (empty($makers)) {
+            if (empty($plants)) {
+                $result['title'] = 'Undefine';
+                $result['message'] = "Plant Code $plant no found!";
+            } elseif (empty($makers)) {
                 $result['title'] = 'Undefine';
                 $result['message'] = "Maker Code $maker no found!";
             } elseif (empty($suppliers)) {
@@ -401,7 +449,8 @@ class LME_prices extends CI_Controller
 
                 if ($id == 'in') {
                     $lme = json_encode($datas);
-                    $send = $this->api->create('lme_prices', [
+                    $send = $this->crud->create('lme_prices', [
+                        'plant_id' => $plant,
                         'maker_code' => $maker,
                         'ven_id' => $supp,
                         'item_id' => $item,
@@ -418,12 +467,13 @@ class LME_prices extends CI_Controller
                     foreach ($merge as $key => $value) { $lme[$value->range] = $value; }
                     $lme = json_encode(array_values($lme));
 
-                    $send = $this->api->update('lme_prices', ["id" => $id], ['data_lme' => $lme]);
+                    $send = $this->crud->update('lme_prices', ["id" => $id], ['data_lme' => $lme]);
                 }
                 $get = json_decode($send, true);
                 if ($get['theme'] == 'success') {
-                    $this->api->create('lme_price_logs', [
+                    $this->crud->create('lme_price_logs', [
                         'price_id' => $get['id'],
+                        'plant_id' => $plant,
                         'maker_code' => $maker,
                         'ven_id' => $supp,
                         'item_id' => $item,
@@ -442,7 +492,7 @@ class LME_prices extends CI_Controller
         if ($option == "excel") {
             $format  = date("Y-m-d H:i:s");
             header("Content-type: application/vnd-ms-excel");
-            header("Content-Disposition: attachment; filename=LME Range $format.xls");
+            header("Content-Disposition: attachment; filename=Setup Price LME ($format).xls");
         }
 
         $get = $this->db->select("id, CONCAT(lme_start,'-',lme_end) AS ranges")
@@ -462,27 +512,29 @@ class LME_prices extends CI_Controller
         $this->db->from('config');
         $config = $this->db->get()->row();
 
-        $this->db->select('TRIM(name) AS name')->from('user')->where('username', $this->session->username);
+        $this->db->select('TRIM(name) AS name')->from('users')->where('username', $this->session->username);
         $fullname = $this->db->get()->row()->name;
 
-        $this->db->select(
+        $this->db->distinct()->select(
              "TRIM(a.id) AS id,"
             ."TRIM(a.data_lme) AS prices,"
             ."TRIM(a.maker_code) AS maker_code,"
             ."TRIM(a.ven_id) AS ven_id,"
+            ."TRIM(h.name) AS plant,"
             ."TRIM(a.item_id) AS part_no,"
             ."COALESCE(TRIM(d.name), '') AS supplier,"
-            ."COALESCE(TRIM(f.name), '') AS maker_name,"
+            ."COALESCE(TRIM(e.name), '') AS maker_name,"
             .$cols
             ."COALESCE(a.updated_date, a.created_date) AS u_date,"
             ."COALESCE(TRIM(c.name), TRIM(b.name)) AS u_by"
         )->from('lme_prices a')
-            ->join('user b', 'a.created_by = b.username', 'left')
-            ->join('user c', 'a.updated_by = c.username', 'left')
+            ->join('users b', 'a.created_by = b.username', 'left')
+            ->join('users c', 'a.updated_by = c.username', 'left')
             ->join('suppliers d', 'a.ven_id = d.number', 'left')
-            ->join('supplier_items e', 'a.item_id = e.item_id', 'left')
-            ->join('mst_maker f', 'a.maker_code = f.number', 'left')
-            ->join('mst_item_raw g', 'a.item_id = g.item_id', 'left')
+            ->join('makers e', 'a.maker_code = e.number', 'left')
+            ->join('item_rm f', 'a.item_id = f.number', 'left')
+            ->join('supplier_items g', 'f.id = g.item_rm_id', 'left')
+            ->join('plants h', 'a.plant_id = h.number', 'left')
         ->order_by('id');
 
         $records = $this->db->get()->result_array();
@@ -518,6 +570,7 @@ class LME_prices extends CI_Controller
         <table id="lme_prices" border="1">
             <tr>
                 <th width="20" rowspan="2">No</th>
+                <th rowspan="2">Plant</th>
                 <th rowspan="2">Item ID</th>
                 <th rowspan="2">Supplier</th>
                 <th rowspan="2">WIRE Name Maker</th>
@@ -533,6 +586,7 @@ class LME_prices extends CI_Controller
         foreach ($records as $data) {
             $html .= '  <tr>
                 <td align="center">' . $no . '</td>
+                <td>' . $data['plant'] . '</td>
                 <td>' . $data['part_no'] . '</td>
                 <td>' . $data['supplier'] . '</td>
                 <td>' . $data['maker_name'] . '</td>

@@ -1,13 +1,10 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 
-// Load library phpspreadsheet
-require('./excel/vendor/autoload.php');
-
-use PhpOffice\PhpSpreadsheet\Helper\Sample;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-// End load library phpspreadsheet
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 
 class Tmp_lme_price extends CI_Controller
 {
@@ -17,15 +14,16 @@ class Tmp_lme_price extends CI_Controller
         $this->load->helper('url');
         $this->load->helper(array('form', 'url'));
         $this->load->library('form_validation');
+        $this->load->library('spreadsheet_lib');
         $this->load->library('session');
-        $this->load->model('api');
+        $this->load->model('crud');
     }
 
     public function index()
     {
         if ($this->session->username != "") {
             $sheet = 0;
-            $excel = new Spreadsheet();
+            $excel = $this->spreadsheet_lib->newSpreadsheet();
             $spreadsheet = $excel->getActiveSheet($sheet);
             $excel->getProperties()->setCreator('Pixelphy')
                 ->setLastModifiedBy('Pixelphy')
@@ -76,6 +74,7 @@ class Tmp_lme_price extends CI_Controller
             //Coloumn
             $alfa = 'A';
             $spreadsheet->setCellValue($alfa.'1', 'ITEM ID'); $alfa++;
+            $spreadsheet->setCellValue($alfa.'1', 'PLANT CODE'); $alfa++;
             $spreadsheet->setCellValue($alfa.'1', 'MAKER CODE'); $alfa++;
             $spreadsheet->setCellValue($alfa.'1', 'SUPPLIER CODE'); $alfa++;
             $spreadsheet->setCellValue($alfa.'1', 'LME RANGE'); $alfa++;
@@ -98,10 +97,11 @@ class Tmp_lme_price extends CI_Controller
             $spreadsheet->getStyle('A1')->applyFromArray($style_col);
             $spreadsheet->getColumnDimension('A')->setAutoSize(true);
 
-            $this->db->select("DISTINCT TRIM(item_id) AS item")->from("supplier_items")->order_by('item');
+            $this->db->select("DISTINCT TRIM(b.number) AS item")
+            ->from("supplier_items a")->join("item_rm b", "a.item_rm_id = b.id")->order_by('item');
             foreach ($this->db->get()->result_object() as $key => $value) {
                 $row = $key + 2;
-                $spreadsheet->setCellValue('A'.$row, $value->item);
+                $spreadsheet->setCellValueExplicit('A'.$row, $value->item, DataType::TYPE_STRING);
                 $spreadsheet->getStyle('A'.$row)->applyFromArray($style_row);
             }
 
@@ -112,14 +112,40 @@ class Tmp_lme_price extends CI_Controller
             $spreadsheet = $excel->createSheet($sheet);
 
             $alfa = 'A';
-            $spreadsheet->setCellValue($alfa.'1', 'MAKER CODE'); $alfa++;
-            $spreadsheet->setCellValue($alfa.'1', 'MAKER NAME');
+            $spreadsheet->setCellValue($alfa.'1', 'PLANT CODE'); $alfa++;
+            $spreadsheet->setCellValue($alfa.'1', 'PLANT NAME');
 
-            $get = $this->db->select("DISTINCT TRIM(a.maker_code) AS code, TRIM(b.name) AS maker")
-            ->from("supplier_items a")->join("mst_maker b","a.maker_code = b.number")->order_by("maker");
+            $get = $this->db->select("DISTINCT TRIM(number) AS code, TRIM(name) AS name")
+            ->from("plants")->order_by("name");
             foreach ($this->db->get()->result_object() as $key => $value) {
                 $row = $key + 2;
                 $spreadsheet->setCellValue('A'.$row, $value->code);
+                $spreadsheet->setCellValue('B'.$row, $value->name);
+
+                $spreadsheet->getStyle('A'.$row)->applyFromArray($style_row);
+                $spreadsheet->getStyle('B'.$row)->applyFromArray($style_row);
+            }
+
+            for ($i='A'; $i <= $alfa; $i++) {
+                $spreadsheet->getStyle($i.'1')->applyFromArray($style_col);
+                $spreadsheet->getColumnDimension($i)->setAutoSize(true);
+            }
+
+            $spreadsheet->setTitle('PLANT CODE');
+
+            //SHEET 4 ------------------------------------------------------------------------------------------------------------
+            $sheet++;
+            $spreadsheet = $excel->createSheet($sheet);
+
+            $alfa = 'A';
+            $spreadsheet->setCellValue($alfa.'1', 'MAKER CODE'); $alfa++;
+            $spreadsheet->setCellValue($alfa.'1', 'MAKER NAME');
+
+            $get = $this->db->select("DISTINCT TRIM(b.number) AS code, TRIM(b.name) AS maker")
+            ->from("supplier_items a")->join("makers b","a.maker_id = b.id")->order_by("maker");
+            foreach ($this->db->get()->result_object() as $key => $value) {
+                $row = $key + 2;
+                $spreadsheet->setCellValueExplicit('A'.$row, $value->code, DataType::TYPE_STRING);
                 $spreadsheet->setCellValue('B'.$row, $value->maker);
 
                 $spreadsheet->getStyle('A'.$row)->applyFromArray($style_row);
@@ -133,7 +159,7 @@ class Tmp_lme_price extends CI_Controller
 
             $spreadsheet->setTitle('MAKER CODE');
 
-            //SHEET 4 ------------------------------------------------------------------------------------------------------------
+            //SHEET 5 ------------------------------------------------------------------------------------------------------------
             $sheet++;
             $spreadsheet = $excel->createSheet($sheet);
 
@@ -145,7 +171,7 @@ class Tmp_lme_price extends CI_Controller
             ->from("supplier_items a")->join("suppliers b", "a.supplier_id = b.id")->order_by("name");
             foreach ($this->db->get()->result_object() as $key => $value) {
                 $row = $key + 2;
-                $spreadsheet->setCellValue('A'.$row, $value->id);
+                $spreadsheet->setCellValueExplicit('A'.$row, $value->id, DataType::TYPE_STRING);
                 $spreadsheet->setCellValue('B'.$row, $value->name);
 
                 $spreadsheet->getStyle('A'.$row)->applyFromArray($style_row);
@@ -159,7 +185,7 @@ class Tmp_lme_price extends CI_Controller
 
             $spreadsheet->setTitle('SUPPLIER CODE');
 
-            //SHEET 5 ------------------------------------------------------------------------------------------------------------
+            //SHEET 6 ------------------------------------------------------------------------------------------------------------
             $sheet++;
             $spreadsheet = $excel->createSheet($sheet);
 
