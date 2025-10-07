@@ -281,7 +281,7 @@
         if (filter_month == "" || filter_year == "" || filter_revision == "" || filter_plant == "") {
             toastr.warning("Please select filter plant, month, year and revision", "Information");
         }else{
-            $.messager.prompt('Generate Delivery Schedule', 'Please input Password Generate', function(r){
+            $.messager.prompt('Generate Delivery Schedule', 'WARNING, This WILL DELETE DATA AND RENEW DATA, Please input Password Generate', function(r){
                 if (r == "DELIVERYLOCAL"){
                     Swal.fire({
                         title: 'Please Wait for Generating Data',

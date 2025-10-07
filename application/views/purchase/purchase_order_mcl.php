@@ -37,16 +37,16 @@
             <th colspan="2" data-options="field:'scedule',width:80,halign:'center'">Schedule Delivery Import</th>
             <th rowspan="2" data-options="field:'erp',width:80,align:'center',formatter:BtnPush">Push ERP</th>
             <th rowspan="2" data-options="field:'push_date',width:150,align:'center'">Push Date</th>
-            <th colspan="3" data-options="field:'Send_mail',width:100,halign:'center'">Send Mail</th>
+            <th colspan="2" data-options="field:'Send_mail',width:100,halign:'center'">Send Mail</th>
             <!-- <th hidden colspan="2" data-options="field:'Send_mail',width:100,halign:'center'">Vendor Confirm</th> -->
             <!-- <th rowspan="2" data-options="field:'note',width:200,halign:'center'">Note</th> -->
             <th colspan="3" data-options="field:'Send_mail',width:100,halign:'center'">Approved</th>
             <th colspan="2" data-options="field:'Send_mail',width:100,halign:'center'">Created</th>
         </tr>
         <tr>
-            <th data-options="field:'print_sd1',width:80,align:'center',formatter:BtnCreateSd">Create</th>
-            <th data-options="field:'print_sd2',width:120,align:'center',formatter:BtnPrintSd">Print</th>
-            <th data-options="field:'send',width:100,align:'center',formatter:BtnSend">Send</th>
+            <th data-options="field:'print_sd1',width:100,align:'center',formatter:BtnCreateSd">Create</th>
+            <th data-options="field:'print_sd2',width:100,align:'center',formatter:BtnPrintSd">Print</th>
+            <!-- <th data-options="field:'send',width:100,align:'center',formatter:BtnSend">Send</th> -->
             <th data-options="field:'email_status',width:80,align:'center', styler:cellStylerSend, formatter:cellFormatterSend">Status</th>
             <th data-options="field:'email_date',width:130,align:'center'">Date</th>
             <!-- <th hidden data-options="field:'confirm',width:100,align:'center', styler:cellStylerConfirm, formatter:cellFormatterConfirm">Status</th>
@@ -401,21 +401,6 @@
         });
     }
 
-    function componentCheck(filter_month, filter_year, filter_revision) {
-        $('#filter_po').combobox({
-            url: '<?php echo base_url('purchase/purchase_orders/readPoSearch?filter_month='); ?>' + window.btoa(filter_month) + '&filter_year=' + btoa(filter_year) + '&filter_revision=' + btoa(filter_revision),
-            valueField: 'po_no',
-            textField: 'po_no',
-            prompt: 'Select PO No',
-            icons: [{
-                iconCls: 'icon-clear',
-                handler: function(e) {
-                    $(e.data.target).combobox('clear').combobox('textbox').focus();
-                }
-            }],
-        });
-    }
-
     function filter() {
         var filter_month = $("#filter_month").combobox('getValue');
         var filter_year = $("#filter_year").combobox('getValue');
@@ -513,14 +498,6 @@
                     $(e.data.target).combobox('clear').combobox('textbox').focus();
                 }
             }],
-            onSelect: function(month){
-                var filter_year = $("#filter_year").combobox('getValue');
-                var filter_revision = $("#filter_revision").combobox('getValue');
-
-                if(filter_year != "" && filter_revision != ""){
-                    componentCheck(month.id, filter_year, filter_revision);
-                }
-            }
         });
 
         $('#filter_year').combobox({
@@ -534,14 +511,6 @@
                     $(e.data.target).combobox('clear').combobox('textbox').focus();
                 }
             }],
-            onSelect: function(year){
-                var filter_month = $("#filter_month").combobox('getValue');
-                var filter_revision = $("#filter_revision").combobox('getValue');
-
-                if(filter_month != "" && filter_revision != ""){
-                    componentCheck(filter_month, year, filter_revision);
-                }
-            }
         });
 
         $('#filter_revision').combobox({
@@ -555,14 +524,6 @@
                     $(e.data.target).combobox('clear').combobox('textbox').focus();
                 }
             }],
-            onSelect: function(revision){
-                var filter_month = $("#filter_month").combobox('getValue');
-                var filter_year = $("#filter_year").combobox('getValue');
-
-                if(filter_month != "" && filter_year != ""){
-                    componentCheck(filter_month, filter_year, revision.id);
-                }
-            }
         });
 
         $('#filter_plant').combobox({
@@ -672,7 +633,25 @@
                     title: 'Name',
                     width: 250
                 }]
-            ]
+            ],
+            onSelect: function(val, row){
+                var filter_month = $("#filter_month").combobox('getValue');
+                var filter_year = $("#filter_year").combobox('getValue');
+                var filter_revision = $("#filter_revision").combobox('getValue');
+
+                $('#filter_po').combobox({
+                    url: '<?php echo base_url('purchase/purchase_orders/readPoSearch?filter_month='); ?>' + window.btoa(filter_month) + '&filter_year=' + btoa(filter_year) + '&filter_revision=' + btoa(filter_revision) + "&filter_supplier=" + btoa(row.id),
+                    valueField: 'po_no',
+                    textField: 'po_no',
+                    prompt: 'Select PO No',
+                    icons: [{
+                        iconCls: 'icon-clear',
+                        handler: function(e) {
+                            $(e.data.target).combobox('clear').combobox('textbox').focus();
+                        }
+                    }],
+                });
+            }
         });
     });
 

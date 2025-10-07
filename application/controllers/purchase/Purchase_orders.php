@@ -57,10 +57,11 @@ class Purchase_orders extends CI_Controller
         $filter_month = base64_decode($this->input->get('filter_month'));
         $filter_year = base64_decode($this->input->get('filter_year'));
         $filter_revision = base64_decode($this->input->get('filter_revision'));
+        $filter_supplier = base64_decode($this->input->get('filter_supplier'));
 
         $post = isset($_POST['q']) ? $_POST['q'] : "";
 
-        $datas = $this->crud->query("SELECT DISTINCT po_no FROM purchase_orders WHERE p_month = '$filter_month' and p_year = '$filter_year' and revision='$filter_revision'");
+        $datas = $this->crud->query("SELECT DISTINCT po_no FROM purchase_orders WHERE p_month = '$filter_month' and p_year = '$filter_year' and revision='$filter_revision' and supplier_id = '$filter_supplier'");
         echo json_encode($datas);
     }
 
@@ -558,7 +559,7 @@ class Purchase_orders extends CI_Controller
             $po_no = $this->input->post('po_no');
             $email_date = $this->input->post('email_date');
             
-            $this->db->update('purchase_orders', ["email_status" => "SENT", "confirm" => "Pending", "email_date" => $email_date], ["po_no" => $po_no]);
+            $this->db->update('purchase_orders', ["email_status" => "SENT", "email_date" => $email_date], ["po_no" => $po_no]);
             
             echo json_encode(array("message" => "Complete Mail Success"));
         }
@@ -635,9 +636,9 @@ class Purchase_orders extends CI_Controller
                 "poc_reqqty" => $qty,
                 "currency" => $post['currency'],
                 "periode" => date("Ym"),
-                // "etd_date" => $post['delivery_date'],
+                "etd_date" => $post['delivery_date'],
                 "poc_remark" => $post['reason'],
-                // "poc_status_order" => "REGULAR",
+                "poc_status_order" => "REGULAR",
             );
 
             // if($poc){poc
@@ -657,11 +658,13 @@ class Purchase_orders extends CI_Controller
             // }
 
             $send = $this->mrp_push->push_purchase_orders($postFinal);
+
+            $this->db->where("item_rm_id", $post['item_rm_id']);
+            $this->db->where("po_no", $post['po_no']);
+            $this->db->update('purchase_orders', ["push_date" => date("Y-m-d H:i:s"), "push" => "OK"]);
+            
             die(json_encode($send));
             if($send){
-                $this->db->where("item_rm_id", $post['item_rm_id']);
-                $this->db->where("po_no", $post['po_no']);
-                $this->db->update('purchase_orders', ["push_date" => date("Y-m-d H:i:s"), "push" => "OK"]);
                 echo json_encode(array("title" => "Good Job", "message" => $post['item_rm_number'] . " | Data Update Successfully", "theme" => "success"));
             }else{
                 echo json_encode(array("title" => "Error", "message" => $post['item_rm_number'] . " | Data Unsaved", "theme" => "error"));

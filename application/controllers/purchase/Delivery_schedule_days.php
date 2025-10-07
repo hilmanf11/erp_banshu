@@ -459,11 +459,11 @@ class Delivery_schedule_days extends CI_Controller
             $delivery_schedule_days = $this->crud->read("delivery_schedule_days", [], ["p_month" => $filter_month, "p_year" => $filter_year, "revision" => $filter_revision, "item_rm_id" => $item_rm_id, 'po_no' => $po_no]);
 
             if(!empty($delivery_schedule_days)){
-                $this->db->update('delivery_schedule_days', array_merge($post, $arrDay), ["p_month" => $filter_month, "p_year" => $filter_year, "revision" => $filter_revision, "item_rm_id" => $item_rm_id, 'po_no' => $po_no]);
+                $this->crud->update('delivery_schedule_days', ["p_month" => $filter_month, "p_year" => $filter_year, "revision" => $filter_revision, "item_rm_id" => $item_rm_id, 'po_no' => $po_no], array_merge($post, $arrDay), "logs");
                 echo json_encode(array("title" => "Good Job", "message" => $item_rm_number . " | Data Update Successfully", "theme" => "success"));
                 // echo json_encode(array("title" => "Error", "message" => $post['part_no'] . " | Duplicate", "theme" => "error"));
             }else{
-                if ($this->crud->create('delivery_schedule_days', array_merge($post, $arrDay))) {
+                if ($this->crud->create('delivery_schedule_days', array_merge($post, $arrDay), "logs")) {
                     echo json_encode(array("title" => "Good Job", "message" => $item_rm_number . " | Data Saved Successfully", "theme" => "success"));
                 } else {
                     echo json_encode(array("title" => "Error", "message" => $item_rm_number . " | Data Unsaved", "theme" => "error"));
@@ -588,9 +588,9 @@ class Delivery_schedule_days extends CI_Controller
             if (empty($delivery_schedule_days->id)) {
                 echo json_encode(array("title" => "Not Found", "message" => "Part No " . $data['item_rm_number'] . " and PO No " . $data['po_no'] . " Not Found", "theme" => "error"));
             } else {
+                echo json_encode(array("title" => "Good Job", "message" => "Part No" . $data['item_rm_number'] . " Updated Successfully", "theme" => "success"));
                 unset($data['item_rm_number']);
                 $this->crud->update('delivery_schedule_days', ["item_rm_id" => @$item_rm->id, "po_no" => $data['po_no']], $data);
-                echo json_encode(array("title" => "Good Job", "message" => "Part No" . $data['part_no'] . " Updated Successfully", "theme" => "success"));
             }
         }
     }

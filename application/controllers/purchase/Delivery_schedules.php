@@ -445,9 +445,9 @@ class Delivery_schedules extends CI_Controller
             if (empty($delivery_schedules->id)) {
                 echo json_encode(array("title" => "Not Found", "message" => "Part No " . $data['item_rm_number'] . " and PO No " . $data['po_no'] . " Not Found", "theme" => "error"));
             } else {
+                echo json_encode(array("title" => "Good Job", "message" => "Part No" . $data['item_rm_number'] . " Updated Successfully", "theme" => "success"));
                 unset($data['item_rm_number']);
                 $this->crud->update('delivery_schedules', ["item_rm_id" => @$item_rm->id, "po_no" => $data['po_no']], $data);
-                echo json_encode(array("title" => "Good Job", "message" => "Part No" . $data['part_no'] . " Updated Successfully", "theme" => "success"));
             }
         }
     }
@@ -724,7 +724,7 @@ class Delivery_schedules extends CI_Controller
         $this->db->where('a.p_year', $filter_year);
         $this->db->like('a.revision', $filter_revision);
         $this->db->like('a.po_no', $filter_po_no);
-        $this->db->like('d.name', $filter_item_family);
+        $this->db->like('d.id', $filter_item_family);
         $this->db->like('a.item_rm_id', $filter_item_rm);
         $this->db->like('a.supplier_id', $filter_supplier);
         $this->db->order_by('b.name', 'asc');

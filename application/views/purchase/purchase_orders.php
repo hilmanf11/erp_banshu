@@ -37,7 +37,7 @@
             <!-- <th colspan="2" data-options="field:'scedule',width:80,halign:'center'">Schedule Delivery</th> -->
             <!-- <th rowspan="2" data-options="field:'erp',width:80,align:'center',formatter:BtnPush">Push ERP</th> -->
             <!-- <th rowspan="2" data-options="field:'push_date',width:150,align:'center'">Push Date</th> -->
-            <th colspan="2" data-options="field:'Send_mail',width:100,halign:'center'">Send Mail</th>
+            <th colspan="3" data-options="field:'Send_mail',width:100,halign:'center'">Send Mail</th>
             <!-- <th hidden colspan="2" data-options="field:'Send_mail',width:100,halign:'center'">Vendor Confirm</th> -->
             <!-- <th rowspan="2" data-options="field:'note',width:200,halign:'center'">Note</th> -->
             <th colspan="3" data-options="field:'Send_mail',width:100,halign:'center'">Approved</th>
@@ -46,7 +46,7 @@
         <tr>
             <!-- <th data-options="field:'print_sd1',width:80,align:'center',formatter:BtnCreateSd">Create</th> -->
             <!-- <th data-options="field:'print_sd2',width:80,align:'center',formatter:BtnPrintSd">Print</th> -->
-            <!-- <th data-options="field:'send',width:80,align:'center',formatter:BtnSend">Send</th> -->
+            <th data-options="field:'send',width:80,align:'center',formatter:BtnSend">Send</th>
             <th data-options="field:'email_status',width:80,align:'center', styler:cellStylerSend, formatter:cellFormatterSend">Status</th>
             <th data-options="field:'email_date',width:130,align:'center'">Date</th>
             <!-- <th hidden data-options="field:'confirm',width:100,align:'center', styler:cellStylerConfirm, formatter:cellFormatterConfirm">Status</th>
@@ -141,7 +141,7 @@
             <legend><b>Form Detail</b></legend>
             <div style="width: 50%; float: left;">
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Del. Sch No</span>
+                    <span style="width:35%; display:inline-block;">PO No</span>
                     <input style="width:60%;" id="d_po_no" class="easyui-textbox" readonly>
                 </div>
                 <div class="fitem">
@@ -153,6 +153,7 @@
                     <a href="javascript:;" id="detailEdit" class="easyui-linkbutton" onclick="detailEdit()"><i class="fa fa-edit"></i> Edit Data</a>
                     <a href="javascript:;" id="pushData" class="easyui-linkbutton c5" onclick="pushData()"><i class="fa fa-database"></i> Push Data</a>
                     <a href="javascript:;" id="sendMail" class="easyui-linkbutton" onclick="sendMail()"><i class="fa fa-send"></i> Send Mail</a>
+                    <a href="javascript:;" id="completeMail" class="easyui-linkbutton c1" onclick="completeMail()"><i class="fa fa-check"></i> Complete Mail</a>
                 </div>
             </div>
             <div style="width: 50%; float: left;">
@@ -160,9 +161,9 @@
                     <span style="width:35%; display:inline-block;">Product Family</span>
                     <input style="width:60%;" id="d_product_family" class="easyui-textbox" readonly>
                 </div>
-                <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Note</span>
-                    <input style="width:60%;" id="d_note" data-options="onChange:updateNote" class="easyui-textbox">
+                <div class="fitem" id="completeMailDate">
+                    <span style="width:35%; display:inline-block;">Send Date</span>
+                    <input style="width:60%;" id="d_email_date" class="easyui-datebox" value="<?= date("Y-m-d") ?>" data-options="formatter:myformatter,parser:myparser, editable:false">
                 </div>
             </div>
 
@@ -481,17 +482,23 @@
             $("#pushData").hide();
             $("#detailEdit").show();
             $("#sendMail").hide();
+            $("#completeMail").hide();
             $("#sendBlink").hide();
+            $("#completeMailDate").hide();
         }else if(push == "push"){
             $("#pushData").show();
             $("#detailEdit").hide();
             $("#sendMail").hide();
+            $("#completeMail").hide();
             $("#sendBlink").hide();
+            $("#completeMailDate").hide();
         }else{
             $("#pushData").hide();
             $("#detailEdit").hide();
             $("#sendMail").show();
+            $("#completeMail").show();
             $("#sendBlink").show();
+            $("#completeMailDate").show();
             $("#sendMailText").html(email);
             $("#mail_to").textbox("setValue", email);
             $("#mail_cc").textbox("setValue", email_cc);
@@ -609,17 +616,39 @@
     }
 
     function sendMail(){
-        $.ajax({
-            type: "post",
-            url: "<?= base_url("planning/config_mail/reads/purchase_orders/") ?>" + val,
-            dataType: "json",
-            success: function (response) {
-                if(response == null){
-                    toastr.info("Not Available format, please input in master Setting Mail");
-                    $("#mail_message").html("");
-                }else{
-                    $("#mail_message").html(response.description);
-                }
+        toastr.error("Not Available");
+        // $.ajax({
+        //     type: "post",
+        //     url: "<?= base_url("purchase/config_mail/reads/purchase_orders/") ?>" + val,
+        //     dataType: "json",
+        //     success: function (response) {
+        //         if(response == null){
+        //             toastr.info("Not Available format, please input in master Setting Mail");
+        //             $("#mail_message").html("");
+        //         }else{
+        //             $("#mail_message").html(response.description);
+        //         }
+        //     }
+        // });
+    }
+
+    function completeMail(){
+        $.messager.prompt('Complete Mail', 'Please input Password to Complete Mail PO', function(r){
+            if (r == "COMPLETEMAIL"){
+                var purchase_order_no = $("#d_po_no").textbox('getValue');
+                var email_date = $("#d_email_date").datebox('getValue');
+
+                $.ajax({
+                    type: "post",
+                    url: "<?= base_url("purchase/purchase_orders/completeMail") ?>",
+                    data: "po_no=" + purchase_order_no + "&email_date=" + email_date,
+                    dataType: "json",
+                    success: function (response) {
+                        toastr.success(response.message);
+                        $("#dlg_purchase_order").dialog('close');
+                        $("#dg").datagrid('reload');
+                    }
+                });
             }
         });
     }
@@ -686,21 +715,6 @@
                     }
                 });
             }
-        });
-    }
-
-    function componentCheck(filter_month, filter_year, filter_revision) {
-        $('#filter_po').combobox({
-            url: '<?php echo base_url('purchase/purchase_orders/readPoSearch?filter_month='); ?>' + window.btoa(filter_month) + '&filter_year=' + btoa(filter_year) + '&filter_revision=' + btoa(filter_revision),
-            valueField: 'po_no',
-            textField: 'po_no',
-            prompt: 'Select PO No',
-            icons: [{
-                iconCls: 'icon-clear',
-                handler: function(e) {
-                    $(e.data.target).combobox('clear').combobox('textbox').focus();
-                }
-            }],
         });
     }
 
@@ -993,14 +1007,6 @@
                     $(e.data.target).combobox('clear').combobox('textbox').focus();
                 }
             }],
-            onSelect: function(month){
-                var filter_year = $("#filter_year").combobox('getValue');
-                var filter_revision = $("#filter_revision").combobox('getValue');
-
-                if(filter_year != "" && filter_revision != ""){
-                    componentCheck(month.id, filter_year, filter_revision);
-                }
-            }
         });
 
         $('#filter_year').combobox({
@@ -1014,14 +1020,6 @@
                     $(e.data.target).combobox('clear').combobox('textbox').focus();
                 }
             }],
-            onSelect: function(year){
-                var filter_month = $("#filter_month").combobox('getValue');
-                var filter_revision = $("#filter_revision").combobox('getValue');
-
-                if(filter_month != "" && filter_revision != ""){
-                    componentCheck(filter_month, year, filter_revision);
-                }
-            }
         });
 
         $('#filter_revision').combobox({
@@ -1035,14 +1033,6 @@
                     $(e.data.target).combobox('clear').combobox('textbox').focus();
                 }
             }],
-            onSelect: function(revision){
-                var filter_month = $("#filter_month").combobox('getValue');
-                var filter_year = $("#filter_year").combobox('getValue');
-
-                if(filter_month != "" && filter_year != ""){
-                    componentCheck(filter_month, filter_year, revision.id);
-                }
-            }
         });
 
         $('#filter_plant').combobox({
@@ -1152,7 +1142,25 @@
                     title: 'Name',
                     width: 250
                 }]
-            ]
+            ],
+            onSelect: function(val, row){
+                var filter_month = $("#filter_month").combobox('getValue');
+                var filter_year = $("#filter_year").combobox('getValue');
+                var filter_revision = $("#filter_revision").combobox('getValue');
+                
+                $('#filter_po').combobox({
+                    url: '<?php echo base_url('purchase/purchase_orders/readPoSearch?filter_month='); ?>' + window.btoa(filter_month) + '&filter_year=' + btoa(filter_year) + '&filter_revision=' + btoa(filter_revision) + "&filter_supplier=" + btoa(row.id),
+                    valueField: 'po_no',
+                    textField: 'po_no',
+                    prompt: 'Select PO No',
+                    icons: [{
+                        iconCls: 'icon-clear',
+                        handler: function(e) {
+                            $(e.data.target).combobox('clear').combobox('textbox').focus();
+                        }
+                    }],
+                });
+            }
         });
 
         // UPLOAD DATA

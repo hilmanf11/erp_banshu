@@ -471,7 +471,7 @@ class Purchase_requests extends CI_Controller
             $result = array();
             //Select Query
             $this->db->select('a.*, b.name as supplier_name, c.name as item_family_name, SUM(a.qty) as total_pr, SUM(a.mrp) as total_mrp, COALESCE(e.total, 0) as total_po, COUNT(a.id) as total_data');
-            $this->db->from('purchase_requests a');
+            $this->db->from("(select * from purchase_requests where qty > 0 and flag = 'OK') a");
             $this->db->join('suppliers b', 'a.supplier_id = b.id');
             $this->db->join('item_familys c', "a.item_family_id = c.id and c.item_category_id IN ('C01')");
             // $this->db->join("(select request_no, COUNT(id) as total FROM purchase_requests WHERE approved_to = '' GROUP BY request_no) d", 'a.request_no = d.request_no', 'left');
