@@ -16,7 +16,15 @@ class Marketing_price_wire extends CI_Controller
     public function index()
     {
         $data = [];
-        $get = $this->db->get("marketing_price_wire")->result_array();
+
+        $this->db->distinct()->select(
+            "a.*,"
+            ."COALESCE(TRIM(b.name),'') AS supp_name,"
+            ."COALESCE(TRIM(c.name),'') AS maker_name"
+        )->from("marketing_price_wire a")
+            ->join("suppliers b", "a.supp_id = b.number")
+            ->join("makers c", "a.maker_code = c.number");
+        $get = $this->db->get()->result_array();
         foreach ($get as $index => $row) {
             $row['price'] = floatval($row['price']);
             $row['duty_price'] = floatval($row['import_duty']) * $row['price'];
