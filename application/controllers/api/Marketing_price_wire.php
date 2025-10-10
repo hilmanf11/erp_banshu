@@ -20,10 +20,14 @@ class Marketing_price_wire extends CI_Controller
         $this->db->distinct()->select(
             "a.*,"
             ."COALESCE(TRIM(b.name),'') AS supp_name,"
-            ."COALESCE(TRIM(c.name),'') AS maker_name"
+            ."COALESCE(TRIM(c.name),'') AS maker_name,"
+            ."COALESCE(TRIM(d.name),'') AS item_name,"
+            ."COALESCE(TRIM(e.name),'') AS family_name"
         )->from("marketing_price_wire a")
             ->join("suppliers b", "a.supp_id = b.number")
-            ->join("makers c", "a.maker_code = c.number");
+            ->join("makers c", "a.maker_code = c.number")
+            ->join("item_rm d", "a.item_id = d.number")
+            ->join("item_familys e", "d.item_family_id = e.id");
         $get = $this->db->get()->result_array();
         foreach ($get as $index => $row) {
             $row['price'] = floatval($row['price']);
