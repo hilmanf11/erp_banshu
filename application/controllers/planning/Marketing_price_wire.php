@@ -191,9 +191,9 @@ class Marketing_price_wire extends CI_Controller
         $get = $this->db->get()->result_object();
         foreach ($get as $index => $row) {
             $row->price = floatval($row->price);
-        	$row->duty = floatval($row->duty) * $row->price;
+        	$row->duty = (floatval($row->duty) / 100) * $row->price;
         	$row->insurance = floatval($row->insurance) * $row->price;
-        	$row->transport = floatval($row->transport) * $row->price;
+        	$row->transport = (floatval($row->transport) / 100) * $row->price;
         	$row->total = floatval(number_format($row->price + $row->duty + $row->insurance + $row->transport, 4));
         	array_push($datas, $row);
         }
@@ -379,9 +379,9 @@ class Marketing_price_wire extends CI_Controller
             $this->db->order_by("plant, item");
             $get = $this->db->get()->result_object();
             foreach ($get as $index => $row) {
-                $row->duty = floatval($row->duty) * floatval($row->price);
+                $row->duty = (floatval($row->duty) / 100) * floatval($row->price);
                 $row->insurance = floatval($row->insurance) * floatval($row->price);
-                $row->transport = floatval($row->transport) * floatval($row->price);
+                $row->transport = (floatval($row->transport) / 100) * floatval($row->price);
                 $row->total = $row->duty + $row->insurance + $row->transport;
                 array_push($datas, $row);
             }
