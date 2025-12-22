@@ -122,13 +122,14 @@
         <fieldset style="width: 30%; border:2px solid #d0d0d0; margin-bottom: 5px; margin-top: 5px; border-radius:4px;">
             <legend><b>Generating Process</b></legend>
 
-            <b>Calculation Share Order</b>
+            <b>Generate MRP to Purchase Request</b>
             <div id="p_upload" class="easyui-progressbar" style="width:100%;"></div>
             <center><b id="p_start">0</b> Of <b id="p_finish">0</b></center>
         </fieldset>
     </div>
     <a href="javascript:;" class="easyui-linkbutton" plain="true" onclick="adds()"><i class="fa fa-plus"></i> Additional</a>
     <?= $button ?>
+    <a href="javascript:;" class="easyui-linkbutton" plain="true" onclick="disapproveData()"><i class="fa fa-file"></i> Disapprove Data</a>
 </div>
 
 <div id="dlg_update" class="easyui-dialog" title="Add New" data-options="closed: true,modal:true" style="width: 800px; padding:10px; top: 20px;">
@@ -284,6 +285,38 @@
 
 <div id="dlg_purchase_request" class="easyui-dialog" title="Detail Purchase Request" data-options="closed: true,modal:true, fit:true" style="width: 100%; top: 0px; left: 0px;">
     <table id="dg_purchase_request" class="easyui-datagrid" style="width:100%;" toolbar="#toolbar3" showFooter="true"></table>
+</div>
+
+<div id="dlg_disapproveData" class="easyui-dialog" title="Data Disapproved Purchase Requests" data-options="closed: true, modal:true, fit:true" style="width: 100%; top: 0px; left: 0px;">
+    <table id="dg_disapproveData" class="easyui-datagrid" style="width:100%;">
+        <thead>
+            <tr>
+                <th rowspan="2" data-options="field:'period',width:80,halign:'center'">Period</th>
+                <th rowspan="2" data-options="field:'revision',width:80,halign:'center'">Revision</th>
+                <th rowspan="2" data-options="field:'plant',width:80,halign:'center'">Plant</th>
+                <th rowspan="2" data-options="field:'request_no',width:150,halign:'center'">PR No</th>
+                <th rowspan="2" data-options="field:'request_date',width:100,halign:'center'">PR Date</th>
+                <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No BEI</th>
+                <th rowspan="2" data-options="field:'item_rm_name',width:150,halign:'center'">Part Name</th>
+                <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Supplier Name</th>
+                <th rowspan="2" data-options="field:'need',width:100,halign:'center',align:'right',formatter:numberformat">Need</th>
+                <th rowspan="2" data-options="field:'mrp',width:100,halign:'center',align:'right',formatter:numberformat">MRP</th>
+                <th rowspan="2" data-options="field:'qty',width:100,halign:'center',align:'right',formatter:numberformat">Qty</th>
+                <th rowspan="2" data-options="field:'approved_reason',width:400,halign:'center'">Reason</th>
+                <th colspan="2" data-options="field:'',width:100,halign:'center'">Disapproved</th>
+                <th colspan="2" data-options="field:'',width:100,halign:'center'">Created</th>
+                <th colspan="2" data-options="field:'',width:100,halign:'center'">Updated</th>
+            </tr>
+            <tr>
+                <th data-options="field:'approved_by',width:100,align:'center'">By</th>
+                <th data-options="field:'approved_date',width:120,align:'center'">Date</th>
+                <th data-options="field:'created_by',width:100,align:'center'">By</th>
+                <th data-options="field:'created_date',width:120,align:'center'">Date</th>
+                <th data-options="field:'updated_by',width:100,align:'center'">By</th>
+                <th data-options="field:'updated_date',width:120,align:'center'">Date</th>
+            </tr>
+        </thead>
+    </table>
 </div>
 
 <!-- Upload -->
@@ -886,6 +919,21 @@
         }
     }
 
+    function disapproveData(){
+        $("#dlg_disapproveData").dialog('open');
+        $('#dg_disapproveData').datagrid('disableFilter');
+
+        $('#dg_disapproveData').datagrid({
+            url: '<?= base_url('notifications/datatablesAll/purchase_requests') ?>',
+            clientPaging: true,
+            remoteFilter: false,
+            rownumbers: true,
+            singleSelect: false,
+            fit: true
+        });
+        $('#dg_disapproveData').treegrid('enableFilter');
+    }
+
     function details(request_no, supplier, item_family_id, push="") {
         $("#dlg_purchase_request").dialog('open');
 
@@ -925,6 +973,18 @@
                             align: 'center',
                             rowspan: 2,
                             styler:cellStylerApproval, formatter:cellFormatterApproval
+                        }, {
+                            field: 'approved_by',
+                            title: 'Approval By',
+                            width: 120,
+                            align: 'center',
+                            rowspan: 2,
+                        }, {
+                            field: 'approved_date',
+                            title: 'Approval Date',
+                            width: 150,
+                            align: 'center',
+                            rowspan: 2,
                         }, {
                             field: 'flag',
                             title: 'Status',
@@ -1037,16 +1097,10 @@
                             colspan: 3
                         }, {
                             field: '',
-                            title: 'Next Forecast',
-                            width: 200,
-                            align: 'center',
-                            colspan: 3
-                        }, {
-                            field: '',
                             title: 'Forecast Supplier',
                             width: 100,
                             align: 'center',
-                            colspan: 3
+                            colspan: 6
                         }, {
                             field: 'avg_forecast',
                             title: 'Xbar',
@@ -1097,64 +1151,64 @@
                             align: 'right',
                             formatter: numberformat
                         }, {
-                            field: 'forecast_m3',
+                            field: 'prodplan_1',
                             title: monthName[0],
                             width: 100,
                             halign: 'center',
                             align: 'right',
                             formatter: numberformat
                         }, {
-                            field: 'forecast_m2',
+                            field: 'prodplan_2',
                             title: monthName[1],
                             width: 100,
                             halign: 'center',
                             align: 'right',
                             formatter: numberformat
                         }, {
-                            field: 'forecast_m1',
+                            field: 'prodplan_3',
                             title: monthName[2],
                             width: 100,
                             halign: 'center',
                             align: 'right',
                             formatter: numberformat
                         }, {
-                            field: 'forecast_plus_1',
+                            field: 'forecast_m1',
                             title: monthName[4],
                             width: 100,
                             halign: 'center',
                             align: 'right',
                             formatter: numberformat
                         }, {
-                            field: 'forecast_plus_2',
+                            field: 'forecast_m2',
                             title: monthName[5],
                             width: 100,
                             halign: 'center',
                             align: 'right',
                             formatter: numberformat
                         }, {
-                            field: 'forecast_plus_3',
+                            field: 'forecast_m3',
                             title: monthName[6],
                             width: 100,
                             halign: 'center',
                             align: 'right',
                             formatter: numberformat
                         }, {
-                            field: 'prodplan_1',
-                            title: 'M 1',
+                            field: 'forecast_plus_1',
+                            title: monthName[7],
                             width: 100,
                             halign: 'center',
                             align: 'right',
                             formatter: numberformat
                         }, {
-                            field: 'prodplan_2',
-                            title: 'M 2',
+                            field: 'forecast_plus_2',
+                            title: monthName[8],
                             width: 100,
                             halign: 'center',
                             align: 'right',
                             formatter: numberformat
                         }, {
-                            field: 'prodplan_3',
-                            title: 'M 3',
+                            field: 'forecast_plus_3',
+                            title: "> 6 Month",
                             width: 100,
                             halign: 'center',
                             align: 'right',
@@ -1455,6 +1509,10 @@
                                                 requestData(total, json, number + 1, value, success + 0, failed + 1);
                                             }
                                             $("#p_remarks2").append(title + "<br>");
+                                        },
+                                        error: function(){
+                                            toastr.error("Connection Timeout.");
+                                            requestData(total, json, number, value, success + 0, failed + 0);
                                         }
                                     });
                                 }

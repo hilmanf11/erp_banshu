@@ -1,9 +1,13 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 
+// Load library phpspreadsheet
+require('./excel/vendor/autoload.php');
+
+use PhpOffice\PhpSpreadsheet\Helper\Sample;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+// End load library phpspreadsheet
 
 class Tmp_lme_range extends CI_Controller
 {
@@ -13,15 +17,14 @@ class Tmp_lme_range extends CI_Controller
         $this->load->helper('url');
         $this->load->helper(array('form', 'url'));
         $this->load->library('form_validation');
-        $this->load->library('spreadsheet_lib');
         $this->load->library('session');
-        $this->load->model('crud');
+        $this->load->model('api');
     }
 
     public function index()
     {
         if ($this->session->username != "") {
-            $excel = $this->spreadsheet_lib->newSpreadsheet();
+            $excel = new Spreadsheet();
             $spreadsheet = $excel->getActiveSheet(0);
             $excel->getProperties()->setCreator('Pixelphy')
                 ->setLastModifiedBy('Pixelphy')
@@ -38,13 +41,13 @@ class Tmp_lme_range extends CI_Controller
                     'vertical' => 'center' // Set text jadi di tengah secara vertical (middle)
                 ),
                 'borders' => array(
-                    'top' => array('borderStyle'  => PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN), // Set border top dengan garis tipis
-                    'right' => array('borderStyle'  => PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN),  // Set border right dengan garis tipis
-                    'bottom' => array('borderStyle'  => PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN), // Set border bottom dengan garis tipis
-                    'left' => array('borderStyle'  => PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN) // Set border left dengan garis tipis
+                    'top' => array('borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN), // Set border top dengan garis tipis
+                    'right' => array('borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN),  // Set border right dengan garis tipis
+                    'bottom' => array('borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN), // Set border bottom dengan garis tipis
+                    'left' => array('borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN) // Set border left dengan garis tipis
                 ),
                 'fill' => array(
-                    'fillType' => PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
                     'startColor' => array('rgb' => 'FFC000')
                 )
             );

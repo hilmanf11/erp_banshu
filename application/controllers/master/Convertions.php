@@ -55,9 +55,9 @@ class Convertions extends CI_Controller
             if (@count($filters) > 0) {
                 foreach ($filters as $filter) {
                     if($filter->field == "item_rm_number"){
-                        $this->db->like("b.id", $filter->value);
+                        $this->db->like("b.number", $filter->value);
                     } elseif ($filter->field == "item_rm_name") {
-                        $this->db->like("b.id", $filter->value);
+                        $this->db->like("b.name", $filter->value);
                     } else {
                         $this->db->like("a.".$filter->field, $filter->value);
                     }
@@ -120,10 +120,13 @@ class Convertions extends CI_Controller
         for ($i = 3; $i <= $total_row; $i++) {
             $datas[] = array(
                 //excel
-                'item_rm_id' => $data->val($i, 2),
+                'item_rm_number' => $data->val($i, 2),
                 'uom_po' => $data->val($i, 3),
                 'uom_soft' => $data->val($i, 4),
-                'convertion' => $data->val($i, 5)
+                'convertion' => $data->val($i, 5),
+                'type' => $data->val($i, 6),
+                'mpq' => $data->val($i, 7),
+                'moq' => $data->val($i, 8),
             );
         }
         $datas['total'] = count($datas);
@@ -162,21 +165,39 @@ class Convertions extends CI_Controller
         if ($this->input->post()) {
             $data = $this->input->post('data');
 
-            //Cek Process Number          //table       //field        //field excel
-            $item_rm = $this->crud->read('item_rm', [], ["id" => $data['item_rm_id']]);
+            $item_rm = $this->crud->read('item_rm', [], ["number" => $data['item_rm_number']]);
+            $uom_po = $this->crud->read('uom', [], ["name" => $data['uom_po']]);
+            $uom_soft = $this->crud->read('uom', [], ["name" => $data['uom_soft']]);
 
             if (empty($item_rm->number)) {
-                echo json_encode(array("title" => "Not Found", "message" => " Part No. " . $data['item_rm_id'] . " Not Found", "theme" => "error"));
+                echo json_encode(array("title" => "Not Found", "message" => " Part No. " . $data['item_rm_number'] . " Not Found", "theme" => "error"));
+            }elseif(empty($uom_po->number)){
+                echo json_encode(array("title" => "Not Found", "message" => " Uom PO " . $data['uom_po'] . " Not Found", "theme" => "error"));
+            }elseif(empty($uom_soft->number)){
+                echo json_encode(array("title" => "Not Found", "message" => " Uom To " . $data['uom_soft'] . " Not Found", "theme" => "error"));
+            }elseif(!in_array($data['type'], array('Divided','Multiply'))){
+                echo json_encode(array("title" => "Not Found", "message" => " Fill Type should Be Divided or Multiply", "theme" => "error"));
             } else {
+                $convertions = $this->crud->read('convertions', [], ["item_rm_id" => $item_rm->id]);
+
                 $dataFinal = array(
                     //field
-                    "item_rm_id" => $data['item_rm_id'],
+                    "item_rm_id" => $item_rm->id,
                     "uom_po" => $data['uom_po'],
                     "uom_soft" => $data['uom_soft'],
                     "convertion" => $data['convertion'],
+                    "type" => $data['type'],
+                    "mpq" => $data['mpq'],
+                    "moq" => $data['moq'],
                 );
-                $send   = $this->crud->create('convertions', $dataFinal);
-                echo $send;
+
+                if($convertions){
+                    $send = $this->crud->update('convertions', ["item_rm_id" => $item_rm->id], $dataFinal);
+                    echo $send;
+                }else{
+                    $send = $this->crud->create('convertions', $dataFinal);
+                    echo $send;
+                }
             }
         }
     }

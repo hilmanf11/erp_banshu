@@ -176,7 +176,7 @@ class Purchase_orders extends CI_Controller
         }
     }
 
-    public function datatableDetails($po_no, $revision){
+    public function datatableDetails($po_no, $revision = ""){
         $po_no = base64_decode($po_no);
         $filter_item_rm = trim(base64_decode($this->input->get('filter_item_rm')));
 
@@ -190,7 +190,7 @@ class Purchase_orders extends CI_Controller
         $config = $this->db->get()->row();
 
         //Select Query
-        $this->db->select("a.*, g.purchase_order as mrp_qty, b.number as supplier_no, b.name as supplier_name, f.mpq, f.moq, b.state,
+        $this->db->select("a.*, g.purchase_order as mrp_qty, b.number as supplier_no, b.name as supplier_name, f.mpq, f.moq, b.state, b.alias,
             b.email, d.number as item_rm_number, d.name as item_rm_name, d.item_family_id, e.name as product_family, b.type as supplier_type,
             (CASE WHEN a.price = f.price THEN 'OK' ELSE 'SYNC' END) as sync, f.price as new_price, f.item_supplier");
         $this->db->from('purchase_orders a');
@@ -205,7 +205,9 @@ class Purchase_orders extends CI_Controller
         // $this->db->join('hsn i', "d.hsn_code = i.number", 'left');
         $this->db->where('a.type', "PO");
         $this->db->where('a.po_no', $po_no);
-        $this->db->where('a.revision', $revision);
+        if($revision != ""){
+            $this->db->where('a.revision', $revision);
+        }
         $this->db->like('a.item_rm_id', $filter_item_rm);
         $this->db->group_by('a.item_rm_id');
         $this->db->order_by('d.number');
@@ -362,10 +364,12 @@ class Purchase_orders extends CI_Controller
                 }else{
                     $uom = $convert->uom_soft;
                     if($convert->type == "Divided"){
-                        $qty = ($purchase_request['qty'] / $convert->convertion);
+                        $final = ($purchase_request['qty'] / $convert->convertion);
+                        $qty = (ceil($final / $convert->moq) * $convert->moq);
                         $total = ($qty * $purchase_request['price']);
                     }else{
-                        $qty = ($purchase_request['qty'] * $convert->convertion);
+                        $final = ($purchase_request['qty'] * $convert->convertion);
+                        $qty = (ceil($final / $convert->moq) * $convert->moq);
                         $total = ($qty * $purchase_request['price']);
                     }
                 }
@@ -421,6 +425,7 @@ class Purchase_orders extends CI_Controller
             $records = $this->crud->reads('purchase_orders', [], [
                 "p_month" => $post['p_month'],
                 "p_year" => $post['p_year'],
+                "revision" => $post['revision'],
                 "revision" => $post['revision'],
                 "plant" => $post['plant'],
                 "item_rm_id" => $post['item_rm_id'],
@@ -488,6 +493,7 @@ class Purchase_orders extends CI_Controller
                 "p_year" => $post['p_year'],
                 "revision" => $post['revision'],
                 "plant" => $post['plant'],
+                "request_no" => $post['request_no'],
                 "item_rm_id" => $post['item_rm_id'],
                 "supplier_id" => $post['supplier_id']
             ]);
@@ -506,6 +512,7 @@ class Purchase_orders extends CI_Controller
                     "p_year" => $post['p_year'],
                     "revision" => $post['revision'],
                     "plant" => $post['plant'],
+                    "request_no" => $post['request_no'],
                     "item_rm_id" => $post['item_rm_id'],
                     "supplier_id" => $post['supplier_id']
                 ]);
@@ -601,8 +608,9 @@ class Purchase_orders extends CI_Controller
 
             $post = $this->input->post('data');
 
-            $this->export->select('*');
-            $this->export->from("mst_item");
+            $this->export->select('a.item_id, b.um_name');
+            $this->export->from("mst_item a");
+            $this->export->join('r_unit_measure b', 'a.um_id = b.um_id', 'left');
             $this->export->where("item_id", $post['item_rm_number']);
             $mst_item = $this->export->get()->row();
 
@@ -615,20 +623,26 @@ class Purchase_orders extends CI_Controller
             // $gpai = $this->crudSupplier($post['supplier_no']);
             // $supplier = $gpai['data'];
 
+
+
             $convert = $this->crud->read("convertions", [], ["item_rm_id" => $post['item_rm_id']]);
             if(empty($convert->uom_po)){
                 $qty = $post['qty'];
             }else{
-                if($convert->type == "Divided"){
-                    $qty = ($post['qty'] * $convert->convertion);
+                if(strtoupper($post['uom']) == strtoupper(@$mst_item->um_name)){
+                    $qty = $post['qty'];
                 }else{
-                    $qty = ($v['qty'] / $convert->convertion);
+                    if($convert->type == "Divided"){
+                        $qty = ($post['qty'] * $convert->convertion);
+                    }else{
+                        $qty = ($post['qty'] / $convert->convertion);
+                    }
                 }
             }
 
             $postFinal = array(
                 "poc_id" => $post['po_no'],
-                "ven_id" => @$mst_item->ven_id,
+                "ven_id" => $post['alias'],
                 "poc_date" => $post['po_date'],
                 "poc_emp" => $this->session->name,
                 "item_id" => $post['item_rm_number'],
@@ -931,6 +945,7 @@ class Purchase_orders extends CI_Controller
         // $month_2 =  date('M Y', strtotime('+2 month', strtotime(@$purchase_orders->po_date)));
         // $month_3 =  date('M Y', strtotime('+3 month', strtotime(@$purchase_orders->po_date)));
 
+        $config_iso = $this->db->get('config_iso')->row();
         $config = $this->db->get('config')->row();
 
         //Config Page
@@ -1033,12 +1048,12 @@ class Purchase_orders extends CI_Controller
                                             <td width="50" rowspan="4"><img src="' . base_url('assets/image/qrcode/' . $purchase_orders->po_no . '.png') . '" width="60"/></td>
                                             <td width="60">Doc No</td>
                                             <td width="5">:</td>
-                                            <td width="100"></td>
+                                            <td width="100">'.$config_iso->doc_purchase_order.'</td>
                                         </tr>
                                         <tr>
                                             <td>Form</td>
                                             <td>:</td>
-                                            <td></td>
+                                            <td>'.$config_iso->form_purchase_order.'</td>
                                         </tr>
                                         <tr>
                                             <td>Print Date</td>
@@ -1383,7 +1398,7 @@ class Purchase_orders extends CI_Controller
                                 <b style="font-size:14px;">' . $config->name . '</b><br>
                                 <span style="font-size:10px;">' . $config->address . '</span><br>
                             </td>
-                            <th width="100" style="text-align:right;"></th>
+                            <td width="100" style="text-align:right;font-size:12px;">FRM-BEI-PRC-002</td>
                         </tr>
                     </table>
                         <div style="padding:10px;">
@@ -1694,6 +1709,21 @@ class Purchase_orders extends CI_Controller
             $this->db->where("po_no", $po_no);
             $this->db->update('purchase_orders', ["email_date" => null, "email_status" => "PENDING"]);
             echo json_encode(array("title" => "Successs", "message" => "Email Cancel Successfully", "theme" => "success"));
+        }
+    }
+
+    public function sendConfirm(){
+        $po_no = $this->input->post('po_no');
+        $status = $this->input->post('status');
+
+        if($status == "YES"){
+            $this->db->where("po_no", $po_no);
+            $this->db->update('purchase_orders', ["confirm_date" => date("Y-m-d H:i:s"), "confirm" => $status]);
+            echo json_encode(array("title" => "Successs", "message" => "Confirm Successfully", "theme" => "success"));
+        }else{
+            $this->db->where("po_no", $po_no);
+            $this->db->update('purchase_orders', ["confirm_date" => null, "confirm" => $status]);
+            echo json_encode(array("title" => "Successs", "message" => "Unconfirm Successfully", "theme" => "success"));
         }
     }
 

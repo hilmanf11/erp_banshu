@@ -10,6 +10,7 @@
     <thead>
         <tr>
             <th rowspan="2" data-options="field:'number',width:80,align:'center'">Supplier<br>Code</th>
+            <th rowspan="2" data-options="field:'alias',width:100,align:'center'">Supplier<br>ERP ID</th>
             <th rowspan="2" data-options="field:'supplier_type',width:100,align:'center'">Supplier<br>Type</th>
             <th rowspan="2" data-options="field:'type',width:80,align:'center'">Type</th>
             <th rowspan="2" data-options="field:'address',width:250,halign:'center'">Address</th>
@@ -63,6 +64,10 @@
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Supplier Code</span>
                     <input style="width:60%;" name="number" id="number" required="" class="easyui-textbox">
+                </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Supplier ERP ID</span>
+                    <input style="width:60%;" name="alias" id="alias" required="" class="easyui-textbox">
                 </div>
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Supplier PO</span>

@@ -69,6 +69,7 @@
                     <option value="rgp_transaction_in">RGP Transaction IN</option>
                     <option value="rgp_transaction_out">RGP Transaction OUT</option>
                     <option value="scrap_booking">Scrap Booking</option>
+                    <option value="request_npd">Request NPD</option>
                 </select>
             </div>
             <div class="fitem">

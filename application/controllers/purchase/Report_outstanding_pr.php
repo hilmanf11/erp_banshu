@@ -144,7 +144,7 @@ class Report_outstanding_pr extends CI_Controller
                                 </tr>';
                     $html .= '  <tr>
                                     <th width="20"></th>
-                                    <th>Component No</th>
+                                    <th>Part No Supplier</th>
                                     <th width="600">Specification</th>
                                     <th>UoM</th>
                                     <th>Quantity</th>

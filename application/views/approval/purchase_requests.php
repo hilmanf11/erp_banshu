@@ -18,7 +18,8 @@
             <th data-options="field:'uom',width:80,halign:'center'">Uom</th>
             <th data-options="field:'supplier_name',width:250,halign:'center'">Supplier</th>
             <th data-options="field:'qty',width:80,halign:'center',align:'right',formatter: numberformat">Qty</th>
-            <th data-options="field:'forecast_avg',width:80,halign:'center',align:'right',formatter: numberformat">Xbar<br>(3 Month)</th>
+            <th data-options="field:'issued_avg',width:80,halign:'center',align:'right',formatter: numberformat">Xbar<br>Workorder</th>
+            <th data-options="field:'forecast_avg',width:80,halign:'center',align:'right',formatter: numberformat">Xbar<br>Forecast</th>
             <th data-options="field:'ito',width:80,halign:'center',align:'right',formatter: numberformat">ITO</th>
             <th data-options="field:'currency',width:80,halign:'center'">Currency</th>
             <th data-options="field:'price',width:100,halign:'center',align:'right',formatter: numberformatPrice2">Price</th>

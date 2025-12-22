@@ -140,4 +140,73 @@ class Notifications extends CI_Controller
         $logs = $this->db->delete('notifications', $data);
         echo $logs;
     }
+
+    public function datatablesAll($menu){
+        $this->db->select('*');
+        $this->db->from('notifications');
+        $this->db->where('table_name', $menu);
+        $this->db->where('name', "Disapproved");
+        $this->db->order_by('id', 'DESC');
+        $this->db->limit(1000);
+        $records = $this->db->get()->result_array();
+
+        $arr = array();
+        foreach ($records as $record) {
+            $description = json_decode($record['logs']);
+            $item_rm = $this->crud->read("item_rm", [], ["id" => $description->item_rm_id]);
+            $supplier = $this->crud->read("suppliers", [], ["id" => $description->supplier_id]);
+
+            if($menu == "purchase_requests"){
+                $arr[] = array(
+                    "period" => $description->p_year.$description->p_month,
+                    "revision" => $description->revision,
+                    "plant" => $description->plant,
+                    "request_no" => $description->request_no,
+                    "request_date" => $description->request_date,
+                    "item_rm_number" => @$item_rm->number,
+                    "item_rm_name" => @$item_rm->name,
+                    "supplier_name" => @$supplier->name,
+                    "need" => $description->need,
+                    "mrp" => $description->mrp,
+                    "qty" => $description->qty,
+                    "approved_reason" => $record['reason'],
+                    "approved_by" => $record['users_id_from'],
+                    "approved_date" => $record['created_date'],
+                    "created_by" => $description->created_by,
+                    "created_date" => $description->created_date,
+                    "updated_by" => $description->updated_by,
+                    "updated_date" => $description->updated_date,
+                );
+            }
+
+            if($menu == "purchase_orders"){
+                $arr[] = array(
+                    "period" => $description->p_year.$description->p_month,
+                    "revision" => $description->revision,
+                    "plant" => $description->plant,
+                    "request_no" => $description->request_no,
+                    "po_no" => $description->po_no,
+                    "po_date" => $description->po_date,
+                    "item_rm_number" => @$item_rm->number,
+                    "item_rm_name" => @$item_rm->name,
+                    "supplier_name" => @$supplier->name,
+                    "price" => $description->price,
+                    "total" => $description->total,
+                    "qty" => $description->qty,
+                    "currency" => $description->currency,
+                    "remarks" => $description->remarks,
+                    "approved_reason" => $record['reason'],
+                    "approved_by" => $record['users_id_from'],
+                    "approved_date" => $record['created_date'],
+                    "created_by" => $description->created_by,
+                    "created_date" => $description->created_date,
+                    "updated_by" => $description->updated_by,
+                    "updated_date" => $description->updated_date,
+                );
+            }
+        }
+
+        die(json_encode($arr));
+
+    }
 }

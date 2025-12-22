@@ -132,6 +132,7 @@
         </fieldset>
     </div>
     <?= $button ?>
+    <a href="javascript:;" class="easyui-linkbutton" plain="true" onclick="disapproveData()"><i class="fa fa-file"></i> Disapprove Data</a>
     <!-- <a href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true" onclick="formula()"><i class="fa fa-info"></i> Help</a> -->
 </div>
 
@@ -204,6 +205,41 @@
                 <th data-options="field:'price_old',width:100,halign:'center',align:'right',formatter:numberformatPrice">Old Price</th>
                 <th data-options="field:'reason',width:150,halign:'center'">Reason</th>
                 <th data-options="field:'remarks',width:200,halign:'center'">Remarks</th>
+            </tr>
+        </thead>
+    </table>
+</div>
+
+<div id="dlg_disapproveData" class="easyui-dialog" title="Data Disapproved Purchase Orders" data-options="closed: true, modal:true, fit:true" style="width: 100%; top: 0px; left: 0px;">
+    <table id="dg_disapproveData" class="easyui-datagrid" style="width:100%;">
+        <thead>
+            <tr>
+                <th rowspan="2" data-options="field:'period',width:80,halign:'center'">Period</th>
+                <th rowspan="2" data-options="field:'revision',width:80,halign:'center'">Revision</th>
+                <th rowspan="2" data-options="field:'plant',width:80,halign:'center'">Plant</th>
+                <th rowspan="2" data-options="field:'request_no',width:150,halign:'center'">PR No</th>
+                <th rowspan="2" data-options="field:'po_no',width:150,halign:'center'">PO No</th>
+                <th rowspan="2" data-options="field:'po_date',width:100,halign:'center'">PO Date</th>
+                <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No BEI</th>
+                <th rowspan="2" data-options="field:'item_rm_name',width:150,halign:'center'">Part Name</th>
+                <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Supplier Name</th>
+                <th rowspan="2" data-options="field:'qty',width:100,halign:'center',align:'right',formatter:numberformat">Qty</th>
+                <th rowspan="2" data-options="field:'price',width:100,halign:'center',align:'right',formatter:numberformatPrice">Price</th>
+                <th rowspan="2" data-options="field:'total',width:100,halign:'center',align:'right',formatter:numberformat">Total</th>
+                <th rowspan="2" data-options="field:'currency',width:80,align:'center'">Currency</th>
+                <th rowspan="2" data-options="field:'remarks',width:80,halign:'center'">Remarks</th>
+                <th rowspan="2" data-options="field:'approved_reason',width:400,halign:'center'">Reason</th>
+                <th colspan="2" data-options="field:'',width:100,halign:'center'">Disapproved</th>
+                <th colspan="2" data-options="field:'',width:100,halign:'center'">Created</th>
+                <th colspan="2" data-options="field:'',width:100,halign:'center'">Updated</th>
+            </tr>
+            <tr>
+                <th data-options="field:'approved_by',width:100,align:'center'">By</th>
+                <th data-options="field:'approved_date',width:120,align:'center'">Date</th>
+                <th data-options="field:'created_by',width:100,align:'center'">By</th>
+                <th data-options="field:'created_date',width:120,align:'center'">Date</th>
+                <th data-options="field:'updated_by',width:100,align:'center'">By</th>
+                <th data-options="field:'updated_date',width:120,align:'center'">Date</th>
             </tr>
         </thead>
     </table>
@@ -564,6 +600,21 @@
         } else {
             toastr.warning("Please select one of the data in the table first!", "Information");
         }
+    }
+
+    function disapproveData(){
+        $("#dlg_disapproveData").dialog('open');
+        $('#dg_disapproveData').datagrid('disableFilter');
+
+        $('#dg_disapproveData').datagrid({
+            url: '<?= base_url('notifications/datatablesAll/purchase_orders') ?>',
+            clientPaging: true,
+            remoteFilter: false,
+            rownumbers: true,
+            singleSelect: false,
+            fit: true
+        });
+        $('#dg_disapproveData').treegrid('enableFilter');
     }
 
     function pushData(){

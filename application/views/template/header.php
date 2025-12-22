@@ -47,11 +47,6 @@ $config = $this->db->get()->row();
     <script type="text/javascript" src="<?= base_url('assets/vendors/toastr.min.js') ?>"></script>
     <script type="text/javascript" src="<?= base_url('assets/vendors/sweetalert2.all.min.js') ?>"></script>
     <script type="text/javascript" src="<?= base_url('assets/vendors/summernote/summernote-lite.js') ?>"></script>
-    <script type="text/javascript" src="<?= base_url('assets/vendors/charts/code/highcharts.js') ?>"></script>
-    <script type="text/javascript" src="<?= base_url('assets/vendors/charts/code/modules/exporting.js') ?>"></script>
-    <script type="text/javascript" src="<?= base_url('assets/vendors/charts/code/modules/export-data.js') ?>"></script>
-    <script type="text/javascript" src="<?= base_url('assets/vendors/charts/code/modules/accessibility.js') ?>"></script>
-
     <!-- <script type="text/javascript" src="<?= base_url('assets/bootstrap/js/bootstrap.min.js?3') ?>"></script> -->
     <!-- <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script> -->
 

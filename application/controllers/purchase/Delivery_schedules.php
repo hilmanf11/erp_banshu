@@ -75,6 +75,7 @@ class Delivery_schedules extends CI_Controller
             $this->db->join('supplier_items c', 'a.supplier_id = c.supplier_id and c.item_rm_id = ia.id and a.plant = c.plant');
             $this->db->join('makers d', 'c.maker_id = d.id');
             $this->db->where('d.type !=', "LOCAL");
+            $this->db->where('a.confirm', "NO");
             $this->db->where('a.po_no', $po_no);
             $this->db->group_by('a.item_rm_id');
             $this->db->group_by('a.supplier_id');
@@ -250,13 +251,14 @@ class Delivery_schedules extends CI_Controller
             $offset = ($page - 1) * $rows;
             $result = array();
             //Select Query
-            $this->db->select('a.*, b.name as supplier_name, c.number as item_rm_number, c.name as item_rm_name, c.uom, d.name as product_family, (CASE WHEN (a.mpq = 0 or a.mpq is null) THEN e.mpq ELSE a.mpq END) as mpq2');
+            $this->db->select('a.*, b.name as supplier_name, c.number as item_rm_number, c.name as item_rm_name, c.uom, d.name as product_family, (CASE WHEN (a.mpq = 0 or a.mpq is null) THEN e.mpq ELSE a.mpq END) as mpq2, f.confirm');
             $this->db->from('delivery_schedules a');
             $this->db->join('suppliers b', 'a.supplier_id = b.id');
             $this->db->join('item_rm c', 'a.item_rm_id = c.id');
             $this->db->join('item_rm ia', "TRIM(LEADING '+' FROM c.number) = ia.number");
             $this->db->join('item_familys d', 'c.item_family_id = d.id');
             $this->db->join('supplier_items e', 'a.supplier_id = e.supplier_id and ia.id = e.item_rm_id and a.plant = e.plant');
+            $this->db->join('purchase_orders f', 'a.po_no = f.po_no and a.item_rm_id = f.item_rm_id');
             $this->db->where('a.p_month', $filter_month);
             $this->db->where('a.p_year', $filter_year);
             if($filter_revision != ""){
@@ -266,7 +268,7 @@ class Delivery_schedules extends CI_Controller
                 $this->db->like('b.id', $filter_supplier);
             }
             if($filter_po_no != ""){
-                $this->db->like('a.po_no', $filter_po_no);
+                $this->db->where('a.po_no', $filter_po_no);
             }
             if($filter_item_family != ""){
                 $this->db->like('c.item_family_id', $filter_item_family);

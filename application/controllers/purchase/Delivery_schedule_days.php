@@ -201,13 +201,14 @@ class Delivery_schedule_days extends CI_Controller
             $filter_item_id = base64_decode($this->input->get('filter_item_id'));
 
             //Select Query
-            $this->db->select("a.*, b.number as item_rm_number, b.name as item_rm_name, (case when f.mpq is not null then f.mpq else d.mpq end) as mpq, (case when f.moq is not null then f.moq else d.moq end) as moq, d.leadtime, c.name as supplier_name, e.name as product_family_name");
+            $this->db->select("a.*, b.number as item_rm_number, b.name as item_rm_name, (case when f.mpq is not null then f.mpq else d.mpq end) as mpq, (case when f.moq is not null then f.moq else d.moq end) as moq, d.leadtime, c.name as supplier_name, e.name as product_family_name, g.confirm");
             $this->db->from('delivery_schedule_days a');
             $this->db->join('item_rm b', 'a.item_rm_id = b.id');
             $this->db->join('suppliers c', 'a.supplier_id = c.id');
             $this->db->join('supplier_items d', 'a.supplier_id = d.supplier_id and a.item_rm_id = d.item_rm_id', 'left');
             $this->db->join('item_familys e', 'b.item_family_id = e.id');
             $this->db->join('convertions f', 'a.item_rm_id = f.item_rm_id', 'left');
+            $this->db->join('purchase_orders g', 'a.po_no = g.po_no and a.item_rm_id = g.item_rm_id');
             $this->db->where('a.plant', $filter_plant);
             $this->db->where('a.p_month', $filter_month);
             $this->db->where('a.p_year', $filter_year);
@@ -269,6 +270,7 @@ class Delivery_schedule_days extends CI_Controller
                     "mpq" => $record['mpq'],
                     "moq" => $record['moq'],
                     "leadtime" => $record['leadtime'],
+                    "confirm" => $record['confirm'],
                     "qty" => $record['qty'],
                     "qty_bf" => $record['qty_bf'],
                     "created_by" => $record['created_by'],
@@ -307,11 +309,12 @@ class Delivery_schedule_days extends CI_Controller
 
         $this->db->select('a.po_no, a.item_rm_id, d.number as item_rm_number, a.supplier_id, a.qty');
         $this->db->from('purchase_orders a');
-        $this->db->join('supplier_items b', 'a.supplier_id = b.supplier_id and a.item_rm_id = b.item_rm_id and a.plant = b.plant');
+        $this->db->join('supplier_items b', 'a.supplier_id = b.supplier_id and a.item_rm_id = b.item_rm_id and a.plant = b.plant and b.share_order > 0');
         $this->db->join('suppliers c', 'b.supplier_id = c.id');
         $this->db->join('item_rm d', 'b.item_rm_id = d.id');
-        // $this->db->join('makers e', 'b.maker_id = e.id');
-        // $this->db->where('e.type', "LOCAL");
+        $this->db->join('makers e', 'b.maker_id = e.id');
+        $this->db->where('e.type', "LOCAL");
+        $this->db->where('a.confirm', "NO");
         $this->db->where('a.plant', $filter_plant);
         $this->db->where('a.p_month', $filter_month);
         $this->db->where('a.p_year', $filter_year);
@@ -801,12 +804,13 @@ class Delivery_schedule_days extends CI_Controller
                         </td>
                         <td style="font-size: 14px; text-align: left; margin:2px;">
                             <b>' . $config->name . '</b><br>
-                            <small>MATERIAL CALCULATION</small>
+                            <small>SCHEDULE DELIVERY LOCAL</small>
                         </td>
                     </tr>
                 </table>
             </div>
             <div style="float: right; font-size: 12px; text-align: right;">
+                Document No FRM-BEI-PRC-002 <br>
                 Print Date ' . date("d M Y H:m:s") . ' <br>
                 Print By ' . $this->session->username . '  
             </div>

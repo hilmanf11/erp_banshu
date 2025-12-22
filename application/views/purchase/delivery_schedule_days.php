@@ -311,7 +311,7 @@
                             if(rows.total > 0){
                                 requestData(rows.total, rows);
                             }else{
-                                Swal.fire('Not Found!', 'Data Purchase Order not found!', 'error');
+                                Swal.fire('Not Found!', 'Data Purchase Order not found or Delivery Schedule Status is Confirm please change to Unconfirm!', 'error');
                             }
 
                             function requestData(total, json, number = 1, value = 0, success = 1, failed = 1) {
@@ -377,6 +377,11 @@
     function update() {
         var row = $('#dg').datagrid('getSelected');
         if (row) {
+            if(row.confirm == "YES"){
+                toastr.warning("Status Delivery Schedule is Confirm, Please change to Unconfirm for edit data");
+                return false;
+            }
+
             $('#dlg_insert').dialog('open');
             $('#frm_insert').form('load', row);
             $('#qtyPo').html(row.qty);

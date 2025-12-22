@@ -92,32 +92,22 @@ class Purchase_requests extends CI_Controller
 
     function forecast($item_rm_id,$year,$month,$revision){
         $period = date("Y-m-d", strtotime($year ."-". $month ."-01"));
-        $periodmin1 = date("mY", strtotime("-1 month", strtotime($period)));
-        $periodmin2 = date("mY", strtotime("-2 month", strtotime($period)));
-        $periodmin3 = date("mY", strtotime("-3 month", strtotime($period)));
-        $periodplus1 = date("mY", strtotime($period));
+        $periods = date("mY", strtotime($period));
 
-        $q_forecast = $this->db->query("SELECT item_rm_id, SUM(prod_plan_1) as qty 
-            FROM mrp_ltpp 
-            WHERE CONCAT(p_month, p_year) IN ('$periodmin1','$periodmin2','$periodmin3')
+        $q_forecast = $this->db->query("SELECT *
+            FROM generate_mrp_finals 
+            WHERE CONCAT(p_month, p_year) = '$periods' and revision = '$revision'
             AND item_rm_id ='$item_rm_id'
-            GROUP BY item_rm_id, p_month");
+            GROUP BY item_rm_id");
         $forecast = $q_forecast->result_array();
-
-        $q_forecast2 = $this->db->query("SELECT item_rm_id, prod_plan_2, prod_plan_3, prod_plan_4
-            FROM mrp_ltpp 
-            WHERE CONCAT(p_month, p_year) IN ('$periodplus1')
-            AND item_rm_id ='$item_rm_id'
-            GROUP BY item_rm_id, p_month");
-        $forecast2 = $q_forecast2->result_array();
         
         return array(
-            "fc1" => @$forecast[2]['qty'],
-            "fc2" => @$forecast[1]['qty'],
-            "fc3" => @$forecast[0]['qty'],
-            "fc4" => @$forecast2[0]['prod_plan_2'],
-            "fc5" => @$forecast2[0]['prod_plan_3'],
-            "fc6" => @$forecast2[0]['prod_plan_4'],
+            "fc1" => @$forecast[0]['need_2'],
+            "fc2" => @$forecast[0]['need_3'],
+            "fc3" => @$forecast[0]['need_4'],
+            "fc4" => @$forecast[0]['need_5'],
+            "fc5" => @$forecast[0]['need_6'],
+            "fc6" => @$forecast[0]['avg_need'],
         );
     }
 
@@ -147,7 +137,7 @@ class Purchase_requests extends CI_Controller
         $year = $this->input->get('year');
 
         $start = strtotime($year . "-" . $month . "-01");
-        $begin =  strtotime(date('Y-m-d', strtotime('+4 month', $start)));
+        $begin =  strtotime(date('Y-m-d', strtotime('+6 month', $start)));
         $end =  strtotime(date('Y-m-d', strtotime('-3 month', $start)));
 
         $monthName = array();
@@ -471,7 +461,7 @@ class Purchase_requests extends CI_Controller
             $result = array();
             //Select Query
             $this->db->select('a.*, b.name as supplier_name, c.name as item_family_name, SUM(a.qty) as total_pr, SUM(a.mrp) as total_mrp, COALESCE(e.total, 0) as total_po, COUNT(a.id) as total_data');
-            $this->db->from("(select * from purchase_requests where qty > 0 and flag = 'OK') a");
+            $this->db->from("(select * from purchase_requests where qty > 0 and flag = 'OK' order by approved_to desc) a");
             $this->db->join('suppliers b', 'a.supplier_id = b.id');
             $this->db->join('item_familys c', "a.item_family_id = c.id and c.item_category_id IN ('C01')");
             // $this->db->join("(select request_no, COUNT(id) as total FROM purchase_requests WHERE approved_to = '' GROUP BY request_no) d", 'a.request_no = d.request_no', 'left');
@@ -578,18 +568,17 @@ class Purchase_requests extends CI_Controller
             $leadtime = date('Y-m-01', strtotime($ending));
             $hpo = $this->history_po($data['plant'], $data['p_year'],$data['p_month'], $item_id);
             
-            // $m1 = date('Y-m-01', strtotime($leadtime));
-            // $m2 = date('Y-m-01', strtotime('+1 month', strtotime($leadtime)));
-            // $m3 = date('Y-m-01', strtotime('+2 month', strtotime($leadtime)));
+            $period = date("Y-m-d", strtotime($filter_year ."-". $filter_month ."-01"));
+            $periodmin1 = date("mY", strtotime("-1 month", strtotime($period)));
+            $periodmin2 = date("mY", strtotime("-2 month", strtotime($period)));
+            $periodmin3 = date("mY", strtotime("-3 month", strtotime($period)));
 
-            // $qmps1 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m1' and item_rm_id = '$item_id' and revision = '$revision'");
-            // $rpms1 = $qmps1->row();
-
-            // $qmps2 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m2' and item_rm_id = '$item_id' and revision = '$revision'");
-            // $rpms2 = $qmps2->row();
-
-            // $qmps3 = $this->db->query("SELECT qty FROM generate_mrp WHERE `period` = '$m3' and item_rm_id = '$item_id' and revision = '$revision'");
-            // $rpms3 = $qmps3->row();
+            $q_forecast = $this->db->query("SELECT item_rm_id, SUM(prod_plan_1) as qty 
+                FROM mrp_ltpp 
+                WHERE CONCAT(p_month, p_year) IN ('$periodmin1','$periodmin2','$periodmin3')
+                AND item_rm_id ='$item_id'
+                GROUP BY item_rm_id, p_month");
+            $forecast = $q_forecast->result_array();
 
             $m1 = date('mY', strtotime($leadtime));
 
@@ -603,26 +592,26 @@ class Purchase_requests extends CI_Controller
                 "m2" => empty(@$hpo['po2']) ? 0 : @$hpo['po2'],
                 "m3" => empty(@$hpo['po3']) ? 0 : @$hpo['po3'],
                 "avg" => empty((@$hpo['po1'] + @$hpo['po2'] + @$hpo['po3'])) ? 0 : ((@$hpo['po1'] + @$hpo['po2'] + @$hpo['po3']) / 3),
-                "prodplan_1" => @$rpms1->prod_plan_4,
-                "prodplan_2" => @$rpms1->prod_plan_5,
-                "prodplan_3" => @$rpms1->prod_plan_6,
-                "avg_forecast" => round(($data['forecast_m1'] + $data['forecast_m2'] + $data['forecast_m3'] + $data['forecast_plus_1'] + $data['forecast_plus_2'] + $data['forecast_plus_3'] + @$rpms1->prod_plan_4 + @$rpms1->prod_plan_5 + @$rpms1->prod_plan_6) / 9)
+                "prodplan_1" => @$forecast[2]['qty'],
+                "prodplan_2" => @$forecast[1]['qty'],
+                "prodplan_3" => @$forecast[0]['qty'],
+                "avg_forecast" => round(($data['forecast_m1'] + $data['forecast_m2'] + $data['forecast_m3'] + $data['forecast_plus_1'] + $data['forecast_plus_2'] + $data['forecast_plus_3']) / 6)
             ]);
 
             $total_m1 += empty(@$rpo1->qty) ? 0 : @$rpo1->qty;
             $total_m2 += empty(@$rpo2->qty) ? 0 : @$rpo2->qty;
             $total_m3 += empty(@$rpo3->qty) ? 0 : @$rpo3->qty;
             $total_avg += empty((@$rpo1->qty + @$rpo2->qty + @$rpo3->qty)) ? 0 : ((@$rpo1->qty + @$rpo2->qty + @$rpo3->qty) / 3);
-            $total_prodplan_1 += @$rpms1->prod_plan_4;
-            $total_prodplan_2 += @$rpms1->prod_plan_5;
-            $total_prodplan_3 += @$rpms1->prod_plan_6;
+            $total_prodplan_1 += @$forecast[2]['qty'];
+            $total_prodplan_2 += @$forecast[1]['qty'];
+            $total_prodplan_3 += @$forecast[0]['qty'];
             $total_forecast_m1 += $data['forecast_m1'];
             $total_forecast_m2 += $data['forecast_m2'];
             $total_forecast_m3 += $data['forecast_m3'];
             $total_forecast_plus_1 += $data['forecast_plus_1'];
             $total_forecast_plus_2 += $data['forecast_plus_2'];
             $total_forecast_plus_3 += $data['forecast_plus_3'];
-            $total_avg_forecast += (($data['forecast_m1'] + $data['forecast_m2'] + $data['forecast_m3'] + $data['forecast_plus_1'] + $data['forecast_plus_2'] + $data['forecast_plus_3'] + @$rpms1->prod_plan_4 + @$rpms1->prod_plan_5 + @$rpms1->prod_plan_6) / 9);
+            $total_avg_forecast += (($data['forecast_m1'] + $data['forecast_m2'] + $data['forecast_m3'] + $data['forecast_plus_1'] + $data['forecast_plus_2'] + $data['forecast_plus_3']) / 6);
             $total_purchase_request += $data['qty'];
             $total_need += $data['need'];
             $total_mrp += $data['mrp'];
@@ -760,8 +749,13 @@ class Purchase_requests extends CI_Controller
     {
         if ($this->input->post()) {
             $post = $this->input->post('data');
-            $send = $this->crud->create('purchase_requests', $post, "", "approval");
-            echo $send;
+            $purchase_requests = $this->crud->reads("purchase_requests", [], ["item_rm_id" => $post['item_rm_id'], "request_no" => $post['request_no']]);
+            if(count($purchase_requests) > 0){
+                echo json_encode(array("message" => "Duplicate", "title" => "Double", "theme" => "error"));
+            }else{
+                $send = $this->crud->create('purchase_requests', $post, "", "approval");
+                echo $send;
+            }
         }
     }
 
@@ -876,6 +870,10 @@ class Purchase_requests extends CI_Controller
                 }else{
                     $qty = 0;
                 }
+
+                if($purchase_request->approved_to == "" && $purchase_request->approved != 0){
+                    die(json_encode(array("title" => "Failed", "message" => "Part No " . $data['item_rm_number'] . " has been Approved, Cannot Change", "theme" => "error")));
+                }
                 
                 $dataFinal = array(
                     "qty" => $qty,
@@ -884,7 +882,7 @@ class Purchase_requests extends CI_Controller
                     "flag" => $data['flag'],
                 );
 
-                $this->crud->update('purchase_requests', ["id" => $purchase_request->id], $dataFinal);
+                $this->crud->update('purchase_requests', ["id" => $purchase_request->id], $dataFinal, "", "approval");
                 echo json_encode(array("title" => "Updated", "message" => "Part No " . $data['item_rm_number'] . " Update Successfully", "theme" => "success"));
             }
         }
@@ -981,6 +979,7 @@ class Purchase_requests extends CI_Controller
                 <table id="customers" border="1">
                     <tr>
                         <th rowspan="2" style="text-align:center;" width="20">No</th>
+                        <th rowspan="2" style="text-align:center;">STATUS</th>
                         <th rowspan="2" style="text-align:center;">PLANT</th>
                         <th rowspan="2" style="text-align:center;">PERIOD</th>
                         <th rowspan="2" style="text-align:center;">REVISION</th>
@@ -1033,6 +1032,7 @@ class Purchase_requests extends CI_Controller
 
                         $html .= "  <tr ".$style.">
                                         <td>".$no."</td>
+                                        <td>".$record['flag']."</td>
                                         <td>".$record['plant']."</td>
                                         <td>".$record['p_year'] . $record['p_month']."</td>
                                         <td>".$record['revision']."</td>
@@ -1131,7 +1131,10 @@ class Purchase_requests extends CI_Controller
             $this->db->limit(35, ($i * 35));
             $records = $this->db->get()->result_array();
 
-            $html .= '  <div style="border: 1px solid black; width:100%;">
+            $html .= '  <div style="text-align:right;">
+                            FRM-EXP-MCL-003
+                        </div>
+                        <div style="border: 1px solid black; width:100%;">
                             <div style="padding:10px;">
                                 <center>
                                     <h3><u>PURCHASE REQUISITION</u></h3>

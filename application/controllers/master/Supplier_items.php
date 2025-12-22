@@ -696,6 +696,7 @@ class Supplier_items extends CI_Controller
                 <th>Product Family</th>
                 <th>Maker</th>
                 <th>Maker Type</th>
+                <th>COO Name</th>
                 <th>SPQ</th>
                 <th>MPQ</th>
                 <th>MOQ</th>
@@ -743,6 +744,7 @@ class Supplier_items extends CI_Controller
                     <td>' . $data['item_family_name'] . '</td>
                     <td>' . $data['maker_name'] . '</td>
                     <td>' . $data['maker_type'] . '</td>
+                    <td>' . $data['coo_name'] . '</td>
                     <td>' . $data['spq'] . '</td>
                     <td>' . $data['mpq'] . '</td>
                     <td>' . $data['moq'] . '</td>

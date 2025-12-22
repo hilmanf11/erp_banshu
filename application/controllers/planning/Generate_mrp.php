@@ -333,7 +333,7 @@ class Generate_mrp extends CI_Controller
         $this->db->from("generate_mrp_finals a");
         $this->db->join('item_rm b', 'a.item_rm_id = b.id');
         $this->db->join('item_rm ia', "TRIM(LEADING '+' FROM b.number) = ia.number");
-        $this->db->join("supplier_items c", "ia.id = c.item_rm_id and a.plant = c.plant", "left");
+        $this->db->join("(select * from supplier_items where share_order > 0) c", "ia.id = c.item_rm_id and a.plant = c.plant", "left");
         $this->db->where("a.p_month", $filter_month);
         $this->db->where("a.p_year", $filter_year);
         $this->db->where("a.revision", $filter_revision);
@@ -1292,6 +1292,7 @@ class Generate_mrp extends CI_Controller
                         </table>
                     </div>
                     <div style="float: right; font-size: 12px; text-align: right;">
+                        FRM-EXP-MCL-001 <br>
                         Print Date ' . date("d M Y H:m:s") . ' <br>
                         Print By ' . $this->session->username . '  
                     </div>

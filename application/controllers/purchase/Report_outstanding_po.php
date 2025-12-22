@@ -70,7 +70,9 @@ class Report_outstanding_po extends CI_Controller
         $this->db->from('config');
         $config = $this->db->get()->row();
         
-        $sql = $this->db->query("SELECT a.id AS item_rm_id, a.number AS item_rm_number, a.name AS item_rm_name, a.uom, b.po_no, e.name as item_family_name, f.id as supplier_id, f.name as supplier_name,
+        $sql = $this->db->query("SELECT a.id AS item_rm_id, a.number AS item_rm_number, a.name AS item_rm_name, 
+            (case when g.uom_soft is not null then g.uom_soft else a.uom end) as uom, 
+            b.po_no, e.name as item_family_name, f.id as supplier_id, f.name as supplier_name,
             COALESCE(d.begin_stock, 0) AS begin_stock,
             COALESCE(SUM(b.qty), 0) AS qty_po, 
             COALESCE(c.qty_receipt, 0) AS qty_receipt, 
@@ -80,6 +82,7 @@ class Report_outstanding_po extends CI_Controller
         JOIN item_familys e ON a.item_family_id = e.id
         JOIN purchase_orders b ON a.id = b.item_rm_id
         JOIN suppliers f ON b.supplier_id = f.id
+        LEFT JOIN convertions g ON a.id = g.item_rm_id
         LEFT JOIN (SELECT item_rm_id, po_no, SUM(qty_receipt) AS qty_receipt FROM purchase_order_receipts WHERE receipt_date between '$filter_from' and '$filter_to' and status != '2' GROUP BY item_rm_id, po_no) c ON a.id = c.item_rm_id and b.po_no = c.po_no
         LEFT JOIN (SELECT a.id, b.po_no, (COALESCE(SUM(b.qty), 0) - COALESCE(c.qty_receipt, 0)) AS begin_stock
             FROM item_rm a
@@ -120,7 +123,7 @@ class Report_outstanding_po extends CI_Controller
                 <tr>
                     <th width="20">No</th>
                     <th width="50">Status</th>
-                    <th>Part No EBWS</th>
+                    <th>Part No Original</th>
                     <th>Part No Supplier</th>
                     <th>Description</th>
                     <th>Product Family</th>
@@ -267,10 +270,10 @@ class Report_outstanding_po extends CI_Controller
                                         <td>' . $purchase->supplier_name . '</td>
                                         <td>' . $purchase->po_no . '</td>
                                         <td>' . $purchase->request_no . '</td>
-                                        <td style="text-align:right;">' . number_format($begin, 2) . '</td>
-                                        <td style="text-align:right;">' . number_format($qty) . '</td>
+                                        <td style="text-align:right;">' . number_format($begin, 0) . '</td>
+                                        <td style="text-align:right;">' . number_format($qty, 0) . '</td>
                                         <td style="text-align:right;">' . number_format(0)  . '</td>
-                                        <td style="text-align:right;">' . number_format($balance, 2)  . '</td>
+                                        <td style="text-align:right;">' . number_format($balance, 0)  . '</td>
                                     </tr>';
                         $begin += $qty;
                         $nod++;
@@ -303,10 +306,10 @@ class Report_outstanding_po extends CI_Controller
                                         <td>' . $receipt->supplier_name . '</td>
                                         <td>' . $receipt->receipt_no . '</td>
                                         <td>' . $receipt->bc_document . '</td>
-                                        <td style="text-align:right;">' . number_format($begin, 2) . '</td>
+                                        <td style="text-align:right;">' . number_format($begin, 0) . '</td>
                                         <td style="text-align:right;">' . number_format(0) . '</td>
-                                        <td style="text-align:right;">' . number_format($qty_receipt, 2)  . '</td>
-                                        <td style="text-align:right;">' . number_format($balance, 2)  . '</td>
+                                        <td style="text-align:right;">' . number_format($qty_receipt, 0)  . '</td>
+                                        <td style="text-align:right;">' . number_format($balance, 0)  . '</td>
                                     </tr>';
                         $begin -= $qty_receipt;
                         $nod++;

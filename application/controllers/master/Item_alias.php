@@ -145,11 +145,13 @@ class Item_alias extends CI_Controller
         $this->db->from('config');
         $config = $this->db->get()->row();
 
-        $this->db->select('*');
-        $this->db->from('item_alias');
-        $this->db->where('deleted', 0);
-        $this->db->order_by('id', 'ASC');
+        $this->db->select('a.*, b.number as item_rm_number, c.number as item_rm_alias');
+        $this->db->from('item_alias a');
+        $this->db->join('item_rm b', 'a.number = b.id');
+        $this->db->join('item_rm c', 'a.alias = c.id');
+        $this->db->order_by('b.number', 'ASC');
         $records = $this->db->get()->result_array();
+
         $html = '<html><head><title>Print Data</title></head><style>body {font-family: Arial, Helvetica, sans-serif;}#customers {border-collapse: collapse;width: 100%;font-size: 12px;}#customers td, #customers th {border: 1px solid #ddd;padding: 2px;}#customers tr:nth-child(even){background-color: #f2f2f2;}#customers tr:hover {background-color: #ddd;}#customers th {padding-top: 2px;padding-bottom: 2px;text-align: left;color: black;}</style><body>
         <center>
             <div style="float: left; font-size: 12px; text-align: left;">
@@ -170,24 +172,37 @@ class Item_alias extends CI_Controller
             </div>
             <br><br>
             <div style="float: centet; font-size: 16px; text-align: center;">
-                <h3>MASTER ITEM ALIAS</h3>
+                <h3>MASTER ITEM EQUIVALENT</h3>
             </div>
         </center>
         
         <table id="customers" border="1">
             <tr>
-                <th width="20">No</th>
-                <th>Part No Original</th>
-                <th>Part No Alias</th>
-                <th>Description</th>
+                <th rowspan="2" width="20">No</th>
+                <th rowspan="2">Plant</th>
+                <th rowspan="2">Part No BEI</th>
+                <th rowspan="2">Part No Supplier</th>
+                <th colspan="2">Created</th>
+                <th colspan="2">Updated</th>
+            </tr>
+            <tr>
+                <th>By</th>
+                <th>Date</th>
+                <th>By</th>
+                <th>Date</th>
             </tr>';
         $no = 1;
         foreach ($records as $data) {
             $html .= '<tr>
-                    <td>' . $no . '</td>
-                    <td>' . $data['number'] . '</td>
-                    <td>' . $data['alias'] . '</td>
-                    <td>' . $data['description'] . '</td>';
+                        <td>' . $no . '</td>
+                        <td>' . $data['plant'] . '</td>
+                        <td style="mso-number-format:\@;">' . $data['item_rm_number'] . '</td>
+                        <td style="mso-number-format:\@;">' . $data['item_rm_alias'] . '</td>
+                        <td>' . $data['created_by'] . '</td>
+                        <td>' . $data['created_date'] . '</td>
+                        <td>' . $data['updated_by'] . '</td>
+                        <td>' . $data['updated_date'] . '</td>
+                    </tr>';
             $no++;
         }
         $html .= '</table></body></html>';

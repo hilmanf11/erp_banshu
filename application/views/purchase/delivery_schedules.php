@@ -305,6 +305,11 @@
     function update() {
         var row = $('#dg').datagrid('getSelected');
         if (row) {
+            if(row.confirm == "YES"){
+                toastr.warning("Status Delivery Schedule is Confirm, Please change to Unconfirm for edit data");
+                return false;
+            }
+            
             $('#dlg_insert').dialog('open');
             $('#frm_insert').form('load', row);
             $("#mpq").numberbox('setValue', row.mpq2);

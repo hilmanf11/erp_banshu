@@ -35,6 +35,8 @@
             <th rowspan="2" data-options="field:'print_po',width:80,halign:'center',formatter:BtnPrint">Print PO</th>
             <!-- <th rowspan="2" data-options="field:'terms',width:100,halign:'center',formatter:btnTerms">Terms<br>Condition</th> -->
             <th colspan="2" data-options="field:'scedule',width:80,halign:'center'">Schedule Delivery Import</th>
+            <th rowspan="2" data-options="field:'confirm',width:100,align:'center',formatter:BtnConfirm">Confirm OK</th>
+            <th rowspan="2" data-options="field:'confirm_date',width:150,align:'center'">Confirm Date</th>
             <th rowspan="2" data-options="field:'erp',width:80,align:'center',formatter:BtnPush">Push ERP</th>
             <th rowspan="2" data-options="field:'push_date',width:150,align:'center'">Push Date</th>
             <th colspan="2" data-options="field:'Send_mail',width:100,halign:'center'">Send Mail</th>
@@ -132,6 +134,7 @@
         </fieldset>
     </div>
     <?= $button ?>
+    <a href="javascript:;" class="easyui-linkbutton" plain="true" onclick="disapproveData()"><i class="fa fa-file"></i> Disapprove Data</a>
     <!-- <a href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true" onclick="formula()"><i class="fa fa-info"></i> Help</a> -->
 </div>
 
@@ -208,6 +211,37 @@
     </table>
 </div>
 
+<div id="dlg_disapproveData" class="easyui-dialog" title="Data Disapproved Purchase Orders" data-options="closed: true, modal:true, fit:true" style="width: 100%; top: 0px; left: 0px;">
+    <table id="dg_disapproveData" class="easyui-datagrid" style="width:100%;">
+        <thead>
+            <tr>
+                <th rowspan="2" data-options="field:'period',width:80,halign:'center'">Period</th>
+                <th rowspan="2" data-options="field:'revision',width:80,halign:'center'">Revision</th>
+                <th rowspan="2" data-options="field:'plant',width:80,halign:'center'">Plant</th>
+                <th rowspan="2" data-options="field:'request_no',width:150,halign:'center'">PR No</th>
+                <th rowspan="2" data-options="field:'po_no',width:150,halign:'center'">PO No</th>
+                <th rowspan="2" data-options="field:'po_date',width:100,halign:'center'">PO Date</th>
+                <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No BEI</th>
+                <th rowspan="2" data-options="field:'item_rm_name',width:150,halign:'center'">Part Name</th>
+                <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Supplier Name</th>
+                <th rowspan="2" data-options="field:'qty',width:100,halign:'center',align:'right',formatter:numberformat">Qty</th>
+                <th rowspan="2" data-options="field:'approved_reason',width:400,halign:'center'">Reason</th>
+                <th colspan="2" data-options="field:'',width:100,halign:'center'">Disapproved</th>
+                <th colspan="2" data-options="field:'',width:100,halign:'center'">Created</th>
+                <th colspan="2" data-options="field:'',width:100,halign:'center'">Updated</th>
+            </tr>
+            <tr>
+                <th data-options="field:'approved_by',width:100,align:'center'">By</th>
+                <th data-options="field:'approved_date',width:120,align:'center'">Date</th>
+                <th data-options="field:'created_by',width:100,align:'center'">By</th>
+                <th data-options="field:'created_date',width:120,align:'center'">Date</th>
+                <th data-options="field:'updated_by',width:100,align:'center'">By</th>
+                <th data-options="field:'updated_date',width:120,align:'center'">Date</th>
+            </tr>
+        </thead>
+    </table>
+</div>
+
 <!-- PDF -->
 <iframe id="printout" src="" style="width: 100%;" hidden></iframe>
 
@@ -257,6 +291,21 @@
 
     function detailEdit(){
         toastr.error("Cannot Edit Data");
+    }
+
+    function disapproveData(){
+        $("#dlg_disapproveData").dialog('open');
+        $('#dg_disapproveData').datagrid('disableFilter');
+
+        $('#dg_disapproveData').datagrid({
+            url: '<?= base_url('notifications/datatablesAll/purchase_orders') ?>',
+            clientPaging: true,
+            remoteFilter: false,
+            rownumbers: true,
+            singleSelect: false,
+            fit: true
+        });
+        $('#dg_disapproveData').treegrid('enableFilter');
     }
 
     function pushData(){
@@ -329,6 +378,34 @@
                     success: function (response) {
                         Swal.close();
                         Swal.fire('Good job!', 'Update Status Send Mail Completed!', 'success');
+                        $("#dg").datagrid('reload');
+                    }
+                });
+            }
+        });
+    }
+
+    function confirm(po_no, status){
+        $.messager.prompt('Update Status Confrim', 'Please input "CONFIRM" for Update Status', function(r){
+            if (r == "CONFIRM"){
+                Swal.fire({
+                    title: 'Please Wait for Create Data',
+                    showConfirmButton: false,
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    },
+                });
+
+                $.ajax({
+                    type: "post",
+                    url: "<?= base_url("purchase/purchase_orders/sendConfirm") ?>",
+                    data: "po_no=" + po_no + "&status=" + status, 
+                    dataType: "json",
+                    success: function (response) {
+                        Swal.close();
+                        Swal.fire('Good job!', 'Update Status Confirm Completed!', 'success');
                         $("#dg").datagrid('reload');
                     }
                 });
@@ -745,6 +822,16 @@
         }
     }
     
+    function BtnConfirm(val, row) {
+        if(val == "YES") {
+            var details = "confirm('"+row.po_no+"','NO')";
+            return '<a class="btn btn-success w-100" style="pointer-events: visible; opacity:1;" onClick="'+details+'"><i class="fa fa-check"></i> Confirm</a>';
+        } else {
+            var details = "confirm('"+row.po_no+"','YES')";
+            return '<a class="btn btn-danger w-100" style="pointer-events: visible; opacity:1;" onClick="'+details+'"><i class="fa fa-times"></i> Unconfirm</a>';
+        }
+    }
+
     function BtnPush(val, row) {
         if(row.push == "OK") {
             return 'DONE';

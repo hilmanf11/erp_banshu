@@ -1,4 +1,6 @@
 <?php
+header('Content-Type: application/json; charset=utf-8');
+
 date_default_timezone_set("Asia/Bangkok");
 defined('BASEPATH') or exit('No direct script access allowed');
 
@@ -7,6 +9,7 @@ class M_approvals extends CI_Controller
     public function __construct()
     {
         parent::__construct();
+        $this->CI = &get_instance(); // Tambahkan ini!
         $this->load->helper('url');
         $this->load->helper(array('form', 'url'));
         $this->load->library('form_validation');
@@ -31,8 +34,12 @@ class M_approvals extends CI_Controller
             if (!empty($user)) {
                 $id = $this->input->post('id');
                 $tablename = $this->input->post('tablename');
+
+                $idx = $this->input->post('idx'); // cek idx untuk send notif
+
                 $data = $this->crud->read($tablename, [], ["id" => $id]);
-                $approval = $this->crud->read('approvals', ["sub_department" => $user->sub_department, "department" => $user->department, "division" => $user->division], ["table_name" => $tablename]);
+                // $approval = $this->crud->read('approvals', ["sub_department" => $user->sub_department, "department" => $user->department, "division" => $user->division], ["table_name" => $tablename]);
+                $approval = $this->crud->read('approvals', ["status" => 0], ["table_name" => $tablename]);
 
                 if ($data->approved == 1) {
                     $users_id = @$approval->user_approval_2;
@@ -60,6 +67,19 @@ class M_approvals extends CI_Controller
 
                 $send = $this->db->update($tablename, $values, ["id" => $id]);
 
+                // SEND NOTIF TO REQUESTER
+                $dataRequest = $this->crud->read('users', [], ["username" => $data->created_by]);
+                //$messageForReq = "Request data " . strtoupper(str_replace("_", " ", $tablename)) . " has been APPROVED from " . $approval->created_by;
+                //$this->pushNotification(@$dataRequest->token_id, @$user->name, $messageForReq, $dataRequest->id);
+
+                // cek apakah ada approval lain
+                // SEND NOTIF TO NEXT USER APPROVAL & cek index keberapa data yg dikirim dari FE ? notif hanya dikirim sekali
+                if ($approved != 0 && $idx == '0') {
+                    $message = "Sent a request to approve data " . strtoupper(str_replace("_", " ", $tablename));
+                    $dataApproval = $this->crud->read("users", [], ["username" => $users_id]);
+                    $this->pushNotification(@$dataApproval->token_id, $dataRequest->name, $message);
+                }
+
                 if ($send) {
                     echo json_encode(array("title" => "Approved", "message" => "Data Approved Successfully", "theme" => "success"));
                 } else {
@@ -83,12 +103,19 @@ class M_approvals extends CI_Controller
             $read = $this->crud->read($tablename, [], ["id" => $id]);
             $data = json_decode(@$read->approved_data, false);
 
+            //$dataRequest = $this->crud->read('users', [], ["username" => $read->created_by]);
+            //$messageForReq = "Request data " . strtoupper(str_replace("_", " ", $tablename)) . "has been DISAPPROVED from " . $user->name;
+            //$this->pushNotification(@$dataRequest->token_id, @$user->name, $messageForReq);
+
             /* Default */
             if (empty($data)) {
                 $this->db->delete($tablename, ["id" => $id]);
+                // $this->db->update($tablename, ['status' => 1], ["id" => $id]);
             } else {
                 $this->db->update($tablename, $data, ["id" => $id]);
             }
+
+            // die(json_encode(array("title" => "Disapproved", "message" => "Data Disapproved Successfully", "theme" => "success")));
 
             $this->db->insert("notifications", [
                 "created_by" => @$user->username,
@@ -134,30 +161,31 @@ class M_approvals extends CI_Controller
                 show_error("API KEY Cannot Found");
             } else {
                 //Users
-                $users = $this->crud->reads("users", [], ["approved_to" => $user->username], "", "", "", ["approved_to", "approved_by"]);
+                // $users = $this->crud->reads("users", [], ["approved_to" => $user->username], "", "", "", ["approved_to", "approved_by"]);
                 $purchase_orders = $this->crud->reads('purchase_orders', [], ["approved_to" => $user->username], "", "", "", ["approved_to", "approved_by"]);
                 $purchase_requests = $this->crud->reads('purchase_requests', [], ["approved_to" => $user->username], "", "", "", ["approved_to", "approved_by"]);
 
                 $data = array();
-                foreach ($users as $user) {
-                    $name = $this->crud->read("users", [], ["username" => $user->approved_by]);
+                // foreach ($users as $user) {
+                //     $name = $this->crud->read("users", [], ["username" => $user->approved_by]);
 
-                    if (empty($user->updated_date)) {
-                        $created_date = $user->created_date;
-                    } else {
-                        $created_date = $user->updated_date;
-                    }
+                //     if (empty($user->updated_date)) {
+                //         $created_date = $user->created_date;
+                //     } else {
+                //         $created_date = $user->updated_date;
+                //     }
 
-                    $data[] = array(
-                        "approved_by" => $user->approved_by,
-                        "approved_to" => $user->approved_to,
-                        "module" => "users",
-                        "name" => $name->name,
-                        "avatar" => $name->avatar,
-                        "message" => "Sent a request to approve data USER",
-                        "created_date" => $created_date,
-                    );
-                }
+                //     $data[] = array(
+                //         "approved_by" => $user->approved_by,
+                //         "approved_to" => $user->approved_to,
+                //         "module" => "users",
+                //         "name" => $name->name,
+                //         "avatar" => $name->avatar,
+                //         "message" => "Sent a request to approve data USER",
+                //         "created_date" => $created_date,
+                //     );
+                // }
+
                 foreach ($purchase_orders as $po) {
                     $name = $this->crud->read("users", [], ["username" => $po->approved_by]);
 
@@ -377,5 +405,91 @@ class M_approvals extends CI_Controller
         } else {
             show_error("Cannot Process your Request");
         }
+    }
+
+    function getAccessToken()
+    {
+        // Path relatif ke file JSON
+        $pathToFile = __DIR__ . '/erp-mobile-askara.json';
+        if (!file_exists($pathToFile)) {
+            die("File credentials tidak ditemukan: $pathToFile");
+        }
+
+        $serviceAccount = json_decode(file_get_contents($pathToFile), true);
+        $header = base64_encode(json_encode(['alg' => 'RS256', 'typ' => 'JWT']));
+        $iat = time();
+        $exp = $iat + 60;
+        $claimSet = base64_encode(json_encode([
+            'iss' => $serviceAccount['client_email'],
+            'scope' => 'https://www.googleapis.com/auth/firebase.messaging',
+            'aud' => 'https://oauth2.googleapis.com/token',
+            'exp' => $exp,
+            'iat' => $iat,
+        ]));
+
+        $signatureInput = $header . '.' . $claimSet;
+        $signature = null;
+        openssl_sign($signatureInput, $signature, $serviceAccount['private_key'], 'SHA256');
+
+        $jwt = $signatureInput . '.' . base64_encode($signature);
+        $ch = curl_init('https://oauth2.googleapis.com/token');
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/x-www-form-urlencoded']);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+            'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+            'assertion' => $jwt,
+        ]));
+
+        $response = curl_exec($ch);
+        curl_close($ch);
+
+        // die($response);
+
+        $responseArray = json_decode($response, true);
+        return $responseArray['access_token'];
+    }
+
+    // Token adalah deviceId/TokenId hp
+    function pushNotification($token, $title, $messages)
+    {
+        $url = 'https://fcm.googleapis.com/v1/projects/erp-mobile-askara/messages:send';
+        // $tokenUser = 'fjt-9yygSH-kcAiPoMY7cY:APA91bEpNVcIP47v5flZ4nSgJJ97i3pkgDip_zO5wlcuAOwOjSrEHIju-v_jqGruP-aW83O9qHhBVoAdv-w0-BmaXTp5QzUFw0LKfac_S4ZJ-DnoIk6NbCg';
+
+        // Data notifikasi dari input
+        $notification = [
+            'title' => $title,
+            'body' => $messages,
+        ];
+
+        // Payload yang akan dikirim ke Firebase
+        $payload = [
+            'message' => [
+                'token' => $token,
+                'notification' => $notification,
+                // 'data' => [
+                //     'title' => $title,
+                //     'body' => $messages,
+                // ],
+            ]
+        ];
+
+        $headers = [
+            'Authorization: Bearer ' . $this->getAccessToken(),
+            'Content-Type: application/json',
+        ];
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+        $result = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
     }
 }

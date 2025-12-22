@@ -351,6 +351,7 @@ class Approvals extends CI_Controller
         $rgp_transaction_in = $this->crud->reads('rgp_transactions', [], ["approved_to" => $this->session->username, "type" => "IN"], "", "", "", ["approved_to", "approved_by"]);
         $rgp_transaction_out = $this->crud->reads('rgp_transactions', [], ["approved_to" => $this->session->username, "type" => "OUT"], "", "", "", ["approved_to", "approved_by"]);
         $scrap_booking = $this->crud->reads('scrap_booking', [], ["approved_to" => $this->session->username], "", "", "", ["approved_to", "approved_by"]);
+        $request_npd = $this->crud->reads('request_npd', [], ["approved_to" => $this->session->username], "", "", "", ["approved_to", "approved_by"]);
 
         $totalRows = (count($users) + 
             count($purchase_orders) + 
@@ -373,6 +374,7 @@ class Approvals extends CI_Controller
             count($supply_materials) +
             count($supply_sheets) +
             count($item_ng) +
+            count($request_npd) +
             count($scraps) +
             count($item_mpq) +
             count($generate_mrp_finals) +
@@ -425,6 +427,7 @@ class Approvals extends CI_Controller
         $rgp_transaction_in = $this->crud->reads('rgp_transactions', [], ["approved_to" => $this->session->username, "type" => "IN"], "", "", "", ["approved_to", "approved_by"]);
         $rgp_transaction_out = $this->crud->reads('rgp_transactions', [], ["approved_to" => $this->session->username, "type" => "OUT"], "", "", "", ["approved_to", "approved_by"]);
         $scrap_booking = $this->crud->reads('scrap_booking', [], ["approved_to" => $this->session->username], "", "", "", ["approved_to", "approved_by"]);
+        $request_npd = $this->crud->reads('request_npd', [], ["approved_to" => $this->session->username], "", "", "", ["approved_to", "approved_by"]);
 
         foreach ($users as $user) {
             $this->approvalMessage($user->approved_by, $user->approved_to, $user->created_by, "users");
@@ -532,6 +535,10 @@ class Approvals extends CI_Controller
 
         foreach ($scrap_booking as $scrap_b) {
             $this->approvalMessage($scrap_b->approved_by, $scrap_b->approved_to, $scrap_b->created_by, "scrap_booking");
+        }
+
+        foreach ($request_npd as $npd) {
+            $this->approvalMessage($npd->approved_by, $npd->approved_to, $npd->created_by, "request_npd");
         }
     }
 
@@ -933,6 +940,18 @@ class Approvals extends CI_Controller
         }
     }
 
+    public function request_npd($approved_to, $approved_by){
+        if (empty($this->session->username)) {
+            redirect('error_session');
+        } else {
+            $data['approved_to'] = base64_decode($approved_to);
+            $data['approved_by'] = base64_decode($approved_by);
+            $data['table'] = "request_npd";
+            $this->load->view('template/header', $data);
+            $this->load->view('approval/request_npd');
+        }
+    }
+
     public function approvalUsers($approved_to, $approved_by)
     {
         $approved_to = base64_decode($approved_to);
@@ -1205,11 +1224,13 @@ class Approvals extends CI_Controller
         $approved_to = base64_decode($approved_to);
         $approved_by = base64_decode($approved_by);
 
-        $this->db->select('a.*, b.uom, b.number as item_rm_number, b.name as item_rm_name, c.name as supplier_name, d.name as item_family_name');
+        $this->db->select('a.*, b.uom, b.number as item_rm_number, b.name as item_rm_name, c.name as supplier_name, d.name as item_family_name, round(COALESCE(e.issued_avg, 0) + COALESCE(f.issued_avg, 0)) as issued_avg');
         $this->db->from('purchase_requests a');
         $this->db->join('item_rm b', 'a.item_rm_id = b.id');
         $this->db->join('suppliers c', 'a.supplier_id = c.id');
         $this->db->join('item_familys d', 'b.item_family_id = d.id');
+        $this->db->join('generate_mrp_finals e', 'a.p_month = e.p_month and a.p_year = e.p_year and a.revision = e.revision and a.item_rm_id = e.item_rm_id', 'left');
+        $this->db->join('generate_mrp_finals f', 'a.p_month = f.p_month and a.p_year = f.p_year and a.revision = f.revision and e.item_rm_alias = f.item_rm_id', 'left');
         $this->db->where('a.approved_to', $approved_to);
         $this->db->where('a.approved_by', $approved_by);
         $this->db->where('a.flag', "OK");
@@ -1634,6 +1655,23 @@ class Approvals extends CI_Controller
         $this->db->from('sales_orders a');
         $this->db->join('customers b', 'a.customer_id = b.id');
         $this->db->join('item_fg c', 'a.item_fg_id = c.id');
+        $this->db->where('a.approved_to', $approved_to);
+        $this->db->where('a.approved_by', $approved_by);
+        $this->db->group_by('a.id');
+        $this->db->order_by('a.id', 'ASC');
+        $records = $this->db->get()->result_array();
+
+        die(json_encode($records));
+    }
+
+    public function approvalRequestNpd($approved_to, $approved_by){
+        $approved_to = base64_decode($approved_to);
+        $approved_by = base64_decode($approved_by);
+        
+        $this->db->select('a.*, b.number as item_rm_number, b.name as item_rm_name, c.name as supplier_name');
+        $this->db->from('request_npd a');
+        $this->db->join('item_rm b', 'a.item_rm_id = b.id', 'left');
+        $this->db->join('suppliers c', 'a.supplier_id = c.id', 'left');
         $this->db->where('a.approved_to', $approved_to);
         $this->db->where('a.approved_by', $approved_by);
         $this->db->group_by('a.id');
