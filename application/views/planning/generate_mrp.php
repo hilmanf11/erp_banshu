@@ -22,7 +22,7 @@
                         <input style="width:60%;" id="filter_plant" required class="easyui-combobox">
                     </div>
                     <div class="fitem">
-                        <span style="width:35%; display:inline-block;">Supplier</span>
+                        <span style="width:35%; display:inline-block;">Vendor</span>
                         <input style="width:60%;" id="filter_supplier" class="easyui-combobox">
                     </div>
                     <div class="fitem">
@@ -148,7 +148,7 @@
         <thead>
             <tr>
                 <th data-options="field:'id',width:120,halign:'center'">Original Part No</th>
-                <th data-options="field:'number',width:250,halign:'center'">Part No Supplier</th>
+                <th data-options="field:'number',width:250,halign:'center'">Part No Vendor</th>
                 <th data-options="field:'name',width:250,halign:'center'">Description</th>
                 <th data-options="field:'mpq',width:80,align:'center', styler:numberStyle">MPQ</th>
                 <th data-options="field:'moq',width:80,align:'center', styler:numberStyle">MOQ</th>
@@ -166,7 +166,7 @@
         <thead>
             <tr>
                 <th data-options="field:'id',width:120,halign:'center'">Original Part No</th>
-                <th data-options="field:'number',width:250,halign:'center'">Part No Supplier</th>
+                <th data-options="field:'number',width:250,halign:'center'">Part No Vendor</th>
                 <th data-options="field:'name',width:250,halign:'center'">Description</th>
                 <th data-options="field:'whs',width:80,align:'center', styler:numberStyle">WHS</th>
                 <th data-options="field:'ospo',width:80,align:'center', styler:numberStyle">OS PO</th>
@@ -301,8 +301,8 @@
                             <li><b>Breakdown LTTP & BOM</b> is taken from (Generate LTTP x Bom)</li>
                             <li><b>WHS</b> is taken from Ending Stock in Store of Cut off</li>
                             <li><b>WIP</b> is taken from Generate MPP - Issued If result Minus</li>
-                            <li><b>OS SUPPLIER</b> is taken from Purchase Order - Gate Entry of Cut Off</li>
-                            <li><b>TOTAL STOCK</b> is taken from (WHS + WIP + OS SUPPLIER)</li>
+                            <li><b>OS VENDOR</b> is taken from Purchase Order - Gate Entry of Cut Off</li>
+                            <li><b>TOTAL STOCK</b> is taken from (WHS + WIP + OS VENDOR)</li>
                             <li><b>OS SUPPLY</b> Generate MPP - Issued If result Plus</li>
                         </ul>
                         <center><b style="font-size:16px !important;">FORMULA</b><hr></center>
@@ -314,8 +314,8 @@
                             <li><b>BAL M4</b> is taken from (BAL M3 - NEED M4)</li>
                             <li><b>BAL M5</b> is taken from (BAL M4 - NEED M5)</li>
                             <li><b>BAL M6</b> is taken from (BAL M5 - NEED M6)</li>
-                            <li><b>SAFETY STOCK</b> is taken from (Supplier Items (safety stock) * TOTAL NEED)</li>
-                            <li><b>TOTAL NEED</b> Calculate Leadtime if Supplier (type) = "LOCAL" then Current Month from BAL else Next Month from BAL + SAFETY STOCK</li>
+                            <li><b>SAFETY STOCK</b> is taken from (Vendor Items (safety stock) * TOTAL NEED)</li>
+                            <li><b>TOTAL NEED</b> Calculate Leadtime if Vendor (type) = "LOCAL" then Current Month from BAL else Next Month from BAL + SAFETY STOCK</li>
                             <li><b>MRP RESULT</b> is taken from Round Up from TOTAL NEED</li>
                         </ul>
                     </div>`,
@@ -1507,7 +1507,7 @@
             url: '<?php echo base_url('master/suppliers/reads'); ?>',
             valueField: 'id',
             textField: 'name',
-            prompt: 'Select Supplier',
+            prompt: 'Select Vendor',
             icons: [{
                 iconCls: 'icon-clear',
                 handler: function(e) {
@@ -1549,7 +1549,7 @@
                             width: 150
                         },{
                             field: 'number',
-                            title: 'Part No Supplier',
+                            title: 'Part No Vendor',
                             width: 200
                         }, {
                             field: 'name',

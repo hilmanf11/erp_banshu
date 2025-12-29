@@ -986,7 +986,7 @@ class Purchase_requests extends CI_Controller
                         <th rowspan="2" style="text-align:center;">PR NO</th>
                         <th rowspan="2" style="text-align:center;">VENDOR</th>
                         <th rowspan="2" style="text-align:center;">PART NO BEI</th>
-                        <th rowspan="2" style="text-align:center;">PART NO SUPPLIER</th>
+                        <th rowspan="2" style="text-align:center;">PART NO VENDOR</th>
                         <th rowspan="2" style="text-align:center;">PART NAME</th>
                         <th rowspan="2" style="text-align:center;">PRODFAM</th>
                         <th rowspan="2" style="text-align:center;">SHARE<br>ORDER</th>
@@ -998,7 +998,7 @@ class Purchase_requests extends CI_Controller
                         <th rowspan="2" style="text-align:center;">QTY</th>
                         <th colspan="3" style="text-align:center;">PURCHASE HISTORY</th>
                         <th rowspan="2" style="text-align:center;">AVG</th>
-                        <th colspan="6" style="text-align:center;">FORECAST SUPPLIER</th>
+                        <th colspan="6" style="text-align:center;">FORECAST VENDOR</th>
                         <th rowspan="2" style="text-align:center;">AVG</th>
                         <th rowspan="2" style="text-align:center;">REASON</th>
                     </tr>
@@ -1176,7 +1176,7 @@ class Purchase_requests extends CI_Controller
                                     <tr>
                                         <th width="20">No</th>
                                         <th width="120">Part No BEI</th>
-                                        <th width="120">Part No Supplier</th>
+                                        <th width="120">Part No Vendor</th>
                                         <th width="120">Part Name</th>
                                         <th width="100">Delivery Date <br>(ETA)</th>
                                         <th width="50">Qty</th>

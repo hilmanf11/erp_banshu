@@ -5,7 +5,7 @@
             <th rowspan="2" data-options="field:'plant',width:80,halign:'center'">Plant</th>
             <th rowspan="2" data-options="field:'request_no',width:120,halign:'center'">PR No</th>
             <th rowspan="2" data-options="field:'request_date',width:100,halign:'center'">PR Date</th>
-            <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Supplier Name</th>
+            <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Vendor Name</th>
             <th rowspan="2" data-options="field:'item_family_name',width:120,halign:'center'">Product Family</th>
             <th rowspan="2" data-options="field:'total_mrp',width:100,halign:'center',align:'right',formatter:numberformat">Total MRP</th>
             <th rowspan="2" data-options="field:'total_pr',width:100,halign:'center',align:'right',formatter:numberformat">Total PR</th>
@@ -51,7 +51,7 @@
             </div>
             <div style="width: 30%; float: left;">
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Supplier Name</span>
+                    <span style="width:35%; display:inline-block;">Vendor Name</span>
                     <input style="width:60%;" id="d_supplier" class="easyui-textbox" readonly>
                 </div>
             </div>
@@ -102,7 +102,7 @@
             </div>
             <div style="width: 50%; float: left;">
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Supplier</span>
+                    <span style="width:35%; display:inline-block;">Vendor</span>
                     <input style="width:60%;" id="filter_supplier" class="easyui-combobox">
                 </div>
                 <div class="fitem">
@@ -154,11 +154,11 @@
                     </select>
                 </div>
                 <div class="fitem" hidden>
-                    <span style="width:35%; display:inline-block;">Supplier Name</span>
+                    <span style="width:35%; display:inline-block;">Vendor Name</span>
                     <input style="width:60%;" name="supplier_id" disabled class="easyui-combobox">
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Supplier Name</span>
+                    <span style="width:35%; display:inline-block;">Vendor Name</span>
                     <input style="width:60%;" name="supplier_name" disabled class="easyui-textbox">
                 </div>
                 <div class="fitem">
@@ -267,7 +267,7 @@
                         <input style="width:60%;" name="plant" id="plant" required class="easyui-combobox">
                     </div>
                     <div class="fitem">
-                        <span style="width:35%; display:inline-block;">Supplier Name</span>
+                        <span style="width:35%; display:inline-block;">Vendor Name</span>
                         <input style="width:60%;" name="supplier_id" id="supplier_id" required class="easyui-combobox">
                     </div>
                     <div class="fitem">
@@ -298,7 +298,7 @@
                 <th rowspan="2" data-options="field:'request_date',width:100,halign:'center'">PR Date</th>
                 <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No BEI</th>
                 <th rowspan="2" data-options="field:'item_rm_name',width:150,halign:'center'">Part Name</th>
-                <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Supplier Name</th>
+                <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Vendor Name</th>
                 <th rowspan="2" data-options="field:'need',width:100,halign:'center',align:'right',formatter:numberformat">Need</th>
                 <th rowspan="2" data-options="field:'mrp',width:100,halign:'center',align:'right',formatter:numberformat">MRP</th>
                 <th rowspan="2" data-options="field:'qty',width:100,halign:'center',align:'right',formatter:numberformat">Qty</th>
@@ -471,7 +471,7 @@
                                     width: 120
                                 },{
                                     field: 'number',
-                                    title: 'Part No Supplier',
+                                    title: 'Part No Vendor',
                                     width: 200
                                 }, {
                                     field: 'name',
@@ -544,7 +544,7 @@
                     field: 'number',
                     width: 200,
                     halign: 'center',
-                    title: "Part No Supplier",
+                    title: "Part No Vendor",
                     editor: {
                         type: 'textbox',
                         options: {
@@ -875,7 +875,7 @@
                         width: 200
                     }, {
                         field: 'supplier_name',
-                        title: 'Supplier Name',
+                        title: 'Vendor Name',
                         width: 250
                     }]
                 ]
@@ -1006,7 +1006,7 @@
                             rowspan: 2
                         }, {
                             field: 'item_supplier',
-                            title: 'Part No Supplier',
+                            title: 'Part No Vendor',
                             width: 200,
                             halign: 'center',
                             rowspan: 2
@@ -1097,7 +1097,7 @@
                             colspan: 3
                         }, {
                             field: '',
-                            title: 'Forecast Supplier',
+                            title: 'Forecast Vendor',
                             width: 100,
                             align: 'center',
                             colspan: 6
@@ -1587,7 +1587,7 @@
             url: '<?php echo base_url('master/suppliers/reads'); ?>',
             valueField: 'id',
             textField: 'name',
-            prompt: 'Select Supplier',
+            prompt: 'Select Vendor',
             onSelect: function(supp){
                 $('#item_family_id').combobox({
                     url: '<?php echo base_url('purchase/purchase_requests/readprodfam/'); ?>' + btoa(supp.id),
@@ -1660,7 +1660,7 @@
             url: '<?php echo base_url('master/suppliers/reads'); ?>',
             valueField: 'id',
             textField: 'name',
-            prompt: 'Select Supplier',
+            prompt: 'Select Vendor',
             icons: [{
                 iconCls: 'icon-clear',
                 handler: function(e) {

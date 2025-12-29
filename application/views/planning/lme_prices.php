@@ -4,7 +4,7 @@
             <th rowspan="2" field="ck" checkbox="true"></th>
             <th rowspan="2" data-options="field:'plant',width:'200',halign:'center'">Plant</th>
             <th rowspan="2" data-options="field:'part_no',width:'100',halign:'center'">Item ID</th>
-            <th rowspan="2" data-options="field:'supplier',width:'200',halign:'center'">Supplier</th>
+            <th rowspan="2" data-options="field:'supplier',width:'200',halign:'center'">Vendor</th>
             <th rowspan="2" data-options="field:'maker_name',width:'300',halign:'center'">WIRE Name Maker</th>
             <th rowspan="2" data-options="field:'part_no',width:'100',halign:'center'">Part No</th>
             <th rowspan="2" data-options="field:'id',width:'100',halign:'center',align:'center',formatter:btnHistory">History</th>
@@ -39,7 +39,7 @@
         </div>
         <div style="width: 30%; float: left;">
             <div class="fitem">
-                <span style="width:35%; display:inline-block;">Supplier</span>
+                <span style="width:35%; display:inline-block;">Vendor</span>
                 <input style="width:60%;" name="f_supp_id" id="f_supp_id" class="easyui-combogrid">
             </div>
             <div class="fitem">
@@ -73,7 +73,7 @@
                     <input style="width:60%;" name="part_no" id="part_no" class="easyui-combogrid">
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Supplier</span>
+                    <span style="width:35%; display:inline-block;">Vendor</span>
                     <input style="width:60%;" name="supp_id" id="supp_id" class="easyui-combogrid">
                 </div>
             </fieldset>
@@ -281,7 +281,7 @@
                     pageSize: 20,
                     columns: [[
                         {field: 'part_no', title: 'Item ID', width: '100', halign: 'center', rowspan: 2},
-                        {field: 'supplier', title: 'Supplier', width: '200', halign: 'center', rowspan: 2},
+                        {field: 'supplier', title: 'Vendor', width: '200', halign: 'center', rowspan: 2},
                         {field: 'maker_name', title: 'WIRE Name Maker', width: '300', halign: 'center', rowspan: 2},
                         {field: 'part_no', title: 'Part No', width: '100', halign: 'center', rowspan: 2},
                         {title: 'Unit Packing MOQ Price  & LME Range (USD/MTR)', width: '100', halign: 'center', colspan: result.span.length},
@@ -330,14 +330,14 @@
             textField: 'name',
             mode: 'remote',
             fitColumns: true,
-            prompt: "Select Supplier",
+            prompt: "Select Vendor",
             icons: [{
                 iconCls: 'icon-clear',
                 handler: function(e) { $(e.data.target).combogrid('clear').combogrid('textbox').focus(); }
             }],
             columns: [[
-                {field: 'id', title: 'Supplier ID', halign: 'center', width: '49%'},
-                {field: 'name', title: 'Supplier Name', halign: 'center', width: '49%'}
+                {field: 'id', title: 'Vendor ID', halign: 'center', width: '49%'},
+                {field: 'name', title: 'Vendor Name', halign: 'center', width: '49%'}
             ]]
         });
 
@@ -497,7 +497,7 @@
             textField: 'name',
             mode: 'remote',
             fitColumns: true,
-            prompt: "Select Supplier",
+            prompt: "Select Vendor",
             icons: [{
                 iconCls: 'icon-clear',
                 handler: function(e) {
@@ -507,8 +507,8 @@
                 }
             }],
             columns: [[
-                {field: 'id', title: 'Supplier ID', halign: 'center', width: '49%'},
-                {field: 'name', title: 'Supplier Name', halign: 'center', width: '49%'}
+                {field: 'id', title: 'Vendor ID', halign: 'center', width: '49%'},
+                {field: 'name', title: 'Vendor Name', halign: 'center', width: '49%'}
             ]],
             onSelect: function (index, row) {
                 $('#bnt_add').linkbutton('enable');

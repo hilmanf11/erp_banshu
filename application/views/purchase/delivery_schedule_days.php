@@ -13,7 +13,7 @@
             <th rowspan="2" data-options="field:'plant',width:100,halign:'center'">Plant</th>
             <th rowspan="2" data-options="field:'po_no',width:180,halign:'center'">PO No</th>
             <th rowspan="2" data-options="field:'product_family_name',width:120,halign:'center'">Product Family</th>
-            <th rowspan="2" data-options="field:'supplier_name',width:200,halign:'center'">Supplier</th>
+            <th rowspan="2" data-options="field:'supplier_name',width:200,halign:'center'">Vendor</th>
             <th rowspan="2"data-options="field:'mpq',width:80,halign:'center',align:'right', formatter:numberformat">MPQ</th>
             <th rowspan="2"data-options="field:'moq',width:80,halign:'center',align:'right', formatter:numberformat">MOQ</th>
             <th rowspan="2"data-options="field:'leadtime',width:80,halign:'center',align:'right', formatter:numberformat">Leadtime</th>
@@ -114,7 +114,7 @@
             </div>
             <div style="width: 50%; float: left;">
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Supplier</span>
+                    <span style="width:35%; display:inline-block;">Vendor</span>
                     <input style="width:60%;" id="filter_supplier" value="<?= $filter_supplier ?>" class="easyui-combobox">
                 </div>
                 <div class="fitem">
@@ -172,7 +172,7 @@
                 </div>
                 <div style="float: left; width: 50%;">
                     <div class="fitem">
-                        <span style="width:30%; display:inline-block;">Supplier</span>
+                        <span style="width:30%; display:inline-block;">Vendor</span>
                         <input style="width:60%;" name="supplier_name" id="supplier_name" disabled class="easyui-textbox">
                     </div>
                     <div class="fitem">
@@ -499,7 +499,7 @@
             "&filter_item_id=" + window.btoa(filter_item_id);
 
         if (filter_month == "" || filter_year == "" || filter_revision == "" || filter_plant == "" || filter_item_family == "" && filter_supplier == "") {
-                toastr.warning("Please select Plant, Period, Revision Supplier or Product Family!", "Information");
+                toastr.warning("Please select Plant, Period, Revision Vendor or Product Family!", "Information");
         } else {
             window.location.assign(url);
             // $('#dg').datagrid({
@@ -578,7 +578,7 @@
             "&filter_item_id=" + window.btoa(filter_item_id);
 
         if (filter_month == "" || filter_year == "" || filter_plant == "" || filter_revision == "" || filter_item_family == "" && filter_supplier == "") {
-            toastr.warning("Please select Plant, Period, Revision Supplier or Product Family!", "Information");
+            toastr.warning("Please select Plant, Period, Revision Vendor or Product Family!", "Information");
         }else{
             $('#dg').datagrid({
                 url: '<?= base_url('purchase/delivery_schedule_days/datatables') ?>' + url,
@@ -749,7 +749,7 @@
             url: '<?php echo base_url('master/suppliers/reads'); ?>',
             valueField: 'id',
             textField: 'name',
-            prompt: 'Select Supplier',
+            prompt: 'Select Vendor',
             icons: [{
                 iconCls: 'icon-clear',
                 handler: function(e) {
@@ -805,7 +805,7 @@
                             width: 150
                         }, {
                             field: 'number',
-                            title: 'Part No Supplier',
+                            title: 'Part No Vendor',
                             width: 200
                         }, {
                             field: 'name',

@@ -1305,11 +1305,11 @@ class Generate_mrp extends CI_Controller
                         <th rowspan="2" style="text-align:center;">PLANT</th>
                         <th rowspan="2" style="text-align:center;">PERIOD</th>
                         <th rowspan="2" style="text-align:center;">PART NO BEI</th>
-                        <th rowspan="2" style="text-align:center;">PART NO SUPPLIER</th>
+                        <th rowspan="2" style="text-align:center;">PART NO VENDOR</th>
                         <th rowspan="2" style="text-align:center;">DESCRIPTION</th>
                         <th rowspan="2" style="text-align:center;">PRODUCT FAMILY</th>
-                        <th rowspan="2" style="text-align:center;">SUPPLIER CODE</th>
-                        <th rowspan="2" style="text-align:center;">SUPPLIER NAME</th>
+                        <th rowspan="2" style="text-align:center;">VENDOR CODE</th>
+                        <th rowspan="2" style="text-align:center;">VENDOR NAME</th>
                         <th rowspan="2" style="text-align:center;">MAKER NAME</th>
                         <th rowspan="2" style="text-align:center;">MAKER TYPE</th>
                         <th rowspan="2" style="text-align:center;">CLASS<br>A/B/C</th>
@@ -1346,7 +1346,7 @@ class Generate_mrp extends CI_Controller
                         <th style="text-align:center;">'.$need_1.'</th>
                         <th style="text-align:center;">WHS</th>
                         <th style="text-align:center;">WIP</th>
-                        <th style="text-align:center;">OS SUPPLIER</th>
+                        <th style="text-align:center;">OS VENDOR</th>
                         <th style="text-align:center;">NEED</th>
                         <th style="text-align:center;">BAL</th>
                         <th style="text-align:center;">NEED</th>

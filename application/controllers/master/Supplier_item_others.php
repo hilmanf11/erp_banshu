@@ -12,7 +12,7 @@ class Supplier_item_others extends CI_Controller
         $this->load->library('session');
         $this->load->model('crud');
         //VALIDASI FORM
-        $this->form_validation->set_rules('supplier_id', 'Supplier', 'required|min_length[1]|max_length[20]|is_unique[supplier_items.supplier_id]');
+        $this->form_validation->set_rules('supplier_id', 'Vendor', 'required|min_length[1]|max_length[20]|is_unique[supplier_items.supplier_id]');
         $this->form_validation->set_rules('item_rm_id', 'Part No.', 'required|min_length[1]|max_length[20]|is_unique[supplier_items.item_rm_id]');
     }
     //HALAMAN UTAMA
@@ -373,14 +373,14 @@ class Supplier_item_others extends CI_Controller
 
     public function uploadclearFailed()
     {
-        @unlink('failed/supplier_items.txt');
+        @unlink('failed/vendor_items.txt');
     }
 
     public function uploadcreateFailed()
     {
         if ($this->input->post()) {
             $message = $this->input->post('message');
-            $textFailed = fopen('failed/supplier_items.txt', 'a');
+            $textFailed = fopen('failed/vendor_items.txt', 'a');
             fwrite($textFailed, $message . "\n");
             fclose($textFailed);
         }
@@ -389,7 +389,7 @@ class Supplier_item_others extends CI_Controller
     //UPLOAD DOWNLOAD FAILED
     public function uploadDownloadFailed()
     {
-        $file = "failed/supplier_items.txt";
+        $file = "failed/vendor_items.txt";
         header('Content-Description: File Failed');
         header('Content-Disposition: attachment; filename=' . basename($file));
         header('Expires: 0');
@@ -431,7 +431,7 @@ class Supplier_item_others extends CI_Controller
             );
 
             if(empty($supplier->id) > 0){
-                echo json_encode(array("title" => "Not Found", "message" => "Supplier Code " . $data['supplier_id'] . " Not Found", "theme" => "error"));
+                echo json_encode(array("title" => "Not Found", "message" => "Vendor Code " . $data['supplier_id'] . " Not Found", "theme" => "error"));
             }elseif(empty($item_rm->id)){
                 echo json_encode(array("title" => "Not Found", "message" => "Part No " . $data['item_rm_id'] . " Not Found", "theme" => "error"));
             }elseif($data['price'] <= 0){
@@ -458,7 +458,7 @@ class Supplier_item_others extends CI_Controller
         if ($option == "excel") {
             $format  = date("Ymd");
             header("Content-type: application/vnd-ms-excel");
-            header("Content-Disposition: attachment; filename=supplier_items_$format.xls");
+            header("Content-Disposition: attachment; filename=vendor_items_$format.xls");
         }
 
         $filter_suppliers  = base64_decode($this->input->get('filter_suppliers'));
@@ -534,7 +534,7 @@ class Supplier_item_others extends CI_Controller
             </div>
             <br><br>
             <div style="float: centet; font-size: 16px; text-align: center;">
-                <h3>MASTER SUPPLIER ITEM</h3>
+                <h3>MASTER VENDOR ITEM</h3>
             </div>
         </center>
         
@@ -544,12 +544,12 @@ class Supplier_item_others extends CI_Controller
                 <th>Approved</th>
                 <th>Approved By</th>
                 <th>Approved Date</th>
-                <th>Supplier Name</th>
+                <th>Vendor Name</th>
                 <th>Part No EBWS</th>
-                <th>Part No Supplier</th>
+                <th>Part No Vendor</th>
                 <th>Description</th>
-                <th>Supplier Type</th>
-                <th>Supplier Origin</th>
+                <th>Vendor Type</th>
+                <th>Vendor Origin</th>
                 <th>Product Family</th>
                 <th>Maker</th>
                 <th>Maker Type</th>
@@ -626,7 +626,7 @@ class Supplier_item_others extends CI_Controller
     {
         $format  = date("Ymd");
         header("Content-type: application/vnd-ms-excel");
-        header("Content-Disposition: attachment; filename=supplier_items_price_other_history_$format.xls");
+        header("Content-Disposition: attachment; filename=vendor_items_price_other_history_$format.xls");
 
         $filter_suppliers  = base64_decode($this->input->get('filter_suppliers'));
         $filter_category  = base64_decode($this->input->get('filter_category'));
@@ -681,19 +681,19 @@ class Supplier_item_others extends CI_Controller
             </div>
             <br><br>
             <div style="float: centet; font-size: 16px; text-align: center;">
-                <h3>HISTORY SUPPLIER CONTRACT PRICE RM</h3>
+                <h3>HISTORY VENDOR CONTRACT PRICE RM</h3>
             </div>
         </center>
         
         <table id="supplier_items" border="1">
             <tr>
                 <th width="20">No</th>
-                <th>Supplier ID</th>
-                <th>Supplier Name</th>
+                <th>Vendor ID</th>
+                <th>Vendor Name</th>
                 <th>Part No EBWS</th>
-                <th>Part No Supplier</th>
+                <th>Part No Vendor</th>
                 <th>Description</th>
-                <th>Supplier Type</th>
+                <th>Vendor Type</th>
                 <th>Product Family</th>
                 <th>Currency</th>
                 <th>Price</th>

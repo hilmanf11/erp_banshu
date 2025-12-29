@@ -12,7 +12,7 @@ class Suppliers extends CI_Controller
         $this->load->library('session');
         $this->load->model('crud');
         //VALIDASI FORM
-        $this->form_validation->set_rules('number', 'Supplier Code', 'required|min_length[1]|max_length[20]|is_unique[suppliers.number]');
+        $this->form_validation->set_rules('number', 'Vendor Code', 'required|min_length[1]|max_length[20]|is_unique[suppliers.number]');
     }
     //HALAMAN UTAMA
     public function index()
@@ -178,13 +178,13 @@ class Suppliers extends CI_Controller
     }
     public function uploadclearFailed()
     {
-        @unlink('failed/suppliers.txt');
+        @unlink('failed/vendors.txt');
     }
     public function uploadcreateFailed()
     {
         if ($this->input->post()) {
             $message = $this->input->post('message');
-            $textFailed = fopen('failed/suppliers.txt', 'a');
+            $textFailed = fopen('failed/vendors.txt', 'a');
             fwrite($textFailed, $message . "\n");
             fclose($textFailed);
         }
@@ -192,7 +192,7 @@ class Suppliers extends CI_Controller
     //UPLOAD DOWNLOAD FAILED
     public function uploadDownloadFailed()
     {
-        $file = "failed/suppliers.txt";
+        $file = "failed/vendors.txt";
         header('Content-Description: File Failed');
         header('Content-Disposition: attachment; filename=' . basename($file));
         header('Expires: 0');
@@ -226,9 +226,9 @@ class Suppliers extends CI_Controller
             $autoid = "SUP-" . $kode1 ."-". $kode2;
 
             if (!empty($suppliers->number)) {
-                echo json_encode(array("title" => "Duplicated", "message" => " Supplier Code " . $data['number'] . " is Duplicate Data", "theme" => "error"));
+                echo json_encode(array("title" => "Duplicated", "message" => " Vendor Code " . $data['number'] . " is Duplicate Data", "theme" => "error"));
             } else if(!in_array($data['type'], array("LOCAL","IMPORT"))){
-                echo json_encode(array("title" => "Not Found", "message" => " Supplier Type " . $data['type'] . " is Not Match", "theme" => "error"));
+                echo json_encode(array("title" => "Not Found", "message" => " Vendor Type " . $data['type'] . " is Not Match", "theme" => "error"));
             // } else if(empty($tds->section)){
             //     echo json_encode(array("title" => "Not Found", "message" => " TDS Section " . $data['tds'] . " is Not Found", "theme" => "error"));
             } else {
@@ -264,7 +264,7 @@ class Suppliers extends CI_Controller
         if ($option == "excel") {
             $format  = date("Ymd");
             header("Content-type: application/vnd-ms-excel");
-            header("Content-Disposition: attachment; filename=suppliers_$format.xls");
+            header("Content-Disposition: attachment; filename=vendors_$format.xls");
         }
         //Config
         $this->db->select('*');
@@ -296,16 +296,16 @@ class Suppliers extends CI_Controller
             </div>
             <br><br>
             <div style="float: centet; font-size: 16px; text-align: center;">
-                <h3>MASTER SUPPLIER</h3>
+                <h3>MASTER VENDOR</h3>
             </div>
         </center>
         
         <table id="suppliers" border="1">
             <tr>
                 <th width="20">No</th>
-                <th>Supplier ID</th>
-                <th>Supplier Name</th>
-                <th>Supplier Code</th>
+                <th>Vendor ID</th>
+                <th>Vendor Name</th>
+                <th>Vendor Code</th>
                 <th>type</th>
                 <th>Address</th>
                 <th>Country of Origin</th>

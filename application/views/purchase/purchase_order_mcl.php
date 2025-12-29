@@ -21,8 +21,8 @@
             <th rowspan="2" field="ck" checkbox="true"></th>
             <th rowspan="2" data-options="field:'status',width:80,align:'center', styler:cellStylerStatus, formatter:cellFormatterStatus">Status</th>
             <th rowspan="2" data-options="field:'plant',width:80,halign:'center'">Plant</th>
-            <th rowspan="2" data-options="field:'supplier_id',width:100,halign:'center'">Supplier ID</th>
-            <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Supplier Name</th>
+            <th rowspan="2" data-options="field:'supplier_id',width:100,halign:'center'">Vendor ID</th>
+            <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Vendor Name</th>
             <th rowspan="2" data-options="field:'supplier_type',width:80,halign:'center'">Type</th>
             <th rowspan="2" data-options="field:'item_family_name',width:120,halign:'center'">Product Family</th>
             <th rowspan="2" data-options="field:'request_no',width:120,halign:'center'">PR No</th>
@@ -84,7 +84,7 @@
                     </select>
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Supplier</span>
+                    <span style="width:35%; display:inline-block;">Vendor</span>
                     <input style="width:60%;" id="filter_supplier" class="easyui-combogrid">
                 </div>
                 <div class="fitem">
@@ -108,7 +108,7 @@
             </div>
             <div style="width: 30%; float: left;">
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Supplier Type</span>
+                    <span style="width:35%; display:inline-block;">Vendor Type</span>
                     <select style="width:60%;" id="filter_type" class="easyui-combobox" panelHeight="auto">
                         <option value="">ALL</option>
                         <option value="LOCAL">LOCAL</option>
@@ -148,7 +148,7 @@
                     <input style="width:60%;" id="d_po_no" class="easyui-textbox" readonly>
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Supplier Name</span>
+                    <span style="width:35%; display:inline-block;">Vendor Name</span>
                     <input style="width:60%;" id="d_supplier" class="easyui-textbox" readonly>
                 </div>
                 <div class="fitem">
@@ -188,7 +188,7 @@
                 <!-- <th data-options="field:'status',width:100,align:'center', styler:cellStylerDelivery, formatter:cellFormatterDelivery">Delivery<br>Confirmation</th> -->
                 <th data-options="field:'item_rm_id',width:100,halign:'center'">Part No<br>Original</th>
                 <th data-options="field:'item_rm_number',width:200,halign:'center'">Part No BEI</th>
-                <th data-options="field:'item_supplier',width:200,halign:'center'">Part No Supplier</th>
+                <th data-options="field:'item_supplier',width:200,halign:'center'">Part No Vendor</th>
                 <th data-options="field:'item_rm_name',width:200,halign:'center'">Description</th>
                 <!-- <th data-options="field:'product_family',width:120,halign:'center'">Product Family</th> -->
                 <th data-options="field:'uom',width:80,align:'center'">Uom</th>
@@ -223,7 +223,7 @@
                 <th rowspan="2" data-options="field:'po_date',width:100,halign:'center'">PO Date</th>
                 <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No BEI</th>
                 <th rowspan="2" data-options="field:'item_rm_name',width:150,halign:'center'">Part Name</th>
-                <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Supplier Name</th>
+                <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Vendor Name</th>
                 <th rowspan="2" data-options="field:'qty',width:100,halign:'center',align:'right',formatter:numberformat">Qty</th>
                 <th rowspan="2" data-options="field:'approved_reason',width:400,halign:'center'">Reason</th>
                 <th colspan="2" data-options="field:'',width:100,halign:'center'">Disapproved</th>
@@ -643,7 +643,7 @@
                             width: 120
                         }, {
                             field: 'number',
-                            title: 'Part No Supplier',
+                            title: 'Part No Vendor',
                             width: 200
                         }, {
                             field: 'name',
@@ -676,7 +676,7 @@
                     width: 120
                 }, {
                     field: 'number',
-                    title: 'Part No Supplier',
+                    title: 'Part No Vendor',
                     width: 200
                 }, {
                     field: 'name',
@@ -693,7 +693,7 @@
             textField: 'name',
             mode: 'remote',
             fitColumns: true,
-            prompt: "Select Supplier",
+            prompt: "Select Vendor",
             icons: [{
                 iconCls: 'icon-clear',
                 handler: function(e) {

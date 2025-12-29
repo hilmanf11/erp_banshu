@@ -5,15 +5,15 @@
             <th rowspan="2" field="ck" checkbox="true"></th>
             <th rowspan="2" data-options="field:'detail',width:80,halign:'center',formatter:BtnDetail">History</th>
             <th colspan="4" data-options="field:'',width:100,halign:'center'">Approved</th>
-            <th rowspan="2" data-options="field:'supplier_id',width:100,halign:'center'">Supplier ID</th>
-            <th rowspan="2" data-options="field:'supplier_po',width:150,halign:'center'">Supplier PO</th>
-            <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Supplier Name</th>
+            <th rowspan="2" data-options="field:'supplier_id',width:100,halign:'center'">Vendor ID</th>
+            <th rowspan="2" data-options="field:'supplier_po',width:150,halign:'center'">Vendor PO</th>
+            <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Vendor Name</th>
             <th rowspan="2" data-options="field:'item_rm_id',width:100,halign:'center'">Original Part No</th>
-            <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No Supplier</th>
+            <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No Vendor</th>
             <th rowspan="2" data-options="field:'item_rm_name',width:150,halign:'center'">Description</th>
-            <!-- <th rowspan="2" data-options="field:'item_supplier',width:150,halign:'center'">Part Supplier</th> -->
-            <th rowspan="2" data-options="field:'type',width:100,align:'center'">Supplier Type</th>
-            <th rowspan="2" data-options="field:'origin',width:120,halign:'center'">Supplier Origin</th>
+            <!-- <th rowspan="2" data-options="field:'item_supplier',width:150,halign:'center'">Part Vendor</th> -->
+            <th rowspan="2" data-options="field:'type',width:100,align:'center'">Vendor Type</th>
+            <th rowspan="2" data-options="field:'origin',width:120,halign:'center'">Vendor Origin</th>
             <th rowspan="2" data-options="field:'item_family_name',width:120,halign:'center'">Product Family</th>
             <th rowspan="2" data-options="field:'maker_name',width:150,halign:'center'">Maker</th>
             <th rowspan="2" data-options="field:'maker_type',width:100,halign:'center'">Maker Type</th>
@@ -55,7 +55,7 @@
             <legend><b>Form Filter Data</b></legend>
             <div style="width: 30%; float: left;">
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Supplier</span>
+                    <span style="width:35%; display:inline-block;">Vendor</span>
                     <input style="width:60%;" name="filter_suppliers" id="filter_suppliers" class="easyui-combogrid">
                 </div>
                 <div class="fitem">
@@ -77,7 +77,7 @@
                     <input style="width:60%;" name="filter_item_rm" id="filter_item_rm" class="easyui-combogrid">
                 </div>
                 <div class="fitem" hidden>
-                    <span style="width:35%; display:inline-block;">Part Supplier</span>
+                    <span style="width:35%; display:inline-block;">Part Vendor</span>
                     <input style="width:60%;" name="filter_item_vendor" id="filter_item_vendor" class="easyui-combobox">
                 </div>
             </div>
@@ -112,7 +112,7 @@
             <legend><b>Form Data</b></legend>
             <div style="width: 49%; float: left;">
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Supplier</span>
+                    <span style="width:35%; display:inline-block;">Vendor</span>
                     <input style="width:60%;" name="supplier_id" id="supplier_id" required="" class="easyui-combogrid">
                 </div>
                 <div class="fitem">
@@ -128,7 +128,7 @@
                     <input style="width:60%;" name="item_rm_id" id="item_rm_id" required="" class="easyui-combogrid">
                 </div>
                 <div class="fitem" hidden>
-                    <span style="width:35%; display:inline-block;">Part Supplier</span>
+                    <span style="width:35%; display:inline-block;">Part Vendor</span>
                     <input style="width:60%;" name="item_supplier" id="item_supplier" class="easyui-textbox">
                 </div>
                 <div class="fitem">
@@ -202,7 +202,7 @@
     </form>
 </div>
 
-<div id="dlg_history" class="easyui-dialog" title="History Supplier Contract" data-options="closed: true,modal:true" style="width: 90%; height: 500px; top: 0px; left: 0px;">
+<div id="dlg_history" class="easyui-dialog" title="History Vendor Contract" data-options="closed: true,modal:true" style="width: 90%; height: 500px; top: 0px; left: 0px;">
     <table id="dg_history" class="easyui-datagrid" style="width:100%;">
         <thead>
             <tr>
@@ -370,7 +370,7 @@
 
     //DOWNLOAD TEMPLATE UPLOAD
     function download_excel() {
-        window.location.assign('<?= base_url('template/tmp_supplier_item_others.xls') ?>');
+        window.location.assign('<?= base_url('template/tmp_vendor_item_others.xls') ?>');
     }
 
     //FILTER DATA
@@ -742,7 +742,7 @@
             textField: 'name',
             mode: 'remote',
             fitColumns: true,
-            prompt: "Select Supplier",
+            prompt: "Select Vendor",
             icons: [{
                 iconCls: 'icon-clear',
                 handler: function(e) {
@@ -752,11 +752,11 @@
             columns: [
                 [{
                     field: 'number',
-                    title: 'Supplier No',
+                    title: 'Vendor No',
                     width: 100
                 }, {
                     field: 'name',
-                    title: 'Supplier Name',
+                    title: 'Vendor Name',
                     width: 250
                 }, ]
             ]
@@ -797,7 +797,7 @@
             url: '<?php echo base_url('master/supplier_item_others/readVendor'); ?>',
             valueField: 'item_supplier',
             textField: 'item_supplier',
-            prompt: 'Select Part Supplier',
+            prompt: 'Select Part Vendor',
             icons: [{
                 iconCls: 'icon-clear',
                 handler: function(e) {
@@ -871,15 +871,15 @@
             textField: 'name',
             mode: 'remote',
             fitColumns: true,
-            prompt: "Choose Supplier",
+            prompt: "Choose Vendor",
             columns: [
                 [{
                     field: 'id',
-                    title: 'Supplier No',
+                    title: 'Vendor No',
                     width: 80
                 }, {
                     field: 'name',
-                    title: 'Supplier Name',
+                    title: 'Vendor Name',
                     width: 250
                 }, {
                     field: 'type',
@@ -924,7 +924,7 @@
                     width: 100
                 }, {
                     field: 'number',
-                    title: 'Part No Supplier',
+                    title: 'Part No Vendor',
                     width: 200
                 }, {
                     field: 'name',

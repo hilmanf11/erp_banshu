@@ -547,7 +547,7 @@ class Delivery_schedules extends CI_Controller
             <tr>
                 <th rowspan="2" width="10" style="text-align:center;">No</th>
                 <th rowspan="2" width="50" style="text-align:center;">PO NO</th>
-                <th rowspan="2" width="100" style="text-align:center;">Supplier Name</th>
+                <th rowspan="2" width="100" style="text-align:center;">Vendor Name</th>
                 <th rowspan="2" width="50" style="text-align:center;">Product Family</th>
                 <th rowspan="2" width="80" style="text-align:center;">Part No</th>
                 <th rowspan="2" width="50" style="text-align:center;">Part Name</th>
@@ -760,7 +760,7 @@ class Delivery_schedules extends CI_Controller
             <tr>
                 <th rowspan="2" width="10" style="text-align:center;">No</th>
                 <th rowspan="2" width="50" style="text-align:center;">PO NO</th>
-                <th rowspan="2" width="100" style="text-align:center;">Supplier Name</th>
+                <th rowspan="2" width="100" style="text-align:center;">Vendor Name</th>
                 <th rowspan="2" width="50" style="text-align:center;">Product Family</th>
                 <th rowspan="2" width="80" style="text-align:center;">Part No</th>
                 <th rowspan="2" width="50" style="text-align:center;">Part Name</th>

@@ -16,7 +16,7 @@
                     </select>
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Supplier</span>
+                    <span style="width:35%; display:inline-block;">Vendor</span>
                     <input style="width:60%;" id="filter_supplier" class="easyui-combobox">
                 </div>
                 <div class="fitem">
@@ -72,7 +72,7 @@
             "&filter_purchase_order=" + window.btoa(filter_purchase_order);
 
         if (filter_from == "" || filter_to == "") {
-            toastr.warning("Please select Trans Date & Supplier!");
+            toastr.warning("Please select Trans Date & Vendor!");
         } else {
             $("#printout").contents().find('html').html("<center><br><br><br><b style='font-size:20px;'>Please Wait...</b></center>");
             $("#printout").attr('src', '<?= base_url('purchase/report_outstanding_po/print') ?>' + url);
@@ -97,7 +97,7 @@
             "&filter_purchase_order=" + window.btoa(filter_purchase_order);
 
         if (filter_from == "" || filter_to == "") {
-            toastr.warning("Please select Trans Date & Supplier!");
+            toastr.warning("Please select Trans Date & Vendor!");
         } else {
             window.location.assign('<?= base_url('purchase/report_outstanding_po/print/excel') ?>' + url);
         }
@@ -116,7 +116,7 @@
             url: '<?php echo base_url('master/suppliers/reads'); ?>',
             valueField: 'id',
             textField: 'name',
-            prompt: 'Select Supplier Name',
+            prompt: 'Select Vendor Name',
             icons: [{
                 iconCls: 'icon-clear',
                 handler: function(e) {
@@ -163,7 +163,7 @@
                     width: 120
                 },{
                     field: 'number',
-                    title: 'Part No Supplier',
+                    title: 'Part No Vendor',
                     width: 200
                 }, {
                     field: 'name',

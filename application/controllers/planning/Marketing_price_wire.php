@@ -191,9 +191,9 @@ class Marketing_price_wire extends CI_Controller
                         <th width="20">No</th>
                         <th>Plant ID</th>
                         <th>Item ID</th>
-                        <th>Supplier ID</th>
-                        <th>Supplier Name</th>
-                        <th>Supplier Type</th>
+                        <th>Vendor ID</th>
+                        <th>Vendor Name</th>
+                        <th>Vendor Type</th>
                         <th>Maker Code</th>
                         <th>Wire Name Maker</th>
                         <th>LME Range</th>
@@ -279,7 +279,7 @@ class Marketing_price_wire extends CI_Controller
 
             //SHEET 1 ------------------------------------------------------------------------------------------------------------
             //Coloumn
-            $columns = ['No', 'Plant ID', 'Item ID', 'Supplier ID', 'Supplier Name', 'Supplier Type', 'Maker Code', 'Wire Name Maker', 'LME Range', 'Price', 'Import Duty', 'Insurance', 'Transportation', 'Total Price'];
+            $columns = ['No', 'Plant ID', 'Item ID', 'Vendor ID', 'Vendor Name', 'Vendor Type', 'Maker Code', 'Wire Name Maker', 'LME Range', 'Price', 'Import Duty', 'Insurance', 'Transportation', 'Total Price'];
             $last_index = count($columns) - 1;
             $title = 'Marketing Price Wire';
 

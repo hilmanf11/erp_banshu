@@ -22,7 +22,7 @@
                     </select>
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Supplier</span>
+                    <span style="width:35%; display:inline-block;">Vendor</span>
                     <input style="width:60%;" id="filter_supplier" class="easyui-combogrid">
                 </div>
                 <div class="fitem">
@@ -70,7 +70,7 @@
                     <input style="width:60%;" name="po_no" id="po_no" disabled class="easyui-textbox">
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Supplier name</span>
+                    <span style="width:35%; display:inline-block;">Vendor name</span>
                     <input style="width:60%;" name="supplier_name" id="supplier_name" disabled class="easyui-textbox">
                 </div>
                 <div class="fitem">
@@ -926,7 +926,7 @@
                             width: 150
                         }, {
                             field: 'supplier_name',
-                            title: 'Supplier Name',
+                            title: 'Vendor Name',
                             width: 250
                         }]
                     ]
@@ -941,7 +941,7 @@
             textField: 'name',
             mode: 'remote',
             fitColumns: true,
-            prompt: "Select Supplier",
+            prompt: "Select Vendor",
             icons: [{
                 iconCls: 'icon-clear',
                 handler: function(e) {
@@ -994,7 +994,7 @@
                             width: 120
                         }, {
                             field: 'number',
-                            title: 'Part No Supplier',
+                            title: 'Part No Vendor',
                             width: 200
                         }, {
                             field: 'name',
@@ -1027,7 +1027,7 @@
                     width: 120
                 }, {
                     field: 'number',
-                    title: 'Part No Supplier',
+                    title: 'Part No Vendor',
                     width: 200
                 }, {
                     field: 'name',

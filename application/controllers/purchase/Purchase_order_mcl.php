@@ -218,7 +218,7 @@ class Purchase_order_mcl extends CI_Controller
                                 </center>
                                 <table style="width:100%; font-size:11px; margin-bottom:10px;">
                                     <tr>
-                                        <td width="50">Supplier</td>
+                                        <td width="50">Vendor</td>
                                         <td width="10">:</td>
                                         <td width="65%">
                                             <b>' . @$supplier->name . '</b>
@@ -246,7 +246,7 @@ class Purchase_order_mcl extends CI_Controller
                                         <th rowspan="2" style="text-align:center;">No</th>
                                         <th rowspan="2" style="text-align:center;">Part No Original</th>
                                         <th rowspan="2" style="text-align:center;">Part No BEI</th>
-                                        <th rowspan="2" style="text-align:center;">Part No Supplier</th>
+                                        <th rowspan="2" style="text-align:center;">Part No Vendor</th>
                                         <th rowspan="2" style="text-align:center;">Description</th>
                                         <th rowspan="2" style="text-align:center;">Maker</th>
                                         <th rowspan="2" style="text-align:center;">ETD</th>
@@ -360,7 +360,7 @@ class Purchase_order_mcl extends CI_Controller
                                 <div style="width:50%;">
                                     <table style="margin-top:20px; font-size:12px;">
                                         <tr>
-                                            <th width="200" style="text-align:center;">Supplier Approval</th>
+                                            <th width="200" style="text-align:center;">Vendor Approval</th>
                                         </tr>
                                         <tr>
                                             <th style="height:80px;"></th>
@@ -541,7 +541,7 @@ class Purchase_order_mcl extends CI_Controller
                                     <td><b>' . $purchase_order->revision . '</b></td>
                                 </tr>
                                 <tr>
-                                    <td width="20">Supplier</td>
+                                    <td width="20">Vendor</td>
                                     <td width="10">:</td>
                                     <td><b>' . @$supplier->name . '</b></td>
                                 </tr>
@@ -550,7 +550,7 @@ class Purchase_order_mcl extends CI_Controller
                                 <tr>
                                     <th rowspan="2" width="10" style="text-align:center;">No</th>
                                     <th rowspan="2" width="100" style="text-align:center;">Part No BEI</th>
-                                    <th rowspan="2" width="100" style="text-align:center;">Part No Supplier</th>
+                                    <th rowspan="2" width="100" style="text-align:center;">Part No Vendor</th>
                                     <th rowspan="2" width="50" style="text-align:center;">Part Name</th>
                                     <th rowspan="2" width="30" style="text-align:center;">LT</th>
                                     <th rowspan="2" width="50" style="text-align:center;">MPQ</th>
@@ -751,12 +751,12 @@ class Purchase_order_mcl extends CI_Controller
                 <th style="text-align:center;">Register Date</th>
                 <th style="text-align:center;">Part No Original</th>
                 <th style="text-align:center;">Part No BEI</th>
-                <th style="text-align:center;">Part No Supplier</th>
+                <th style="text-align:center;">Part No Vendor</th>
                 <th style="text-align:center;">Part Name</th>
                 <th style="text-align:center;">Product Family</th>
-                <th style="text-align:center;">Supplier No</th>
-                <th style="text-align:center;">Supplier Name</th>
-                <th style="text-align:center;">Supplier Type</th>
+                <th style="text-align:center;">Vendor No</th>
+                <th style="text-align:center;">Vendor Name</th>
+                <th style="text-align:center;">Vendor Type</th>
                 <th style="text-align:center;">Qty</th>
                 <th style="text-align:center;">Uom</th>
                 <th style="text-align:center;">Leadtime</th>

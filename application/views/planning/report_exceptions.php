@@ -3,7 +3,7 @@
     <thead>
             <tr>
                 <th data-options="field:'item_rm_id',width:120,halign:'center'">Part No Original</th>
-                <th data-options="field:'item_rm_number',width:250,halign:'center'">Part No Supplier</th>
+                <th data-options="field:'item_rm_number',width:250,halign:'center'">Part No Vendor</th>
                 <th data-options="field:'item_rm_name',width:250,halign:'center'">Description</th>
                 <th data-options="field:'mpq',width:80,align:'center', styler:numberStyle">MPQ</th>
                 <th data-options="field:'moq',width:80,align:'center', styler:numberStyle">MOQ</th>

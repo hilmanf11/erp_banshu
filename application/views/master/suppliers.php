@@ -3,15 +3,15 @@
     <thead frozen="true">
         <tr>
             <th field="ck" checkbox="true"></th>
-            <th data-options="field:'id',width:100,align:'center'">Supplier ID</th>
-            <th data-options="field:'name',width:250,halign:'center'">Supplier Name</th>
+            <th data-options="field:'id',width:100,align:'center'">Vendor ID</th>
+            <th data-options="field:'name',width:250,halign:'center'">Vendor Name</th>
         </tr>
     </thead>
     <thead>
         <tr>
-            <th rowspan="2" data-options="field:'number',width:80,align:'center'">Supplier<br>Code</th>
-            <th rowspan="2" data-options="field:'alias',width:100,align:'center'">Supplier<br>ERP ID</th>
-            <th rowspan="2" data-options="field:'supplier_type',width:100,align:'center'">Supplier<br>Type</th>
+            <th rowspan="2" data-options="field:'number',width:80,align:'center'">Vendor<br>Code</th>
+            <th rowspan="2" data-options="field:'alias',width:100,align:'center'">Vendor<br>ERP ID</th>
+            <th rowspan="2" data-options="field:'supplier_type',width:100,align:'center'">Vendor<br>Type</th>
             <th rowspan="2" data-options="field:'type',width:80,align:'center'">Type</th>
             <th rowspan="2" data-options="field:'address',width:250,halign:'center'">Address</th>
             <th rowspan="2" data-options="field:'origin',width:120,halign:'center'">Country of Origin</th>
@@ -54,27 +54,27 @@
             <legend><b>Form Data</b></legend>
             <div style="float:left; width:50%;">
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Supplier ID</span>
+                    <span style="width:35%; display:inline-block;">Vendor ID</span>
                     <input style="width:30%;" name="id" id="ids" required="" class="easyui-textbox" readonly>
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Supplier Name</span>
+                    <span style="width:35%; display:inline-block;">Vendor Name</span>
                     <input style="width:60%;" name="name" id="name" required="" class="easyui-textbox">
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Supplier Code</span>
+                    <span style="width:35%; display:inline-block;">Vendor Code</span>
                     <input style="width:60%;" name="number" id="number" required="" class="easyui-textbox">
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Supplier ERP ID</span>
+                    <span style="width:35%; display:inline-block;">Vendor ERP ID</span>
                     <input style="width:60%;" name="alias" id="alias" required="" class="easyui-textbox">
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Supplier PO</span>
+                    <span style="width:35%; display:inline-block;">Vendor PO</span>
                     <input style="width:60%;" name="supplier_po" id="supplier_po" readonly="true" class="easyui-textbox">
                 </div>
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Supplier Type</span>
+                    <span style="width:35%; display:inline-block;">Vendor Type</span>
                     <select style="width:60%;" name="supplier_type" id="supplier_type" required="" panelHeight="auto" class="easyui-combobox">
                         <option value="RAW MATERIAL">RAW MATERIAL</option>
                         <option value="CAPITAL GOODS">CAPITAL GOODS</option>
@@ -183,7 +183,7 @@
         <fieldset style="width:100%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; padding: 10px; float: left;">
             <legend><b>Setting Terms & Conditions for Purchase Order</b></legend>
             <div class="fitem" hidden>
-                <span style="width:35%; display:inline-block;">Supplier ID</span>
+                <span style="width:35%; display:inline-block;">Vendor ID</span>
                 <input style="width:60%;" id="supplier_id_terms" name="supplier_id" class="easyui-textbox">
             </div>
 
@@ -330,7 +330,7 @@
     }
     // DOWNLOAD
     function download_excel() {
-        window.location.assign('<?= base_url('template/tmp_suppliers.xls') ?>');
+        window.location.assign('<?= base_url('template/tmp_vendors.xls') ?>');
     }
     //PRINT PDF
     function pdf() {

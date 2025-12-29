@@ -12,7 +12,7 @@ class Supplier_items extends CI_Controller
         $this->load->library('session');
         $this->load->model('crud');
         //VALIDASI FORM
-        $this->form_validation->set_rules('supplier_id', 'Supplier', 'required|min_length[1]|max_length[20]|is_unique[supplier_items.supplier_id]');
+        $this->form_validation->set_rules('supplier_id', 'Vendor', 'required|min_length[1]|max_length[20]|is_unique[supplier_items.supplier_id]');
         $this->form_validation->set_rules('item_rm_id', 'Part No.', 'required|min_length[1]|max_length[20]|is_unique[supplier_items.item_rm_id]');
     }
     //HALAMAN UTAMA
@@ -420,14 +420,14 @@ class Supplier_items extends CI_Controller
 
     public function uploadclearFailed()
     {
-        @unlink('failed/supplier_items.txt');
+        @unlink('failed/vendor_items.txt');
     }
 
     public function uploadcreateFailed()
     {
         if ($this->input->post()) {
             $message = $this->input->post('message');
-            $textFailed = fopen('failed/supplier_items.txt', 'a');
+            $textFailed = fopen('failed/vendor_items.txt', 'a');
             fwrite($textFailed, $message . "\n");
             fclose($textFailed);
         }
@@ -436,7 +436,7 @@ class Supplier_items extends CI_Controller
     //UPLOAD DOWNLOAD FAILED
     public function uploadDownloadFailed()
     {
-        $file = "failed/supplier_items.txt";
+        $file = "failed/vendor_items.txt";
         header('Content-Description: File Failed');
         header('Content-Disposition: attachment; filename=' . basename($file));
         header('Expires: 0');
@@ -468,7 +468,7 @@ class Supplier_items extends CI_Controller
             $rowSupItm = $sqlSupItm->row();
 
             if(empty($supplier->id)){
-                die(json_encode(array("title" => "Not Found", "message" => "Supplier Code " . $data['supplier_id'] . " Not Found", "theme" => "error")));
+                die(json_encode(array("title" => "Not Found", "message" => "Vendor Code " . $data['supplier_id'] . " Not Found", "theme" => "error")));
             }
 
             if(empty($item_rm->id)){
@@ -489,7 +489,7 @@ class Supplier_items extends CI_Controller
                 }elseif($data['mpq'] <= 0 || $data['moq'] <= 0 || $data['share_order'] <= 0 || $data['leadtime'] <= 0){
                     echo json_encode(array("title" => "MPQ 0", "message" => "MPQ, MOQ, Share Order, Leadtime for Part No " . $data['item_rm_number'] . " Cannot <= 0", "theme" => "error"));
                 }elseif(@$supplier_items->supplier_id != "") {
-                    echo json_encode(array("title" => "Duplicate", "message" => "Supplier " . $data['supplier_id'] . " and Part No " . $data['item_rm_number'] . " Has been Created", "theme" => "error"));
+                    echo json_encode(array("title" => "Duplicate", "message" => "Vendor " . $data['supplier_id'] . " and Part No " . $data['item_rm_number'] . " Has been Created", "theme" => "error"));
                 } else {
                     $dataFinal = array(
                         //field
@@ -573,7 +573,7 @@ class Supplier_items extends CI_Controller
 
                     $this->crud->create('supplier_item_histories', $dataFinal);
                 }else{
-                    echo json_encode(array("title" => "Not Found", "message" => "Supplier " . $data['supplier_id'] . " and Part No " . $data['item_rm_number'] . " Not Found in Supplier Items", "theme" => "error"));
+                    echo json_encode(array("title" => "Not Found", "message" => "Vendor " . $data['supplier_id'] . " and Part No " . $data['item_rm_number'] . " Not Found in Vendor Items", "theme" => "error"));
                 }
             }else{
                 die(json_encode(array("title" => "Unknown", "message" => "Action " . $data['action'], "theme" => "error")));
@@ -589,7 +589,7 @@ class Supplier_items extends CI_Controller
         if ($option == "excel") {
             $format  = date("Ymd");
             header("Content-type: application/vnd-ms-excel");
-            header("Content-Disposition: attachment; filename=supplier_items_$format.xls");
+            header("Content-Disposition: attachment; filename=vendor_items_$format.xls");
         }
 
         $filter_plant  = base64_decode($this->input->get('filter_plant'));
@@ -674,7 +674,7 @@ class Supplier_items extends CI_Controller
             </div>
             <br><br>
             <div style="float: centet; font-size: 16px; text-align: center;">
-                <h3>MASTER SUPPLIER ITEM</h3>
+                <h3>MASTER VENDOR ITEM</h3>
             </div>
         </center>
         
@@ -685,14 +685,14 @@ class Supplier_items extends CI_Controller
                 <th>Approved By</th>
                 <th>Approved Date</th>
                 <th>Plant</th>
-                <th>Supplier ID</th>
-                <th>Supplier Name</th>
+                <th>Vendor ID</th>
+                <th>Vendor Name</th>
                 <th>Original Part No</th>
                 <th>Part No BEI</th>
-                <th>Part No Supplier</th>
+                <th>Part No Vendor</th>
                 <th>Description</th>
-                <th>Supplier Type</th>
-                <th>Supplier Origin</th>
+                <th>Vendor Type</th>
+                <th>Vendor Origin</th>
                 <th>Product Family</th>
                 <th>Maker</th>
                 <th>Maker Type</th>
@@ -776,7 +776,7 @@ class Supplier_items extends CI_Controller
     {
         $format  = date("Ymd");
         header("Content-type: application/vnd-ms-excel");
-        header("Content-Disposition: attachment; filename=supplier_items_price_history_$format.xls");
+        header("Content-Disposition: attachment; filename=vendor_items_price_history_$format.xls");
 
         $filter_suppliers  = base64_decode($this->input->get('filter_suppliers'));
         $filter_category  = base64_decode($this->input->get('filter_category'));
@@ -839,12 +839,12 @@ class Supplier_items extends CI_Controller
             <tr>
                 <th width="20">No</th>
                 <th>Plant</th>
-                <th>Supplier ID</th>
-                <th>Supplier Name</th>
+                <th>Vendor ID</th>
+                <th>Vendor Name</th>
                 <th>Part No EBWS</th>
-                <th>Part No Supplier</th>
+                <th>Part No Vendor</th>
                 <th>Description</th>
-                <th>Supplier Type</th>
+                <th>Vendor Type</th>
                 <th>Product Family</th>
                 <th>Currency</th>
                 <th>Price</th>

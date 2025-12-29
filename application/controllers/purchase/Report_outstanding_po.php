@@ -124,11 +124,11 @@ class Report_outstanding_po extends CI_Controller
                     <th width="20">No</th>
                     <th width="50">Status</th>
                     <th>Part No Original</th>
-                    <th>Part No Supplier</th>
+                    <th>Part No Vendor</th>
                     <th>Description</th>
                     <th>Product Family</th>
-                    <th>Supplier ID</th>
-                    <th>Supplier Name</th>
+                    <th>Vendor ID</th>
+                    <th>Vendor Name</th>
                     <th>PO No</th>
                     <th>Uom</th>
                     <th>Begin Balance</th>
@@ -195,8 +195,8 @@ class Report_outstanding_po extends CI_Controller
                                 <th>Trans Type</th>
                                 <th>Created By</th>
                                 <th>Trans Date</th>
-                                <th>Supplier ID</th>
-                                <th>Supplier Name</th>
+                                <th>Vendor ID</th>
+                                <th>Vendor Name</th>
                                 <th>PO No</th>
                                 <th>Invoice No</th>
                                 <th>Begin</th>

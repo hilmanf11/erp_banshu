@@ -896,11 +896,11 @@ class Purchase_orders extends CI_Controller
             if(empty($item_rm)){
                 echo json_encode(array("title" => "Not Found", "message" => "Part No ".$post['item_rm_id']." Not Found in Master Items", "theme" => "error"));
             }elseif(empty($supplier)){
-                echo json_encode(array("title" => "Not Found", "message" => "Supplier ID ".$post['supplier_id']." Not Found in Master Suppliers", "theme" => "error"));
+                echo json_encode(array("title" => "Not Found", "message" => "Vendor ID ".$post['supplier_id']." Not Found in Master Vendors", "theme" => "error"));
             }elseif(empty($supplier_items)){
-                echo json_encode(array("title" => "Not Found", "message" => "Supplier and Item Not Found in Supplier Items", "theme" => "error"));
+                echo json_encode(array("title" => "Not Found", "message" => "Vendor and Item Not Found in Vendor Items", "theme" => "error"));
             }elseif($supplier_items->approved_to != ""){
-                echo json_encode(array("title" => "Not Approved", "message" => "Part No ".$post['item_rm_id']." in Supplier Item Not Approved", "theme" => "error"));
+                echo json_encode(array("title" => "Not Approved", "message" => "Part No ".$post['item_rm_id']." in Vendor Item Not Approved", "theme" => "error"));
             }elseif(!empty($purchase_orders)){
                 echo json_encode(array("title" => "Duplicate", "message" => "Part No ".$post['item_rm_id']." in PO ".$post['po_no']." is Duplicate", "theme" => "error"));
             }else{
@@ -1078,7 +1078,7 @@ class Purchase_orders extends CI_Controller
                                 </center>
                                 <table style="width:100%; font-size:11px; margin-bottom:10px;">
                                     <tr>
-                                        <td width="50">Supplier</td>
+                                        <td width="50">Vendor</td>
                                         <td width="10">:</td>
                                         <td width="65%">
                                             <b>' . @$supplier->name . '</b>
@@ -1106,7 +1106,7 @@ class Purchase_orders extends CI_Controller
                                         <th rowspan="2" style="text-align:center;">No</th>
                                         <th rowspan="2" style="text-align:center;">Part No Original</th>
                                         <th rowspan="2" style="text-align:center;">Part No BEI</th>
-                                        <th rowspan="2" style="text-align:center;">Part No Supplier</th>
+                                        <th rowspan="2" style="text-align:center;">Part No Vendor</th>
                                         <th rowspan="2" style="text-align:center;">Description</th>
                                         <th rowspan="2" style="text-align:center;">Maker</th>
                                         <th rowspan="2" style="text-align:center;">ETD</th>
@@ -1238,7 +1238,7 @@ class Purchase_orders extends CI_Controller
                                 <div style="width:50%;">
                                     <table style="margin-top:20px; font-size:12px;">
                                         <tr>
-                                            <th width="200" style="text-align:center;">Supplier Approval</th>
+                                            <th width="200" style="text-align:center;">Vendor Approval</th>
                                         </tr>
                                         <tr>
                                             <th style="height:80px;"></th>
@@ -1419,7 +1419,7 @@ class Purchase_orders extends CI_Controller
                                     <td><b>' . $purchase_order->revision . '</b></td>
                                 </tr>
                                 <tr>
-                                    <td width="20">Supplier</td>
+                                    <td width="20">Vendor</td>
                                     <td width="10">:</td>
                                     <td><b>' . @$supplier->name . '</b></td>
                                 </tr>
@@ -1428,7 +1428,7 @@ class Purchase_orders extends CI_Controller
                                 <tr>
                                     <th rowspan="2" width="10" style="text-align:center;">No</th>
                                     <th rowspan="2" width="100" style="text-align:center;">Part No BEI</th>
-                                    <th rowspan="2" width="100" style="text-align:center;">Part No Supplier</th>
+                                    <th rowspan="2" width="100" style="text-align:center;">Part No Vendor</th>
                                     <th rowspan="2" width="50" style="text-align:center;">Part Name</th>
                                     <th rowspan="2" width="30" style="text-align:center;">LT</th>
                                     <th rowspan="2" width="50" style="text-align:center;">MPQ</th>
@@ -1629,12 +1629,12 @@ class Purchase_orders extends CI_Controller
                 <th style="text-align:center;">Register Date</th>
                 <th style="text-align:center;">Part No Original</th>
                 <th style="text-align:center;">Part No BEI</th>
-                <th style="text-align:center;">Part No Supplier</th>
+                <th style="text-align:center;">Part No Vendor</th>
                 <th style="text-align:center;">Part Name</th>
                 <th style="text-align:center;">Product Family</th>
-                <th style="text-align:center;">Supplier No</th>
-                <th style="text-align:center;">Supplier Name</th>
-                <th style="text-align:center;">Supplier Type</th>
+                <th style="text-align:center;">Vendor No</th>
+                <th style="text-align:center;">Vendor Name</th>
+                <th style="text-align:center;">Vendor Type</th>
                 <th style="text-align:center;">Qty</th>
                 <th style="text-align:center;">Price</th>
                 <th style="text-align:center;">Total</th>

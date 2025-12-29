@@ -18,7 +18,7 @@
         </div>
         <div style="width: 30%; float: left;">
             <div class="fitem">
-                <span style="width:35%; display:inline-block;">Supplier</span>
+                <span style="width:35%; display:inline-block;">Vendor</span>
                 <input style="width:60%;" name="f_supplier" id="f_supplier" class="easyui-combogrid">
             </div>
             <div class="fitem">
@@ -42,9 +42,9 @@
             columns: [[
             	{field: 'plant', title: 'Plant ID', halign: 'center'},
             	{field: 'item', title: 'Item ID', halign: 'center'},
-            	{field: 'supp_id', title: 'Supplier ID', halign: 'center'},
-            	{field: 'supp_name', title: 'Supplier Name', halign: 'center'},
-            	{field: 'supp_type', title: 'Supplier Type', halign: 'center', align: 'center'},
+            	{field: 'supp_id', title: 'Vendor ID', halign: 'center'},
+            	{field: 'supp_name', title: 'Vendor Name', halign: 'center'},
+            	{field: 'supp_type', title: 'Vendor Type', halign: 'center', align: 'center'},
             	{field: 'maker_id', title: 'Maker Code', halign: 'center'},
             	{field: 'maker_name', title: 'Wire Name Maker', halign: 'center'},
             	{field: 'ranges', title: 'LME Range', halign: 'center'},
@@ -96,14 +96,14 @@
             textField: 'supplier',
             mode: 'remote',
             fitColumns: true,
-            prompt: "Select Supplier",
+            prompt: "Select Vendor",
             icons: [{
                 iconCls: 'icon-clear',
                 handler: function(e) { $(e.data.target).combogrid('clear').combogrid('textbox').focus(); }
             }],
             columns: [[
-            	{field: 'id', title: 'Supplier ID', halign: 'center', width: '29%'},
-            	{field: 'supplier', title: 'Supplier Name', halign: 'center', width: '69%'}
+            	{field: 'id', title: 'Vendor ID', halign: 'center', width: '29%'},
+            	{field: 'supplier', title: 'Vendor Name', halign: 'center', width: '69%'}
             ]]
         });
 

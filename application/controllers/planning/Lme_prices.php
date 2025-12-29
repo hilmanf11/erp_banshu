@@ -432,7 +432,7 @@ class LME_prices extends CI_Controller
                 $result['message'] = "Maker Code $maker no found!";
             } elseif (empty($suppliers)) {
                 $result['title'] = 'Undefine';
-                $result['message'] = "Supplier Code $supp no found!";
+                $result['message'] = "Vendor Code $supp no found!";
             } elseif (empty($ranges)) {
                 $result['title'] = 'Undefine';
                 $result['message'] = "LME Range $range no found!";
@@ -572,7 +572,7 @@ class LME_prices extends CI_Controller
                 <th width="20" rowspan="2">No</th>
                 <th rowspan="2">Plant</th>
                 <th rowspan="2">Item ID</th>
-                <th rowspan="2">Supplier</th>
+                <th rowspan="2">Vendor</th>
                 <th rowspan="2">WIRE Name Maker</th>
                 <th rowspan="2">Part No</th>
                 <th colspan="'.count($ranges).'">Unit Packing MOQ Price  & LME Range (USD/MTR)</th>
