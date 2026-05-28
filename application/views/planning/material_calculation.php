@@ -3,7 +3,7 @@
         <tr>
             <th field="ck" checkbox="true"></th>
             <th data-options="field:'item_rm_id',width:120,halign:'center'">Part No Original</th>
-            <th data-options="field:'item_rm_number',width:200,halign:'center'">Part No Supplier</th>
+            <th data-options="field:'item_rm_number',width:200,halign:'center'">Part No</th>
         </tr>
     </thead>
     <thead>
@@ -13,6 +13,7 @@
             <th rowspan="2" data-options="field:'stock_whs',width:80,halign:'center',align:'right',styler:cellStyler, formatter:numberformat">Stock WHS</th>
             <th rowspan="2" data-options="field:'total_whs',width:80,halign:'center',align:'right',styler:cellStyler, formatter:numberformat">Total WHS</th>
             <th rowspan="2" data-options="field:'os_supply',width:80,halign:'center',align:'right',styler:cellStyler, formatter:numberformat">OS Supply</th>
+            <!-- <th rowspan="2" data-options="field:'os_wo',width:80,halign:'center',align:'right',styler:cellStyler, formatter:numberformat">OS WO</th> -->
             <th rowspan="2" data-options="field:'stock_hand',width:80,halign:'center',align:'right',styler:cellStyler, formatter:numberformat">Onhand<br>Stock</th>
             <th rowspan="2" data-options="field:'total_incoming',width:80,halign:'center',align:'right',styler:cellStyler, formatter:numberformat">Total<br>Incoming</th>
             <th rowspan="2" data-options="field:'total_supply',width:80,halign:'center',align:'right',styler:cellStyler, formatter:numberformat">Total<br>Supply</th>
@@ -245,7 +246,7 @@
 
                     $.ajax({
                         type: "get",
-                        url: "<?= base_url('planning/material_calculation/getdata') ?>",
+                        url: "<?= base_url('planning/material_calculation/getData') ?>",
                         data: "filter_month=" + window.btoa(filter_month) +
                             "&filter_year=" + window.btoa(filter_year) +
                             "&filter_revision=" + window.btoa(filter_revision) +

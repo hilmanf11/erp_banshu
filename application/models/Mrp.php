@@ -83,14 +83,14 @@ class Mrp extends CI_Model
 
     public function master_item()
     {
-        $login = $this->login("GH");
+        $login = $this->login();
 
         if ($login->information == 'Success') {
             $token = $login->token;
             $curl = curl_init();
 
             curl_setopt_array($curl, array(
-                CURLOPT_URL => 'http://erp.banshu-ind.com/pro-api-hedom/master_item',
+                CURLOPT_URL => 'http://erp.banshu-ind.com/pro-api/master_item',
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_ENCODING => '',
                 CURLOPT_MAXREDIRS => 10,

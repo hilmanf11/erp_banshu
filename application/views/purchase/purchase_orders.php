@@ -132,6 +132,7 @@
         </fieldset>
     </div>
     <?= $button ?>
+    <a href="javascript:;" class="easyui-linkbutton" plain="true" onclick="csv()"><i class="fa fa-file"></i> Export CSV</a>
     <a href="javascript:;" class="easyui-linkbutton" plain="true" onclick="disapproveData()"><i class="fa fa-file"></i> Disapprove Data</a>
     <!-- <a href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true" onclick="formula()"><i class="fa fa-info"></i> Help</a> -->
 </div>
@@ -161,6 +162,14 @@
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Product Family</span>
                     <input style="width:60%;" id="d_product_family" class="easyui-textbox" readonly>
+                </div>
+                <div class="fitem" id="txt_address">
+                    <span style="width:35%; display:inline-block;">Shipping Address</span>
+                    <input style="width:60%;" id="d_address" class="easyui-combobox">
+                </div>
+                <div class="fitem" id="txt_incoterms">
+                    <span style="width:35%; display:inline-block;">Incoterms</span>
+                    <input style="width:60%;" id="d_incoterms" class="easyui-combobox">
                 </div>
                 <div class="fitem" id="completeMailDate">
                     <span style="width:35%; display:inline-block;">Send Date</span>
@@ -506,7 +515,7 @@
     //     });
     // }
     
-    function details(po_no, supplier, note, product_family, push="", email = "", email_cc = "") {
+    function details(po_no, supplier, note, product_family, plant, incoterms, address, push="", email = "", email_cc = "") {
         $("#dlg_purchase_order").dialog('open');
 
         $("#d_po_no").textbox('setValue', po_no);
@@ -521,6 +530,8 @@
             $("#completeMail").hide();
             $("#sendBlink").hide();
             $("#completeMailDate").hide();
+            $("#txt_address").show();
+            $("#txt_incoterms").show();
         }else if(push == "push"){
             $("#pushData").show();
             $("#detailEdit").hide();
@@ -528,6 +539,8 @@
             $("#completeMail").hide();
             $("#sendBlink").hide();
             $("#completeMailDate").hide();
+            $("#txt_address").hide();
+            $("#txt_incoterms").hide();
         }else{
             $("#pushData").hide();
             $("#detailEdit").hide();
@@ -544,7 +557,54 @@
 
         var revision = $("#filter_revision").combobox('getValue');
         var filter_item_rm = $("#filter_item_rm").combogrid('getValue');
+
+        $('#d_address').combobox({
+            url: '<?php echo base_url('master/plants/readAddress/'); ?>' + plant,
+            valueField: 'name',
+            textField: 'name',
+            prompt: 'Select Shipping Address',
+            editable: false,
+            onSelect: function(row){
+                if(row.name != address){
+                    $.ajax({
+                        type: "post",
+                        url: "<?= base_url('purchase/purchase_orders/updateData') ?>",
+                        data: "po_no=" + po_no + "&address=" + row.name,
+                        dataType: "json",
+                        success: function (response) {
+                            toastr.success(response.message);
+                            $("#dg").datagrid('reload');
+                        }
+                    });
+                }
+            }
+        });
+
+        $('#d_incoterms').combobox({
+            url: '<?php echo base_url('master/incoterms/reads'); ?>',
+            valueField: 'name',
+            textField: 'name',
+            prompt: 'Select Incoterms',
+            editable: false,
+            onSelect: function(row){
+                if(row.name != incoterms){
+                    $.ajax({
+                        type: "post",
+                        url: "<?= base_url('purchase/purchase_orders/updateData') ?>",
+                        data: "po_no=" + po_no + "&incoterms=" + row.name,
+                        dataType: "json",
+                        success: function (response) {
+                            toastr.success(response.message);
+                            $("#dg").datagrid('reload');
+                        }
+                    });
+                }
+            }
+        });
         
+        $("#d_address").combobox('setValue', address);
+        $("#d_incoterms").combobox('setValue', incoterms);
+
         $('#dg_purchase_order').datagrid({
             url: '<?= base_url('purchase/purchase_orders/datatableDetails/') ?>' + btoa(po_no) + "/" + revision + "?filter_item_rm=" + btoa(filter_item_rm),
             clientPaging: false,
@@ -895,6 +955,10 @@
         } else {
             window.location.assign('<?= base_url('purchase/purchase_orders/print/excel') ?>' + url);
         }
+    }
+
+    function csv() {
+        window.location.assign('<?= base_url('purchase/purchase_orders/csv') ?>');
     }
 
     // UPLOAD DATA
@@ -1357,7 +1421,7 @@
     }
 
     function BtnDetail(val, row) {
-        var details = "details('"+row.po_no+"','"+row.supplier_name+"','"+row.note+"','"+row.item_family_name+"')";
+        var details = "details('"+row.po_no+"','"+row.supplier_name+"','"+row.note+"','"+row.item_family_name+"','"+row.plant+"','"+row.incoterms+"','"+row.address+"')";
         return '<a class="btn btn-primary w-100" style="pointer-events: visible; opacity:1;" onClick="'+details+'"><i class="fa fa-eye"></i> View</a>';
     }
 
@@ -1396,7 +1460,7 @@
             return 'DONE';
         // } else if ((row.approved_to == null || row.approved_to == "") && row.email_status == "SEND") {
         } else if (row.approved_to == null || row.approved_to == "") {
-            var details = "details('"+row.po_no+"','"+row.supplier_name+"','"+row.note+"','"+row.item_family_name+"','push')";
+            var details = "details('"+row.po_no+"','"+row.supplier_name+"','"+row.note+"','"+row.item_family_name+"','"+row.plant+"','"+row.incoterms+"','"+row.address+"','push')";
             return '<a class="btn btn-danger w-100" style="pointer-events: visible; opacity:1;" onClick="'+details+'"><i class="fa fa-share"></i> Push</a>';
         } else {
             return '-';
@@ -1407,7 +1471,7 @@
         if(row.email_status == "SENT"){
             return "-";
         } else if (row.approved_to == null || row.approved_to == "") {
-            var details = "details('"+row.po_no+"','"+row.supplier_name+"','"+row.note+"','"+row.item_family_name+"','mail','"+row.email+"')";
+            var details = "details('"+row.po_no+"','"+row.supplier_name+"','"+row.note+"','"+row.item_family_name+"','"+row.plant+"','"+row.incoterms+"','"+row.address+"','mail','"+row.email+"')";
             return '<a class="btn btn-success w-100" style="pointer-events: visible; opacity:1;" onClick="'+details+'"><i class="fa fa-send"></i> Send</a>';
         } else {
             return '-';

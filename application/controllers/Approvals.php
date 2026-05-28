@@ -20,11 +20,18 @@ class Approvals extends CI_Controller
         $p_year = substr($period, 0, 4);
         $p_month = substr($period, 4);
         $supplier_id = $this->input->post('supplier_id');
+        $approved_to = $this->input->post('approved_to');
+        $approved_by = $this->input->post('approved_by');
         $revision = $this->input->post('revision');
         $tablename = $this->input->post('tablename');
         $message = $this->input->post('message');
         $approval = $this->crud->read('approvals', [], ["table_name" => $tablename]);
-        $data = $this->crud->read($tablename, [], ["supplier_id" => $supplier_id, "revision" => $revision, "p_year" => $p_year, "p_month" => $p_month]);
+
+        if($tablename == "forecast_supplier"){
+            $data = $this->crud->read($tablename, [], ["approved_to" => $approved_to, "approved_by" => $approved_by]);
+        }else{
+            $data = $this->crud->read($tablename, [], ["supplier_id" => $supplier_id, "revision" => $revision, "p_year" => $p_year, "p_month" => $p_month]);
+        }
 
         if ($data->approved == 1) {
             $users_id = @$approval->user_approval_2;
@@ -50,7 +57,11 @@ class Approvals extends CI_Controller
             "approved" => $approved,
         );
 
-        $send = $this->db->update($tablename, $values, ["supplier_id" => $supplier_id, "revision" => $revision, "p_year" => $p_year, "p_month" => $p_month]);
+        if($tablename == "forecast_supplier"){
+            $send = $this->db->update($tablename, $values, ["approved_to" => $approved_to, "approved_by" => $approved_by]);
+        }else{
+            $send = $this->db->update($tablename, $values, ["supplier_id" => $supplier_id, "revision" => $revision, "p_year" => $p_year, "p_month" => $p_month]);
+        }
 
         if ($send) {
             echo json_encode(array("title" => "Approved", "message" => "Data Approved Successfully", "theme" => "success"));
@@ -188,10 +199,16 @@ class Approvals extends CI_Controller
         $p_month = substr($period, 4);
         $revision = $this->input->post('revision');
         $supplier_id = $this->input->post('supplier_id');
+        $approved_to = $this->input->post('approved_to');
+        $approved_by = $this->input->post('approved_by');
         $tablename = $this->input->post('tablename');
         $message = $this->input->post('message');
 
-        $send = $this->db->delete($tablename, ["supplier_id" => @$supplier_id, "p_year" => $p_year, "p_month" => $p_month, "revision" => $revision]);
+        if($tablename == "forecast_supplier"){
+            $send = $this->db->delete($tablename, ["approved_to" => @$approved_to, "approved_by" => $approved_by]);
+        }else{
+            $send = $this->db->delete($tablename, ["supplier_id" => @$supplier_id, "p_year" => $p_year, "p_month" => $p_month, "revision" => $revision]);
+        }
 
         if ($send) {
             echo json_encode(array("title" => "Disapproved", "message" => "Data Disapproved Successfully", "theme" => "success"));
@@ -333,6 +350,7 @@ class Approvals extends CI_Controller
         // $os_so = $this->crud->reads('os_so', [], ["approved_to" => $this->session->username], "", "", "", ["approved_to", "approved_by"]);
         // $os_mpp = $this->crud->reads('os_mpp', [], ["approved_to" => $this->session->username], "", "", "", ["approved_to", "approved_by"]);
         $forecasts = $this->crud->reads('forecasts', [], ["approved_to" => $this->session->username], "", "", "", ["approved_to", "approved_by"]);
+        $forecast_supplier = $this->crud->reads('forecast_supplier', [], ["approved_to" => $this->session->username], "", "", "", ["approved_to", "approved_by"]);
 
         // $generate_mrp_finals = $this->crud->reads('generate_mrp_finals', [], ["approved_to" => $this->session->username], "", "", "", ["approved_to", "approved_by"]);
         $generate_mrp_finals = $this->crud->query("SELECT * FROM generate_mrp_finals WHERE purchase_order > 0 and approved_to = '$username' GROUP BY approved_to, approved_by");
@@ -381,6 +399,7 @@ class Approvals extends CI_Controller
             count($rgp_transaction_in) +
             count($rgp_transaction_out) +
             count($scrap_booking) +
+            count($forecast_supplier) +
             count($forecasts)
         );
 
@@ -412,6 +431,7 @@ class Approvals extends CI_Controller
 
         $generate_mrp_finals = $this->crud->query("SELECT * FROM generate_mrp_finals WHERE purchase_order > 0 and approved_to = '$username' GROUP BY approved_to, approved_by");
 
+        $forecast_supplier = $this->crud->reads('forecast_supplier', [], ["approved_to" => $this->session->username], "", "", "", ["approved_to", "approved_by"]);
         $forecasts = $this->crud->reads('forecasts', [], ["approved_to" => $this->session->username], "", "", "", ["approved_to", "approved_by"]);
         $purchase_requests = $this->crud->reads('purchase_requests', [], ["approved_to" => $this->session->username, "flag" => "OK"], "", "", "", ["approved_to", "approved_by"]);
         $purchase_request_others = $this->crud->reads('purchase_request_others', [], ["approved_to" => $this->session->username], "", "", "", ["approved_to", "approved_by"]);
@@ -540,6 +560,10 @@ class Approvals extends CI_Controller
         foreach ($request_npd as $npd) {
             $this->approvalMessage($npd->approved_by, $npd->approved_to, $npd->created_by, "request_npd");
         }
+
+        foreach ($forecast_supplier as $fcs) {
+            $this->approvalMessage($fcs->approved_by, $fcs->approved_to, $fcs->created_by, "forecast_supplier");
+        }
     }
 
     public function approvalMessage($approved_by, $approved_to, $created_by, $table)
@@ -553,7 +577,7 @@ class Approvals extends CI_Controller
         }
 
         if($table == "supplier_items"){
-            $tablename = "supplier_contracts";
+            $tablename = "vendor_contracts";
         }elseif($table == "item_rm"){
             $tablename = "master_items";
         }elseif($table == "supply_materials"){
@@ -952,6 +976,18 @@ class Approvals extends CI_Controller
         }
     }
 
+    public function forecast_supplier($approved_to, $approved_by){
+        if (empty($this->session->username)) {
+            redirect('error_session');
+        } else {
+            $data['approved_to'] = base64_decode($approved_to);
+            $data['approved_by'] = base64_decode($approved_by);
+            $data['table'] = "forecast_supplier";
+            $this->load->view('template/header', $data);
+            $this->load->view('approval/forecast_supplier');
+        }
+    }
+
     public function approvalUsers($approved_to, $approved_by)
     {
         $approved_to = base64_decode($approved_to);
@@ -1224,13 +1260,14 @@ class Approvals extends CI_Controller
         $approved_to = base64_decode($approved_to);
         $approved_by = base64_decode($approved_by);
 
-        $this->db->select('a.*, b.uom, b.number as item_rm_number, b.name as item_rm_name, c.name as supplier_name, d.name as item_family_name, round(COALESCE(e.issued_avg, 0) + COALESCE(f.issued_avg, 0)) as issued_avg');
+        $this->db->select('a.*, b.uom, b.number as item_rm_number, b.name as item_rm_name, c.name as supplier_name, d.name as item_family_name, round(COALESCE(e.issued_avg, 0) + COALESCE(f.issued_avg, 0)) as issued_avg, g.attachment as attachment_npd');
         $this->db->from('purchase_requests a');
         $this->db->join('item_rm b', 'a.item_rm_id = b.id');
         $this->db->join('suppliers c', 'a.supplier_id = c.id');
         $this->db->join('item_familys d', 'b.item_family_id = d.id');
         $this->db->join('generate_mrp_finals e', 'a.p_month = e.p_month and a.p_year = e.p_year and a.revision = e.revision and a.item_rm_id = e.item_rm_id', 'left');
         $this->db->join('generate_mrp_finals f', 'a.p_month = f.p_month and a.p_year = f.p_year and a.revision = f.revision and e.item_rm_alias = f.item_rm_id', 'left');
+        $this->db->join('request_npd g', 'a.request_npd = g.request_no and a.item_rm_id = g.item_rm_id', 'left');
         $this->db->where('a.approved_to', $approved_to);
         $this->db->where('a.approved_by', $approved_by);
         $this->db->where('a.flag', "OK");
@@ -1262,7 +1299,7 @@ class Approvals extends CI_Controller
         $approved_to = base64_decode($approved_to);
         $approved_by = base64_decode($approved_by);
 
-        $this->db->select('a.po_no, a.attachment, a.po_date, a.supplier_id, b.number as supplier_number, b.name as supplier_name, b.type, b.state, b.currency, a.note, SUM(a.total) as grandtotal');
+        $this->db->select('a.po_no, a.attachment, a.po_date, a.supplier_id, b.number as supplier_number, b.name as supplier_name, b.type, b.state, a.currency, a.note, SUM(a.total) as grandtotal');
         $this->db->from('purchase_orders a');
         $this->db->join('suppliers b', 'a.supplier_id = b.id');
         $this->db->where('a.approved_to', $approved_to);
@@ -1287,15 +1324,16 @@ class Approvals extends CI_Controller
                     b.name as item_name,
                     c.name as item_family_name, 
                     d.name as supplier_name, 
-                    d.currency, e.mpq, 
-                    e.moq,
+                    d.currency, 
+                    (CASE WHEN f.mpq is null THEN e.mpq ELSE f.mpq END) as mpq, 
+                    (CASE WHEN f.moq is null THEN e.moq ELSE f.moq END) as moq,
                     e.item_supplier,
-                    b.uom,
+                    a.uom,
                     a.month_1,
                     a.month_2,
                     a.month_3,
                     a.discount,
-                    d.currency, 
+                    a.currency, 
                     a.qty as qty, 
                     a.price as price, 
                     a.total as total,
@@ -1307,6 +1345,7 @@ class Approvals extends CI_Controller
         $this->db->join('item_familys c', 'b.item_family_id = c.id');
         $this->db->join('suppliers d', 'a.supplier_id = d.id');
         $this->db->join('supplier_items e', 'a.item_rm_id = e.item_rm_id and a.supplier_id = e.supplier_id', 'left');
+        $this->db->join('convertions f', 'a.item_rm_id = f.item_rm_id', 'left');
         $this->db->where('a.approved_to', $approved_to);
         $this->db->where('a.approved_by', $approved_by);
         $this->db->where('a.po_no', $po_no);
@@ -1454,12 +1493,13 @@ class Approvals extends CI_Controller
         $approved_by = base64_decode($approved_by);
         $supplier_id = base64_decode($this->input->get("supplier_id"));
 
-        $this->db->select('a.*, b.number as supplier_number, b.name as supplier_name, b.currency as supplier_currency, c.number as item_rm_number, c.name as item_rm_name, c.item_family_id as item_rm_family, c.uom, d.name as item_family_name, e.price as price_before');
+        $this->db->select('a.*, b.number as supplier_number, b.name as supplier_name, f.name as maker_name, b.currency as supplier_currency, c.number as item_rm_number, c.name as item_rm_name, c.item_family_id as item_rm_family, c.uom, d.name as item_family_name, e.price as price_before');
         $this->db->from('supplier_items a');
         $this->db->join('suppliers b', 'a.supplier_id = b.id');
         $this->db->join('item_rm c', 'a.item_rm_id = c.id');
         $this->db->join('item_familys d', 'c.item_family_id = d.id');
         $this->db->join("(SELECT * FROM supplier_item_histories ORDER BY id DESC) e", "a.supplier_id = e.supplier_id and a.item_rm_id = e.item_rm_id and a.plant = e.plant and a.price != e.price", "left");
+        $this->db->join('makers f', 'a.maker_id = f.id', 'left');
         $this->db->where('a.approved_to', $approved_to);
         $this->db->where('a.approved_by', $approved_by);
         $this->db->where('a.supplier_id', $supplier_id);
@@ -1853,6 +1893,52 @@ class Approvals extends CI_Controller
         $records = $this->db->get()->result_array();
 
         die(json_encode($records));
+    }
+
+    public function approvalForecastSupplier($approved_to, $approved_by)
+    {
+        $approved_to = base64_decode($approved_to);
+        $approved_by = base64_decode($approved_by);
+
+        $filters = json_decode($this->input->post('filterRules'));
+        $page = $this->input->post('page');
+        $rows = $this->input->post('rows');
+
+        //Pagination 1-10
+        $page   = isset($page) ? intval($page) : 1;
+        $rows   = isset($rows) ? intval($rows) : 10;
+        $offset = ($page - 1) * $rows;
+        $result = array();
+
+        //Select Query
+        $this->db->select('a.*, b.number as item_rm_number, b.name as item_rm_name');
+        $this->db->from('forecast_supplier a');
+        $this->db->join('item_rm b', 'a.item_rm_id = b.id');
+        $this->db->where('a.approved_to', $approved_to);
+        $this->db->where('a.approved_by', $approved_by);
+        if (@count($filters) > 0) {
+            foreach ($filters as $filter) {
+                if($filter->field == "item_rm_number"){
+                    $this->db->like("b.number", $filter->value);
+                }elseif($filter->field == "item_rm_name"){
+                    $this->db->like("b.name", $filter->value);
+                }else{
+                    $this->db->like("a." . $filter->field, $filter->value);
+                }
+            }
+        }
+        $this->db->order_by('a.vendor_name', 'asc');
+        $this->db->order_by('b.number', 'asc');
+        //Total Data
+        $totalRows = $this->db->count_all_results('', false);
+        //Limit 1 - 10
+        // $this->db->limit($rows, $offset);
+        //Get Data Array
+        $records = $this->db->get()->result_array();
+        //Mapping Data
+        $result['total'] = $totalRows;
+        $result = array_merge($result, ['rows' => $records]);
+        echo json_encode($result);
     }
 }
 

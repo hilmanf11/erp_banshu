@@ -36,7 +36,7 @@ class Purchase_requests extends CI_Controller
     }
 
     public function reads(){
-        $query = $this->db->query("SELECT DISTINCT request_no FROM purchase_requests ORDER BY request_no DESC LIMIT 1000");
+        $query = $this->db->query("SELECT DISTINCT request_no FROM purchase_requests WHERE type = 'REGULAR' ORDER BY request_no DESC LIMIT 1000");
         $records = $query->result_array();
 
         echo json_encode($records);
@@ -232,6 +232,17 @@ class Purchase_requests extends CI_Controller
                 $array_pfm = array();
             }
 
+            $sqlQuery = $this->db->query("SELECT item_rm_alias FROM generate_mrp_finals WHERE p_month='$filter_month' and p_year='$filter_year' and revision='$filter_revision' and plant='$filter_plant' and item_rm_alias != '' GROUP BY item_rm_alias");
+            $rowDatas = $sqlQuery->result_array();
+
+            $merged = [];
+            foreach ($rowDatas as $data) {
+                $explode = array_map('trim', explode(",", $data['item_rm_alias']));
+                $merged = array_merge($merged, $explode);
+            }
+
+            $merged = array_unique(array_filter($merged)); // Bersihkan duplikat & null
+
             // $this->crud->delete("purchase_requests", array_merge(["p_month" => $filter_month, "p_year" => $filter_year, "revision" => $filter_revision, "plant" => $filter_plant], $array_pfm));
 
             //Select Query
@@ -246,8 +257,12 @@ class Purchase_requests extends CI_Controller
             $this->db->join('suppliers e', 'c.supplier_id = e.id');
             $this->db->join('item_familys f', 'b.item_family_id = f.id');
             $this->db->join('makers g', 'c.maker_id = g.id', 'left');
-            $this->db->join("(select * from purchase_requests WHERE status_data IN ('GENERATE','EDIT')) h", "a.supplier_id = h.supplier_id and a.item_rm_id = h.item_rm_id and a.plant = h.plant and a.p_month = h.p_month and a.p_year = h.p_year and a.revision = h.revision", 'left');
-            $this->db->where("a.item_rm_id NOT IN (SELECT item_rm_alias FROM generate_mrp_finals WHERE p_month='$filter_month' and p_year='$filter_year' and revision='$filter_revision' and plant='$filter_plant' GROUP BY item_rm_alias)");
+            $this->db->join("(select * from purchase_requests WHERE status_data IN ('GENERATE','EDIT','UPLOAD')) h", "a.supplier_id = h.supplier_id and a.item_rm_id = h.item_rm_id and a.plant = h.plant and a.p_month = h.p_month and a.p_year = h.p_year and a.revision = h.revision", 'left');
+            // $this->db->where_not_in("a.item_rm_id", $merged);
+            $chunks = array_chunk($merged, 500); 
+            foreach ($chunks as $chunk) {
+                $this->db->where_not_in('a.item_rm_id', $chunk);
+            }
             $this->db->where("(a.purchase_order > 0 or a.item_rm_alias != '')");
             $this->db->where("(c.mpq > 0 and c.moq > 0 and c.leadtime > 0)");
             $this->db->where('a.p_month', $filter_month);
@@ -460,12 +475,20 @@ class Purchase_requests extends CI_Controller
             $offset = ($page - 1) * $rows;
             $result = array();
             //Select Query
-            $this->db->select('a.*, b.name as supplier_name, c.name as item_family_name, SUM(a.qty) as total_pr, SUM(a.mrp) as total_mrp, COALESCE(e.total, 0) as total_po, COUNT(a.id) as total_data');
-            $this->db->from("(select * from purchase_requests where qty > 0 and flag = 'OK' order by approved_to desc) a");
+            $this->db->select("a.*, 
+                b.name as supplier_name, 
+                c.name as item_family_name, 
+                SUM(a.qty) as total_pr, 
+                SUM(a.mrp) as total_mrp, 
+                COALESCE(e.total, 0) as total_po, 
+                COUNT(a.id) as total_data,
+                SUM(CASE WHEN (a.approved_to = '' OR a.approved_to IS NULL) THEN 1 ELSE 0 END) AS total_approved");
+            $this->db->from("(select * from purchase_requests where qty > 0 and flag = 'OK') a");
             $this->db->join('suppliers b', 'a.supplier_id = b.id');
             $this->db->join('item_familys c', "a.item_family_id = c.id and c.item_category_id IN ('C01')");
             // $this->db->join("(select request_no, COUNT(id) as total FROM purchase_requests WHERE approved_to = '' GROUP BY request_no) d", 'a.request_no = d.request_no', 'left');
             $this->db->join("(select request_no, COUNT(id) as total FROM purchase_orders GROUP BY request_no) e", 'a.request_no = e.request_no', 'left');
+            $this->db->where('a.type', "REGULAR");
             $this->db->where('a.p_month', $filter_month);
             $this->db->where('a.p_year', $filter_year);
             $this->db->where('a.revision', $filter_revision);
@@ -871,6 +894,10 @@ class Purchase_requests extends CI_Controller
                     $qty = 0;
                 }
 
+                // if($purchase_request->confirm == 1){
+                //     die(json_encode(array("title" => "Failed", "message" => "Part No " . $data['item_rm_number'] . " has been confirmed, Cannot Change", "theme" => "error")));
+                // }
+
                 if($purchase_request->approved_to == "" && $purchase_request->approved != 0){
                     die(json_encode(array("title" => "Failed", "message" => "Part No " . $data['item_rm_number'] . " has been Approved, Cannot Change", "theme" => "error")));
                 }
@@ -926,6 +953,7 @@ class Purchase_requests extends CI_Controller
             $this->db->join('item_rm ia', "TRIM(LEADING '+' FROM d.number) = ia.number");
             $this->db->join('supplier_items e', 'ia.id = e.item_rm_id and a.supplier_id = e.supplier_id and a.plant = e.plant and e.share_order > 0');
             // $this->db->where("(a.approved_to = '' or a.approved_to is null)");
+            $this->db->where('a.type', "REGULAR");
             $this->db->where('a.p_month', $filter_month);
             $this->db->where('a.p_year', $filter_year);
             $this->db->where('a.revision', $filter_revision);

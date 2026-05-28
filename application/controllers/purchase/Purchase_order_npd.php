@@ -1,0 +1,1953 @@
+<?php
+date_default_timezone_set("Asia/Bangkok");
+defined('BASEPATH') or exit('No direct script access allowed');
+
+class Purchase_order_npd extends CI_Controller
+{
+    public function __construct()
+    {
+        parent::__construct();
+        $this->load->helper('url');
+        $this->load->helper(array('form', 'url'));
+        $this->load->library('form_validation');
+        $this->load->library('session');
+        $this->load->model('crud');
+        $this->load->model('mrp_push');
+        $this->load->library('Ciqrcode');
+        $this->load->library('email');
+
+        //Validasi Form
+        $this->form_validation->set_rules('product_no', 'Part No', 'required|min_length[2]|max_length[50]|is_unique[generate_mps.product_no]');
+    }
+
+    public function index()
+    {
+        if (empty($this->session->username)) {
+            redirect('error_session');
+        } elseif ($this->checkuserAccess($this->id_menu()) > 0) {
+            $data['button'] = $this->getbutton($this->id_menu());
+            $data['id_menu'] = $this->id_menu();
+            
+            $this->load->view('template/header', $data);
+            $this->load->view('purchase/purchase_order_npd');
+        } else {
+            redirect('error_access');
+        }
+    }
+
+    public function readRevision(){
+        $p_month = $this->input->post('p_month');
+        $p_year = $this->input->post('p_year');
+
+        $this->db->select('max(revision) as revision');
+        $this->db->from('generate_mrp_finals');
+        $this->db->where('p_month', $p_month);
+        $this->db->where('p_year', $p_year);
+        // $this->db->group_by('revision');
+        $rev = $this->db->get()->row();
+
+        // die(json_encode($rev));
+
+        $revision = @$rev->revision;
+
+        echo json_encode(array("rev" => $revision));
+    }
+
+    function readPoSearch(){
+        $filter_month = base64_decode($this->input->get('filter_month'));
+        $filter_year = base64_decode($this->input->get('filter_year'));
+        $filter_revision = base64_decode($this->input->get('filter_revision'));
+        $filter_supplier = base64_decode($this->input->get('filter_supplier'));
+
+        $post = isset($_POST['q']) ? $_POST['q'] : "";
+
+        $datas = $this->crud->query("SELECT DISTINCT po_no FROM purchase_orders WHERE p_month = '$filter_month' and p_year = '$filter_year' and revision='$filter_revision' and supplier_id = '$filter_supplier' and type='NPD'");
+        echo json_encode($datas);
+    }
+
+    function readPo($p_month, $p_year, $revision, $product_family){
+        $post = isset($_POST['q']) ? $_POST['q'] : "";
+        $datas = $this->crud->query("SELECT DISTINCT a.supplier_id, a.po_no, b.number as supplier_no, b.name as supplier_name, d.name as item_family_name 
+            FROM purchase_orders a
+            JOIN suppliers b ON a.supplier_id = b.id 
+            JOIN item_rm c ON a.item_rm_id = c.id
+            JOIN item_familys d ON c.item_family_id = d.id
+            WHERE a.p_month = '$p_month' and a.p_year = '$p_year' and a.revision = '$revision' and d.id = '$product_family' and a.type = 'NPD'
+            and (a.po_no like '%$post%' or b.name like '%$post%' or d.name like '%$post%')");
+        echo json_encode($datas);
+    }
+
+    function readPono(){
+        $post = isset($_POST['q']) ? $_POST['q'] : "";
+        $supplier_id = base64_decode($this->input->get('supplier_id'));
+        $datas = $this->crud->query("SELECT DISTINCT a.po_no, a.po_date FROM purchase_orders a WHERE a.supplier_id = '$supplier_id' and a.type = 'NPD' and a.status = 0 and (po_date like '%$post%' or po_no like '%$post%') ORDER BY a.po_date, a.po_no ASC");
+        echo json_encode($datas);
+    }
+
+    public function readSupplier(){
+        $post = isset($_POST['q']) ? $_POST['q'] : "";
+        $data = $this->crud->query("SELECT DISTINCT b.id, b.number, b.name, b.type FROM purchase_orders a JOIN suppliers b ON a.supplier_id = b.id WHERE a.type = 'NPD' and a.status = 0 and b.name like '%$post%' ORDER BY b.name asc");
+        echo json_encode($data);
+    }
+
+    public function readTerm()
+    {
+        $po_no = $this->input->post('po_no');
+        $send = $this->crud->read('purchase_orders', [], ["po_no" => $po_no]);
+        echo json_encode($send);
+    }
+
+    function forecast($item_rm_id, $month, $year, $revision){
+        $q_forecast = $this->db->query("SELECT a.item_rm_id, c.number as item_rm_number, c.name as item_rm_name, SUM(a.composition) as qty, 
+            (SUM(a.composition) * b.month_1) as m1, 
+            (SUM(a.composition) * b.month_2) as m2, 
+            (SUM(a.composition) * b.month_3) as m3,
+            (SUM(a.composition) * b.month_4) as m4,
+            (SUM(a.composition) * b.month_5) as m5,
+            (SUM(a.composition) * b.month_6) as m6,
+            (SUM(a.composition) * b.month_7) as m7,
+            (SUM(a.composition) * b.month_8) as m8,
+            (SUM(a.composition) * b.month_9) as m9,
+            (SUM(a.composition) * b.month_10) as m10,
+            (SUM(a.composition) * b.month_11) as m11,
+            (SUM(a.composition) * b.month_12) as m12
+            FROM bom a
+            JOIN forecasts b ON a.item_fg_id = b.item_fg_id
+            JOIN item_rm c ON a.item_rm_id = c.id
+            WHERE b.p_month = '$month' and b.p_year = '$year' and b.revision = '$revision' 
+            and (b.month_1 > 0 or b.month_2 > 0 or b.month_3 > 0) and a.item_rm_id = '$item_rm_id'
+            GROUP BY a.item_rm_id");
+        $forecast = $q_forecast->row();
+
+        return $forecast;
+    }
+
+    public function datatables()
+    {
+        if ($this->input->post()) {
+            $filter_month = base64_decode($this->input->get('filter_month'));
+            $filter_year = base64_decode($this->input->get('filter_year'));
+            $filter_revision = base64_decode($this->input->get('filter_revision'));
+            $filter_item_family = base64_decode($this->input->get('filter_item_family'));
+            $filter_item_rm = trim(base64_decode($this->input->get('filter_item_rm')));
+            $filter_supplier = trim(base64_decode($this->input->get('filter_supplier')));
+            $filter_po = trim(base64_decode($this->input->get('filter_po')));
+            $filter_type = trim(base64_decode($this->input->get('filter_type')));
+            $filter_status = trim(base64_decode($this->input->get('filter_status')));
+
+            $page = $this->input->post('page');
+            $rows = $this->input->post('rows');
+            //Pagination 1-10
+            $page   = isset($page) ? intval($page) : 1;
+            $rows   = isset($rows) ? intval($rows) : 10;
+            $offset = ($page - 1) * $rows;
+            $result = array();
+            //Select Query
+            $this->db->select('a.*, SUM(a.qty) as total_qty, SUM(a.total) as total_amount, COUNT(c.po_no) as print_sd, d.number as supplier_no, d.name as supplier_name, d.type as supplier_type, d.supplier_po, e.name as item_family_name, d.state, d.email');
+            $this->db->from('purchase_orders a');
+            $this->db->join('item_rm b', "a.item_rm_id = b.id");
+            $this->db->join('(select DISTINCT po_no from delivery_schedules) c', "a.po_no = c.po_no", 'left');
+            $this->db->join('suppliers d', "a.supplier_id = d.id", 'left');
+            $this->db->join('item_familys e', "b.item_family_id = e.id");
+            $this->db->where('a.type', 'NPD');
+            $this->db->where('a.p_month', $filter_month);
+            $this->db->where('a.p_year', $filter_year);
+            $this->db->like('a.revision', $filter_revision);
+            $this->db->like('b.item_family_id', $filter_item_family);
+            $this->db->like('a.item_rm_id', $filter_item_rm);
+            $this->db->like('a.supplier_id', $filter_supplier);
+            $this->db->like('a.po_no', $filter_po);
+            $this->db->like('d.type', $filter_type);
+            $this->db->like('a.status', $filter_status);
+            $this->db->group_by('a.po_no');
+            $this->db->order_by('a.po_no');
+            $this->db->order_by('a.status');
+            //Total Data
+            $totalRows = $this->db->count_all_results('', false);
+            //Limit 1 - 10
+            $this->db->limit($rows, $offset);
+            //Get Data Array
+            $records = $this->db->get()->result_array();
+
+            //Mapping Data
+            $result['total'] = $totalRows;
+            $result = array_merge($result, ['rows' => $records]);
+            echo json_encode($result);
+        }
+    }
+
+    public function datatableDetails($po_no, $revision = ""){
+        $po_no = base64_decode($po_no);
+        $filter_item_rm = trim(base64_decode($this->input->get('filter_item_rm')));
+
+        $po = $this->crud->read("purchase_orders", [], ["po_no" => $po_no]);
+        $start_date = date("Y-m-d");
+        $valid_date = date("Y-m-t", strtotime(@$po->p_year."-".@$po->p_month."-10"));
+
+        //Config
+        $this->db->select('*');
+        $this->db->from('config');
+        $config = $this->db->get()->row();
+
+        //Select Query
+        $this->db->select("a.*, g.purchase_order as mrp_qty, b.number as supplier_no, b.name as supplier_name, f.mpq, f.moq, b.state, b.alias,
+            b.email, d.number as item_rm_number, d.name as item_rm_name, d.item_family_id, e.name as product_family, b.type as supplier_type,
+            (CASE WHEN a.price = f.price THEN 'OK' ELSE 'SYNC' END) as sync, f.price as new_price, f.item_supplier");
+        $this->db->from('purchase_orders a');
+        $this->db->join('suppliers b', 'a.supplier_id = b.id');
+        $this->db->join('purchase_requests c', 'a.request_no = c.request_no and a.item_rm_id = c.item_rm_id', 'left');
+        $this->db->join('item_rm d', 'a.item_rm_id = d.id');
+        $this->db->join('item_rm ia', "TRIM(LEADING '+' FROM d.number) = ia.number");
+        $this->db->join('item_familys e', 'd.item_family_id = e.id');
+        $this->db->join('supplier_items f', 'a.supplier_id = f.supplier_id and ia.id = f.item_rm_id and a.plant = f.plant', 'left');
+        $this->db->join('generate_mrp_finals g', 'a.p_month = g.p_month and a.p_year = g.p_year and a.revision = g.revision and a.item_rm_id = g.item_rm_id and a.supplier_id = g.supplier_id', 'left');
+        $this->db->join('purchase_requests h', 'a.request_no = h.request_no', 'left');
+        // $this->db->join('hsn i', "d.hsn_code = i.number", 'left');
+        $this->db->where('a.type', 'NPD');
+        $this->db->where('a.po_no', $po_no);
+        if($revision != ""){
+            $this->db->where('a.revision', $revision);
+        }
+        $this->db->like('a.item_rm_id', $filter_item_rm);
+        $this->db->group_by('a.item_rm_id');
+        $this->db->order_by('d.number');
+        //Total Data
+        $totalRows = $this->db->count_all_results('', false);
+        //Get Data Array
+        $records = $this->db->get()->result_array();
+
+        $data = array();
+        $total_qty = 0;
+        $total_amount = 0;
+        foreach ($records as $record) {
+            $total_qty += $record['qty'];
+            $total_amount += $record['total'];
+            array_push($data, $record);
+        }
+
+        //Mapping Data
+        $result['total'] = $totalRows;
+        $result = array_merge($result, [
+            'rows' => $data,
+            'footer' => array([
+                "item_rm_id" => "Grand Total",
+                "qty" => $total_qty,
+                "price" => 0,
+                "sync" => 0,
+                "total" => $total_amount,
+            ])
+        ]);
+        echo json_encode($result);
+    }
+
+    public function purchaseOrderNo($supplier_no, $plant = ""){
+        // $datenow = date("Y-m-d");
+        // $sql_menu = $this->db->query("SELECT * FROM menus_no WHERE menus_id = '$id_menu' and `status` = '0' and `start_date` <= '$datenow' and end_date >= '$datenow'");
+        // $row_menu = $sql_menu->row();
+
+        // if(@$row_menu->number == ""){
+        //     //
+        // }else{
+            // $number = @$row_menu->number;
+            // $yearnow = date("y", strtotime($row_menu->start_date));
+            // $yearend = date("y", strtotime($row_menu->end_date));
+            $period = date("Ym");
+
+            $whereDate = "NPD-".$plant."-".$supplier_no."-".$period;
+
+            $sqlGetID	= $this->db->query("SELECT max(po_no) as kode FROM purchase_orders WHERE po_no like '%$whereDate%'");
+            $rowID = $sqlGetID->row();
+            $kode = $rowID->kode;
+            
+            if ($kode == NULL) {
+                $autoID = sprintf("%02s", $kode + 1);
+                $autoNo = $whereDate.$autoID;
+            } else {
+                $urutan = (int) substr($kode, -2);
+                $urutan++;
+                $autoID	= sprintf("%02s", $urutan);
+                $autoNo = $whereDate.$autoID;
+            }
+
+            // if($add == ""){
+                return $autoNo;
+            // }else{
+            //     die(json_encode(array("code" => $autoNo)));
+            // }
+        // }
+    }
+
+    public function getData()
+    {
+        if ($this->input->get()) {
+            //Filter Data
+            $request_no = base64_decode($this->input->get('request_no'));
+            $id_menu = $this->input->get('id_menu');
+
+            // $pr = $this->crud->read("purchase_requests", ["request_no" => $request_no]);
+            // $this->crud->delete("purchase_orders", ["request_no" => $request_no]);
+
+            //Select Query
+            $this->db->select('a.*, b.number as pfm_number, c.uom,
+                d.item_supplier, d.price, d.currency, d.leadtime,
+                f.name as supplier_name, f.number as supplier_no, e.item_rm_id as item_po, f.incoterm');
+            $this->db->from('purchase_requests a');
+            $this->db->join('item_familys b', 'a.item_family_id = b.id');
+            $this->db->join('item_rm c', 'a.item_rm_id = c.id');
+            $this->db->join('item_rm ia', "TRIM(LEADING '+' FROM c.number) = ia.number");
+            $this->db->join('supplier_items d', "ia.id = d.item_rm_id and a.supplier_id = d.supplier_id and a.plant = d.plant and d.share_order > 0", 'left');
+            $this->db->join("purchase_orders e", 'a.request_no = e.request_no and a.item_rm_id = e.item_rm_id', 'left');
+            $this->db->join('suppliers f', 'a.supplier_id = f.id');
+            $this->db->where("(a.approved_to = '' or a.approved_to is null)");
+            $this->db->where('a.request_no', $request_no);
+            $this->db->where('a.qty >', 0);
+            $this->db->where("e.item_rm_id is null");
+            $this->db->order_by('d.currency', 'asc');
+            $purchase_requests = $this->db->get()->result_array();
+
+            $arr = array();
+            $end_currency = "-";
+            $end_po_no = "";
+            foreach ($purchase_requests as $purchase_request) {
+                $date = $purchase_request['p_year'] . "-" . $purchase_request['p_month'] . "-01";
+                $item_rm_id = $purchase_request['item_rm_id'];
+                $leadtime = $purchase_request['leadtime'];
+                $revision = $purchase_request['revision'];
+                $plant = $purchase_request['plant'];
+
+                $m1 = date('mY', strtotime($date, strtotime($leadtime)));
+                $m11 = "m".date('n', strtotime($date, strtotime($leadtime)));
+                $m22 = "m".date('n', strtotime($date, strtotime('+1 month', strtotime($leadtime))));
+                $m33 = "m".date('n', strtotime($date, strtotime('+2 month', strtotime($leadtime))));
+                $rowPlant = $this->crud->read("plants", [], ["number" => $plant]);
+                $rowPlantAddress = $this->crud->read("plant_address", [], ["number" => $plant, "default" => "YES"]);
+
+                $qmps1 = $this->db->query("SELECT prod_plan_1, prod_plan_2, prod_plan_3 FROM mrp_ltpp WHERE CONCAT(p_month, p_year) = '$m1' and item_rm_id = '$item_rm_id' and revision = '$revision' and plant='$plant'");
+                $rpms1 = $qmps1->row();
+
+                $forecast = $this->forecast($item_rm_id, $purchase_request['p_month'], $purchase_request['p_year'], @$revision);
+
+                if(@$rpms1->qty > 0){
+                    $prod1 = @$rpms1->prod_plan_1;
+                }else{
+                    $prod1 = @$forecast->$m11;
+                }
+
+                if(@$rpms2->qty > 0){
+                    $prod2 = @$rpms1->prod_plan_2;
+                }else{
+                    $prod2 = @$forecast->$m22;
+                }
+
+                if(@$rpms3->qty > 0){
+                    $prod3 = @$rpms1->prod_plan_3;
+                }else{
+                    $prod3 = @$forecast->$m33;
+                }
+
+                $supplier_no = $purchase_request['supplier_no'];
+                $leadtime = $purchase_request['leadtime'];
+                $eta = date("Y-m-d", strtotime("+".$leadtime." days", strtotime($purchase_request['request_date'])));
+                $period = $purchase_request['p_month']."/".$purchase_request['p_year'];
+                $delivery_date = date("Y-m-d", strtotime("+".$leadtime." days"));
+
+                if($purchase_request['currency'] == $end_currency){
+                    $po_no = $end_po_no;
+                }else{
+                    $po_no = $this->purchaseOrderNo($supplier_no, $rowPlant->type);
+                }
+
+                $convert = $this->crud->read("convertions", [], ["item_rm_id" => $purchase_request['item_rm_id']]);
+                if(empty($convert->uom_po)){
+                    $uom = $purchase_request['uom'];
+                    $qty = $purchase_request['qty'];
+                    $total = ($purchase_request['qty'] * $purchase_request['price']);
+                }else{
+                    $uom = $convert->uom_soft;
+                    if($convert->type == "Divided"){
+                        $final = ($purchase_request['qty'] / $convert->convertion);
+                        $qty = (ceil($final / $convert->moq) * $convert->moq);
+                        $total = ($qty * $purchase_request['price']);
+                    }else{
+                        $final = ($purchase_request['qty'] * $convert->convertion);
+                        $qty = (ceil($final / $convert->moq) * $convert->moq);
+                        $total = ($qty * $purchase_request['price']);
+                    }
+                }
+
+                $arr[] = array(
+                    "supplier_id" => $purchase_request['supplier_id'],
+                    "item_rm_id" => $purchase_request['item_rm_id'],
+                    "plant" => $purchase_request['plant'],
+                    "p_month" => $purchase_request['p_month'],
+                    "p_year" => $purchase_request['p_year'],
+                    "revision" => $purchase_request['revision'],
+                    "request_no" => $request_no,
+                    "request_date" => $purchase_request['request_date'],
+                    "request_name" => $purchase_request['request_name'],
+                    "po_no" => $po_no,
+                    "po_date" => date("Y-m-d"),
+                    "po_name" => $this->session->name,
+                    "delivery_date" => $delivery_date,
+                    "uom" => $uom,
+                    "qty" => $qty,
+                    "price" => $purchase_request['price'],
+                    "total" => $total,
+                    "currency" => $purchase_request['currency'],
+                    "leadtime" => $purchase_request['leadtime'],
+                    "incoterm" => $purchase_request['incoterm'],
+                    "address" => @$rowPlantAddress->name,
+                    "month_1" => $prod1,
+                    "month_2" => $prod2,
+                    "month_3" => $prod3,
+                    "type" => "NPD"
+                );
+
+                $end_currency = $purchase_request['currency'];
+                $end_po_no = $po_no;
+            }
+
+            if(count($arr) > 0){
+                // $this->db->update("purchase_requests", ["create_po" => date("Y-m-d H:i:s"), "confirm" => 0, "confirm_date" => null], ["request_no" => $request_no]);
+                $this->db->update("purchase_requests", ["create_po" => date("Y-m-d H:i:s")], ["request_no" => $request_no]);
+            }
+
+            $arr['total'] = @count($arr);
+            die(json_encode($arr));
+        } else {
+            show_error("Cannot Process your request");
+        }
+    }
+
+    public function create()
+    {
+        if ($this->input->post()) {
+            $po_no = $this->input->post('po_no');
+            $po_date = $this->input->post('po_date');
+            $post = $this->input->post('data');
+
+            $records = $this->crud->reads('purchase_orders', [], [
+                "p_month" => $post['p_month'],
+                "p_year" => $post['p_year'],
+                "revision" => $post['revision'],
+                "revision" => $post['revision'],
+                "plant" => $post['plant'],
+                "item_rm_id" => $post['item_rm_id'],
+                "supplier_id" => $post['supplier_id']
+            ]);
+
+            if (count($records) > 0) {
+                $send = $this->db->update('purchase_orders', [
+                    "qty" => $post['qty'],
+                    "price" => $post['price'],
+                    "total" => $post['total'],
+                    "currency" => $post['currency'],
+                    "month_1" => $post['month_1'],
+                    "month_2" => $post['month_2'],
+                    "month_3" => $post['month_3']
+                ],[
+                    "p_month" => $post['p_month'],
+                    "p_year" => $post['p_year'],
+                    "revision" => $post['revision'],
+                    "plant" => $post['plant'],
+                    "item_rm_id" => $post['item_rm_id'],
+                    "supplier_id" => $post['supplier_id']
+                ]);
+
+                echo $send;
+            } else {
+                $postFinal = array(
+                    "supplier_id" => $post['supplier_id'],
+                    "item_rm_id" => $post['item_rm_id'],
+                    "plant" => $post['plant'],
+                    "p_month" => $post['p_month'],
+                    "p_year" => $post['p_year'],
+                    "revision" => $post['revision'],
+                    "request_date" => $post['request_date'],
+                    "request_name" => $post['request_name'],
+                    "po_no" => $po_no,
+                    "po_date" => $po_date,
+                    "delivery_date" => date("Y-m-d", strtotime("+".$post['leadtime']." day", strtotime($po_date))),
+                    "uom" => $post['uom'],
+                    "qty" => $post['qty'],
+                    "price" => $post['price'],
+                    "total" => $post['total'],
+                    "currency" => $post['currency'],
+                    "leadtime" => $post['leadtime'],
+                    "month_1" => $post['month_1'],
+                    "month_2" => $post['month_2'],
+                    "month_3" => $post['month_3'],
+                );
+
+                $this->db->update('generate_mrp_finals', ["status" => 1], ["p_month" => $post['p_month'], "p_year" => $post['p_year'], "revision" => $post['revision'], "plant" => $post['plant'], "item_rm_id" => $post['item_rm_id'], "supplier_id" => $post['supplier_id']]);
+                $send = $this->crud->create('purchase_orders', $postFinal);
+                // $this->db->update('purchase_orders', ["approved_to" => ""], ["po_no" => $po_no, "item_rm_id" => $post['item_rm_id']]);
+                echo $send;
+            }
+        }
+    }
+
+    public function create2()
+    {
+        if ($this->input->post('data')) {
+            $post = $this->input->post('data');
+
+            $records = $this->crud->reads('purchase_orders', [], [
+                "p_month" => $post['p_month'],
+                "p_year" => $post['p_year'],
+                "revision" => $post['revision'],
+                "plant" => $post['plant'],
+                "request_no" => $post['request_no'],
+                "item_rm_id" => $post['item_rm_id'],
+                "supplier_id" => $post['supplier_id']
+            ]);
+
+            if (count($records) > 0) {
+                $send = $this->db->update('purchase_orders', [
+                    "qty" => $post['qty'],
+                    "price" => $post['price'],
+                    "total" => $post['total'],
+                    "currency" => $post['currency'],
+                    "month_1" => $post['month_1'],
+                    "month_2" => $post['month_2'],
+                    "month_3" => $post['month_3']
+                ],[
+                    "p_month" => $post['p_month'],
+                    "p_year" => $post['p_year'],
+                    "revision" => $post['revision'],
+                    "plant" => $post['plant'],
+                    "request_no" => $post['request_no'],
+                    "item_rm_id" => $post['item_rm_id'],
+                    "supplier_id" => $post['supplier_id']
+                ]);
+
+                echo $send;
+            } else {
+                $postFinal = array(
+                    "supplier_id" => $post['supplier_id'],
+                    "item_rm_id" => $post['item_rm_id'],
+                    "plant" => $post['plant'],
+                    "p_month" => $post['p_month'],
+                    "p_year" => $post['p_year'],
+                    "revision" => $post['revision'],
+                    "request_no" => $post['request_no'],
+                    "request_date" => $post['request_date'],
+                    "request_name" => $post['request_name'],
+                    "po_no" => $post['po_no'],
+                    "po_date" => $post['po_date'],
+                    "po_name" => $post['po_name'],
+                    "delivery_date" => date("Y-m-d", strtotime("+".$post['leadtime']." day", strtotime($post['po_date']))),
+                    "uom" => $post['uom'],
+                    "qty" => $post['qty'],
+                    "price" => $post['price'],
+                    "total" => $post['total'],
+                    "currency" => $post['currency'],
+                    "leadtime" => $post['leadtime'],
+                    "incoterms" => $post['incoterm'],
+                    "address" => $post['address'],
+                    "month_1" => $post['month_1'],
+                    "month_2" => $post['month_2'],
+                    "month_3" => $post['month_3'],
+                    "type" => $post['type'],
+                );
+
+                
+                $this->db->update('generate_mrp_finals', ["status" => 1], ["p_month" => $post['p_month'], "p_year" => $post['p_year'], "revision" => $post['revision'], "item_rm_id" => $post['item_rm_id'], "supplier_id" => $post['supplier_id']]);
+                $send = $this->crud->create('purchase_orders', $postFinal);
+                echo $send;
+            }
+        }
+    }
+
+    // public function updateConfirm(){
+    //     if ($this->input->post()) {
+    //         $request_no = $this->input->post('request_no');
+    //         $this->db->update('purchase_requests', ["confirm" => 1, "confirm_date" => date("Y-m-d H:i:s")], ["request_no" => $request_no]);
+            
+    //         echo json_encode(array("message" => "success"));
+    //     }
+    // }
+
+    public function completeMail(){
+        if ($this->input->post()) {
+            $po_no = $this->input->post('po_no');
+            $email_date = $this->input->post('email_date');
+            
+            $this->db->update('purchase_orders', ["email_status" => "SENT", "email_date" => $email_date], ["po_no" => $po_no]);
+            
+            echo json_encode(array("message" => "Complete Mail Success"));
+        }
+    }
+
+    public function syncPrice(){
+        if ($this->input->post()) {
+            $id = $this->input->post('id');
+            $data = $this->crud->read("purchase_orders", [], ["id" => $id]);
+            $po_no = @$data->po_no;
+            $maxRev = $this->crud->query("SELECT max(rev) as rev FROM purchase_orders WHERE po_no = '$po_no'");
+
+            $sync_date = date("Y-m-d H:i:s");
+            $sync_by = $this->session->username;
+
+            $this->db->select('a.price, a.currency');
+            $this->db->from('supplier_items a');
+            $this->db->where('a.supplier_id', $data->supplier_id);
+            $this->db->where('a.item_rm_id', $data->item_rm_id);
+            $supplier_item = $this->db->get()->row();
+
+            if(!empty($supplier_item)){
+                $total = ($data->qty * $supplier_item->price);
+                $update = $this->db->update('purchase_orders', ["price" => $supplier_item->price, "currency" => $supplier_item->currency, "total" => $total, "rev" => (@$maxRev->rev + 1), "sync_date" => $sync_date, "sync_by" => $sync_by], ["id" => $id]);
+                if($update){
+                    echo json_encode(array("title" => "Good Job", "message" => $data->item_rm_id . " | Sync Price Successfully", "theme" => "success"));
+                } else {
+                    echo json_encode(array("title" => "Error", "message" => $data->item_rm_id . " | Sync Price Failed", "theme" => "error"));
+                }
+            }else{
+                echo json_encode(array("title" => "Error", "message" => "Valid Date not match", "theme" => "error"));
+            }
+        }
+    }
+
+    public function pushData(){
+        if ($this->input->post()) {
+            $this->export = $this->load->database('export', TRUE);
+
+            $post = $this->input->post('data');
+
+            $this->export->select('a.item_id, b.um_name');
+            $this->export->from("mst_item a");
+            $this->export->join('r_unit_measure b', 'a.um_id = b.um_id', 'left');
+            $this->export->where("item_id", $post['item_rm_number']);
+            $mst_item = $this->export->get()->row();
+
+            // $this->dummy->select('*');
+            // $this->dummy->from("poc");
+            // $this->dummy->where("poc_id", $post['po_no']);
+            // $this->dummy->where("item_id", $post['item_rm_number']);
+            // $poc = $this->dummy->get()->row();
+
+            // $gpai = $this->crudSupplier($post['supplier_no']);
+            // $supplier = $gpai['data'];
+
+
+
+            $convert = $this->crud->read("convertions", [], ["item_rm_id" => $post['item_rm_id']]);
+            if(empty($convert->uom_po)){
+                $qty = $post['qty'];
+            }else{
+                if(strtoupper($post['uom']) == strtoupper(@$mst_item->um_name)){
+                    $qty = $post['qty'];
+                }else{
+                    if($convert->type == "Divided"){
+                        $qty = ($post['qty'] * $convert->convertion);
+                    }else{
+                        $qty = ($post['qty'] / $convert->convertion);
+                    }
+                }
+            }
+
+            $postFinal = array(
+                "poc_id" => $post['po_no'],
+                "ven_id" => $post['alias'],
+                "poc_date" => $post['po_date'],
+                "poc_emp" => $this->session->name,
+                "item_id" => $post['item_rm_number'],
+                "poc_reqdate" => date("Y-m-d"),
+                "poc_reqqty" => $qty,
+                "currency" => $post['currency'],
+                "periode" => date("Ym"),
+                "etd_date" => $post['delivery_date'],
+                "poc_remark" => $post['reason'],
+                "poc_status_order" => "REGULAR",
+            );
+
+            // if($poc){poc
+            //     $this->dummy->where("poc_id", $post['po_no']);
+            //     $this->dummy->where("item_id", $post['item_rm_number']);
+            //     if ($this->dummy->update('poc', ["poc_reqqty" => $post['qty']])) {
+            //         echo json_encode(array("title" => "Good Job", "message" => $post['item_rm_number'] . " | Data Update Successfully", "theme" => "success"));
+            //     } else {
+            //         echo json_encode(array("title" => "Error", "message" => $post['item_rm_number'] . " | Data Unsaved", "theme" => "error"));
+            //     }
+            // }else{
+            //     if ($this->dummy->insert('poc', $postFinal)) {
+            //         echo json_encode(array("title" => "Good Job", "message" => $post['item_rm_number'] . " | Data Saved Successfully", "theme" => "success"));
+            //     } else {
+            //         echo json_encode(array("title" => "Error", "message" => $post['item_rm_number'] . " | Data Unsaved", "theme" => "error"));
+            //     }
+            // }
+
+            $send = $this->mrp_push->push_purchase_orders($postFinal);
+
+            $this->db->where("item_rm_id", $post['item_rm_id']);
+            $this->db->where("po_no", $post['po_no']);
+            $this->db->update('purchase_orders', ["push_date" => date("Y-m-d H:i:s"), "push" => "OK"]);
+            
+            die(json_encode($send));
+            if($send){
+                echo json_encode(array("title" => "Good Job", "message" => $post['item_rm_number'] . " | Data Update Successfully", "theme" => "success"));
+            }else{
+                echo json_encode(array("title" => "Error", "message" => $post['item_rm_number'] . " | Data Unsaved", "theme" => "error"));
+            }
+        }
+    }
+
+    public function updateDetails(){
+        if ($this->input->post()) {
+            $id = base64_decode($this->input->get('id'));
+
+            $post = $this->input->post();
+            $total = round($post['qty'] * $post['price'], 4);
+            $databf = $this->crud->read("purchase_orders", [], ["id" => $id]);
+
+            $po_no = @$databf->po_no;
+            $maxRev = $this->crud->query("SELECT max(rev) as rev FROM purchase_orders WHERE po_no = '$po_no'");
+
+            $send = $this->db->update('purchase_orders', [
+                    "po_no" => $post['po_no'], 
+                    "supplier_id" => $post['supplier_id'], 
+                    "qty" => $post['qty'], 
+                    "price" => $post['price'], 
+                    "currency" => $post['currency'], 
+                    "total" => $total, 
+                    "remarks" => $post['remarks'],
+                    "status_edit" => 1,
+                    "rev" => (@$maxRev->rev + 1),
+                    "log" => json_encode(["qty" => $databf->qty, "total" => $databf->total, "revision" => $databf->revision, "log" => $databf->log, "remarks" => $databf->remarks])
+                ], ["id" => $id]
+            );
+
+            if($send){
+                echo json_encode(array("title" => "Good Job", "message" => "Update data Successfully", "theme" => "success"));
+            }else{
+                echo json_encode(array("title" => "Failed", "message" => "Update data Failed", "theme" => "error"));
+            }
+        } else {
+            show_error("Cannot Process your request");
+        }
+    }
+
+    public function updateNote(){
+        if ($this->input->post()) {
+            $po_no = $this->input->post('po_no');
+            $note = $this->input->post('note');
+
+            $send = $this->db->update('purchase_orders', [
+                "note" => $note
+            ], ["po_no" => $po_no]);
+
+            if($send){
+                echo json_encode(array("title" => "Good Job", "message" => "Update Note Successfully", "theme" => "success"));
+            }else{
+                echo json_encode(array("title" => "Failed", "message" => "Update Note Failed", "theme" => "error"));
+            }
+        }
+    }
+
+    public function updateTerms()
+    {
+        if ($this->input->post()) {
+            $post = $this->input->post();
+            $send = $this->db->update('purchase_orders', ["terms" => $post['terms']], ["po_no" => $post['po_no']]);
+            echo json_encode(array("title" => "Good Job", "message" => "Update Temrs & Conditions Successfully", "theme" => "success"));
+        } else {
+            show_error("Cannot Process your request");
+        }
+    }
+
+    public function updateData()
+    {
+        if ($this->input->post()) {
+            $post = $this->input->post();
+            $send = $this->db->update('purchase_orders', $post, ["po_no" => $post['po_no']]);
+            echo json_encode(array("title" => "Good Job", "message" => "Update Data Successfully", "theme" => "success"));
+        } else {
+            show_error("Cannot Process your request");
+        }
+    }
+
+    public function updatePrice(){
+        if ($this->input->post()) {
+            $id = $this->input->post('id');
+            $price = $this->input->post('price');
+            $price_old = $this->input->post('price_old');
+
+            $sync_date = date("Y-m-d H:i:s");
+            $sync_by = $this->session->username;
+
+            $po = $this->crud->read("purchase_orders", [], ["id" => $id]);
+            $total = ($po->qty * $price);
+
+            $send = $this->db->update('purchase_orders', [
+                "sync_by" => $sync_by,
+                "sync_date" => $sync_date,
+                "price_old" => $price_old,
+                "price" => $price,
+                "total" => $total,
+            ], ["id" => $id]);
+
+            if($send){
+                echo json_encode(array("title" => "Good Job", "message" => "Sync Price Successfully", "theme" => "success"));
+            }else{
+                echo json_encode(array("title" => "Failed", "message" => "Sync Price Failed", "theme" => "error"));
+            }
+        }
+    }
+
+    public function updateStatus(){
+        if ($this->input->post()) {
+            $id = $this->input->post('id');
+            $status = $this->input->post('status');
+
+            if($status == "0"){
+                $status_f = 1;
+            }else{
+                $status_f = 0;
+            }
+
+            $send = $this->db->update('purchase_orders', [
+                "status" => $status_f,
+                "complete" => $status_f,
+            ], ["id" => $id]);
+
+            if($send){
+                echo json_encode(array("title" => "Good Job", "message" => "Update Status Successfully", "theme" => "success"));
+            }else{
+                echo json_encode(array("title" => "Failed", "message" => "Update Status Failed", "theme" => "error"));
+            }
+        }
+    }
+
+    public function delete()
+    {
+        $data = $this->input->post();
+        
+        $reads = $this->crud->reads('purchase_orders', ["po_no" => $data['po_no']]);
+        foreach ($reads as $read) {
+            $this->db->update('generate_mrp_finals', ["status" => 0], [
+                "p_month" => $read->p_month, 
+                "p_year" => $read->p_year, 
+                "revision" => $read->revision, 
+                "item_rm_id" => $read->item_rm_id, 
+                "supplier_id" => $read->supplier_id, 
+            ]);
+        }
+        
+        $this->db->update("purchase_requests", ["confirm" => 1], ["request_no" => @$reads[0]->request_no]);
+        $send = $this->crud->delete('purchase_orders', ["po_no" => $data['po_no']]);
+        $this->db->delete('delivery_schedule_days', ["po_no" => $data['po_no']]);
+        $this->db->delete('delivery_schedules', ["po_no" => $data['po_no']]);
+        echo $send;
+    }
+
+    public function upload()
+    {
+        error_reporting(0);
+        require_once 'assets/vendors/excel_reader2.php';
+        $target = basename($_FILES['file_upload']['name']);
+        move_uploaded_file($_FILES['file_upload']['tmp_name'], $target);
+        chmod($_FILES['file_upload']['name'], 0777);
+        $file = $_FILES['file_upload']['name'];
+        $data = new Spreadsheet_Excel_Reader($file, false);
+        $total_row = $data->rowcount($sheet_index = 0);
+
+        for ($i = 3; $i <= $total_row; $i++) {
+            $datas[] = array(
+                'po_no' => $data->val($i, 2),
+                'po_date' => $data->val($i, 3),
+                'po_name' => $data->val($i, 4),
+                'supplier_id' => $data->val($i, 5),
+                'item_rm_id' => $data->val($i, 6),
+                'delivery_date' => $data->val($i, 7),
+                'qty' => $data->val($i, 8),
+                'month_1' => $data->val($i, 9),
+                'month_2' => $data->val($i, 10),
+                'month_3' => $data->val($i, 11),
+                'remarks' => $data->val($i, 12)
+            );
+        }
+
+        $datas['total'] = count($datas);
+        echo json_encode($datas);
+
+        unlink($_FILES['file_upload']['name']);
+    }
+
+    public function uploadclearFailed()
+    {
+        @unlink('failed/purchase_orders.txt');
+    }
+    public function uploadcreateFailed()
+    {
+        if ($this->input->post()) {
+            $message = $this->input->post('message');
+            $textFailed = fopen('failed/purchase_orders.txt', 'a');
+            fwrite($textFailed, $message . "\n");
+            fclose($textFailed);
+        }
+    }
+    //UPLOAD DOWNLOAD FAILED
+    public function uploadDownloadFailed()
+    {
+        $file = "failed/purchase_orders.txt";
+        header('Content-Description: File Failed');
+        header('Content-Disposition: attachment; filename=' . basename($file));
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+        header('Content-Length: ' . @filesize($file));
+        header("Content-Type: text/plain");
+        @readfile($file);
+    }
+
+    public function uploadcreate()
+    {
+        if ($this->input->post()) {
+            $post = $this->input->post('data');
+
+            $item_rm = $this->crud->read("item_rm", [], ["id" => $post['item_rm_id']]);
+            $supplier = $this->crud->read("suppliers", [], ["id" => $post['supplier_id']]);
+            $supplier_items = $this->crud->read("supplier_items", [], ["item_rm_id" => $post['item_rm_id'], "supplier_id" => $post['supplier_id']]);
+            $purchase_orders = $this->crud->read("purchase_orders", [], ["item_rm_id" => $post['item_rm_id'], "po_no" => $post['po_no'], "supplier_id" => $post['supplier_id']]);
+
+            if(empty($item_rm)){
+                echo json_encode(array("title" => "Not Found", "message" => "Part No ".$post['item_rm_id']." Not Found in Master Items", "theme" => "error"));
+            }elseif(empty($supplier)){
+                echo json_encode(array("title" => "Not Found", "message" => "Vendor ID ".$post['supplier_id']." Not Found in Master Vendors", "theme" => "error"));
+            }elseif(empty($supplier_items)){
+                echo json_encode(array("title" => "Not Found", "message" => "Vendor and Item Not Found in Vendor Items", "theme" => "error"));
+            }elseif($supplier_items->approved_to != ""){
+                echo json_encode(array("title" => "Not Approved", "message" => "Part No ".$post['item_rm_id']." in Vendor Item Not Approved", "theme" => "error"));
+            }elseif(!empty($purchase_orders)){
+                echo json_encode(array("title" => "Duplicate", "message" => "Part No ".$post['item_rm_id']." in PO ".$post['po_no']." is Duplicate", "theme" => "error"));
+            }else{
+                $postFinal = array_merge($post, array(
+                    "p_month" => date("m", strtotime($post['po_date'])),
+                    "p_year" => date("Y", strtotime($post['po_date'])),
+                    "uom" => $item_rm->uom,
+                    "price" => $supplier_items->price,
+                    "total" => ($post['qty'] * $supplier_items->price),
+                    "currency" => $supplier_items->currency,
+                    "leadtime" => $supplier_items->leadtime,
+                    "remarks" => $post['remarks']
+                ));
+
+                $send = $this->crud->create('purchase_orders', $postFinal);
+                echo $send;
+            }
+        }
+    }
+
+    public function print_po($po_no, $export = "")
+    {
+        $purchase_orders_total = $this->crud->reads('purchase_orders', [], ["po_no" => base64_decode($po_no)]);
+        $purchase_orders = $this->crud->read('purchase_orders', [], ["po_no" => base64_decode($po_no)], "", "revision", "desc");
+        $supplier = $this->crud->read('suppliers', [], ["id" => @$purchase_orders->supplier_id]);
+        $approval = $this->crud->read('approvals', [], ["table_name" => "purchase_orders"]);
+
+        $user_3 = $this->crud->read('users', [], ["username" => $approval->user_approval_2]);
+        $user_4 = $this->crud->read('users', [], ["username" => $approval->user_approval_3]);
+        
+        $qr_user_3 = "";
+        $qr_user_4 = "";
+        
+        if($purchase_orders->approved == 3){
+            $qr_user_3 = "src='" .base_url('assets/image/qrcode/' . @$user_3->name . '.png')."'";
+        }elseif($purchase_orders->approved == 4){
+            $qr_user_3 = "src='" .base_url('assets/image/qrcode/' . @$user_3->name . '.png')."'";
+            $qr_user_4 = "src='" .base_url('assets/image/qrcode/' . @$user_4->name . '.png')."'";
+        }
+
+        // $month_1 =  date('M Y', strtotime('+1 month', strtotime(@$purchase_orders->po_date)));
+        // $month_2 =  date('M Y', strtotime('+2 month', strtotime(@$purchase_orders->po_date)));
+        // $month_3 =  date('M Y', strtotime('+3 month', strtotime(@$purchase_orders->po_date)));
+
+        $config_iso = $this->db->get('config_iso')->row();
+        $config = $this->db->get('config')->row();
+
+        //Config Page
+        $rows = 20;
+        $page = ceil(count($purchase_orders_total) / $rows);
+        //Generate QRcode
+        $this->createQrcode($purchase_orders->po_no, "assets/image/qrcode/");
+
+        $this->createQrcode(@$user_3->name, "assets/image/qrcode/");
+        $this->createQrcode(@$user_4->name, "assets/image/qrcode/");
+
+        if($export == ""){
+            $media = "@media screen {
+                            .print {
+                                display: none !important;
+                            }
+                        }
+                        @media print {
+                            .noprint {
+                                display: none !important;
+                            }
+                        }";
+            $media2 = ' <div style="margin:20%;" class="noprint">
+                            <center>
+                                <h1>Press CTRL + P for Print</h1>
+                            </center>
+                        </div>';
+        }else{
+            $media = ".print {
+                        zoom: 0.5;
+                    }";
+            $media2 = "";
+        }
+
+        $html = '<html>
+                    <head>
+                        <title>' . $purchase_orders->po_no . '</title>
+                        <link rel="icon" href="' . $config->favicon . '" type="image/png" sizes="16x16">
+                    </head>
+                    <style>
+                        body {
+                            font-family: Arial, Helvetica, sans-serif;
+                        }
+                        .customers {
+                            border-collapse: collapse;
+                            font-size: 11px;
+                        }
+                        .customers td, .customers th {
+                            border: 1px solid black;padding: 2px;
+                        }
+                        .customers th {
+                            padding-top: 2px;
+                            padding-bottom: 2px;
+                            text-align: center;color: black;
+                        }
+                        '.$media.'
+                    </style>
+                    <body>
+                        '.$media2.'
+                        <div class="print">';
+        //Loop Page
+        $no = 1;
+        $hal = 1;
+        $subtotal = 0;
+        for ($i = 0; $i < $page; $i++) {
+            $this->db->select('a.*,
+                b.number as item_rm_number, 
+                b.name as item_rm_name,
+                c.item_supplier,
+                d.type as maker_type,
+                d.name as maker_name');
+            $this->db->from('purchase_orders a');
+            $this->db->join('item_rm b', 'a.item_rm_id = b.id');
+            $this->db->join('item_rm ia', "TRIM(LEADING '+' FROM b.number) = ia.number");
+            $this->db->join('supplier_items c', "ia.id = c.item_rm_id and a.supplier_id = c.supplier_id and a.plant = c.plant", 'left');
+            $this->db->join('makers d', 'c.maker_id = d.id', 'left');
+            $this->db->where('a.po_no', base64_decode($po_no));
+            $this->db->where('a.qty >', 0);
+            $this->db->order_by('b.number', 'asc');
+            $this->db->limit(20, ($i * 20));
+            $records = $this->db->get()->result_array();
+
+            $plant_address = $this->crud->read("plant_address", [], ["number" => $purchase_orders->plant, "name" => $purchase_orders->address]);
+
+            if ($purchase_orders->updated_date != null) {
+                $revision_date = $purchase_orders->updated_date;
+            } else {
+                $revision_date = $purchase_orders->created_date;
+            }
+            $html .= '  <table style="width:100%;">
+                            <tr>
+                                <th width="10">
+                                    <img src="' . $config->favicon . '" width="40" />
+                                </th>
+                                <td width="300" style="padding:10px;">
+                                    <b style="font-size:14px;">' . $config->name . '</b><br>
+                                    <span style="font-size:10px;">' . $config->address . '</span><br>
+                                </td>
+                                <th width="100" style="text-align:right;">
+                                    <table style="width:100%; font-size:10px;">
+                                        <tr>
+                                            <td width="50" rowspan="4"><img src="' . base_url('assets/image/qrcode/' . $purchase_orders->po_no . '.png') . '" width="60"/></td>
+                                            <td width="60">Doc No</td>
+                                            <td width="5">:</td>
+                                            <td width="100">'.$config_iso->doc_purchase_order.'</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Form</td>
+                                            <td>:</td>
+                                            <td>'.$config_iso->form_purchase_order.'</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Print Date</td>
+                                            <td>:</td>
+                                            <td>' . date("Y-m-d H:i") . '</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Print By</td>
+                                            <td>:</td>
+                                            <td>' . $this->session->name . '</td>
+                                        </tr>
+                                    </table>
+                                </th>
+                            </tr>
+                        </table>
+                        <div style="border: 1px solid black; width:100%;">
+                            <div style="padding:10px;">
+                                <center>
+                                    <br>
+                                    <h3 style="margin:0;"><u>PURCHASE ORDER</u></h3>
+                                    <small>NO : ' . @$purchase_orders->po_no . '</small>
+                                </center>
+                                <br>
+                                <table style="width:100%; font-size:11px; margin-bottom:10px;">
+                                    <tr>
+                                        <td style="text-align:left; padding-right: 20px;" width="35%" rowspan="7">
+                                            Vendor:<br><b>' . @$supplier->name . '</b><br><br>
+                                            Attention:<br><b>' . @$supplier->contact_person . '</b><br><br>
+                                            Page:<br><b>' . $hal  . '</b> of <b> ' . $page . '</b>
+                                        </td>
+
+                                        <td style="text-align:left; padding-right: 20px;" width="25%" rowspan="7">
+                                            PO Date: <br><b>' . date("d F Y", strtotime($purchase_orders->po_date)) . '</b><br><br>
+                                            Revision/Date: <br><b>' . $purchase_orders->rev . ' / ' . date("d F Y", strtotime($revision_date)) . '</b><br><br>
+                                            Payment Terms: <br><b>' . @$supplier->payment_term . ' Days</b>
+                                        </td>
+
+                                        <td style="text-align:left; padding-right: 20px;" width="25%" rowspan="7">
+                                            Shipping Address: <br><b>' . @$plant_address->name . '</b><br><b>' . @$plant_address->address . '</b><br><br>
+                                            Incoterms: <br><b>' . @$purchase_orders->incoterms . '</b>
+                                        </td>
+                                    </tr>
+                                </table>
+                                <table class="customers" style="width:100%;">
+                                    <tr>
+                                        <th rowspan="2" style="text-align:center;">No</th>
+                                        <th rowspan="2" style="text-align:center;">Part No Original</th>
+                                        <th rowspan="2" style="text-align:center;">Part No BEI</th>
+                                        <th rowspan="2" style="text-align:center;">Part No Vendor</th>
+                                        <th rowspan="2" style="text-align:center;">Description</th>
+                                        <th rowspan="2" style="text-align:center;">Maker</th>
+                                        <th rowspan="2" style="text-align:center;">ETD</th>
+                                        <th rowspan="2" style="text-align:center;">ETA</th>
+                                        <th rowspan="2" style="text-align:center;">Qty</th>
+                                        <th rowspan="2" style="text-align:center;">Unit</th>
+                                        <th rowspan="2" style="text-align:center;">Unit<br>Price</th>
+                                        <th rowspan="2" style="text-align:center;">Currency</th>
+                                        <th rowspan="2" style="text-align:center;">Amount</th>
+                                        <th colspan="3" style="text-align:center;">Forecast</th>
+                                    </tr>
+                                    <tr>
+                                        <th style="text-align:center;">M1</th>
+                                        <th style="text-align:center;">M2</th>
+                                        <th style="text-align:center;">M3</th>
+                                    </tr>';
+            $row = 0;
+            foreach ($records as $record) {
+                $plant = $record['plant'];
+                $item_rm_id = $record['item_rm_id'];
+                $revision = $record['rev'];
+                $p_month = $record['p_month'];
+                $p_year = $record['p_year'];
+                $ending = date("Y-m-t", strtotime($record['p_year'] . "-" . $record['p_month'] . "-01"));
+                $leadtime = date('Y-m-01', strtotime('+'.$record['leadtime'].' days', strtotime($ending)));
+                
+                if(empty($record['etd'])){
+                    if($record['maker_type'] == "LOCAL"){
+                        $etd = date("Y-m-d", strtotime("-14 days", strtotime($record['delivery_date'])));
+                    }else{
+                        $etd = date("Y-m-d", strtotime("-21 days", strtotime($record['delivery_date'])));
+                    }
+                }else{
+                    $etd = $record['etd'];
+                }
+                
+                $m1 = date('mY', strtotime($leadtime));
+                $m2 = date('Y-m-01', strtotime('+1 month', strtotime($leadtime)));
+                $m3 = date('Y-m-01', strtotime('+2 month', strtotime($leadtime)));
+                $m11 = "m".date('n', strtotime($leadtime));
+                $m22 = "m".date('n', strtotime('+1 month', strtotime($leadtime)));
+                $m33 = "m".date('n', strtotime('+2 month', strtotime($leadtime)));
+
+                $qmps1 = $this->db->query("SELECT prod_plan_1, prod_plan_2, prod_plan_3 FROM mrp_ltpp WHERE CONCAT(p_month, p_year) = '$m1' and item_rm_id = '$item_rm_id' and revision = '$revision' and plant='$plant'");
+                $rpms1 = $qmps1->row();
+
+                // $forecast = $this->forecast($item_rm_id, $record['p_month'], $record['p_year'], @$revision);
+
+                // if(@$rpms1->qty > 0){
+                    $prod1 = @$rpms1->prod_plan_1;
+                // }else{
+                //     $prod1 = @$forecast->$m11;
+                // }
+
+                // if(@$rpms2->qty > 0){
+                    $prod2 = @$rpms1->prod_plan_2;
+                // }else{
+                //     $prod2 = @$forecast->$m22;
+                // }
+
+                // if(@$rpms3->qty > 0){
+                    $prod3 = @$rpms1->prod_plan_3;
+                // }else{
+                //     $prod3 = @$forecast->$m33;
+                // }
+
+                $subtotal += ($record['total']);
+                if ($record['currency'] == "USD") {
+                    $digits = 4;
+                } elseif ($record['currency'] == "JPY") {
+                    $digits = 4;
+                } else {
+                    $digits = 0;
+                }
+
+                if(!empty($record['reason'])){
+                    $styles = "background:#FFDD9E;";
+                }else{
+                    $styles = "";
+                }
+                
+                $html .= '  <tr style="'.$styles.'">
+                                <td  style="text-align:center;">' . $no . '</td>
+                                <td>' . $record['item_rm_id'] . '</td>
+                                <td>' . $record['item_rm_number'] . '</td>
+                                <td>' . $record['item_supplier'] . '</td>
+                                <td>' . $record['item_rm_name'] . '</td>
+                                <td>' . $record['maker_name'] . '</td>
+                                <td style="text-align:center;">' . $etd . '</td>
+                                <td style="text-align:center;">' . $record['delivery_date'] . '</td>
+                                <td style="text-align:right;">' . number_format($record['qty']) . '</td>
+                                <td style="text-align:center;">' . $record['uom'] . '</td>
+                                <td style="text-align:right;">' . number_format($record['price'], 4) . '</td>
+                                <td style="text-align:center;">' . $record['currency'] . '</td>
+                                <td style="text-align:right;">' . number_format($record['total'], 2) . '</td>
+                                <td style="text-align:right;">' . number_format($prod1) . '</td>
+                                <td style="text-align:right;">' . number_format($prod2) . '</td>
+                                <td style="text-align:right;">' . number_format($prod3) . '</td>
+                            </tr>';
+                $row++;
+                $no++;
+            }
+
+            if (($i + 1) == $page) {
+                $html .= '  <tr>
+                                <td style="vertical-align: top; text-align:left;" colspan="10" rowspan="5">
+                                    <b>Note :</b> <br>';
+                $html .= '      </td>
+                            </tr>
+                            <tr>
+                                <th style="text-align:left" colspan="2">Sub Total</th>
+                                <th style="text-align:right;">' . number_format($subtotal, 2) . '</th>
+                                <th style="text-align:left" colspan="3" rowspan="4"></th>
+                            </tr>
+                            <tr>
+                                <th style="text-align:left" colspan="2">VAT (' . @$supplier->vat . '%)</th>
+                                <th style="text-align:right;">' . number_format(round((@$subtotal * @$supplier->vat) / 100), 2) . '</th>
+                            </tr>
+                            <tr>
+                                <th style="text-align:left" colspan="2">Down Payment</th>
+                                <th style="text-align:right;">-</th>
+                            </tr>
+                            <tr>
+                                <th style="text-align:left" colspan="2">Total Amount</th>
+                                <th style="text-align:right;">' . number_format($subtotal + ((@$subtotal * @$supplier->vat) / 100), 2) . '</th>
+                            </tr>
+                        </table>';
+            } else {
+                $html .= '</table>';
+            }
+            
+            if (($i + 1) == $page) {
+                $html .= '  <div style="width:100%; display: grid; grid-template-columns: auto auto auto;">
+                                <div style="width:50%;">
+                                    <table style="margin-top:20px; font-size:12px;">
+                                        <tr>
+                                            <th width="200" style="text-align:center;">Vendor Approval</th>
+                                        </tr>
+                                        <tr>
+                                            <th style="height:80px;"></th>
+                                        </tr>
+                                        <tr>
+                                            <th style="height:20px; text-align:center;">(...................................)</th>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div style="width:50%; position: absolute; right: 50px;">
+                                    <table style="margin-top:20px; font-size:12px;">
+                                        <tr>
+                                            <th colspan="2" width="800" style="text-align:center;">Approved By</th>
+                                        </tr>
+                                        <tr>
+                                            <th style="height:80px;"><img '.$qr_user_3.' width="80"/></th>
+                                            <th style="height:80px;"><img '.$qr_user_4.' width="80"/></th>
+                                        </tr>
+                                        <tr>
+                                            <th style="height:20px; text-align:center;">'.@$user_3->name.'<br>'.@$user_3->position.'</th>
+                                            <th style="height:20px; text-align:center;">'.@$user_4->name.'<br>'.@$user_4->position.'</th>
+                                        </tr>
+                                    </table>
+                                    <br>
+                                    <i style="font-size:8px;">Electronic Auto Generating Approval No Need Signature</i>
+                                </div>
+                            </div>
+
+                        <br>
+                        <b style="font-size:12px;">Term & Condition</b>
+                        <br>
+                        <table style="width:100%; font-size:12px; margin-top:20px;">
+                            <tr>
+                                <td width="20">1.</td>
+                                <td>Please Acknowledge us in one week of time upon Receipt of PO <br>email to : marui.tatsuhiko@tb-banshu.com, procurement01@banshu-ind.com, procurement02@banshu-ind.com</td>
+                            </tr>
+                            <tr>
+                                <td width="20">2.</td>
+                                <td>We will buy the next month confirmed FC in this PO</td>
+                            </tr>
+                            <tr>
+                                <td width="20">3.</td>
+                                <td>The PO quantity and forecast quantity is as per our customer demand</td>
+                            </tr>
+                        </table><br>
+                        PLEASE PROCESS OUR PO FORECAST
+                    </div>
+                </div>';
+            }else{
+                $html .= "</div></div>";
+            }
+
+            if (($i + 1) != $page) {
+                $html .= '<div style="page-break-after:always;"></div>';
+            }
+            $hal++;
+
+            // <img '.$qr_user_4.' width="80"/>
+        }
+        
+        if($export == ""){
+            $html .= '<script>window.print()</script>';
+            die($html);
+        }else{
+            // Load HTML content
+            $this->dompdf_gen->loadHtml($html);
+
+            // (Optional) Set paper size and orientation
+            $this->dompdf_gen->setPaper('A4', 'potrait');
+
+            // Render the HTML as PDF
+            $this->dompdf_gen->render();
+
+            // Output the generated PDF (1 = download and 0 = preview)
+            // $this->dompdf_gen->stream("sample.pdf", array("Attachment" => 0));
+
+            $filePath = FCPATH . 'assets/po/'.base64_decode($po_no).'.pdf'; // FCPATH ensures the path is relative to the project root
+            $this->dompdf_gen->save($filePath);
+        }
+    }
+
+    public function print_delivery($po_no)
+    {
+        $po_no = base64_decode($po_no);
+        $purchase_order = $this->crud->read('purchase_orders', [], ["po_no" => $po_no], "", "revision", "desc");
+        $supplier = $this->crud->read('suppliers', [], ["id" => @$purchase_order->supplier_id]);
+
+        $filter_year = $purchase_order->p_year;
+        $filter_month = $purchase_order->p_month;
+        $revision = $purchase_order->revision;
+
+        $period_1 = date("F Y", strtotime($filter_year."-".$filter_month."-01"));
+        $period_2 = date("F Y",  strtotime("1 month", strtotime($filter_year."-".$filter_month."-01")));
+        $period_3 = date("F Y",  strtotime("2 month", strtotime($filter_year."-".$filter_month."-01")));
+        $period_4 = date("F Y",  strtotime("3 month", strtotime($filter_year."-".$filter_month."-01")));
+        $period_5 = date("F Y",  strtotime("4 month", strtotime($filter_year."-".$filter_month."-01")));
+        $period_6 = date("F Y",  strtotime("5 month", strtotime($filter_year."-".$filter_month."-01")));
+
+        $config = $this->db->get('config')->row();
+
+        $html = '<html>
+                    <head>
+                        <title>Schedule Delivery '.$po_no.'</title>
+                        <link rel="icon" href="' . base_url('assets/image/config/' . $config->favicon) . '" type="image/png" sizes="16x16">
+                    </head>
+                    <style>
+                        body {
+                            font-family: Arial, Helvetica, sans-serif;
+                        }
+                        #customers {
+                            border-collapse: collapse;width: 100%;
+                            font-size: 10px;
+                        }
+                        #customers td, #customers th {
+                            border: 1px solid black;padding: 2px;
+                        }
+                        #customers th {
+                            padding-top: 2px;
+                            padding-bottom: 2px;
+                            text-align: center;color: black;
+                        }
+                        @media screen {
+                            .print {
+                                display: none !important;
+                            }
+                        }
+                        @media print {
+                            .noprint {
+                                display: none !important;
+                            }
+                        }
+                    </style>
+                    <body>
+                        <div style="margin:20%;" class="noprint">
+                            <center>
+                                <h1>Press CTRL + P for Print</h1>
+                            </center>
+                        </div>
+                        <div class="print">';
+
+        $this->db->select('a.*, b.number as item_rm_number, b.name as item_rm_name, c.mpq, c.moq, c.leadtime, c.item_supplier');
+        $this->db->from('delivery_schedules a');
+        $this->db->join('item_rm b', 'a.item_rm_id = b.id');
+        $this->db->join('item_rm ia', "TRIM(LEADING '+' FROM b.number) = ia.number");
+        $this->db->join('supplier_items c', "ia.id = c.item_rm_id and a.supplier_id = c.supplier_id and a.plant = c.plant", 'left');
+        $this->db->where('a.po_no', $po_no);
+        $this->db->group_by('a.id');
+        $this->db->order_by('b.number');
+        $records = $this->db->get()->result_array();
+
+        $html .= '  <table style="width:100%;">
+                        <tr>
+                            <th width="10">
+                                <img src="' . $config->favicon . '" width="40" />
+                            </th>
+                            <td width="300" style="padding:10px;">
+                                <b style="font-size:14px;">' . $config->name . '</b><br>
+                                <span style="font-size:10px;">' . $config->address . '</span><br>
+                            </td>
+                            <td width="100" style="text-align:right;font-size:12px;">FRM-BEI-PRC-002</td>
+                        </tr>
+                    </table>
+                        <div style="padding:10px;">
+                            <center>
+                                <br>
+                                <h3 style="margin:0;"><u>SCHEDULE DELIVERY</u></h3>
+                                <small>NO : ' . @$po_no . '</small>
+                            </center>
+                            <table style="width:50%; font-size:12px; margin-bottom:10px;">
+                                <tr>
+                                    <td width="20">Period</td>
+                                    <td width="10">:</td>
+                                    <td width="100"><b>' . date("F Y", strtotime($purchase_order->p_year."-".$purchase_order->p_month."-01")) . '</b></td>
+                                </tr>
+                                <tr>
+                                    <td width="20">Revision</td>
+                                    <td width="10">:</td>
+                                    <td><b>' . $purchase_order->revision . '</b></td>
+                                </tr>
+                                <tr>
+                                    <td width="20">Vendor</td>
+                                    <td width="10">:</td>
+                                    <td><b>' . @$supplier->name . '</b></td>
+                                </tr>
+                            </table>
+                            <table id="customers">
+                                <tr>
+                                    <th rowspan="2" width="10" style="text-align:center;">No</th>
+                                    <th rowspan="2" width="100" style="text-align:center;">Part No BEI</th>
+                                    <th rowspan="2" width="100" style="text-align:center;">Part No Vendor</th>
+                                    <th rowspan="2" width="50" style="text-align:center;">Part Name</th>
+                                    <th rowspan="2" width="30" style="text-align:center;">LT</th>
+                                    <th rowspan="2" width="50" style="text-align:center;">MPQ</th>
+                                    <th rowspan="2" width="50" style="text-align:center;">MOQ</th>
+                                    <th rowspan="2" width="50" style="text-align:center;">Qty</th>
+                                    <th colspan="3" width="50" style="text-align:center;">'.$period_1.'</th>
+                                    <th colspan="3" width="50" style="text-align:center;">'.$period_2.'</th>
+                                    <th colspan="3" width="50" style="text-align:center;">'.$period_3.'</th>
+                                    <th colspan="3" width="50" style="text-align:center;">'.$period_4.'</th>
+                                    <th colspan="3" width="50" style="text-align:center;">'.$period_5.'</th>
+                                    <th colspan="3" width="50" style="text-align:center;">'.$period_6.'</th>
+                                    <th colspan="3" width="50" style="text-align:center;">> 6 Month</th>
+                                </tr>
+                                <tr>
+                                    <th width="50" style="text-align:center;">Qty</th>
+                                    <th width="50" style="text-align:center;">ETD</th>
+                                    <th width="50" style="text-align:center;">ETA</th>
+                                    <th width="50" style="text-align:center;">Qty</th>
+                                    <th width="50" style="text-align:center;">ETD</th>
+                                    <th width="50" style="text-align:center;">ETA</th>
+                                    <th width="50" style="text-align:center;">Qty</th>
+                                    <th width="50" style="text-align:center;">ETD</th>
+                                    <th width="50" style="text-align:center;">ETA</th>
+                                    <th width="50" style="text-align:center;">Qty</th>
+                                    <th width="50" style="text-align:center;">ETD</th>
+                                    <th width="50" style="text-align:center;">ETA</th>
+                                    <th width="50" style="text-align:center;">Qty</th>
+                                    <th width="50" style="text-align:center;">ETD</th>
+                                    <th width="50" style="text-align:center;">ETA</th>
+                                    <th width="50" style="text-align:center;">Qty</th>
+                                    <th width="50" style="text-align:center;">ETD</th>
+                                    <th width="50" style="text-align:center;">ETA</th>
+                                    <th width="50" style="text-align:center;">Qty</th>
+                                    <th width="50" style="text-align:center;">ETD</th>
+                                    <th width="50" style="text-align:center;">ETA</th>
+                                </tr>';
+        $no = 1;
+        foreach ($records as $record) {
+            if($record['delivey_date_1'] == "0000-00-00"){ $eta_1 = "-"; }else{ $eta_1 = $record['delivey_date_1']; }
+            if($record['delivey_date_2'] == "0000-00-00"){ $eta_2 = "-"; }else{ $eta_2 = $record['delivey_date_2']; }
+            if($record['delivey_date_3'] == "0000-00-00"){ $eta_3 = "-"; }else{ $eta_3 = $record['delivey_date_3']; }
+            if($record['delivey_date_4'] == "0000-00-00"){ $eta_4 = "-"; }else{ $eta_4 = $record['delivey_date_4']; }
+            if($record['delivey_date_5'] == "0000-00-00"){ $eta_5 = "-"; }else{ $eta_5 = $record['delivey_date_5']; }
+            if($record['delivey_date_6'] == "0000-00-00"){ $eta_6 = "-"; }else{ $eta_6 = $record['delivey_date_6']; }
+            if($record['delivey_date_7'] == "0000-00-00"){ $eta_7 = "-"; }else{ $eta_7 = $record['delivey_date_7']; }
+            if($record['etd_1'] == "0000-00-00"){ $etd_1 = "-"; }else{ $etd_1 = $record['etd_1']; }
+            if($record['etd_2'] == "0000-00-00"){ $etd_2 = "-"; }else{ $etd_2 = $record['etd_2']; }
+            if($record['etd_3'] == "0000-00-00"){ $etd_3 = "-"; }else{ $etd_3 = $record['etd_3']; }
+            if($record['etd_4'] == "0000-00-00"){ $etd_4 = "-"; }else{ $etd_4 = $record['etd_4']; }
+            if($record['etd_5'] == "0000-00-00"){ $etd_5 = "-"; }else{ $etd_5 = $record['etd_5']; }
+            if($record['etd_6'] == "0000-00-00"){ $etd_6 = "-"; }else{ $etd_6 = $record['etd_6']; }
+            if($record['etd_7'] == "0000-00-00"){ $etd_7 = "-"; }else{ $etd_7 = $record['etd_7']; }
+
+            $html .= '  <tr>
+                            <td  style="text-align:center;">' . $no . '</td>
+                            <td>' . $record['item_rm_number'] . '</td>
+                            <td>' . $record['item_supplier'] . '</td>
+                            <td>' . $record['item_rm_name'] . '</td>
+                            <td style="text-align:right;">' . number_format($record['leadtime']) . '</td>
+                            <td style="text-align:right;">' . number_format($record['mpq']) . '</td>
+                            <td style="text-align:right;">' . number_format($record['moq']) . '</td>
+                            <td style="text-align:right;">' . number_format($record['qty']) . '</td>
+                            <td style="text-align:right;">' . number_format($record['delivey_qty_1']) . '</td>
+                            <td style="text-align:center;">'.$etd_1.'</td>
+                            <td style="text-align:center;">'.$eta_1.'</td>
+                            <td style="text-align:right;">' . number_format($record['delivey_qty_2']) . '</td>
+                            <td style="text-align:center;">'.$etd_2.'</td>
+                            <td style="text-align:center;">'.$eta_2.'</td>
+                            <td style="text-align:right;">' . number_format($record['delivey_qty_3']) . '</td>
+                            <td style="text-align:center;">'.$etd_3.'</td>
+                            <td style="text-align:center;">'.$eta_3.'</td>
+                            <td style="text-align:right;">' . number_format($record['delivey_qty_4']) . '</td>
+                            <td style="text-align:center;">'.$etd_4.'</td>
+                            <td style="text-align:center;">'.$eta_4.'</td>
+                            <td style="text-align:right;">' . number_format($record['delivey_qty_5']) . '</td>
+                            <td style="text-align:center;">'.$etd_5.'</td>
+                            <td style="text-align:center;">'.$eta_5.'</td>
+                            <td style="text-align:right;">' . number_format($record['delivey_qty_6']) . '</td>
+                            <td style="text-align:center;">'.$etd_6.'</td>
+                            <td style="text-align:center;">'.$eta_6.'</td>
+                            <td style="text-align:right;">' . number_format($record['delivey_qty_7']) . '</td>
+                            <td style="text-align:center;">'.$etd_7.'</td>
+                            <td style="text-align:center;">'.$eta_7.'</td>
+                        </tr>';
+            $no++;
+        }
+        $html .= '</table>';
+        $html .= '<script>window.print()</script>';
+        die($html);
+    }
+
+    public function csv()
+    {
+        header("Content-type: text/csv; charset=utf-8");
+        header("Content-Disposition: attachment; filename=purchase_orders_" . time() . ".csv");
+        $output = fopen("php://output", "w");
+        fputcsv($output, array(
+            "Month", "Year", "Revision", "PR No", "PO No", "PO Date", "Part No Original", "Part No BEI", "Part No Vendor", "Part Name", "Product Family", "Vendor No",
+            "Vendor Name", "Vendor Type", "Maker Name", "Maker Type", "Qty", "ETD", "ETA", "Price", "Total", "Currency", "Uom", "Leadtime", "Created By", "Created Date"
+        ));
+
+        $this->db->select('a.*, b.name as item_rm_name, b.number as item_rm_number, c.number as supplier_no, 
+            c.name as supplier_name,
+            c.supplier_po,
+            c.type,
+            c.state,
+            d.name as item_family_name,
+            e.item_supplier,
+            f.type as maker_type,
+            f.name as maker_name');
+        $this->db->from('purchase_orders a');
+        $this->db->join('item_rm b', 'a.item_rm_id = b.id');
+        $this->db->join('suppliers c', 'a.supplier_id = c.id');
+        $this->db->join('item_familys d', 'b.item_family_id = d.id');
+        $this->db->join('supplier_items e', 'a.item_rm_id = e.item_rm_id and a.supplier_id = e.supplier_id and a.plant = e.plant');
+        $this->db->join('makers f', 'e.maker_id = f.id', 'left');
+        $this->db->group_by('a.id');
+        $this->db->where('a.type', 'NPD');
+        $this->db->order_by('c.name', 'asc');
+        $this->db->order_by('d.name', 'asc');
+        $this->db->order_by('b.number', 'asc');
+        $records = $this->db->get()->result_array();
+
+        $no = 1;
+        foreach ($records as $data) {
+            if($data['maker_type'] == "LOCAL"){
+                $etd = date("Y-m-d", strtotime("-14 days", strtotime($data['delivery_date'])));
+            }else{
+                $etd = date("Y-m-d", strtotime("-21 days", strtotime($data['delivery_date'])));
+            }
+
+            $data = array(
+                $data['p_month'],
+                $data['p_year'],
+                $data['revision'],
+                $data['request_no'],
+                $data['po_no'],
+                $data['po_date'],
+                $data['item_rm_id'],
+                $data['item_rm_number'],
+                $data['item_supplier'],
+                $data['item_rm_name'],
+                $data['item_family_name'],
+                $data['supplier_id'],
+                $data['supplier_name'],
+                $data['type'],
+                $data['maker_name'],
+                $data['maker_type'],
+                $data['qty'],
+                $etd,
+                $data['delivery_date'],
+                $data['price'],
+                $data['total'],
+                $data['currency'],
+                $data['uom'],
+                $data['leadtime'],
+                $data['created_by'],
+                $data['created_date']
+            );
+
+            fputcsv($output, $data);
+
+            $no++;
+        }
+    }
+
+    public function print($option = "")
+    {
+        if ($option == "excel") {
+            $format  = date("YmdHis");
+            header("Content-type: application/vnd-ms-excel");
+            header("Content-Disposition: attachment; filename=purchase_order_$format.xls");
+        }
+
+        //Config
+        $this->db->select('*');
+        $this->db->from('config');
+        $config = $this->db->get()->row();
+
+        $filter_month = base64_decode($this->input->get('filter_month'));
+        $filter_year = base64_decode($this->input->get('filter_year'));
+        $filter_revision = base64_decode($this->input->get('filter_revision'));
+        $filter_item_family = trim(base64_decode($this->input->get('filter_item_family')));
+        $filter_item_rm = trim(base64_decode($this->input->get('filter_item_rm')));
+        $filter_supplier = trim(base64_decode($this->input->get('filter_supplier')));
+        $filter_po = trim(base64_decode($this->input->get('filter_po')));
+        $filter_type = trim(base64_decode($this->input->get('filter_type')));
+        $filter_status = trim(base64_decode($this->input->get('filter_status')));
+
+        //Select Query
+        $this->db->select('a.*, b.name as item_rm_name, b.number as item_rm_number, c.number as supplier_no, 
+            c.name as supplier_name,
+            c.supplier_po,
+            c.type,
+            c.state,
+            d.name as item_family_name,
+            e.item_supplier,
+            f.type as maker_type,
+            f.name as maker_name');
+        $this->db->from('purchase_orders a');
+        $this->db->join('item_rm b', 'a.item_rm_id = b.id');
+        $this->db->join('suppliers c', 'a.supplier_id = c.id');
+        $this->db->join('item_familys d', 'b.item_family_id = d.id');
+        $this->db->join('supplier_items e', 'a.item_rm_id = e.item_rm_id and a.supplier_id = e.supplier_id and a.plant = e.plant');
+        $this->db->join('makers f', 'e.maker_id = f.id', 'left');
+        $this->db->group_by('a.id');
+        $this->db->where('a.type', 'NPD');
+        $this->db->like('a.p_month', $filter_month);
+        $this->db->like('a.p_year', $filter_year);
+        $this->db->like('a.revision', $filter_revision);
+        if($filter_item_family != ""){
+            $this->db->where('d.id', $filter_item_family);
+        }
+        if($filter_item_rm != ""){
+            $this->db->where('a.item_rm_id', $filter_item_rm);
+        }
+        if($filter_supplier != ""){
+            $this->db->where('a.supplier_id', $filter_supplier);
+        }
+        if($filter_po != ""){
+            $this->db->where('a.po_no', $filter_po);
+        }
+        if($filter_type != ""){
+            $this->db->where('c.type', $filter_type);
+        }
+        if($filter_status != ""){
+            $this->db->where('a.status', $filter_status);
+        }
+        $this->db->order_by('c.name', 'asc');
+        $this->db->order_by('d.name', 'asc');
+        $this->db->order_by('b.number', 'asc');
+        $records = $this->db->get()->result_array();
+
+        $html = '<html><head><title>Print Data</title></head><style>body {font-family: Arial, Helvetica, sans-serif;}#customers {border-collapse: collapse;width: 100%;font-size: 12px;}#customers td, #customers th {border: 1px solid #ddd;padding: 2px;}#customers tr:nth-child(even){background-color: #f2f2f2;}#customers tr:hover {background-color: #ddd;}#customers th {padding-top: 2px;padding-bottom: 2px;text-align: left;color: black;}</style><body>
+        <center>
+            <div style="float: left; font-size: 12px; text-align: left;">
+                <table style="width: 100%;">
+                    <tr>
+                        <td width="50" style="font-size: 12px; vertical-align: top; text-align: center; vertical-align:jus margin-right:10px;">
+                            <img src="' . $config->logo . '" width="30">
+                        </td>
+                        <td style="font-size: 14px; text-align: left; margin:2px;">
+                            <b>' . $config->name . '</b><br>
+                            <small>PURCHASE ORDER</small>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div style="float: right; font-size: 12px; text-align: right;">
+                Print Date ' . date("d M Y H:m:s") . ' <br>
+                Print By ' . $this->session->username . '  
+            </div>
+        </center>
+        <br><br><br>
+        <table style="font-size: 12px;">
+            <tr>
+                <td width="80">PERIOD</td>
+                <td width="20">:</td>
+                <td>' . $filter_month . '/' . $filter_year . '<td>
+            </tr>
+            <tr>
+                <td width="80">REVISION</td>
+                <td width="20">:</td>
+                <td>' . $filter_revision . '<td>
+            </tr>
+        </table>
+        
+        <table id="customers" border="1">
+            <tr>
+                <th width="20" style="text-align:center;">No</th>
+                <th style="text-align:center;">Approved</th>
+                <th style="text-align:center;">Approved By</th>
+                <th style="text-align:center;">Approved Date</th>
+                <th style="text-align:center;">PR No</th>
+                <th style="text-align:center;">PO No</th>
+                <th style="text-align:center;">PO Date</th>
+                <th style="text-align:center;">Part No Original</th>
+                <th style="text-align:center;">Part No BEI</th>
+                <th style="text-align:center;">Part No Vendor</th>
+                <th style="text-align:center;">Part Name</th>
+                <th style="text-align:center;">Product Family</th>
+                <th style="text-align:center;">Vendor No</th>
+                <th style="text-align:center;">Vendor Name</th>
+                <th style="text-align:center;">Vendor Type</th>
+                <th style="text-align:center;">Maker Name</th>
+                <th style="text-align:center;">Maker Type</th>
+                <th style="text-align:center;">Qty</th>
+                <th style="text-align:center;">ETD</th>
+                <th style="text-align:center;">ETA</th>
+                <th style="text-align:center;">Price</th>
+                <th style="text-align:center;">Total</th>
+                <th style="text-align:center;">Currency</th>
+                <th style="text-align:center;">Uom</th>
+                <th style="text-align:center;">Leadtime</th>
+                <th style="text-align:center;">Status</th>
+                <th style="text-align:center;">Created By</th>
+                <th style="text-align:center;">Created Date</th>
+            </tr>';
+
+        $no = 1;
+        foreach ($records as $data) {
+            if($data['status'] == "0"){
+                $status = "OPEN";
+            }else{
+                $status = "CLOSE";
+            }
+            
+            if($data['complete'] == 1){
+                $status = "COMPLETE";
+            }
+
+            if($data['approved_to'] == ""){
+                $approved = "APPROVED";
+            }else{
+                $approved = "CHECKING";
+            }
+
+            if($data['maker_type'] == "LOCAL"){
+                $etd = date("Y-m-d", strtotime("-14 days", strtotime($data['delivery_date'])));
+            }else{
+                $etd = date("Y-m-d", strtotime("-21 days", strtotime($data['delivery_date'])));
+            }
+
+            $html .= '  <tr>
+                            <td>' . $no . '</td>
+                            <td>' . $approved . '</td>
+                            <td>' . $data['approved_by'] . '</td>
+                            <td>' . $data['approved_date'] . '</td>
+                            <td>' . $data['request_no'] . '</td>
+                            <td>' . $data['po_no'] . '</td>
+                            <td>' . $data['po_date'] . '</td>
+                            <td style="mso-number-format:\@;">' . $data['item_rm_id'] . '</td>
+                            <td style="mso-number-format:\@;">' . $data['item_rm_number'] . '</td>
+                            <td style="mso-number-format:\@;">' . $data['item_supplier'] . '</td>
+                            <td>' . $data['item_rm_name'] . '</td>
+                            <td>' . $data['item_family_name'] . '</td>
+                            <td>' . $data['supplier_id'] . '</td>
+                            <td>' . $data['supplier_name'] . '</td>
+                            <td>' . $data['type'] . '</td>
+                            <td>' . $data['maker_name'] . '</td>
+                            <td>' . $data['maker_type'] . '</td>
+                            <td style="text-align:right;">' . $data['qty'] . '</td>
+                            <td style="text-align:center;">' . $etd . '</td>
+                            <td style="text-align:center;">' . $data['delivery_date'] . '</td>
+                            <td style="text-align:right; mso-number-format:0.0000;">' . $data['price'] . '</td>
+                            <td style="text-align:right; mso-number-format:0.0000;">' . $data['total'] . '</td>
+                            <td>' . $data['currency'] . '</td>
+                            <td>' . $data['uom'] . '</td>
+                            <td>' . $data['leadtime'] . '</td>
+                            <td>' . $status . '</td>
+                            <td>' . $data['created_by'] . '</td>
+                            <td>' . $data['created_date'] . '</td>
+                        </tr>';
+            $no++;
+        }
+
+        $html .= '</table></body></html>';
+        echo $html;
+    }
+
+    public function sendMail(){
+        $po_no = $this->input->post('po_no');
+        $status = $this->input->post('status');
+
+        if($status == "SENT"){
+            $this->db->where("po_no", $po_no);
+            $this->db->update('purchase_orders', ["email_date" => date("Y-m-d H:i:s"), "email_status" => "SENT"]);
+            echo json_encode(array("title" => "Successs", "message" => "Email Sending Successfully", "theme" => "success"));
+        }else{
+            $this->db->where("po_no", $po_no);
+            $this->db->update('purchase_orders', ["email_date" => null, "email_status" => "PENDING"]);
+            echo json_encode(array("title" => "Successs", "message" => "Email Cancel Successfully", "theme" => "success"));
+        }
+    }
+
+    public function sendConfirm(){
+        $po_no = $this->input->post('po_no');
+        $status = $this->input->post('status');
+
+        if($status == "YES"){
+            $this->db->where("po_no", $po_no);
+            $this->db->update('purchase_orders', ["confirm_date" => date("Y-m-d H:i:s"), "confirm" => $status]);
+            echo json_encode(array("title" => "Successs", "message" => "Confirm Successfully", "theme" => "success"));
+        }else{
+            $this->db->where("po_no", $po_no);
+            $this->db->update('purchase_orders', ["confirm_date" => null, "confirm" => $status]);
+            echo json_encode(array("title" => "Successs", "message" => "Unconfirm Successfully", "theme" => "success"));
+        }
+    }
+
+    // public function sendMail(){
+    //     error_reporting(0);
+    //     $post = $this->input->post();
+
+    //     $mail_to = explode(";", $post['mail_to']);
+    //     // $mail_to = "hilmanfadillah11@gmail.com";
+    //     $mail_cc = explode(";", $post['mail_cc']);
+    //     // $mail_cc = "aeconsys.dev@gmail.com";
+    //     $mail_format = $post['mail_format'];
+    //     $mail_po = $post['mail_po'];
+
+    //     $message = $this->crud->read("config_mail", [], ["module" => "purchase_orders", "language" => $mail_format]);
+    //     $po = $this->crud->read("purchase_orders", [], ["po_no" => $mail_po]);
+    //     $supplier = $this->crud->read("suppliers", [], ["id" => @$po->supplier_id]);
+    //     $contact_name = @$supplier->attention;
+    //     $company = @$supplier->attention;
+    //     $address = @$supplier->address;
+
+    //     //Setting Upload Image
+    //     $file = $_FILES["attachment"]["name"];
+    //     $extension_explode = explode('.', $file);
+    //     $extension_final = strtolower(end($extension_explode));
+    //     $temporary = $_FILES["attachment"]['tmp_name'];
+
+    //     $file2 = $_FILES["attachment2"]["name"];
+    //     $extension_explode2 = explode('.', $file2);
+    //     $extension_final2 = strtolower(end($extension_explode2));
+    //     $temporary2 = $_FILES["attachment2"]['tmp_name'];
+
+    //     $file3 = $_FILES["attachment3"]["name"];
+    //     $extension_explode3 = explode('.', $file3);
+    //     $extension_final3 = strtolower(end($extension_explode3));
+    //     $temporary3 = $_FILES["attachment3"]['tmp_name'];
+
+    //     $file4 = $_FILES["attachment4"]["name"];
+    //     $extension_explode4 = explode('.', $file4);
+    //     $extension_final4 = strtolower(end($extension_explode4));
+    //     $temporary4 = $_FILES["attachment4"]['tmp_name'];
+
+    //     $file5 = $_FILES["attachment5"]["name"];
+    //     $extension_explode5 = explode('.', $file5);
+    //     $extension_final5 = strtolower(end($extension_explode5));
+    //     $temporary5 = $_FILES["attachment5"]['tmp_name'];
+
+    //     if ((in_array($extension_final, ["pdf"]) === true || $file != "") && (in_array($extension_final2, ["pdf"]) === true || $file2 != "")) {
+    //             @move_uploaded_file($temporary, "assets/po/" . $file);
+    //             @move_uploaded_file($temporary2, "assets/po/" . $file2);
+    //             @move_uploaded_file($temporary3, "assets/po/" . $file3);
+    //             @move_uploaded_file($temporary4, "assets/po/" . $file4);
+    //             @move_uploaded_file($temporary5, "assets/po/" . $file5);
+    //             sleep(3);
+
+    //             $config = array(
+    //                 'protocol' => 'smtp', // 'mail', 'sendmail', or 'smtp'
+    //                 'smtp_host' => 'mail.banshu-ind.com',
+    //                 'smtp_port' => 465,
+    //                 'smtp_user' => 'procurement01@banshu-ind.com',
+    //                 'smtp_pass' => 'pRo!177$BeiAi',
+    //                 'smtp_crypto' => 'ssl', //can be 'ssl' or 'tls' for example
+    //                 'mailtype' => 'html', //plaintext 'text' mails or 'html'
+    //                 'smtp_timeout' => '4', //in seconds
+    //                 'charset' => 'iso-8859-1',
+    //                 'wordwrap' => TRUE
+    //             );
+                
+    //             $description = $message->description;
+    //             $description = str_replace("{{contact}}", $contact_name, $description);
+    //             $description = str_replace("{{po_no}}", $mail_po, $description);
+    //             $description = str_replace("{{company}}", $company, $description);
+    //             $description = str_replace("{{address}}", $address, $description);
+
+    //             $this->email->initialize($config);
+    //             $this->email->from($post['mail_from'], 'BANSHU ELECTRIC INDONESIA');
+    //             $this->email->to($mail_to);
+    //             $this->email->cc($mail_cc);
+    //             $this->email->subject($post['mail_subject']);
+    //             $this->email->message($description);
+
+    //             // Attach the PDF file
+    //             $attachment = 'assets/po/'.$file; // Replace with the path to your PDF file
+    //             $attachment2 = 'assets/po/'.$file2; // Replace with the path to your PDF file
+    //             $attachment3 = 'assets/po/'.$file3; // Replace with the path to your PDF file
+    //             $attachment4 = 'assets/po/'.$file4; // Replace with the path to your PDF file
+    //             $attachment5 = 'assets/po/'.$file5; // Replace with the path to your PDF file
+                
+    //             $this->email->attach($attachment);
+    //             $this->email->attach($attachment2);
+    //             if($file3 != ""){
+    //                 $this->email->attach($attachment3);
+    //             }
+    //             if($file4 != ""){
+    //                 $this->email->attach($attachment4);
+    //             }
+    //             if($file5 != ""){
+    //                 $this->email->attach($attachment5);
+    //             }
+                
+    //             if ($this->email->send()) {
+    //                 echo json_encode(array("title" => "Successs", "message" => "Email Sending Successfully", "theme" => "success"));
+
+    //                 $this->db->where("po_no", $mail_po);
+    //                 $this->db->update('purchase_orders', ["email_date" => date("Y-m-d H:i:s"), "email_status" => "SENT", "confirm" => "Pending"]);
+
+    //             } else {
+    //                 echo json_encode(array("title" => "Failed", "message" => "Email Sending Failed", "theme" => "error"));
+    //             }
+    //     } else {
+    //         show_error("Your extension file is not recognized", 200, "File Upload Error");
+    //     }
+    // }
+}

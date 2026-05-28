@@ -447,6 +447,11 @@ class Supplier_items extends CI_Controller
         @readfile($file);
     }
 
+    function isValidDate($date, $format = 'Y-m-d') {
+        $d = DateTime::createFromFormat($format, $date);
+        return $d && $d->format($format) === $date;
+    }
+
     //UPLOAD CREATE DATA
     public function uploadcreate()
     {
@@ -491,6 +496,18 @@ class Supplier_items extends CI_Controller
                 }elseif(@$supplier_items->supplier_id != "") {
                     echo json_encode(array("title" => "Duplicate", "message" => "Vendor " . $data['supplier_id'] . " and Part No " . $data['item_rm_number'] . " Has been Created", "theme" => "error"));
                 } else {
+                    if ($this->isValidDate($data['start_date'])) {
+                        //
+                    } else {
+                        die(json_encode(array("title" => "Not Found", "message" => "Format Date " . $data['start_date'] . " rejected, use YYYY-MM-DD format and format type is text", "theme" => "error")));
+                    }
+
+                    if ($this->isValidDate($data['valid_date'])) {
+                        //
+                    } else {
+                        die(json_encode(array("title" => "Not Found", "message" => "Format Date " . $data['valid_date'] . " rejected, use YYYY-MM-DD format and format type is text", "theme" => "error")));
+                    }
+
                     $dataFinal = array(
                         //field
                         "supplier_id" => $data['supplier_id'],
@@ -558,6 +575,18 @@ class Supplier_items extends CI_Controller
                         "safety_stock" => $safety_stock,
                         "remarks" => $remarks,
                     );
+
+                    if ($this->isValidDate($start_date)) {
+                        //
+                    } else {
+                        die(json_encode(array("title" => "Not Found", "message" => "Format Date " . $start_date . " rejected, use YYYY-MM-DD format and format type is text", "theme" => "error")));
+                    }
+
+                    if ($this->isValidDate($valid_date)) {
+                        //
+                    } else {
+                        die(json_encode(array("title" => "Not Found", "message" => "Format Date " . $valid_date . " rejected, use YYYY-MM-DD format and format type is text", "theme" => "error")));
+                    }
 
                     if((@$rowSupItm->share_order + $share_order) > 100){
                         echo json_encode(array("title" => "Share Order", "message" => "Share Order for Part No " . $data['item_rm_number'] . " Cannot >= 100", "theme" => "error"));

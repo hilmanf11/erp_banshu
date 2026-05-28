@@ -37,6 +37,14 @@ class Plants extends CI_Controller
         echo json_encode($send);
     }
 
+    public function readAddress($number)
+    {
+        $post = isset($_POST['q']) ? $_POST['q'] : "";
+        // $send = $this->crud->query("SELECT * FROM plants WHERE name LIKE '%$post%'AND number != 'FG'");
+        $send = $this->crud->reads('plant_address', ["name" => $post], ["number" => $number]);
+        echo json_encode($send);
+    }
+
     //GET DATATABLES
     public function datatables()
     {
@@ -72,6 +80,40 @@ class Plants extends CI_Controller
         }
     }
 
+    public function datatables2($number)
+    {
+        if ($this->input->post()) {
+            $filters = json_decode($this->input->post('filterRules'));
+            $page = $this->input->post('page');
+            $rows = $this->input->post('rows');
+            //Pagination 1-10
+            $page   = isset($page) ? intval($page) : 1;
+            $rows   = isset($rows) ? intval($rows) : 10;
+            $offset = ($page - 1) * $rows;
+            $result = array();
+            //Select Query
+            $this->db->select('*');
+            $this->db->from('plant_address');
+            $this->db->where('number', $number);
+            if (@count($filters) > 0) {
+                foreach ($filters as $filter) {
+                    $this->db->like($filter->field, $filter->value);
+                }
+            }
+            $this->db->order_by('id', 'asc');
+            //Total Data
+            $totalRows = $this->db->count_all_results('', false);
+            //Limit 1 - 10
+            $this->db->limit($rows, $offset);
+            //Get Data Array
+            $records = $this->db->get()->result_array();
+            //Mapping Data
+            $result['total'] = $totalRows;
+            $result = array_merge($result, ['rows' => $records]);
+            echo json_encode($result);
+        }
+    }
+
     //CREATE DATA
     public function create()
     {
@@ -87,6 +129,19 @@ class Plants extends CI_Controller
             show_error("Cannot Process your request");
         }
     }
+
+
+    public function create2()
+    {
+        if ($this->input->post()) {
+            $post   = $this->input->post();
+            $send   = $this->crud->create('plant_address', $post);
+            echo $send;
+        } else {
+            show_error("Cannot Process your request");
+        }
+    }
+
     //UPDATE DATA
     public function update()
     {
@@ -99,6 +154,19 @@ class Plants extends CI_Controller
             show_error("Cannot Process your request");
         }
     }
+
+    public function update2()
+    {
+        if ($this->input->post()) {
+            $id   = base64_decode($this->input->get('id'));
+            $post = $this->input->post();
+            $send = $this->crud->update('plant_address', ["id" => $id], $post);
+            echo $send;
+        } else {
+            show_error("Cannot Process your request");
+        }
+    }
+
     //DELETE DATA
     public function delete()
     {
@@ -106,6 +174,14 @@ class Plants extends CI_Controller
         $send = $this->crud->delete('plants', $data);
         echo $send;
     }
+
+    public function delete2()
+    {
+        $data = $this->input->post();
+        $send = $this->crud->delete('plant_address', $data);
+        echo $send;
+    }
+
     //PRINT & EXCEL DATA
     public function print($option = "")
     {

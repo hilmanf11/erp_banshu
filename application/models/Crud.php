@@ -110,8 +110,9 @@ class Crud extends CI_Model
             if ($this->db->insert($table, $data)) {
                 if($logs == ""){
                     $this->logs("Create", json_encode($data), $table);
-                    $this->approvals($table, $id);
                 }
+
+                $this->approvals($table, $id);
                 return json_encode(array("title" => "Good Job", "message" => "Data Saved Successfully", "theme" => "success", "id" => $id));
             } else {
                 return log_message('error', 'There is an error in your system or data');
@@ -136,10 +137,10 @@ class Crud extends CI_Model
                 if($logs == ""){
                     $this->logs("Update Before", json_encode($dataBefore), $table);
                     $this->logs("Update New", json_encode($data), $table);
-                    
-                    $read = $this->read($table, [], $where);
-                    $this->approvals($table, @$read->id, $dataBefore);
                 }
+
+                $read = $this->read($table, [], $where);
+                $this->approvals($table, @$read->id, $dataBefore);
 
                 return json_encode(array("title" => "Good Job", "message" => "Data Updated Successfully", "theme" => "success", "id" => $read->id));
             } else {

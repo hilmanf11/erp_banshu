@@ -30,7 +30,7 @@ class Request_npd_confirm extends CI_Controller
         }
     }
 
-    public function readParts($supplier, $plant){
+    public function readParts($supplier, $plant, $product_family){
         $post = isset($_POST['q']) ? $_POST['q'] : "";
 
         $supplier = base64_decode($supplier);
@@ -38,7 +38,8 @@ class Request_npd_confirm extends CI_Controller
         $query = $this->db->query("SELECT b.id, b.number, b.name, a.item_supplier, a.mpq, a.moq, a.leadtime 
             FROM supplier_items a 
             JOIN item_rm b ON a.item_rm_id = b.id
-            WHERE a.supplier_id = '$supplier' and a.plant = '$plant' and (b.number like '%$post%' or a.item_supplier like '%$post%') and a.share_order > 0
+            JOIN item_familys c ON b.item_family_id = c.id
+            WHERE a.supplier_id = '$supplier' and a.plant = '$plant' and c.name = '$product_family' and (b.number like '%$post%' or a.item_supplier like '%$post%') and a.share_order > 0
             ORDER BY b.number ASC
             LIMIT 100
         ");
@@ -97,9 +98,10 @@ class Request_npd_confirm extends CI_Controller
         $filter_item_npd_id = trim(base64_decode($this->input->get('filter_item_npd_id')));
 
         //Select Query
-        $this->db->select('a.*, b.name as supplier_name');
+        $this->db->select('a.id, a.plant, a.item_npd_id, a.item_npd_name, a.product_family, a.maker, a.uom, a.qty, a.requirement_date, a.confirm, a.confirm_reason, b.name as supplier_id, c.number as item_rm_id, a.item_supplier');
         $this->db->from('request_npd a');
         $this->db->join('suppliers b', 'a.supplier_id = b.id', 'left');
+        $this->db->join('item_rm c', 'a.item_rm_id = c.id', 'left');
         $this->db->where('a.request_no', $request_no);
         $this->db->where("(a.approved_to is null or a.approved_to = '')");
         $this->db->like('a.item_npd_id', $filter_item_npd_id);
@@ -133,8 +135,39 @@ class Request_npd_confirm extends CI_Controller
     {
         if ($this->input->post()) {
             $post = $this->input->post();
-            if($post['confirm'] != ""){
-                $send = $this->db->update('request_npd', array_merge($post, ["confirm_date" => date("Y-m-d H:i:s"), "confirm_by" => $this->session->name]), ["id" => $post['id']]);
+
+            $jsonData = file_get_contents("php://input");
+            $post = json_decode($jsonData, true);
+            $datas = $post['data'];
+
+            $send = "";
+            $this->db->trans_start();
+            foreach ($datas as $data) {
+                if(!empty($data['item_rm_id'])){
+                    $item_rm = $this->crud->read("item_rm", [], ["number" => $data['item_rm_id']]);
+                    $supplier = $this->crud->read("suppliers", [], ["name" => $data['supplier_id']]);
+
+                    if(empty($item_rm)){
+                        die(json_encode(array("title" => "Failed", "message" => "Part No Not Found in Master", "theme" => "error")));
+                    }
+
+                    if(empty($supplier)){
+                        die(json_encode(array("title" => "Failed", "message" => "Supplier Not Found in Master", "theme" => "error")));
+                    }
+                    
+                    $data['item_rm_id'] = $item_rm->id;
+                    $data['supplier_id'] = $supplier->id;
+
+                    if($data['confirm'] != ""){
+                        $this->db->update('request_npd', array_merge($data, ["confirm_date" => date("Y-m-d H:i:s"), "confirm_by" => $this->session->name]), ["id" => $data['id']]);
+                    }
+                }
+            }
+            $this->db->trans_complete();
+
+            if ($this->db->trans_status() === FALSE) {
+                echo json_encode(array("title" => "Failed", "message" => "Data Updated Failed", "theme" => "error"));
+            } else {
                 echo json_encode(array("title" => "Good Job", "message" => "Data Updated Successfully", "theme" => "success"));
             }
         }

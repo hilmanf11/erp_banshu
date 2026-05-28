@@ -4,6 +4,7 @@
             <th rowspan="2" field="ck" checkbox="true"></th>
             <th rowspan="2" data-options="field:'status',width:80,align:'center',styler:cellStyler, formatter:cellFormatter">Convert PR</th>
             <th rowspan="2" data-options="field:'confirm',width:80,align:'center',styler:cellStyler2, formatter:cellFormatter2">Status</th>
+            <!-- <th rowspan="2" data-options="field:'confirm_status',width:80,align:'center',styler:cellStyler3, formatter:cellFormatter3">Status<br>Request</th> -->
             <th rowspan="2" data-options="field:'plant',width:80,halign:'center'">Plant</th>
             <th rowspan="2" data-options="field:'request_no',width:120,halign:'center'">Request No</th>
             <th rowspan="2" data-options="field:'request_by',width:150,halign:'center'">Request By</th>
@@ -77,7 +78,9 @@
                         data: [
                             {id: 'CONFIRMED'},
                             {id: 'NOT EXIST'},
-                            {id: 'CANCEL'}
+                            {id: 'FREE SAMPLE'},
+                            {id: 'CANCEL'},
+                            {id: 'WAITING'}
                         ],
                         valueField: 'id',
                         textField: 'id',
@@ -85,13 +88,24 @@
                         panelHeight: 'auto'
                     }
                 }">Confirm</th>
-                <th rowspan="2" data-options="field:'confirm_reason',width:300,halign:'center',editor: {
-                    type: 'textbox',
+                <th rowspan="2" data-options="field:'confirm_reason',width:200,halign:'center',editor: {
+                    type: 'combobox',
                     options: {
-                        required: true
+                        data: [
+                            {id: 'OK'},
+                            {id: 'PART NO VENDOR UNKNOWN'},
+                            {id: 'PART NO CHANGE'},
+                            {id: 'CONFIRMING MOQ'},
+                            {id: 'CONFIRMING LEADTIME'},
+                            {id: 'CONFIRMING QTY SUPPLY CUST'}
+                        ],
+                        valueField: 'id',
+                        textField: 'id',
+                        required: true,
+                        panelHeight: 'auto'
                     }
-                }">Reason</th>
-                <th colspan="2" data-options="field:'procurement',width:100,halign:'center'">Procurement</th>
+                }">Reason<br><i style="font-size: 10px; color: blue;">Choose or Manual Input</i></th>
+                <th colspan="3" data-options="field:'procurement',width:100,halign:'center'">Procurement</th>
             </tr>
             <tr>
                 <th data-options="field:'supplier_id',width:200,halign:'center',editor: {
@@ -99,7 +113,7 @@
                     options: {
                         url: '<?= base_url('master/suppliers/reads') ?>',
                         panelWidth: 420,
-                        idField: 'id',
+                        idField: 'name',
                         textField: 'name',
                         mode: 'remote',
                         fitColumns: true,
@@ -131,10 +145,15 @@
                                 field: 'item_rm_id'
                             });
 
+                            var ed2 = dg.datagrid('getEditor', {
+                                index: rowIndex,
+                                field: 'item_supplier'
+                            });
+
                             $(ed.target).combogrid({
-                                url: '<?= base_url('purchase/request_npd_confirm/readParts/') ?>' + btoa(rows.id) + '/' + row.plant,
+                                url: '<?= base_url('purchase/request_npd_confirm/readParts/') ?>' + btoa(rows.id) + '/' + row.plant + '/' + row.product_family,
                                 panelWidth: 700,
-                                idField: 'id',
+                                idField: 'number',
                                 textField: 'number',
                                 mode: 'remote',
                                 fitColumns: true,
@@ -151,8 +170,8 @@
                                         title: 'Part No BEI',
                                         width: 150
                                     }, {
-                                        field: 'item_suplier',
-                                        title: 'Part No Supplier',
+                                        field: 'item_supplier',
+                                        title: 'Part No Vendor',
                                         width: 150
                                     }, {
                                         field: 'name',
@@ -171,12 +190,16 @@
                                         title: 'Leadtime',
                                         width: 80
                                     },]
-                                ]
+                                ],
+                                onSelect: function(value2, rows2) {
+                                    $(ed2.target).textbox('setValue', rows2.item_supplier);
+                                }
                             });
                         }
                     }
-                }">Supplier Name</th>
-                <th data-options="field:'item_rm_id',width:150,halign:'center',editor: {type: 'combogrid'}">Part No</th>
+                }">Vendor Name</th>
+                <th data-options="field:'item_rm_id',width:150,halign:'center',editor: {type: 'combogrid'}">Part No BEI</th>
+                <th data-options="field:'item_supplier',width:150,halign:'center',editor: {type: 'textbox'}">Part No Vendor</th>
             </tr>
         </thead>
     </table>
@@ -191,29 +214,60 @@
         var rows = $('#dg_request').datagrid('getRows');
         var totalrows = rows.length;
 
-        for (let i = 0; i < totalrows; i++) {
-            if (rows[i].item_npd_id) {
-                $.ajax({
-                    type: "post",
-                    url: '<?= base_url('purchase/request_npd_confirm/update') ?>',
-                    data: {
+        $.messager.confirm('Warning', 'Are you sure you want to save this data?', function(r) {
+            if (r) {
+                $('#dlg_request').dialog('close');
+
+                Swal.fire({
+                    title: 'Please Wait for Saving Data',
+                    showConfirmButton: false,
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    },
+                });
+
+                combined = [];
+                for (let i = 0; i < totalrows; i++) {
+                    combined.push({
                         id: rows[i].id,
                         confirm: rows[i].confirm,
                         confirm_reason: rows[i].confirm_reason,
                         supplier_id: rows[i].supplier_id,
-                        item_rm_id: rows[i].item_rm_id
-                    },
+                        item_rm_id: rows[i].item_rm_id,
+                        item_supplier: rows[i].item_supplier
+                    });
+                }
+
+                $.ajax({
+                    type: "post",
+                    url: '<?= base_url('purchase/request_npd_confirm/update') ?>',
+                    data: JSON.stringify({ data: combined }),
                     dataType: "json",
-                    success: function(result) {
-                        if (result.theme == "success") {
-                            toastr.success(result.message, result.title);
-                        } else {
-                            toastr.error(result.message, result.title);
-                        }
+                    success: function (result) {
+                        Swal.close();
+                        
+                        Swal.fire({
+                            title: result.message,
+                            icon: result.theme,
+                            confirmButtonText: 'Ok',
+                            allowOutsideClick: false,
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $('#dg').datagrid('reload');
+                            }
+                        });
+                        
+                    }, error: function(jqXHR, textStatus, errorThrown){
+                        Swal.close();
+                        $('#dlg_request').dialog('open');
+                        let response = JSON.parse(jqXHR.responseText);
+                        toastr.error(response.filename || "An unexpected error occurred");
                     }
                 });
             }
-        }
+        });
 
         $('#dg_request').datagrid('reload');
         $('#dlg_request').dialog('close');
@@ -439,6 +493,22 @@
     }
 
     function cellFormatter2(val, row) {
+        if (row.total_data == row.total_confirm) {
+            return 'CLOSE';
+        } else {
+            return 'PENDING';
+        }
+    };
+
+    function cellStyler3(value, row, index) {
+        if (row.total_data == row.total_confirm) {
+            return 'background: #FF5F5F; color:white;';
+        } else {
+            return 'background: #d6a336ff; color:white;';
+        }
+    }
+
+    function cellFormatter3(val, row) {
         if (row.total_data == row.total_confirm) {
             return 'CLOSE';
         } else {

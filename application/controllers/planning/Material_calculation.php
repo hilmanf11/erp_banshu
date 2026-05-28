@@ -130,17 +130,17 @@ class Material_calculation extends CI_Controller
             $sqlWp = $this->db->query("SELECT wp FROM generate_item_calculation_2 WHERE p_month='$filter_month' and p_year='$filter_year' and revision='$filter_revision' GROUP BY wp ORDER BY wp ASC");
             $dWp = $sqlWp->result_array();
 
+            $sqlWp2 = $this->db->query("SELECT wp, item_rm_id, SUM(qty) as qty FROM generate_item_calculation_2 WHERE p_month='$filter_month' and p_year='$filter_year' and revision='$filter_revision' GROUP BY item_rm_id, wp ORDER BY item_rm_id, wp asc");
+            $dWp2 = $sqlWp2->result_array();
+            $dWpMap = [];
+            foreach ($dWp2 as $data2) {
+                $dWpMap[$data2['item_rm_id']."_".$data2['wp']] = $data2['qty'];
+            }
+
             $dataFinal = array();
             foreach ($records as $record) {
                 $item_rm_id = $record['item_rm_id'];
                 $item_rm_number = $record['item_rm_number'];
-
-                $sqlWp2 = $this->db->query("SELECT wp, SUM(qty) as qty FROM generate_item_calculation_2 WHERE item_rm_id = '$item_rm_id' and p_month='$filter_month' and p_year='$filter_year' and revision='$filter_revision' GROUP BY wp ORDER BY wp asc");
-                $dWp2 = $sqlWp2->result_array();
-                $dWpMap = [];
-                foreach ($dWp2 as $data2) {
-                    $dWpMap[$data2['wp']] = $data2['qty'];
-                }
 
                 $etaqty = ($dPorMap[$item_rm_number] ?? 0);
                 $supplyqty = ($dSupplyMap[$item_rm_number] ?? 0);
@@ -152,7 +152,7 @@ class Material_calculation extends CI_Controller
                 foreach ($dWp as $data) {
                     $wp = $data['wp'];
     
-                    $date_qty = ($dWpMap[$wp] ?? 0);
+                    $date_qty = ($dWpMap[$item_rm_id."_".$wp] ?? 0);
                     $balance -= $date_qty;
                     
                     // $arr["eta_".$day] = (int) $etaqty;
@@ -312,7 +312,7 @@ class Material_calculation extends CI_Controller
             $need_2 = ($dNeed2Map[@$item_rm->id] ?? 0);
             $need_3 = ($dNeed3Map[@$item_rm->id] ?? 0);
 
-            $stock_hand = round(@$dataStock + $qty_wip - $os_supply - $os_wo);
+            $stock_hand = round(@$dataStock + $qty_wip - $os_supply);
 
             if (@$item_rm->id != "") {
                 $arr[] = array(
@@ -484,19 +484,19 @@ class Material_calculation extends CI_Controller
         $cut .= '</tr>';
         $date .= '</tr>';
 
+        $sqlWp2 = $this->db->query("SELECT wp, item_rm_id, SUM(qty) as qty FROM generate_item_calculation_2 WHERE p_month='$filter_month' and p_year='$filter_year' and revision='$filter_revision' GROUP BY item_rm_id, wp ORDER BY item_rm_id, wp asc");
+        $dWp2 = $sqlWp2->result_array();
+        $dWpMap = [];
+        foreach ($dWp2 as $data2) {
+            $dWpMap[$data2['item_rm_id']."_".$data2['wp']] = $data2['qty'];
+        }
+
         $content2 = "";
         $content = "";
         $no = 1;
         foreach ($records as $record) {
             $item_rm_id = $record['item_rm_id'];
             $item_rm_number = $record['item_rm_number'];
-
-            $sqlWp2 = $this->db->query("SELECT wp, SUM(qty) as qty FROM generate_item_calculation_2 WHERE item_rm_id = '$item_rm_id' and p_month='$filter_month' and p_year='$filter_year' and revision='$filter_revision' GROUP BY wp ORDER BY wp asc");
-            $dWp2 = $sqlWp2->result_array();
-            $dWpMap = [];
-            foreach ($dWp2 as $data2) {
-                $dWpMap[$data2['wp']] = $data2['qty'];
-            }
 
             $etaqty = ($dPorMap[$item_rm_number] ?? 0);
             $supplyqty = ($dSupplyMap[$item_rm_number] ?? 0);
@@ -507,7 +507,7 @@ class Material_calculation extends CI_Controller
             $contentisi = "";
             foreach ($dWps as $data) {
                 $wp = $data['wp'];
-                $date_qty = ($dWpMap[$wp] ?? 0);
+                $date_qty = ($dWpMap[$item_rm_id."_".$wp] ?? 0);
                 $balance -= $date_qty;
                 
                 // $arr["eta_".$day] = (int) $etaqty;
@@ -607,7 +607,7 @@ class Material_calculation extends CI_Controller
             <tr>
                 <th style="text-align:center;" rowspan="3" width="20">NO</th>
                 <th style="text-align:center;" width="150" rowspan="3">PART NO ORIGINAL</th>
-                <th style="text-align:center;" width="150" rowspan="3">PART NO SUPPLIER</th>
+                <th style="text-align:center;" width="150" rowspan="3">PART NO</th>
                 <th style="text-align:center;" width="80" rowspan="3">DESCRIPTION</th>
                 <th style="text-align:center;" width="80" rowspan="3">PRODUCT FAMILY</th>
                 <th style="text-align:center;" width="50" rowspan="3">BALANCE WIP</th>
@@ -700,5 +700,21 @@ class Material_calculation extends CI_Controller
         }
 
         die(json_encode(array_merge(array("rows" => $records), ["footer" => [["item_rm_id" => "Grand Total", "total" => $balance]]])));
+    }
+
+    public function testingQuery(){
+        $this->dummy = $this->load->database('export', TRUE);
+
+        $ospo = $this->dummy->query("SELECT a.periode, a.wp, REGEXP_REPLACE(a.wp, '([0-9]{2})[^0-9]([0-9]{2})', '\\1/\\2') as final_wp, a.assy_no, c.bom_com_item, TO_CHAR(a.wp_date, 'YYYY-MM-DD') as wp_date, (SUM(a.qty) * c.bom_qty_perassy) as total
+            from wip_trx_mpp a
+            join mst_bom c ON a.assy_no = c.bom_par_item
+            where a.periode = '202602' and c.bom_com_item = '14789 0.75 4C'
+            GROUP BY a.periode, a.wp, a.assy_no, c.bom_com_item, c.bom_qty_perassy, wp_date");
+        $records = $ospo->result_array();
+        
+        // foreach ($records as $record) {
+        //     echo $record['wp'];
+        // }
+        die(json_encode($records));
     }
 }

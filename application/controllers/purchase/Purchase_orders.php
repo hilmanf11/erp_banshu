@@ -61,7 +61,7 @@ class Purchase_orders extends CI_Controller
 
         $post = isset($_POST['q']) ? $_POST['q'] : "";
 
-        $datas = $this->crud->query("SELECT DISTINCT po_no FROM purchase_orders WHERE p_month = '$filter_month' and p_year = '$filter_year' and revision='$filter_revision' and supplier_id = '$filter_supplier'");
+        $datas = $this->crud->query("SELECT DISTINCT po_no FROM purchase_orders WHERE p_month = '$filter_month' and p_year = '$filter_year' and revision='$filter_revision' and supplier_id = '$filter_supplier' and type='PO'");
         echo json_encode($datas);
     }
 
@@ -72,7 +72,7 @@ class Purchase_orders extends CI_Controller
             JOIN suppliers b ON a.supplier_id = b.id 
             JOIN item_rm c ON a.item_rm_id = c.id
             JOIN item_familys d ON c.item_family_id = d.id
-            WHERE a.p_month = '$p_month' and a.p_year = '$p_year' and a.revision = '$revision' and d.id = '$product_family'
+            WHERE a.p_month = '$p_month' and a.p_year = '$p_year' and a.revision = '$revision' and d.id = '$product_family' and a.type = 'PO'
             and (a.po_no like '%$post%' or b.name like '%$post%' or d.name like '%$post%')");
         echo json_encode($datas);
     }
@@ -80,13 +80,13 @@ class Purchase_orders extends CI_Controller
     function readPono(){
         $post = isset($_POST['q']) ? $_POST['q'] : "";
         $supplier_id = base64_decode($this->input->get('supplier_id'));
-        $datas = $this->crud->query("SELECT DISTINCT a.po_no, a.po_date FROM purchase_orders a WHERE a.supplier_id = '$supplier_id' and a.status = 0 and (po_date like '%$post%' or po_no like '%$post%') ORDER BY a.po_date, a.po_no ASC");
+        $datas = $this->crud->query("SELECT DISTINCT a.po_no, a.po_date FROM purchase_orders a WHERE a.supplier_id = '$supplier_id' and a.type = 'PO' and a.status = 0 and (po_date like '%$post%' or po_no like '%$post%') ORDER BY a.po_date, a.po_no ASC");
         echo json_encode($datas);
     }
 
     public function readSupplier(){
         $post = isset($_POST['q']) ? $_POST['q'] : "";
-        $data = $this->crud->query("SELECT DISTINCT b.id, b.number, b.name, b.type FROM purchase_orders a JOIN suppliers b ON a.supplier_id = b.id WHERE a.status = 0 and b.name like '%$post%' ORDER BY b.name asc");
+        $data = $this->crud->query("SELECT DISTINCT b.id, b.number, b.name, b.type FROM purchase_orders a JOIN suppliers b ON a.supplier_id = b.id WHERE a.type = 'PO' and a.status = 0 and b.name like '%$post%' ORDER BY b.name asc");
         echo json_encode($data);
     }
 
@@ -152,7 +152,7 @@ class Purchase_orders extends CI_Controller
             $this->db->where('a.type', "PO");
             $this->db->where('a.p_month', $filter_month);
             $this->db->where('a.p_year', $filter_year);
-            $this->db->where('a.revision', $filter_revision);
+            $this->db->like('a.revision', $filter_revision);
             $this->db->like('b.item_family_id', $filter_item_family);
             $this->db->like('a.item_rm_id', $filter_item_rm);
             $this->db->like('a.supplier_id', $filter_supplier);
@@ -190,7 +190,12 @@ class Purchase_orders extends CI_Controller
         $config = $this->db->get()->row();
 
         //Select Query
-        $this->db->select("a.*, g.purchase_order as mrp_qty, b.number as supplier_no, b.name as supplier_name, f.mpq, f.moq, b.state, b.alias,
+        $this->db->select("a.*, g.purchase_order as mrp_qty, b.number as supplier_no, b.name as supplier_name, 
+            (CASE WHEN i.mpq is null THEN f.mpq ELSE i.mpq END) as mpq, 
+            (CASE WHEN i.moq is null THEN f.moq ELSE i.moq END) as moq,
+            b.state, b.alias, 
+            j.type as maker_type,
+            j.name as maker_name,
             b.email, d.number as item_rm_number, d.name as item_rm_name, d.item_family_id, e.name as product_family, b.type as supplier_type,
             (CASE WHEN a.price = f.price THEN 'OK' ELSE 'SYNC' END) as sync, f.price as new_price, f.item_supplier");
         $this->db->from('purchase_orders a');
@@ -202,6 +207,8 @@ class Purchase_orders extends CI_Controller
         $this->db->join('supplier_items f', 'a.supplier_id = f.supplier_id and ia.id = f.item_rm_id and a.plant = f.plant', 'left');
         $this->db->join('generate_mrp_finals g', 'a.p_month = g.p_month and a.p_year = g.p_year and a.revision = g.revision and a.item_rm_id = g.item_rm_id and a.supplier_id = g.supplier_id', 'left');
         $this->db->join('purchase_requests h', 'a.request_no = h.request_no', 'left');
+        $this->db->join('convertions i', 'a.item_rm_id = i.item_rm_id', 'left');
+        $this->db->join('makers j', 'f.maker_id = j.id', 'left');
         // $this->db->join('hsn i', "d.hsn_code = i.number", 'left');
         $this->db->where('a.type', "PO");
         $this->db->where('a.po_no', $po_no);
@@ -255,7 +262,7 @@ class Purchase_orders extends CI_Controller
 
             $whereDate = $plant."-".$supplier_no."-".$period;
 
-            $sqlGetID	= $this->db->query("SELECT max(po_no) as kode FROM purchase_orders WHERE po_no like '%$whereDate%'");
+            $sqlGetID	= $this->db->query("SELECT max(po_no) as kode FROM purchase_orders WHERE po_no like '%$whereDate%' and type != 'NPD'");
             $rowID = $sqlGetID->row();
             $kode = $rowID->kode;
             
@@ -290,7 +297,7 @@ class Purchase_orders extends CI_Controller
             //Select Query
             $this->db->select('a.*, b.number as pfm_number, c.uom,
                 d.item_supplier, d.price, d.currency, d.leadtime,
-                f.name as supplier_name, f.number as supplier_no, e.item_rm_id as item_po');
+                f.name as supplier_name, f.number as supplier_no, e.item_rm_id as item_po, f.incoterm');
             $this->db->from('purchase_requests a');
             $this->db->join('item_familys b', 'a.item_family_id = b.id');
             $this->db->join('item_rm c', 'a.item_rm_id = c.id');
@@ -320,6 +327,7 @@ class Purchase_orders extends CI_Controller
                 $m22 = "m".date('n', strtotime($date, strtotime('+1 month', strtotime($leadtime))));
                 $m33 = "m".date('n', strtotime($date, strtotime('+2 month', strtotime($leadtime))));
                 $rowPlant = $this->crud->read("plants", [], ["number" => $plant]);
+                $rowPlantAddress = $this->crud->read("plant_address", [], ["number" => $plant, "default" => "YES"]);
 
                 $qmps1 = $this->db->query("SELECT prod_plan_1, prod_plan_2, prod_plan_3 FROM mrp_ltpp WHERE CONCAT(p_month, p_year) = '$m1' and item_rm_id = '$item_rm_id' and revision = '$revision' and plant='$plant'");
                 $rpms1 = $qmps1->row();
@@ -394,6 +402,8 @@ class Purchase_orders extends CI_Controller
                     "total" => $total,
                     "currency" => $purchase_request['currency'],
                     "leadtime" => $purchase_request['leadtime'],
+                    "incoterm" => $purchase_request['incoterm'],
+                    "address" => @$rowPlantAddress->name,
                     "month_1" => $prod1,
                     "month_2" => $prod2,
                     "month_3" => $prod3,
@@ -539,6 +549,8 @@ class Purchase_orders extends CI_Controller
                     "total" => $post['total'],
                     "currency" => $post['currency'],
                     "leadtime" => $post['leadtime'],
+                    "incoterms" => $post['incoterm'],
+                    "address" => $post['address'],
                     "month_1" => $post['month_1'],
                     "month_2" => $post['month_2'],
                     "month_3" => $post['month_3'],
@@ -623,8 +635,6 @@ class Purchase_orders extends CI_Controller
             // $gpai = $this->crudSupplier($post['supplier_no']);
             // $supplier = $gpai['data'];
 
-
-
             $convert = $this->crud->read("convertions", [], ["item_rm_id" => $post['item_rm_id']]);
             if(empty($convert->uom_po)){
                 $qty = $post['qty'];
@@ -640,17 +650,24 @@ class Purchase_orders extends CI_Controller
                 }
             }
 
+            if($post['maker_type'] == "LOCAL"){
+                $etd = date("Y-m-d", strtotime("-14 days", strtotime($post['delivery_date'])));
+            }else{
+                $etd = date("Y-m-d", strtotime("-21 days", strtotime($post['delivery_date'])));
+            }
+
             $postFinal = array(
                 "poc_id" => $post['po_no'],
                 "ven_id" => $post['alias'],
                 "poc_date" => $post['po_date'],
                 "poc_emp" => $this->session->name,
                 "item_id" => $post['item_rm_number'],
-                "poc_reqdate" => date("Y-m-d"),
+                // "poc_reqdate" => date("Y-m-d"),
+                "poc_reqdate" => $post['delivery_date'],
                 "poc_reqqty" => $qty,
                 "currency" => $post['currency'],
                 "periode" => date("Ym"),
-                "etd_date" => $post['delivery_date'],
+                "etd_date" => $etd,
                 "poc_remark" => $post['reason'],
                 "poc_status_order" => "REGULAR",
             );
@@ -698,6 +715,8 @@ class Purchase_orders extends CI_Controller
             $maxRev = $this->crud->query("SELECT max(rev) as rev FROM purchase_orders WHERE po_no = '$po_no'");
 
             $send = $this->db->update('purchase_orders', [
+                    "updated_by" => $this->session->username,
+                    "updated_date" => date("Y-m-d H:i:s"),
                     "po_no" => $post['po_no'], 
                     "supplier_id" => $post['supplier_id'], 
                     "qty" => $post['qty'], 
@@ -744,6 +763,17 @@ class Purchase_orders extends CI_Controller
             $post = $this->input->post();
             $send = $this->db->update('purchase_orders', ["terms" => $post['terms']], ["po_no" => $post['po_no']]);
             echo json_encode(array("title" => "Good Job", "message" => "Update Temrs & Conditions Successfully", "theme" => "success"));
+        } else {
+            show_error("Cannot Process your request");
+        }
+    }
+
+    public function updateData()
+    {
+        if ($this->input->post()) {
+            $post = $this->input->post();
+            $send = $this->db->update('purchase_orders', $post, ["po_no" => $post['po_no']]);
+            echo json_encode(array("title" => "Good Job", "message" => "Update Data Successfully", "theme" => "success"));
         } else {
             show_error("Cannot Process your request");
         }
@@ -856,6 +886,32 @@ class Purchase_orders extends CI_Controller
         unlink($_FILES['file_upload']['name']);
     }
 
+    public function upload2()
+    {
+        error_reporting(0);
+        require_once 'assets/vendors/excel_reader2.php';
+        $target = basename($_FILES['file_upload']['name']);
+        move_uploaded_file($_FILES['file_upload']['tmp_name'], $target);
+        chmod($_FILES['file_upload']['name'], 0777);
+        $file = $_FILES['file_upload']['name'];
+        $data = new Spreadsheet_Excel_Reader($file, false);
+        $total_row = $data->rowcount($sheet_index = 0);
+
+        for ($i = 3; $i <= $total_row; $i++) {
+            $datas[] = array(
+                'po_no' => $data->val($i, 2),
+                'number' => $data->val($i, 3),
+                'etd' => $data->val($i, 4),
+                'delivery_date' => $data->val($i, 5)
+            );
+        }
+
+        $datas['total'] = count($datas);
+        echo json_encode($datas);
+
+        unlink($_FILES['file_upload']['name']);
+    }
+
     public function uploadclearFailed()
     {
         @unlink('failed/purchase_orders.txt');
@@ -917,6 +973,57 @@ class Purchase_orders extends CI_Controller
 
                 $send = $this->crud->create('purchase_orders', $postFinal);
                 echo $send;
+            }
+        }
+    }
+
+    function validasiTanggal($tanggal, $format = 'Y-m-d') {
+        // Membuat objek DateTime berdasarkan format yang diinginkan
+        $d = DateTime::createFromFormat($format, $tanggal);
+        
+        // Memastikan objek berhasil dibuat DAN formatnya pas (tidak menyisakan karakter ekstra)
+        return $d && $d->format($format) === $tanggal;
+    }
+
+    public function uploadcreate2()
+    {
+        if ($this->input->post()) {
+            $post = $this->input->post('data');
+
+            $item_rm = $this->crud->read("item_rm", [], ["number" => $post['number']]);
+            $purchase_order = $this->crud->read("purchase_orders", [], ["po_no" => $post['po_no'], "item_rm_id" => @$item_rm->id]);
+
+            if(empty($item_rm)){
+                echo json_encode(array("title" => "Not Found", "message" => "Part No ".$post['item_rm_id']." Not Found in Master Items", "theme" => "error"));
+            }elseif(empty($purchase_order)){
+                echo json_encode(array("title" => "Not Found", "message" => "PO No ".$post['po_no']." and Part No ".$post['number']." Not Found", "theme" => "error"));
+            }elseif($this->validasiTanggal($post['etd']) === false){
+                echo json_encode(array("title" => "Not Valid", "message" => "ETD ".$post['etd']." Not Valid Format Date", "theme" => "error"));
+            }elseif($this->validasiTanggal($post['delivery_date']) === false){
+                echo json_encode(array("title" => "Not Valid", "message" => "ETA ".$post['delivery_date']." Not Valid Format Date", "theme" => "error"));
+            }else{
+                $postFinal = array(
+                    "etd" => $post['etd'],
+                    "delivery_date" => $post['delivery_date']
+                );
+
+                $dataMrp = array(
+                    "poc_id" => $post['po_no'],
+                    "item_id" => $post['number'],
+                    "poc_reqdate" => $post['delivery_date'],
+                    "etd_date" => $post['etd']
+
+                );
+
+                $send = $this->mrp_push->push_update_poc($dataMrp);
+                if($send){
+                    $this->db->where("item_rm_id", @$item_rm->id);
+                    $this->db->where("po_no", $post['po_no']);
+                    $this->db->update('purchase_orders', $postFinal);
+                    echo json_encode(array("title" => "Successs", "message" => "Data Updated Successfully", "theme" => "success"));
+                }else{
+                    echo json_encode(array("title" => "Failed", "message" => "Failed Update to Old MRP", "theme" => "error"));
+                }
             }
         }
     }
@@ -1028,6 +1135,8 @@ class Purchase_orders extends CI_Controller
             $this->db->limit(20, ($i * 20));
             $records = $this->db->get()->result_array();
 
+            $plant_address = $this->crud->read("plant_address", [], ["number" => $purchase_orders->plant, "name" => $purchase_orders->address]);
+
             if ($purchase_orders->updated_date != null) {
                 $revision_date = $purchase_orders->updated_date;
             } else {
@@ -1076,29 +1185,25 @@ class Purchase_orders extends CI_Controller
                                     <h3 style="margin:0;"><u>PURCHASE ORDER</u></h3>
                                     <small>NO : ' . @$purchase_orders->po_no . '</small>
                                 </center>
+                                <br>
                                 <table style="width:100%; font-size:11px; margin-bottom:10px;">
                                     <tr>
-                                        <td width="50">Vendor</td>
-                                        <td width="10">:</td>
-                                        <td width="65%">
-                                            <b>' . @$supplier->name . '</b>
+                                        <td style="text-align:left; padding-right: 20px;" width="35%" rowspan="7">
+                                            Vendor:<br><b>' . @$supplier->name . '</b><br><br>
+                                            Attention:<br><b>' . @$supplier->contact_person . '</b><br><br>
+                                            Page:<br><b>' . $hal  . '</b> of <b> ' . $page . '</b>
                                         </td>
-                                        <td style="text-align:left; padding-right: 20px;" rowspan="7">
-                                            PO Date: <b>' . date("d F Y", strtotime($purchase_orders->po_date)) . '</b><br>
-                                            Revision: <b>' . $purchase_orders->rev . '</b><br>
-                                            Revision Date: <b>' . date("d F Y", strtotime($revision_date)) . '</b><br>
-                                            Payment Terms: <b>' . @$supplier->payment_term . ' Days</b>
+
+                                        <td style="text-align:left; padding-right: 20px;" width="25%" rowspan="7">
+                                            PO Date: <br><b>' . date("d F Y", strtotime($purchase_orders->po_date)) . '</b><br><br>
+                                            Revision/Date: <br><b>' . $purchase_orders->rev . ' / ' . date("d F Y", strtotime($revision_date)) . '</b><br><br>
+                                            Payment Terms: <br><b>' . @$supplier->payment_term . ' Days</b>
                                         </td>
-                                    </tr>
-                                    <tr>
-                                        <td width="50">Attention</td>
-                                        <td width="10">:</td>
-                                        <td><b>' . @$supplier->contact_person . '</b></td>
-                                    </tr>
-                                    <tr>
-                                        <td width="50">Page</td>
-                                        <td width="10">:</td>
-                                        <td><b>' . $hal  . '</b> of <b> ' . $page . '</b></td>
+
+                                        <td style="text-align:left; padding-right: 20px;" width="25%" rowspan="7">
+                                            Shipping Address: <br><b>' . @$plant_address->name . '</b><br><b>' . @$plant_address->address . '</b><br><br>
+                                            Incoterms: <br><b>' . @$purchase_orders->incoterms . '</b>
+                                        </td>
                                     </tr>
                                 </table>
                                 <table class="customers" style="width:100%;">
@@ -1132,10 +1237,15 @@ class Purchase_orders extends CI_Controller
                 $p_year = $record['p_year'];
                 $ending = date("Y-m-t", strtotime($record['p_year'] . "-" . $record['p_month'] . "-01"));
                 $leadtime = date('Y-m-01', strtotime('+'.$record['leadtime'].' days', strtotime($ending)));
-                if($record['maker_type'] == "LOCAL"){
-                    $etd = date("Y-m-d", strtotime("-14 days", strtotime($record['delivery_date'])));
+                
+                if(empty($record['etd'])){
+                    if($record['maker_type'] == "LOCAL"){
+                        $etd = date("Y-m-d", strtotime("-14 days", strtotime($record['delivery_date'])));
+                    }else{
+                        $etd = date("Y-m-d", strtotime("-21 days", strtotime($record['delivery_date'])));
+                    }
                 }else{
-                    $etd = date("Y-m-d", strtotime("-21 days", strtotime($record['delivery_date'])));
+                    $etd = $record['etd'];
                 }
                 
                 $m1 = date('mY', strtotime($leadtime));
@@ -1273,7 +1383,7 @@ class Purchase_orders extends CI_Controller
                         <table style="width:100%; font-size:12px; margin-top:20px;">
                             <tr>
                                 <td width="20">1.</td>
-                                <td>Please Acknowledge us in one week of time upon Receipt of PO <br>email to : takao.masahiko@tb-banshu.com, procurement01@banshu-ind.com, procurement02@banshu-ind.com</td>
+                                <td>Please Acknowledge us in one week of time upon Receipt of PO <br>email to : marui.tatsuhiko@tb-banshu.com, procurement01@banshu-ind.com, procurement02@banshu-ind.com</td>
                             </tr>
                             <tr>
                                 <td width="20">2.</td>
@@ -1520,6 +1630,85 @@ class Purchase_orders extends CI_Controller
         die($html);
     }
 
+    public function csv()
+    {
+        header("Content-type: text/csv; charset=utf-8");
+        header("Content-Disposition: attachment; filename=purchase_orders_" . time() . ".csv");
+        $output = fopen("php://output", "w");
+        fputcsv($output, array(
+            "Month", "Year", "Revision", "PR No", "PO No", "PO Date", "Part No Original", "Part No BEI", "Part No Vendor", "Part Name", "Product Family", "Vendor No",
+            "Vendor Name", "Vendor Type", "Maker Name", "Maker Type", "Qty", "ETD", "ETA", "Price", "Total", "Currency", "Uom", "Leadtime", "Created By", "Created Date"
+        ));
+
+        $this->db->select('a.*, b.name as item_rm_name, b.number as item_rm_number, c.number as supplier_no, 
+            c.name as supplier_name,
+            c.supplier_po,
+            c.type,
+            c.state,
+            d.name as item_family_name,
+            e.item_supplier,
+            f.type as maker_type,
+            f.name as maker_name');
+        $this->db->from('purchase_orders a');
+        $this->db->join('item_rm b', 'a.item_rm_id = b.id');
+        $this->db->join('suppliers c', 'a.supplier_id = c.id');
+        $this->db->join('item_familys d', 'b.item_family_id = d.id');
+        $this->db->join('supplier_items e', 'a.item_rm_id = e.item_rm_id and a.supplier_id = e.supplier_id and a.plant = e.plant');
+        $this->db->join('makers f', 'e.maker_id = f.id', 'left');
+        $this->db->group_by('a.id');
+        $this->db->where('a.type', "PO");
+        $this->db->order_by('c.name', 'asc');
+        $this->db->order_by('d.name', 'asc');
+        $this->db->order_by('b.number', 'asc');
+        $records = $this->db->get()->result_array();
+
+        $no = 1;
+        foreach ($records as $data) {
+            if(empty($data['etd'])){
+                if($data['maker_type'] == "LOCAL"){
+                    $etd = date("Y-m-d", strtotime("-14 days", strtotime($data['delivery_date'])));
+                }else{
+                    $etd = date("Y-m-d", strtotime("-21 days", strtotime($data['delivery_date'])));
+                }
+            }else{
+                $etd = $data['etd'];
+            }
+
+            $data = array(
+                $data['p_month'],
+                $data['p_year'],
+                $data['revision'],
+                $data['request_no'],
+                $data['po_no'],
+                $data['po_date'],
+                $data['item_rm_id'],
+                $data['item_rm_number'],
+                $data['item_supplier'],
+                $data['item_rm_name'],
+                $data['item_family_name'],
+                $data['supplier_id'],
+                $data['supplier_name'],
+                $data['type'],
+                $data['maker_name'],
+                $data['maker_type'],
+                $data['qty'],
+                $etd,
+                $data['delivery_date'],
+                $data['price'],
+                $data['total'],
+                $data['currency'],
+                $data['uom'],
+                $data['leadtime'],
+                $data['created_by'],
+                $data['created_date']
+            );
+
+            fputcsv($output, $data);
+
+            $no++;
+        }
+    }
+
     public function print($option = "")
     {
         if ($option == "excel") {
@@ -1550,12 +1739,15 @@ class Purchase_orders extends CI_Controller
             c.type,
             c.state,
             d.name as item_family_name,
-            e.item_supplier');
+            e.item_supplier,
+            f.type as maker_type,
+            f.name as maker_name');
         $this->db->from('purchase_orders a');
         $this->db->join('item_rm b', 'a.item_rm_id = b.id');
         $this->db->join('suppliers c', 'a.supplier_id = c.id');
         $this->db->join('item_familys d', 'b.item_family_id = d.id');
         $this->db->join('supplier_items e', 'a.item_rm_id = e.item_rm_id and a.supplier_id = e.supplier_id and a.plant = e.plant');
+        $this->db->join('makers f', 'e.maker_id = f.id', 'left');
         $this->db->group_by('a.id');
         $this->db->where('a.type', "PO");
         $this->db->like('a.p_month', $filter_month);
@@ -1624,9 +1816,9 @@ class Purchase_orders extends CI_Controller
                 <th style="text-align:center;">Approved</th>
                 <th style="text-align:center;">Approved By</th>
                 <th style="text-align:center;">Approved Date</th>
+                <th style="text-align:center;">PR No</th>
                 <th style="text-align:center;">PO No</th>
-                <th style="text-align:center;">Register No</th>
-                <th style="text-align:center;">Register Date</th>
+                <th style="text-align:center;">PO Date</th>
                 <th style="text-align:center;">Part No Original</th>
                 <th style="text-align:center;">Part No BEI</th>
                 <th style="text-align:center;">Part No Vendor</th>
@@ -1635,7 +1827,11 @@ class Purchase_orders extends CI_Controller
                 <th style="text-align:center;">Vendor No</th>
                 <th style="text-align:center;">Vendor Name</th>
                 <th style="text-align:center;">Vendor Type</th>
+                <th style="text-align:center;">Maker Name</th>
+                <th style="text-align:center;">Maker Type</th>
                 <th style="text-align:center;">Qty</th>
+                <th style="text-align:center;">ETD</th>
+                <th style="text-align:center;">ETA</th>
                 <th style="text-align:center;">Price</th>
                 <th style="text-align:center;">Total</th>
                 <th style="text-align:center;">Currency</th>
@@ -1664,12 +1860,22 @@ class Purchase_orders extends CI_Controller
                 $approved = "CHECKING";
             }
 
+            if(empty($data['etd'])){
+                if($data['maker_type'] == "LOCAL"){
+                    $etd = date("Y-m-d", strtotime("-14 days", strtotime($data['delivery_date'])));
+                }else{
+                    $etd = date("Y-m-d", strtotime("-21 days", strtotime($data['delivery_date'])));
+                }
+            }else{
+                $etd = $data['etd'];
+            }
+
             $html .= '  <tr>
                             <td>' . $no . '</td>
                             <td>' . $approved . '</td>
                             <td>' . $data['approved_by'] . '</td>
                             <td>' . $data['approved_date'] . '</td>
-                            <td>' . $data['supplier_po'] . '</td>
+                            <td>' . $data['request_no'] . '</td>
                             <td>' . $data['po_no'] . '</td>
                             <td>' . $data['po_date'] . '</td>
                             <td style="mso-number-format:\@;">' . $data['item_rm_id'] . '</td>
@@ -1680,7 +1886,11 @@ class Purchase_orders extends CI_Controller
                             <td>' . $data['supplier_id'] . '</td>
                             <td>' . $data['supplier_name'] . '</td>
                             <td>' . $data['type'] . '</td>
+                            <td>' . $data['maker_name'] . '</td>
+                            <td>' . $data['maker_type'] . '</td>
                             <td style="text-align:right;">' . $data['qty'] . '</td>
+                            <td style="text-align:center;">' . $etd . '</td>
+                            <td style="text-align:center;">' . $data['delivery_date'] . '</td>
                             <td style="text-align:right; mso-number-format:0.0000;">' . $data['price'] . '</td>
                             <td style="text-align:right; mso-number-format:0.0000;">' . $data['total'] . '</td>
                             <td>' . $data['currency'] . '</td>

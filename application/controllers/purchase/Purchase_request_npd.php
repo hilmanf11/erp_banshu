@@ -398,8 +398,8 @@ class Purchase_request_npd extends CI_Controller
                 echo json_encode(array("message" => "Duplicate", "title" => "Double", "theme" => "error"));
             }else{
                 $send = $this->crud->create('purchase_requests', $post, "", "approval");
-                $this->crud->update('request_npd', ["request_no" => $post['request_npd'], "item_rm_id" => $post['item_rm_id']], ["status" => 1], "", "approval");
-                echo $send;
+                $this->db->update('request_npd', ["status" => 1], ["request_no" => $post['request_npd'], "item_rm_id" => $post['item_rm_id']]);
+                echo json_encode(array("message" => "Covert NPD to Purchase Request has been Successfully", "title" => "Successfull", "theme" => "success"));
             }
         }
     }
@@ -428,7 +428,8 @@ class Purchase_request_npd extends CI_Controller
     public function delete()
     {
         $data = $this->input->post();
-        $send = $this->crud->delete('purchase_requests', $data);
+        $send = $this->crud->delete('purchase_requests', ["request_no" => $data['request_no']]);
+        $this->db->update('request_npd', ["status" => 0], ["request_no" => $data['request_npd']]);
         echo $send;
     }
 

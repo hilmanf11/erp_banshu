@@ -14,27 +14,27 @@
     </thead>
     <thead>
         <tr>
-            <th rowspan="2" data-options="field:'number',width:80,align:'center'">Supplier<br>Code</th>
-            <th rowspan="2" data-options="field:'supplier_type',width:100,align:'center'">Supplier<br>Type</th>
-            <th rowspan="2" data-options="field:'type',width:80,align:'center'">Type</th>
-            <th rowspan="2" data-options="field:'address',width:250,halign:'center'">Address</th>
-            <th rowspan="2" data-options="field:'origin',width:120,halign:'center'">Country of Origin</th>
-            <th rowspan="2" data-options="field:'state',width:120,halign:'center'">State</th>
-            <th rowspan="2" data-options="field:'contact_person',width:120,halign:'center'">Contact Person</th>
-            <th rowspan="2" data-options="field:'telp',width:120,halign:'center'">Telp</th>
-            <th rowspan="2" data-options="field:'fax',width:120,halign:'center'">Fax</th>
-            <th rowspan="2" data-options="field:'email',width:200,halign:'center'">Email</th>
-            <th rowspan="2" data-options="field:'website',width:150,halign:'center'">Website</th>
-            <th rowspan="2" data-options="field:'currency',width:80,align:'center'">Currency</th>
-            <th rowspan="2" data-options="field:'payment_term',width:80,halign:'center',align:'right'">Payment<br>Term (Day)</th>
-            <th rowspan="2" data-options="field:'incoterm',width:80,align:'center'">Incoterm</th>
-            <th rowspan="2" data-options="field:'vat_status',align:'center',width:80">Vat Status</th>
-            <th rowspan="2" data-options="field:'vat',halign:'center',width:80,align:'right'">Vat</th>
-            <th rowspan="2" data-options="field:'commodity',width:80,align:'center'">Commodity</th>
-            <th rowspan="2" data-options="field:'tax',halign:'center',width:120">Tax No</th>
-            <th rowspan="2" data-options="field:'bank_account',width:150,halign:'center'">Bank Account</th>
-            <th rowspan="2" data-options="field:'bank_name',width:150,halign:'center'">Bank Name</th>
-            <th rowspan="2" data-options="field:'status',width:80,align:'center', styler:cellStyler, formatter:cellFormatter">Status</th>
+            <th data-options="field:'number',width:80,align:'center'">Supplier<br>Code</th>
+            <th data-options="field:'supplier_type',width:100,align:'center'">Supplier<br>Type</th>
+            <th data-options="field:'type',width:80,align:'center'">Type</th>
+            <th data-options="field:'address',width:250,halign:'center'">Address</th>
+            <th data-options="field:'origin',width:120,halign:'center'">Country of Origin</th>
+            <th data-options="field:'state',width:120,halign:'center'">State</th>
+            <th data-options="field:'contact_person',width:120,halign:'center'">Contact Person</th>
+            <th data-options="field:'telp',width:120,halign:'center'">Telp</th>
+            <th data-options="field:'fax',width:120,halign:'center'">Fax</th>
+            <th data-options="field:'email',width:200,halign:'center'">Email</th>
+            <th data-options="field:'website',width:150,halign:'center'">Website</th>
+            <th data-options="field:'currency',width:80,align:'center'">Currency</th>
+            <th data-options="field:'payment_term',width:80,halign:'center',align:'right'">Payment<br>Term (Day)</th>
+            <th data-options="field:'incoterm',width:80,align:'center'">Incoterm</th>
+            <th data-options="field:'vat_status',align:'center',width:80">Vat Status</th>
+            <th data-options="field:'vat',halign:'center',width:80,align:'right'">Vat</th>
+            <th data-options="field:'commodity',width:80,align:'center'">Commodity</th>
+            <th data-options="field:'tax',halign:'center',width:120">Tax No</th>
+            <th data-options="field:'bank_account',width:150,halign:'center'">Bank Account</th>
+            <th data-options="field:'bank_name',width:150,halign:'center'">Bank Name</th>
+            <!-- <th data-options="field:'status',width:80,align:'center', styler:cellStyler, formatter:cellFormatter">Status</th> -->
         </tr>
     </thead>
 </table>

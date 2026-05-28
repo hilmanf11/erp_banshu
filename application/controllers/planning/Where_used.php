@@ -37,19 +37,54 @@ class Where_used extends CI_Controller
         }
 
         if ($this->input->get()) {
-            $filter_item_rm_id = base64_decode($this->input->get('filter_item_rm_id'));
+            $filter_item_id = base64_decode($this->input->get('filter_item_id'));
+            $filter_part_id = base64_decode($this->input->get('filter_part_id'));
+            $filter_customer = base64_decode($this->input->get('filter_customer'));
+            $filter_maker = base64_decode($this->input->get('filter_maker'));
+            
+            $whereMaker = empty($filter_maker) ? "" : "WHERE c.name = '$filter_maker'";
 
-            $query = $this->db->query("SELECT d.id as item_rm_id, d.number as item_rm_number, d.name as item_rm_name,
-                b.id as item_fg_id, b.number as item_fg_number, b.number_customer, b.name as item_fg_name, a.composition, e.name as customer_name
-                FROM bom a
-                LEFT JOIN item_fg b ON a.item_fg_id = b.id
-                LEFT JOIN customer_items c ON b.id = c.item_fg_id
-                LEFT JOIN item_rm d ON a.item_rm_id = d.id
-                LEFT JOIN customers e ON c.customer_id = e.id
-                WHERE a.item_rm_id like '%$filter_item_rm_id%' and b.status = 0
-                GROUP BY a.item_fg_id, a.item_rm_id
-                ORDER BY a.item_rm_id ASC");
-            $records = $query->result_array();
+            $this->dummy = $this->load->database('export', TRUE);
+
+            $sqlMaker = $this->db->query("SELECT b.number, c.name 
+                FROM supplier_items a
+                JOIN item_rm b ON a.item_rm_id = b.id
+                LEFT JOIN makers c ON a.maker_id = c.id
+                $whereMaker
+                GROUP BY b.number");
+            $rowMakers = $sqlMaker->result_array();
+
+            $wherePart = [];
+            foreach ($rowMakers as $rowMaker) {
+                $makerItem[$rowMaker['number']] = $rowMaker['name'];
+                $wherePart[] = $rowMaker['number'];
+            }
+
+            $chunks = array_chunk($wherePart, 500);
+
+            $this->dummy->select('a.bom_par_item, a.bom_com_item, a.bom_qty_perassy, a.bom_effdate, a.bom_routid, a.bom_user, a.bom_date, b.item_name, c.cust_name, d.um_name, e.pfm_name, a.bom_maker');
+            $this->dummy->from("mst_bom a");
+            $this->dummy->join('mst_item b', 'a.bom_com_item = b.item_id');
+            $this->dummy->join('mst_item ba', 'a.bom_par_item = ba.item_id');
+            $this->dummy->join('r_customer c', 'ba.cust_id = c.cust_id', 'left');
+            $this->dummy->join('r_unit_measure d', 'b.um_id = d.um_id', 'left');
+            $this->dummy->join('r_prodfam e', 'b.pfm_id = e.pfm_id', 'left');
+            $this->dummy->where('b.stscode_id', "01");
+            $this->dummy->group_start(); 
+            foreach ($chunks as $index => $chunk) {
+                if ($index === 0) {
+                    $this->dummy->where_in('TRIM(a.bom_com_item)', $chunk);
+                } else {
+                    $this->dummy->or_where_in('TRIM(a.bom_com_item)', $chunk);
+                }
+            }
+            $this->dummy->group_end();
+            $this->dummy->like('a.bom_par_item', trim($filter_item_id));
+            $this->dummy->like('a.bom_com_item', trim($filter_part_id));
+            $this->dummy->like('ba.cust_id', $filter_customer);
+            $this->dummy->order_by('a.bom_par_item', 'ASC');
+            $this->dummy->order_by('a.bom_com_item', 'ASC');
+            $records = $this->dummy->get()->result_array();
 
             //Config
             $this->db->select('*');
@@ -80,39 +115,61 @@ class Where_used extends CI_Controller
                     </center>
                     <br><br><br>
                     <center>
-                        <b style="font-size:20px;">WHERE USED</b><br><small>Part No Original '.$filter_item_rm_id.'</small><br><br>
+                        <b style="font-size:20px;">WHERE USED</b><br><small>Part No '.$filter_part_id.'</small><br><br>
                     </center>
                     <table id="customers" border="1">
                         <tr>
-                            <th width="30">No</th>
-                            <th style="text-align:center;">Part No Original</th>
-                            <th style="text-align:center;">Part No BEI</th>
-                            <th style="text-align:center;">Description</th>
-                            <th style="text-align:center;">Product No</th>
-                            <th style="text-align:center;">Part No Customer</th>
-                            <th style="text-align:center;">Description</th>
-                            <th style="text-align:center;">Qty</th>
-                            <th style="text-align:center;">Customer</th>
+                            <th width="20">No</th>
+                            <th>Assy No</th>
+                            <th>Part No</th>
+                            <th>Part Name</th>
+                            <th>Customer</th>
+                            <th>Maker</th>
+                            <th>Product Family</th>
+                            <th>Unit Of Measure</th>
+                            <th>QPA</th>
                         </tr>';
-            $no = 1;
-            foreach ($records as $record) {
-                $html .= '<tr>
-                            <td style="text-align:center;">' . $no . '</td>
-                            <td style="mso-number-format:\@;">' . $record['item_rm_id'] . '</td>
-                            <td style="mso-number-format:\@;">' . $record['item_rm_number'] . '</td>
-                            <td>' . $record['item_rm_name'] . '</td>
-                            <td style="mso-number-format:\@;">' . $record['item_fg_number'] . '</td>
-                            <td style="mso-number-format:\@;">' . $record['number_customer'] . '</td>
-                            <td>' . $record['item_fg_name'] . '</td>
-                            <td>' . $record['composition'] . '</td>
-                            <td>' . $record['customer_name'] . '</td>
-                        </tr>';
-                $no++;
-            }
-            $html .= '</table>';
-        }
+                    $no = 1;
+                    foreach ($records as $data) {
+                        $item_id = trim($data['bom_com_item']);
+                        $bom_maker = @$makerItem[$item_id];
 
-        $html .= '</body></html>';
-        echo $html;
+                        // if(trim($data['bom_maker']) == "undefined"){
+                        //     $bom_maker = "";
+                        // }else{
+                        //     $bom_maker = $data['bom_maker'];
+                        // }
+
+                        if($filter_maker == ""){
+                            $html .= '  <tr>
+                                        <td>' . $no . '</td>
+                                        <td style="mso-number-format:\@;">' . $data['bom_par_item'] . '</td>
+                                        <td style="mso-number-format:\@;">' . $data['bom_com_item'] . '</td>
+                                        <td>' . $data['item_name'] . '</td>
+                                        <td>' . $data['cust_name'] . '</td>
+                                        <td>' . $bom_maker . '</td>
+                                        <td>' . $data['pfm_name'] . '</td>
+                                        <td>' . $data['um_name'] . '</td>
+                                        <td>' . $data['bom_qty_perassy'] . '</td>
+                                    </tr>';
+                        }elseif($filter_maker == $bom_maker){
+                            $html .= '  <tr>
+                                        <td>' . $no . '</td>
+                                        <td style="mso-number-format:\@;">' . $data['bom_par_item'] . '</td>
+                                        <td style="mso-number-format:\@;">' . $data['bom_com_item'] . '</td>
+                                        <td>' . $data['item_name'] . '</td>
+                                        <td>' . $data['cust_name'] . '</td>
+                                        <td>' . $bom_maker . '</td>
+                                        <td>' . $data['pfm_name'] . '</td>
+                                        <td>' . $data['um_name'] . '</td>
+                                        <td>' . $data['bom_qty_perassy'] . '</td>
+                                    </tr>';
+                        }
+                        $no++;
+                    }
+
+            $html .= '</table></body></html>';
+            echo $html;
+        }
     }
 }

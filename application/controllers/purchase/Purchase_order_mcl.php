@@ -268,10 +268,15 @@ class Purchase_order_mcl extends CI_Controller
                 $p_year = $record['p_year'];
                 $ending = date("Y-m-t", strtotime($record['p_year'] . "-" . $record['p_month'] . "-01"));
                 $leadtime = date('Y-m-01', strtotime('+'.$record['leadtime'].' days', strtotime($ending)));
-                if($record['maker_type'] == "LOCAL"){
-                    $etd = date("Y-m-d", strtotime("-14 days", strtotime($record['delivery_date'])));
+
+                if(empty($record['etd'])){
+                    if($record['maker_type'] == "LOCAL"){
+                        $etd = date("Y-m-d", strtotime("-14 days", strtotime($record['delivery_date'])));
+                    }else{
+                        $etd = date("Y-m-d", strtotime("-21 days", strtotime($record['delivery_date'])));
+                    }
                 }else{
-                    $etd = date("Y-m-d", strtotime("-21 days", strtotime($record['delivery_date'])));
+                    $etd = $record['etd'];
                 }
                 
                 $m1 = date('Y-m-01', strtotime($leadtime));
@@ -395,7 +400,7 @@ class Purchase_order_mcl extends CI_Controller
                         <table style="width:100%; font-size:12px; margin-top:20px;">
                             <tr>
                                 <td width="20">1.</td>
-                                <td>Please Acknowledge us in one week of time upon Receipt of PO <br>email to : takao.masahiko@tb-banshu.com, procurement01@banshu-ind.com, procurement02@banshu-ind.com</td>
+                                <td>Please Acknowledge us in one week of time upon Receipt of PO <br>email to : marui.tatsuhiko@tb-banshu.com, procurement01@banshu-ind.com, procurement02@banshu-ind.com</td>
                             </tr>
                             <tr>
                                 <td width="20">2.</td>
@@ -672,12 +677,15 @@ class Purchase_order_mcl extends CI_Controller
             c.type,
             c.state,
             d.name as item_family_name,
-            e.item_supplier');
+            e.item_supplier,
+            f.type as maker_type,
+            f.name as maker_name');
         $this->db->from('purchase_orders a');
         $this->db->join('item_rm b', 'a.item_rm_id = b.id');
         $this->db->join('suppliers c', 'a.supplier_id = c.id');
         $this->db->join('item_familys d', 'b.item_family_id = d.id');
         $this->db->join('supplier_items e', 'a.item_rm_id = e.item_rm_id and a.supplier_id = e.supplier_id and a.plant = e.plant');
+        $this->db->join('makers f', 'e.maker_id = f.id', 'left');
         $this->db->group_by('a.id');
         $this->db->where('a.type', "PO");
         $this->db->like('a.p_month', $filter_month);
@@ -746,9 +754,9 @@ class Purchase_order_mcl extends CI_Controller
                 <th style="text-align:center;">Approved</th>
                 <th style="text-align:center;">Approved By</th>
                 <th style="text-align:center;">Approved Date</th>
+                <th style="text-align:center;">PR No</th>
                 <th style="text-align:center;">PO No</th>
-                <th style="text-align:center;">Register No</th>
-                <th style="text-align:center;">Register Date</th>
+                <th style="text-align:center;">PO Date</th>
                 <th style="text-align:center;">Part No Original</th>
                 <th style="text-align:center;">Part No BEI</th>
                 <th style="text-align:center;">Part No Vendor</th>
@@ -757,7 +765,11 @@ class Purchase_order_mcl extends CI_Controller
                 <th style="text-align:center;">Vendor No</th>
                 <th style="text-align:center;">Vendor Name</th>
                 <th style="text-align:center;">Vendor Type</th>
+                <th style="text-align:center;">Maker Name</th>
+                <th style="text-align:center;">Maker Type</th>
                 <th style="text-align:center;">Qty</th>
+                <th style="text-align:center;">ETD</th>
+                <th style="text-align:center;">ETA</th>
                 <th style="text-align:center;">Uom</th>
                 <th style="text-align:center;">Leadtime</th>
                 <th style="text-align:center;">Status</th>
@@ -788,7 +800,7 @@ class Purchase_order_mcl extends CI_Controller
                             <td>' . $approved . '</td>
                             <td>' . $data['approved_by'] . '</td>
                             <td>' . $data['approved_date'] . '</td>
-                            <td>' . $data['supplier_po'] . '</td>
+                            <td>' . $data['request_no'] . '</td>
                             <td>' . $data['po_no'] . '</td>
                             <td>' . $data['po_date'] . '</td>
                             <td style="mso-number-format:\@;">' . $data['item_rm_id'] . '</td>
@@ -798,8 +810,11 @@ class Purchase_order_mcl extends CI_Controller
                             <td>' . $data['item_family_name'] . '</td>
                             <td>' . $data['supplier_id'] . '</td>
                             <td>' . $data['supplier_name'] . '</td>
-                            <td>' . $data['type'] . '</td>
+                            <td>' . $data['maker_name'] . '</td>
+                            <td>' . $data['maker_type'] . '</td>
                             <td style="text-align:right;">' . $data['qty'] . '</td>
+                            <td style="text-align:center;">' . $etd . '</td>
+                            <td style="text-align:center;">' . $data['delivery_date'] . '</td>
                             <td>' . $data['uom'] . '</td>
                             <td>' . $data['leadtime'] . '</td>
                             <td>' . $status . '</td>

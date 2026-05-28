@@ -45,7 +45,9 @@
         </thead>
         <thead>
             <tr>
-                <th data-options="field:'item_family_name',width:150,halign:'center'">Product Family</th>
+                <th data-options="field:'supplier_number',width:100,halign:'center'">Supplier ID</th>
+                <th data-options="field:'supplier_name',width:250,halign:'center'">Supplier Name</th>
+                <th data-options="field:'maker_name',width:250,halign:'center'">Maker</th>
                 <!-- <th data-options="field:'maker',width:150,halign:'center'">Maker</th> -->
                 <th data-options="field:'mpq',width:80,halign:'center'">MPQ</th>
                 <th data-options="field:'moq',width:80,halign:'center'">MOQ</th>

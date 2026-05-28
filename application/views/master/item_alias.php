@@ -5,7 +5,7 @@
             <th rowspan="2" field="ck" checkbox="true"></th>
             <th rowspan="2" data-options="field:'plant',width:100,halign:'center'">Plant</th>
             <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No BEI</th>
-            <th rowspan="2" data-options="field:'item_rm_alias',width:200,halign:'center'">Part No Supplier</th>
+            <th rowspan="2" data-options="field:'item_rm_alias',width:200,halign:'center'">Part No Vendor</th>
             <th rowspan="2" data-options="field:'description',width:250,halign:'center'">Description</th>
             <th colspan="2" data-options="field:'',width:100,halign:'center'"> Created</th>
             <th colspan="2" data-options="field:'',width:100,halign:'center'"> Updated</th>
@@ -34,11 +34,11 @@
             </div>
             <div class="fitem">
                 <span style="width:35%; display:inline-block;">Part No BEI</span>
-                <input style="width:60%;" name="number" id="number" required="" class="easyui-textbox">
+                <input style="width:60%;" name="number" id="number" required="" class="easyui-combogrid">
             </div>
             <div class="fitem">
-                <span style="width:35%; display:inline-block;">Part No Supplier</span>
-                <input style="width:60%;" name="alias" id="alias" required="" class="easyui-textbox">
+                <span style="width:35%; display:inline-block;">Part No Vendor</span>
+                <input style="width:60%;" name="alias" id="alias" required="" class="easyui-combogrid">
             </div>
             <div class="fitem">
                 <span style="width:35%; display:inline-block;">Description</span>
@@ -306,6 +306,56 @@
                     });
                 }
             }]
+        });
+
+        $('#number').combogrid({
+            url: '<?= base_url('master/item_rm/reads') ?>',
+            panelWidth: 550,
+            idField: 'id',
+            textField: 'number',
+            mode: 'remote',
+            fitColumns: true,
+            prompt: "Select Part No BEI",
+            columns: [
+                [{
+                    field: 'id',
+                    title: 'Part No EBWS',
+                    width: 100
+                }, {
+                    field: 'number',
+                    title: 'Part No Supplier',
+                    width: 200
+                }, {
+                    field: 'name',
+                    title: 'Description',
+                    width: 200
+                }, ]
+            ],
+        });
+
+        $('#alias').combogrid({
+            url: '<?= base_url('master/item_rm/reads') ?>',
+            panelWidth: 550,
+            idField: 'id',
+            textField: 'number',
+            mode: 'remote',
+            fitColumns: true,
+            prompt: "Select Part No Vendor",
+            columns: [
+                [{
+                    field: 'id',
+                    title: 'Part No EBWS',
+                    width: 100
+                }, {
+                    field: 'number',
+                    title: 'Part No Supplier',
+                    width: 200
+                }, {
+                    field: 'name',
+                    title: 'Description',
+                    width: 200
+                }, ]
+            ],
         });
     });
 </script>

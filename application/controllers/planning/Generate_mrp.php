@@ -528,21 +528,21 @@ class Generate_mrp extends CI_Controller
             }
 
             //Select Query
-            $this->db->select('a.item_rm_id, 
+            $this->db->select("a.item_rm_id, 
                 a.prod_plan_1, 
                 a.prod_plan_2, 
                 a.prod_plan_3, 
                 a.prod_plan_4,
                 a.prod_plan_5,
                 a.prod_plan_6,
-                ix.alias as item_rm_alias, 
+                GROUP_CONCAT(ix.alias SEPARATOR ', ') as item_rm_alias,
                 b.supplier_id, 
                 b.share_order, 
                 b.safety_stock,
                 coalesce(b.mpq, 0) as mpq, 
                 coalesce(b.moq, 0) as moq, 
                 c.type as supplier_type,
-                coalesce((b.leadtime + b.transit), 0) as leadtime');
+                coalesce((b.leadtime + b.transit), 0) as leadtime");
             $this->db->from("(SELECT * FROM mrp_ltpp WHERE p_month = '$filter_month' AND p_year = '$filter_year' AND revision = '$filter_revision' AND plant = '$filter_plant') a");
             $this->db->join('item_rm i', "a.item_rm_id = i.id");
             $this->db->join('item_rm ia', "TRIM(LEADING '+' FROM i.number) = ia.number");
@@ -997,6 +997,24 @@ class Generate_mrp extends CI_Controller
             $this->db->order_by('a.`total_need`', 'asc');
             $generates = $this->db->get()->result_array();
 
+            $this->db->select('b.item_family_id, SUM(a.total_need) as total');
+            $this->db->from('generate_mrp_finals a');
+            $this->db->join('item_rm b', 'a.item_rm_id = b.id');
+            $this->db->join('item_familys c', 'b.item_family_id = c.id');
+            $this->db->where('a.p_month', $filter_month);
+            $this->db->where('a.p_year', $filter_year);
+            $this->db->where('a.revision', $filter_revision);
+            $this->db->where('a.plant', $filter_plant);
+            // $this->db->where('b.item_family_id', $generate['item_family_id']);
+            $this->db->group_by('b.item_family_id');
+            $this->db->order_by('c.number', 'asc');
+            $generateProds = $this->db->get()->result_array();
+            
+            $arrProd = array();
+            foreach ($generateProds as $generateProd) {
+                $arrProd[$generateProd['item_family_id']] = $generateProd['total'];
+            }
+
             $total_need = 0;
             $product_family = "";
             $arr = array();
@@ -1007,20 +1025,8 @@ class Generate_mrp extends CI_Controller
                     $total_need += $generate['total_need'];
                 }
 
-                $this->db->select('c.number, SUM(a.total_need) as total');
-                $this->db->from('generate_mrp_finals a');
-                $this->db->join('item_rm b', 'a.item_rm_id = b.id');
-                $this->db->join('item_familys c', 'b.item_family_id = c.id');
-                $this->db->where('a.p_month', $filter_month);
-                $this->db->where('a.p_year', $filter_year);
-                $this->db->where('a.revision', $filter_revision);
-                $this->db->where('a.plant', $filter_plant);
-                $this->db->where('b.item_family_id', $generate['item_family_id']);
-                $this->db->group_by('b.item_family_id');
-                $mrp = $this->db->get()->row();
-
-                if(@$total_need > 0 || @$mrp->total > 0){
-                    $composition = round(($total_need / @$mrp->total) * 100);
+                if(@$total_need > 0 || @$arrProd[$generate['item_family_id']] > 0){
+                    $composition = round(($total_need / @$arrProd[$generate['item_family_id']]) * 100);
                 }else{
                     $composition = 0;
                 }
@@ -1038,7 +1044,7 @@ class Generate_mrp extends CI_Controller
                     "item_rm_id" => $generate['item_rm_id'],
                     "supplier_id" => $generate['supplier_id'],
                     "need" => $generate['total_need'],
-                    "total" => @$mrp->total,
+                    "total" => @$arrProd[$generate['item_family_id']],
                     "composition" => $composition,
                     "class" => $safety_stock->name,
                     "safety" => $safety_stock->safety,
@@ -1084,11 +1090,11 @@ class Generate_mrp extends CI_Controller
                     "revision" => $post['revision'],
                     "item_rm_id" => $post['item_rm_id'],
                     "plant" => $post['plant'],
-                ], $post);
+                ], $post, "logs");
 
                 echo $send;
             } else {
-                $send = $this->crud->create('generate_mrp_finals', $post);
+                $send = $this->crud->create('generate_mrp_finals', $post, "logs");
                 echo $send;
             }
         }
@@ -1113,11 +1119,11 @@ class Generate_mrp extends CI_Controller
                     "revision" => $post['revision'],
                     "item_rm_id" => $post['item_rm_id'],
                     "plant" => $post['plant'],
-                ], $post);
+                ], $post, "logs");
 
                 echo $send;
             } else {
-                $send = $this->crud->create('generate_mrp_abcclass', $post);
+                $send = $this->crud->create('generate_mrp_abcclass', $post, "logs");
                 echo $send;
             }
         }
@@ -1217,6 +1223,18 @@ class Generate_mrp extends CI_Controller
             $need_2 = date("m/Y",  strtotime("-2 month", strtotime($filter_year."-".$filter_month."-01")));
             $need_3 = date("m/Y",  strtotime("-3 month", strtotime($filter_year."-".$filter_month."-01")));
 
+            $sqlAlias = $this->db->query("SELECT item_rm_alias FROM generate_mrp_finals WHERE p_month='$filter_month' and p_year='$filter_year' and revision='$filter_revision' and plant='$filter_plant' GROUP BY item_rm_alias");
+            $dataAlias = $sqlAlias->result_array();
+            
+            $arrAlias = [];
+            foreach ($dataAlias as $dataAlia) {
+                $parts = explode(',', $dataAlia['item_rm_alias']);
+                foreach ($parts as $part) {
+                    $arrAlias[] = trim($part);
+                }
+            }
+            $aliasNotIn = array_values(array_unique($arrAlias));
+
             $this->db->select('a.*, CONCAT(a.p_year, a.p_month) as period, b.number as item_rm_number, h.item_supplier, b.name as item_rm_name, f.number as item_alias, e.id as supplier_number, e.name as supplier_name, 
                 i.type as supplier_type, 
                 i.name as maker_name,
@@ -1229,13 +1247,14 @@ class Generate_mrp extends CI_Controller
             $this->db->join('suppliers e', 'a.supplier_id = e.id');
             $this->db->join('supplier_items h', 'a.item_rm_id = h.item_rm_id and a.supplier_id = h.supplier_id and a.plant = h.plant');
             $this->db->join('makers i', 'h.maker_id = i.id', 'left');
-            $this->db->join("(select * from purchase_requests WHERE status_data = 'GENERATE') g", "a.supplier_id = g.supplier_id and a.item_rm_id = g.item_rm_id and a.plant = g.plant and a.p_month = g.p_month and a.p_year = g.p_year and a.revision = g.revision", 'left');
+            $this->db->join("(SELECT * FROM purchase_requests WHERE status_data = 'GENERATE' AND p_month='$filter_month' AND p_year='$filter_year' AND revision='$filter_revision' AND plant='GE') g", "a.supplier_id = g.supplier_id and a.item_rm_id = g.item_rm_id", 'left');
             $this->db->where("(a.mpq > 0 and a.moq > 0 and a.leadtime > 0 and a.share_order > 0)");
             $this->db->where('a.plant', $filter_plant);
             if($filter_supplier != ""){
                 $this->db->where('a.supplier_id', $filter_supplier);
             }
-            $this->db->where("a.item_rm_id NOT IN (SELECT item_rm_alias FROM generate_mrp_finals WHERE p_month='$filter_month' and p_year='$filter_year' and revision='$filter_revision' and plant='$filter_plant' GROUP BY item_rm_alias)");
+            // $this->db->where("a.item_rm_id NOT IN (SELECT item_rm_alias FROM generate_mrp_finals WHERE p_month='$filter_month' and p_year='$filter_year' and revision='$filter_revision' and plant='$filter_plant' GROUP BY item_rm_alias)");
+            $this->db->where_not_in('a.item_rm_id', $aliasNotIn);
             if($approved_to != ""){
                 $this->db->where('a.p_month', $filter_month);
                 $this->db->where('a.p_year', $filter_year);
@@ -1257,6 +1276,7 @@ class Generate_mrp extends CI_Controller
             $this->db->order_by('b.number', 'asc');
             // $this->db->limit(10);
             $records = $this->db->get()->result_array();
+            
 
             $html = '<html><head><title>Print Data</title></head><style>body {font-family: Arial, Helvetica, sans-serif;}#customers {border-collapse: collapse;width: 250%;font-size: 11px;}#customers td, #customers th {border: 1px solid #ddd;padding: 2px;}#customers tr:nth-child(even){background-color: #f2f2f2;}#customers tr:hover {background-color: #ddd;}#customers th {padding-top: 2px;padding-bottom: 2px;text-align: left;color: black;} 
             .box-green{
@@ -1365,6 +1385,7 @@ class Generate_mrp extends CI_Controller
 
                     $no = 1;
                     foreach ($records as $record) {
+                        $item_rm_alias = explode(", ", $record['item_rm_alias']);
                         if($record['approved_to'] == "" || $record['approved_to'] == null){
                             $approved = "APPROVED";
                             $styleApp = "background:green; color:white;";
@@ -1383,7 +1404,7 @@ class Generate_mrp extends CI_Controller
                         $this->db->where('a.p_month', $filter_month);
                         $this->db->where('a.p_year', $filter_year);
                         $this->db->where('a.revision', $filter_revision);
-                        $this->db->where('a.item_rm_id', $record['item_rm_alias']);
+                        $this->db->where_in('a.item_rm_id', $item_rm_alias);
                         $this->db->group_by('a.item_rm_id');
                         // $this->db->group_by('a.supplier_id');
                         $this->db->order_by('c.name', 'asc');
@@ -1416,6 +1437,7 @@ class Generate_mrp extends CI_Controller
                         $balance_4 = 0;
                         $balance_5 = 0;
                         $balance_6 = 0;
+                        $total_need = 0;
                         $avg_balance = 0;
                         foreach ($records2 as $record2) {
                             $issued_1 += round($record2['issued_1']);
@@ -1442,6 +1464,7 @@ class Generate_mrp extends CI_Controller
                             $balance_4 += round($record2['balance_4']);
                             $balance_5 += round($record2['balance_5']);
                             $balance_6 += round($record2['balance_6']);
+                            $total_need += round($record2['total_need']);
                             $avg_balance += round($record2['avg_balance']);
                             $html2 .= "  <tr style='background:#8bc5ff;'>
                                         <td></td>

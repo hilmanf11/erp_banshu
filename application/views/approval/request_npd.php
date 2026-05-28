@@ -16,7 +16,7 @@
             <th data-options="field:'item_npd_name',width:100,halign:'center'">Part Name</th>
             <th data-options="field:'product_family',width:100,halign:'center'">Product Family</th>
             <th data-options="field:'maker',width:200,halign:'center'">Maker</th>
-            <th data-options="field:'qty',width:80,halign:'center',align:'right',formatter:numberFormat">Qty</th>
+            <th data-options="field:'qty',width:80,halign:'center',align:'right'">Qty</th>
             <th data-options="field:'uom',width:80,align:'center'">Uom</th>
             <th data-options="field:'requirement_date',width:100,align:'center'">Requirement</th>
             <th data-options="field:'request_reason',width:200,halign:'center'">Reason</th>

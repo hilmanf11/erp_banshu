@@ -75,7 +75,7 @@ class Delivery_schedules extends CI_Controller
             $this->db->join('supplier_items c', 'a.supplier_id = c.supplier_id and c.item_rm_id = ia.id and a.plant = c.plant');
             $this->db->join('makers d', 'c.maker_id = d.id');
             $this->db->where('d.type !=', "LOCAL");
-            $this->db->where('a.confirm', "NO");
+            // $this->db->where('a.confirm', "NO");
             $this->db->where('a.po_no', $po_no);
             $this->db->group_by('a.item_rm_id');
             $this->db->group_by('a.supplier_id');

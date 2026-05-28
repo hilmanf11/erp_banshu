@@ -360,7 +360,8 @@
                                 method: 'post',
                                 url: '<?= base_url('purchase/purchase_request_npd/delete') ?>',
                                 data: {
-                                    request_no: row.request_no
+                                    request_no: row.request_no,
+                                    request_npd: row.request_npd,
                                 },
                                 success: function(result) {
                                     var result = eval('(' + result + ')');
@@ -674,7 +675,7 @@
 
                 $.ajax({
                     type: "get",
-                    url: "<?= base_url('purchase/purchase_orders/getData') ?>",
+                    url: "<?= base_url('purchase/purchase_order_npd/getData') ?>",
                     data: "request_no=" + window.btoa(request_no) + "&id_menu=20240103000001",
                     dataType: "json",
                     success: function(rows) {
@@ -690,7 +691,7 @@
                                     $('#p_start').html(number);
                                     $('#p_finish').html(total);
 
-                                    $.post('<?= base_url('purchase/purchase_orders/create2') ?>', {
+                                    $.post('<?= base_url('purchase/purchase_order_npd/create2') ?>', {
                                         data: json[number - 1]
                                     }, function(note) {
                                         var result = eval('(' + note + ')');

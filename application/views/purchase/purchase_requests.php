@@ -1269,11 +1269,16 @@
                                             $("#dg").datagrid('reload');
                                         }
                                     }).fail(function(jqXHR, textStatus) {
-                                        if (textStatus == "error") {
-                                            toastr.error("Connection time out");
+                                        // if (textStatus == "error") {
+                                        //     toastr.error("Connection time out");
 
+                                        //     requestData(total, json, number, value, success + 0, failed + 1);
+                                        // }
+                                        setTimeout(function() {
+                                            // $('#myElement').fadeOut();
+                                            toastr.error("Connection time out");
                                             requestData(total, json, number, value, success + 0, failed + 1);
-                                        }
+                                        }, 5000);
                                     });
                                 }
                             }
@@ -1817,7 +1822,7 @@
 
     function BtnSend(val, row) {
         if(row.total_data != row.total_po){
-            if((row.approved_to == null || row.approved_to == "") && row.confirm == "1"){
+            if(parseInt(row.total_approved) > 0 && row.confirm == "1"){
                 var send = "sendPo('"+row.request_no+"')";
                 return '<a class="btn btn-success w-100" style="pointer-events: visible; opacity:1;" onClick="'+send+'"><i class="fa fa-plus"></i> Create PO</a>';
             }else{

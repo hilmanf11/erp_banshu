@@ -84,13 +84,24 @@ class Item_alias extends CI_Controller
     public function create()
     {
         if ($this->input->post()) {
-            if ($this->form_validation->run() == TRUE) {
-                $post   = $this->input->post();
-                $send   = $this->crud->create('item_alias', $post);
-                echo $send;
+            // if ($this->form_validation->run() == TRUE) {
+            $post   = $this->input->post();
+            $item_alias = $this->crud->reads('item_alias', [], ["number" => $post['number'], "alias" => $post['alias']]);
+            
+            if (!empty($item_alias->id)) {
+                echo json_encode(array("title" => "Duplicate", "message" => "Part No " . $post['number'] . " Already Created", "theme" => "error"));
             } else {
-                show_error(validation_errors());
+
+                if($post['number'] != $post['alias']){
+                    $send = $this->crud->create('item_alias', $post);
+                    echo $send;
+                }else{
+                    show_error("Item Bei and vendor cannot same");
+                }
             }
+            // } else {
+            //     show_error(validation_errors());
+            // }
         } else {
             show_error("Cannot Process your request");
         }
@@ -123,12 +134,16 @@ class Item_alias extends CI_Controller
             $item_alias = $this->crud->read('item_alias', [], ["number" => $data['number'], "alias" => $data['alias']]);
 
             if (!empty($item_alias->id)) {
-                $send = json_encode(array("title" => "Duplicate", "message" => "Part No " . $data['number'] . " Already Created", "theme" => "error"));
+                echo json_encode(array("title" => "Duplicate", "message" => "Part No " . $data['number'] . " Already Created", "theme" => "error"));
             } else {
-                $send = $this->crud->create('item_alias', $data);
+
+                if($post['number'] != $post['alias']){
+                    $send = $this->crud->create('item_alias', $data);
+                    echo $send;
+                }else{
+                    show_error("Item Bei and supplier cannot same");
+                }
             }
-            
-            echo $send;
         }
     }
 
@@ -181,7 +196,7 @@ class Item_alias extends CI_Controller
                 <th rowspan="2" width="20">No</th>
                 <th rowspan="2">Plant</th>
                 <th rowspan="2">Part No BEI</th>
-                <th rowspan="2">Part No Supplier</th>
+                <th rowspan="2">Part No Vendor</th>
                 <th colspan="2">Created</th>
                 <th colspan="2">Updated</th>
             </tr>
