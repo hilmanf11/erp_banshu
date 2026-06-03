@@ -203,6 +203,8 @@
                 <th data-options="field:'mpq',width:80,halign:'center'">MPQ</th>
                 <th data-options="field:'moq',width:80,halign:'center'">MOQ</th>
                 <th data-options="field:'leadtime',width:80,halign:'center'">Leadtime</th>
+                <th data-options="field:'etd_date',width:100,halign:'center'">ETD</th>
+                <th data-options="field:'delivery_date',width:100,halign:'center'">ETA</th>
                 <th data-options="field:'qty',width:80,halign:'center',align:'right',formatter:numberformat">Qty</th>
                 <th data-options="field:'price',width:100,halign:'center',align:'right',formatter:numberformatPrice">Price</th>
                 <th data-options="field:'sync',width:80,align:'center', formatter:BtnSync">Sync</th>
@@ -309,6 +311,14 @@
             <div class="fitem">
                 <span style="width:35%; display:inline-block;">Remarks</span>
                 <input style="width:50%;" name="remarks" id="remarks" class="easyui-textbox">
+            </div>
+            <div class="fitem">
+                <span style="width:35%; display:inline-block;">ETD</span>
+                <input style="width:50%;" name="etd_date" id="etd_date" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
+            </div>
+            <div class="fitem">
+                <span style="width:35%; display:inline-block;">ETA</span>
+                <input style="width:50%;" name="delivery_date" id="delivery_date" class="easyui-datebox" data-options="formatter:myformatter,parser:myparser, editable:false">
             </div>
             <div class="fitem">
                 <span style="width:35%; display:inline-block;">Reason</span>

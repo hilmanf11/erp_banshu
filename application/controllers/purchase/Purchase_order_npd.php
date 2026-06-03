@@ -27,7 +27,7 @@ class Purchase_order_npd extends CI_Controller
         } elseif ($this->checkuserAccess($this->id_menu()) > 0) {
             $data['button'] = $this->getbutton($this->id_menu());
             $data['id_menu'] = $this->id_menu();
-            
+
             $this->load->view('template/header', $data);
             $this->load->view('purchase/purchase_order_npd');
         } else {
@@ -35,7 +35,8 @@ class Purchase_order_npd extends CI_Controller
         }
     }
 
-    public function readRevision(){
+    public function readRevision()
+    {
         $p_month = $this->input->post('p_month');
         $p_year = $this->input->post('p_year');
 
@@ -53,7 +54,8 @@ class Purchase_order_npd extends CI_Controller
         echo json_encode(array("rev" => $revision));
     }
 
-    function readPoSearch(){
+    function readPoSearch()
+    {
         $filter_month = base64_decode($this->input->get('filter_month'));
         $filter_year = base64_decode($this->input->get('filter_year'));
         $filter_revision = base64_decode($this->input->get('filter_revision'));
@@ -65,7 +67,8 @@ class Purchase_order_npd extends CI_Controller
         echo json_encode($datas);
     }
 
-    function readPo($p_month, $p_year, $revision, $product_family){
+    function readPo($p_month, $p_year, $revision, $product_family)
+    {
         $post = isset($_POST['q']) ? $_POST['q'] : "";
         $datas = $this->crud->query("SELECT DISTINCT a.supplier_id, a.po_no, b.number as supplier_no, b.name as supplier_name, d.name as item_family_name 
             FROM purchase_orders a
@@ -77,14 +80,16 @@ class Purchase_order_npd extends CI_Controller
         echo json_encode($datas);
     }
 
-    function readPono(){
+    function readPono()
+    {
         $post = isset($_POST['q']) ? $_POST['q'] : "";
         $supplier_id = base64_decode($this->input->get('supplier_id'));
         $datas = $this->crud->query("SELECT DISTINCT a.po_no, a.po_date FROM purchase_orders a WHERE a.supplier_id = '$supplier_id' and a.type = 'NPD' and a.status = 0 and (po_date like '%$post%' or po_no like '%$post%') ORDER BY a.po_date, a.po_no ASC");
         echo json_encode($datas);
     }
 
-    public function readSupplier(){
+    public function readSupplier()
+    {
         $post = isset($_POST['q']) ? $_POST['q'] : "";
         $data = $this->crud->query("SELECT DISTINCT b.id, b.number, b.name, b.type FROM purchase_orders a JOIN suppliers b ON a.supplier_id = b.id WHERE a.type = 'NPD' and a.status = 0 and b.name like '%$post%' ORDER BY b.name asc");
         echo json_encode($data);
@@ -97,7 +102,8 @@ class Purchase_order_npd extends CI_Controller
         echo json_encode($send);
     }
 
-    function forecast($item_rm_id, $month, $year, $revision){
+    function forecast($item_rm_id, $month, $year, $revision)
+    {
         $q_forecast = $this->db->query("SELECT a.item_rm_id, c.number as item_rm_number, c.name as item_rm_name, SUM(a.composition) as qty, 
             (SUM(a.composition) * b.month_1) as m1, 
             (SUM(a.composition) * b.month_2) as m2, 
@@ -176,13 +182,14 @@ class Purchase_order_npd extends CI_Controller
         }
     }
 
-    public function datatableDetails($po_no, $revision = ""){
+    public function datatableDetails($po_no, $revision = "")
+    {
         $po_no = base64_decode($po_no);
         $filter_item_rm = trim(base64_decode($this->input->get('filter_item_rm')));
 
         $po = $this->crud->read("purchase_orders", [], ["po_no" => $po_no]);
         $start_date = date("Y-m-d");
-        $valid_date = date("Y-m-t", strtotime(@$po->p_year."-".@$po->p_month."-10"));
+        $valid_date = date("Y-m-t", strtotime(@$po->p_year . "-" . @$po->p_month . "-10"));
 
         //Config
         $this->db->select('*');
@@ -192,7 +199,9 @@ class Purchase_order_npd extends CI_Controller
         //Select Query
         $this->db->select("a.*, g.purchase_order as mrp_qty, b.number as supplier_no, b.name as supplier_name, f.mpq, f.moq, b.state, b.alias,
             b.email, d.number as item_rm_number, d.name as item_rm_name, d.item_family_id, e.name as product_family, b.type as supplier_type,
-            (CASE WHEN a.price = f.price THEN 'OK' ELSE 'SYNC' END) as sync, f.price as new_price, f.item_supplier");
+            (CASE WHEN a.price = f.price THEN 'OK' ELSE 'SYNC' END) as sync, f.price as new_price, f.item_supplier,
+            (CASE WHEN a.etd IS NOT NULL THEN a.etd ELSE (CASE WHEN i.type='LOCAL' THEN DATE_SUB(a.delivery_date, INTERVAL 14 DAY) WHEN i.type='IMPORT' THEN DATE_SUB(a.delivery_date, INTERVAL 21 DAY) END) END) as etd_date
+            ");
         $this->db->from('purchase_orders a');
         $this->db->join('suppliers b', 'a.supplier_id = b.id');
         $this->db->join('purchase_requests c', 'a.request_no = c.request_no and a.item_rm_id = c.item_rm_id', 'left');
@@ -202,10 +211,11 @@ class Purchase_order_npd extends CI_Controller
         $this->db->join('supplier_items f', 'a.supplier_id = f.supplier_id and ia.id = f.item_rm_id and a.plant = f.plant', 'left');
         $this->db->join('generate_mrp_finals g', 'a.p_month = g.p_month and a.p_year = g.p_year and a.revision = g.revision and a.item_rm_id = g.item_rm_id and a.supplier_id = g.supplier_id', 'left');
         $this->db->join('purchase_requests h', 'a.request_no = h.request_no', 'left');
+        $this->db->join('makers i', 'f.maker_id = i.id', 'left');
         // $this->db->join('hsn i', "d.hsn_code = i.number", 'left');
         $this->db->where('a.type', 'NPD');
         $this->db->where('a.po_no', $po_no);
-        if($revision != ""){
+        if ($revision != "") {
             $this->db->where('a.revision', $revision);
         }
         $this->db->like('a.item_rm_id', $filter_item_rm);
@@ -240,7 +250,8 @@ class Purchase_order_npd extends CI_Controller
         echo json_encode($result);
     }
 
-    public function purchaseOrderNo($supplier_no, $plant = ""){
+    public function purchaseOrderNo($supplier_no, $plant = "")
+    {
         // $datenow = date("Y-m-d");
         // $sql_menu = $this->db->query("SELECT * FROM menus_no WHERE menus_id = '$id_menu' and `status` = '0' and `start_date` <= '$datenow' and end_date >= '$datenow'");
         // $row_menu = $sql_menu->row();
@@ -248,32 +259,32 @@ class Purchase_order_npd extends CI_Controller
         // if(@$row_menu->number == ""){
         //     //
         // }else{
-            // $number = @$row_menu->number;
-            // $yearnow = date("y", strtotime($row_menu->start_date));
-            // $yearend = date("y", strtotime($row_menu->end_date));
-            $period = date("Ym");
+        // $number = @$row_menu->number;
+        // $yearnow = date("y", strtotime($row_menu->start_date));
+        // $yearend = date("y", strtotime($row_menu->end_date));
+        $period = date("Ym");
 
-            $whereDate = "NPD-".$plant."-".$supplier_no."-".$period;
+        $whereDate = "NPD-" . $plant . "-" . $supplier_no . "-" . $period;
 
-            $sqlGetID	= $this->db->query("SELECT max(po_no) as kode FROM purchase_orders WHERE po_no like '%$whereDate%'");
-            $rowID = $sqlGetID->row();
-            $kode = $rowID->kode;
-            
-            if ($kode == NULL) {
-                $autoID = sprintf("%02s", $kode + 1);
-                $autoNo = $whereDate.$autoID;
-            } else {
-                $urutan = (int) substr($kode, -2);
-                $urutan++;
-                $autoID	= sprintf("%02s", $urutan);
-                $autoNo = $whereDate.$autoID;
-            }
+        $sqlGetID    = $this->db->query("SELECT max(po_no) as kode FROM purchase_orders WHERE po_no like '%$whereDate%'");
+        $rowID = $sqlGetID->row();
+        $kode = $rowID->kode;
 
-            // if($add == ""){
-                return $autoNo;
-            // }else{
-            //     die(json_encode(array("code" => $autoNo)));
-            // }
+        if ($kode == NULL) {
+            $autoID = sprintf("%02s", $kode + 1);
+            $autoNo = $whereDate . $autoID;
+        } else {
+            $urutan = (int) substr($kode, -2);
+            $urutan++;
+            $autoID    = sprintf("%02s", $urutan);
+            $autoNo = $whereDate . $autoID;
+        }
+
+        // if($add == ""){
+        return $autoNo;
+        // }else{
+        //     die(json_encode(array("code" => $autoNo)));
+        // }
         // }
     }
 
@@ -316,9 +327,9 @@ class Purchase_order_npd extends CI_Controller
                 $plant = $purchase_request['plant'];
 
                 $m1 = date('mY', strtotime($date, strtotime($leadtime)));
-                $m11 = "m".date('n', strtotime($date, strtotime($leadtime)));
-                $m22 = "m".date('n', strtotime($date, strtotime('+1 month', strtotime($leadtime))));
-                $m33 = "m".date('n', strtotime($date, strtotime('+2 month', strtotime($leadtime))));
+                $m11 = "m" . date('n', strtotime($date, strtotime($leadtime)));
+                $m22 = "m" . date('n', strtotime($date, strtotime('+1 month', strtotime($leadtime))));
+                $m33 = "m" . date('n', strtotime($date, strtotime('+2 month', strtotime($leadtime))));
                 $rowPlant = $this->crud->read("plants", [], ["number" => $plant]);
                 $rowPlantAddress = $this->crud->read("plant_address", [], ["number" => $plant, "default" => "YES"]);
 
@@ -327,48 +338,48 @@ class Purchase_order_npd extends CI_Controller
 
                 $forecast = $this->forecast($item_rm_id, $purchase_request['p_month'], $purchase_request['p_year'], @$revision);
 
-                if(@$rpms1->qty > 0){
+                if (@$rpms1->qty > 0) {
                     $prod1 = @$rpms1->prod_plan_1;
-                }else{
+                } else {
                     $prod1 = @$forecast->$m11;
                 }
 
-                if(@$rpms2->qty > 0){
+                if (@$rpms2->qty > 0) {
                     $prod2 = @$rpms1->prod_plan_2;
-                }else{
+                } else {
                     $prod2 = @$forecast->$m22;
                 }
 
-                if(@$rpms3->qty > 0){
+                if (@$rpms3->qty > 0) {
                     $prod3 = @$rpms1->prod_plan_3;
-                }else{
+                } else {
                     $prod3 = @$forecast->$m33;
                 }
 
                 $supplier_no = $purchase_request['supplier_no'];
                 $leadtime = $purchase_request['leadtime'];
-                $eta = date("Y-m-d", strtotime("+".$leadtime." days", strtotime($purchase_request['request_date'])));
-                $period = $purchase_request['p_month']."/".$purchase_request['p_year'];
-                $delivery_date = date("Y-m-d", strtotime("+".$leadtime." days"));
+                $eta = date("Y-m-d", strtotime("+" . $leadtime . " days", strtotime($purchase_request['request_date'])));
+                $period = $purchase_request['p_month'] . "/" . $purchase_request['p_year'];
+                $delivery_date = date("Y-m-d", strtotime("+" . $leadtime . " days"));
 
-                if($purchase_request['currency'] == $end_currency){
+                if ($purchase_request['currency'] == $end_currency) {
                     $po_no = $end_po_no;
-                }else{
+                } else {
                     $po_no = $this->purchaseOrderNo($supplier_no, $rowPlant->type);
                 }
 
                 $convert = $this->crud->read("convertions", [], ["item_rm_id" => $purchase_request['item_rm_id']]);
-                if(empty($convert->uom_po)){
+                if (empty($convert->uom_po)) {
                     $uom = $purchase_request['uom'];
                     $qty = $purchase_request['qty'];
                     $total = ($purchase_request['qty'] * $purchase_request['price']);
-                }else{
+                } else {
                     $uom = $convert->uom_soft;
-                    if($convert->type == "Divided"){
+                    if ($convert->type == "Divided") {
                         $final = ($purchase_request['qty'] / $convert->convertion);
                         $qty = (ceil($final / $convert->moq) * $convert->moq);
                         $total = ($qty * $purchase_request['price']);
-                    }else{
+                    } else {
                         $final = ($purchase_request['qty'] * $convert->convertion);
                         $qty = (ceil($final / $convert->moq) * $convert->moq);
                         $total = ($qty * $purchase_request['price']);
@@ -407,7 +418,7 @@ class Purchase_order_npd extends CI_Controller
                 $end_po_no = $po_no;
             }
 
-            if(count($arr) > 0){
+            if (count($arr) > 0) {
                 // $this->db->update("purchase_requests", ["create_po" => date("Y-m-d H:i:s"), "confirm" => 0, "confirm_date" => null], ["request_no" => $request_no]);
                 $this->db->update("purchase_requests", ["create_po" => date("Y-m-d H:i:s")], ["request_no" => $request_no]);
             }
@@ -445,7 +456,7 @@ class Purchase_order_npd extends CI_Controller
                     "month_1" => $post['month_1'],
                     "month_2" => $post['month_2'],
                     "month_3" => $post['month_3']
-                ],[
+                ], [
                     "p_month" => $post['p_month'],
                     "p_year" => $post['p_year'],
                     "revision" => $post['revision'],
@@ -467,7 +478,7 @@ class Purchase_order_npd extends CI_Controller
                     "request_name" => $post['request_name'],
                     "po_no" => $po_no,
                     "po_date" => $po_date,
-                    "delivery_date" => date("Y-m-d", strtotime("+".$post['leadtime']." day", strtotime($po_date))),
+                    "delivery_date" => date("Y-m-d", strtotime("+" . $post['leadtime'] . " day", strtotime($po_date))),
                     "uom" => $post['uom'],
                     "qty" => $post['qty'],
                     "price" => $post['price'],
@@ -511,7 +522,7 @@ class Purchase_order_npd extends CI_Controller
                     "month_1" => $post['month_1'],
                     "month_2" => $post['month_2'],
                     "month_3" => $post['month_3']
-                ],[
+                ], [
                     "p_month" => $post['p_month'],
                     "p_year" => $post['p_year'],
                     "revision" => $post['revision'],
@@ -536,7 +547,7 @@ class Purchase_order_npd extends CI_Controller
                     "po_no" => $post['po_no'],
                     "po_date" => $post['po_date'],
                     "po_name" => $post['po_name'],
-                    "delivery_date" => date("Y-m-d", strtotime("+".$post['leadtime']." day", strtotime($post['po_date']))),
+                    "delivery_date" => date("Y-m-d", strtotime("+" . $post['leadtime'] . " day", strtotime($post['po_date']))),
                     "uom" => $post['uom'],
                     "qty" => $post['qty'],
                     "price" => $post['price'],
@@ -551,7 +562,7 @@ class Purchase_order_npd extends CI_Controller
                     "type" => $post['type'],
                 );
 
-                
+
                 $this->db->update('generate_mrp_finals', ["status" => 1], ["p_month" => $post['p_month'], "p_year" => $post['p_year'], "revision" => $post['revision'], "item_rm_id" => $post['item_rm_id'], "supplier_id" => $post['supplier_id']]);
                 $send = $this->crud->create('purchase_orders', $postFinal);
                 echo $send;
@@ -563,23 +574,25 @@ class Purchase_order_npd extends CI_Controller
     //     if ($this->input->post()) {
     //         $request_no = $this->input->post('request_no');
     //         $this->db->update('purchase_requests', ["confirm" => 1, "confirm_date" => date("Y-m-d H:i:s")], ["request_no" => $request_no]);
-            
+
     //         echo json_encode(array("message" => "success"));
     //     }
     // }
 
-    public function completeMail(){
+    public function completeMail()
+    {
         if ($this->input->post()) {
             $po_no = $this->input->post('po_no');
             $email_date = $this->input->post('email_date');
-            
+
             $this->db->update('purchase_orders', ["email_status" => "SENT", "email_date" => $email_date], ["po_no" => $po_no]);
-            
+
             echo json_encode(array("message" => "Complete Mail Success"));
         }
     }
 
-    public function syncPrice(){
+    public function syncPrice()
+    {
         if ($this->input->post()) {
             $id = $this->input->post('id');
             $data = $this->crud->read("purchase_orders", [], ["id" => $id]);
@@ -595,21 +608,22 @@ class Purchase_order_npd extends CI_Controller
             $this->db->where('a.item_rm_id', $data->item_rm_id);
             $supplier_item = $this->db->get()->row();
 
-            if(!empty($supplier_item)){
+            if (!empty($supplier_item)) {
                 $total = ($data->qty * $supplier_item->price);
                 $update = $this->db->update('purchase_orders', ["price" => $supplier_item->price, "currency" => $supplier_item->currency, "total" => $total, "rev" => (@$maxRev->rev + 1), "sync_date" => $sync_date, "sync_by" => $sync_by], ["id" => $id]);
-                if($update){
+                if ($update) {
                     echo json_encode(array("title" => "Good Job", "message" => $data->item_rm_id . " | Sync Price Successfully", "theme" => "success"));
                 } else {
                     echo json_encode(array("title" => "Error", "message" => $data->item_rm_id . " | Sync Price Failed", "theme" => "error"));
                 }
-            }else{
+            } else {
                 echo json_encode(array("title" => "Error", "message" => "Valid Date not match", "theme" => "error"));
             }
         }
     }
 
-    public function pushData(){
+    public function pushData()
+    {
         if ($this->input->post()) {
             $this->export = $this->load->database('export', TRUE);
 
@@ -633,15 +647,15 @@ class Purchase_order_npd extends CI_Controller
 
 
             $convert = $this->crud->read("convertions", [], ["item_rm_id" => $post['item_rm_id']]);
-            if(empty($convert->uom_po)){
+            if (empty($convert->uom_po)) {
                 $qty = $post['qty'];
-            }else{
-                if(strtoupper($post['uom']) == strtoupper(@$mst_item->um_name)){
+            } else {
+                if (strtoupper($post['uom']) == strtoupper(@$mst_item->um_name)) {
                     $qty = $post['qty'];
-                }else{
-                    if($convert->type == "Divided"){
+                } else {
+                    if ($convert->type == "Divided") {
                         $qty = ($post['qty'] * $convert->convertion);
-                    }else{
+                    } else {
                         $qty = ($post['qty'] / $convert->convertion);
                     }
                 }
@@ -683,17 +697,18 @@ class Purchase_order_npd extends CI_Controller
             $this->db->where("item_rm_id", $post['item_rm_id']);
             $this->db->where("po_no", $post['po_no']);
             $this->db->update('purchase_orders', ["push_date" => date("Y-m-d H:i:s"), "push" => "OK"]);
-            
+
             die(json_encode($send));
-            if($send){
+            if ($send) {
                 echo json_encode(array("title" => "Good Job", "message" => $post['item_rm_number'] . " | Data Update Successfully", "theme" => "success"));
-            }else{
+            } else {
                 echo json_encode(array("title" => "Error", "message" => $post['item_rm_number'] . " | Data Unsaved", "theme" => "error"));
             }
         }
     }
 
-    public function updateDetails(){
+    public function updateDetails()
+    {
         if ($this->input->post()) {
             $id = base64_decode($this->input->get('id'));
 
@@ -704,23 +719,29 @@ class Purchase_order_npd extends CI_Controller
             $po_no = @$databf->po_no;
             $maxRev = $this->crud->query("SELECT max(rev) as rev FROM purchase_orders WHERE po_no = '$po_no'");
 
-            $send = $this->db->update('purchase_orders', [
-                    "po_no" => $post['po_no'], 
-                    "supplier_id" => $post['supplier_id'], 
-                    "qty" => $post['qty'], 
-                    "price" => $post['price'], 
-                    "currency" => $post['currency'], 
-                    "total" => $total, 
+            $send = $this->db->update(
+                'purchase_orders',
+                [
+                    "po_no" => $post['po_no'],
+                    "supplier_id" => $post['supplier_id'],
+                    "qty" => $post['qty'],
+                    "price" => $post['price'],
+                    "currency" => $post['currency'],
+                    "total" => $total,
                     "remarks" => $post['remarks'],
+                    "etd" => $post['etd_date'],
+                    "delivery_date" => $post['delivery_date'],
+                    "reason" => $post['reason'],
                     "status_edit" => 1,
                     "rev" => (@$maxRev->rev + 1),
                     "log" => json_encode(["qty" => $databf->qty, "total" => $databf->total, "revision" => $databf->revision, "log" => $databf->log, "remarks" => $databf->remarks])
-                ], ["id" => $id]
+                ],
+                ["id" => $id]
             );
 
-            if($send){
+            if ($send) {
                 echo json_encode(array("title" => "Good Job", "message" => "Update data Successfully", "theme" => "success"));
-            }else{
+            } else {
                 echo json_encode(array("title" => "Failed", "message" => "Update data Failed", "theme" => "error"));
             }
         } else {
@@ -728,7 +749,8 @@ class Purchase_order_npd extends CI_Controller
         }
     }
 
-    public function updateNote(){
+    public function updateNote()
+    {
         if ($this->input->post()) {
             $po_no = $this->input->post('po_no');
             $note = $this->input->post('note');
@@ -737,9 +759,9 @@ class Purchase_order_npd extends CI_Controller
                 "note" => $note
             ], ["po_no" => $po_no]);
 
-            if($send){
+            if ($send) {
                 echo json_encode(array("title" => "Good Job", "message" => "Update Note Successfully", "theme" => "success"));
-            }else{
+            } else {
                 echo json_encode(array("title" => "Failed", "message" => "Update Note Failed", "theme" => "error"));
             }
         }
@@ -767,7 +789,8 @@ class Purchase_order_npd extends CI_Controller
         }
     }
 
-    public function updatePrice(){
+    public function updatePrice()
+    {
         if ($this->input->post()) {
             $id = $this->input->post('id');
             $price = $this->input->post('price');
@@ -787,22 +810,23 @@ class Purchase_order_npd extends CI_Controller
                 "total" => $total,
             ], ["id" => $id]);
 
-            if($send){
+            if ($send) {
                 echo json_encode(array("title" => "Good Job", "message" => "Sync Price Successfully", "theme" => "success"));
-            }else{
+            } else {
                 echo json_encode(array("title" => "Failed", "message" => "Sync Price Failed", "theme" => "error"));
             }
         }
     }
 
-    public function updateStatus(){
+    public function updateStatus()
+    {
         if ($this->input->post()) {
             $id = $this->input->post('id');
             $status = $this->input->post('status');
 
-            if($status == "0"){
+            if ($status == "0") {
                 $status_f = 1;
-            }else{
+            } else {
                 $status_f = 0;
             }
 
@@ -811,9 +835,9 @@ class Purchase_order_npd extends CI_Controller
                 "complete" => $status_f,
             ], ["id" => $id]);
 
-            if($send){
+            if ($send) {
                 echo json_encode(array("title" => "Good Job", "message" => "Update Status Successfully", "theme" => "success"));
-            }else{
+            } else {
                 echo json_encode(array("title" => "Failed", "message" => "Update Status Failed", "theme" => "error"));
             }
         }
@@ -822,18 +846,18 @@ class Purchase_order_npd extends CI_Controller
     public function delete()
     {
         $data = $this->input->post();
-        
+
         $reads = $this->crud->reads('purchase_orders', ["po_no" => $data['po_no']]);
         foreach ($reads as $read) {
             $this->db->update('generate_mrp_finals', ["status" => 0], [
-                "p_month" => $read->p_month, 
-                "p_year" => $read->p_year, 
-                "revision" => $read->revision, 
-                "item_rm_id" => $read->item_rm_id, 
-                "supplier_id" => $read->supplier_id, 
+                "p_month" => $read->p_month,
+                "p_year" => $read->p_year,
+                "revision" => $read->revision,
+                "item_rm_id" => $read->item_rm_id,
+                "supplier_id" => $read->supplier_id,
             ]);
         }
-        
+
         $this->db->update("purchase_requests", ["confirm" => 1], ["request_no" => @$reads[0]->request_no]);
         $send = $this->crud->delete('purchase_orders', ["po_no" => $data['po_no']]);
         $this->db->delete('delivery_schedule_days', ["po_no" => $data['po_no']]);
@@ -911,17 +935,17 @@ class Purchase_order_npd extends CI_Controller
             $supplier_items = $this->crud->read("supplier_items", [], ["item_rm_id" => $post['item_rm_id'], "supplier_id" => $post['supplier_id']]);
             $purchase_orders = $this->crud->read("purchase_orders", [], ["item_rm_id" => $post['item_rm_id'], "po_no" => $post['po_no'], "supplier_id" => $post['supplier_id']]);
 
-            if(empty($item_rm)){
-                echo json_encode(array("title" => "Not Found", "message" => "Part No ".$post['item_rm_id']." Not Found in Master Items", "theme" => "error"));
-            }elseif(empty($supplier)){
-                echo json_encode(array("title" => "Not Found", "message" => "Vendor ID ".$post['supplier_id']." Not Found in Master Vendors", "theme" => "error"));
-            }elseif(empty($supplier_items)){
+            if (empty($item_rm)) {
+                echo json_encode(array("title" => "Not Found", "message" => "Part No " . $post['item_rm_id'] . " Not Found in Master Items", "theme" => "error"));
+            } elseif (empty($supplier)) {
+                echo json_encode(array("title" => "Not Found", "message" => "Vendor ID " . $post['supplier_id'] . " Not Found in Master Vendors", "theme" => "error"));
+            } elseif (empty($supplier_items)) {
                 echo json_encode(array("title" => "Not Found", "message" => "Vendor and Item Not Found in Vendor Items", "theme" => "error"));
-            }elseif($supplier_items->approved_to != ""){
-                echo json_encode(array("title" => "Not Approved", "message" => "Part No ".$post['item_rm_id']." in Vendor Item Not Approved", "theme" => "error"));
-            }elseif(!empty($purchase_orders)){
-                echo json_encode(array("title" => "Duplicate", "message" => "Part No ".$post['item_rm_id']." in PO ".$post['po_no']." is Duplicate", "theme" => "error"));
-            }else{
+            } elseif ($supplier_items->approved_to != "") {
+                echo json_encode(array("title" => "Not Approved", "message" => "Part No " . $post['item_rm_id'] . " in Vendor Item Not Approved", "theme" => "error"));
+            } elseif (!empty($purchase_orders)) {
+                echo json_encode(array("title" => "Duplicate", "message" => "Part No " . $post['item_rm_id'] . " in PO " . $post['po_no'] . " is Duplicate", "theme" => "error"));
+            } else {
                 $postFinal = array_merge($post, array(
                     "p_month" => date("m", strtotime($post['po_date'])),
                     "p_year" => date("Y", strtotime($post['po_date'])),
@@ -948,15 +972,15 @@ class Purchase_order_npd extends CI_Controller
 
         $user_3 = $this->crud->read('users', [], ["username" => $approval->user_approval_2]);
         $user_4 = $this->crud->read('users', [], ["username" => $approval->user_approval_3]);
-        
+
         $qr_user_3 = "";
         $qr_user_4 = "";
-        
-        if($purchase_orders->approved == 3){
-            $qr_user_3 = "src='" .base_url('assets/image/qrcode/' . @$user_3->name . '.png')."'";
-        }elseif($purchase_orders->approved == 4){
-            $qr_user_3 = "src='" .base_url('assets/image/qrcode/' . @$user_3->name . '.png')."'";
-            $qr_user_4 = "src='" .base_url('assets/image/qrcode/' . @$user_4->name . '.png')."'";
+
+        if ($purchase_orders->approved == 3) {
+            $qr_user_3 = "src='" . base_url('assets/image/qrcode/' . @$user_3->name . '.png') . "'";
+        } elseif ($purchase_orders->approved == 4) {
+            $qr_user_3 = "src='" . base_url('assets/image/qrcode/' . @$user_3->name . '.png') . "'";
+            $qr_user_4 = "src='" . base_url('assets/image/qrcode/' . @$user_4->name . '.png') . "'";
         }
 
         // $month_1 =  date('M Y', strtotime('+1 month', strtotime(@$purchase_orders->po_date)));
@@ -975,7 +999,7 @@ class Purchase_order_npd extends CI_Controller
         $this->createQrcode(@$user_3->name, "assets/image/qrcode/");
         $this->createQrcode(@$user_4->name, "assets/image/qrcode/");
 
-        if($export == ""){
+        if ($export == "") {
             $media = "@media screen {
                             .print {
                                 display: none !important;
@@ -991,7 +1015,7 @@ class Purchase_order_npd extends CI_Controller
                                 <h1>Press CTRL + P for Print</h1>
                             </center>
                         </div>';
-        }else{
+        } else {
             $media = ".print {
                         zoom: 0.5;
                     }";
@@ -1019,10 +1043,10 @@ class Purchase_order_npd extends CI_Controller
                             padding-bottom: 2px;
                             text-align: center;color: black;
                         }
-                        '.$media.'
+                        ' . $media . '
                     </style>
                     <body>
-                        '.$media2.'
+                        ' . $media2 . '
                         <div class="print">';
         //Loop Page
         $no = 1;
@@ -1068,12 +1092,12 @@ class Purchase_order_npd extends CI_Controller
                                             <td width="50" rowspan="4"><img src="' . base_url('assets/image/qrcode/' . $purchase_orders->po_no . '.png') . '" width="60"/></td>
                                             <td width="60">Doc No</td>
                                             <td width="5">:</td>
-                                            <td width="100">'.$config_iso->doc_purchase_order.'</td>
+                                            <td width="100">' . $config_iso->doc_purchase_order . '</td>
                                         </tr>
                                         <tr>
                                             <td>Form</td>
                                             <td>:</td>
-                                            <td>'.$config_iso->form_purchase_order.'</td>
+                                            <td>' . $config_iso->form_purchase_order . '</td>
                                         </tr>
                                         <tr>
                                             <td>Print Date</td>
@@ -1147,24 +1171,24 @@ class Purchase_order_npd extends CI_Controller
                 $p_month = $record['p_month'];
                 $p_year = $record['p_year'];
                 $ending = date("Y-m-t", strtotime($record['p_year'] . "-" . $record['p_month'] . "-01"));
-                $leadtime = date('Y-m-01', strtotime('+'.$record['leadtime'].' days', strtotime($ending)));
-                
-                if(empty($record['etd'])){
-                    if($record['maker_type'] == "LOCAL"){
+                $leadtime = date('Y-m-01', strtotime('+' . $record['leadtime'] . ' days', strtotime($ending)));
+
+                if (empty($record['etd'])) {
+                    if ($record['maker_type'] == "LOCAL") {
                         $etd = date("Y-m-d", strtotime("-14 days", strtotime($record['delivery_date'])));
-                    }else{
+                    } else {
                         $etd = date("Y-m-d", strtotime("-21 days", strtotime($record['delivery_date'])));
                     }
-                }else{
+                } else {
                     $etd = $record['etd'];
                 }
-                
+
                 $m1 = date('mY', strtotime($leadtime));
                 $m2 = date('Y-m-01', strtotime('+1 month', strtotime($leadtime)));
                 $m3 = date('Y-m-01', strtotime('+2 month', strtotime($leadtime)));
-                $m11 = "m".date('n', strtotime($leadtime));
-                $m22 = "m".date('n', strtotime('+1 month', strtotime($leadtime)));
-                $m33 = "m".date('n', strtotime('+2 month', strtotime($leadtime)));
+                $m11 = "m" . date('n', strtotime($leadtime));
+                $m22 = "m" . date('n', strtotime('+1 month', strtotime($leadtime)));
+                $m33 = "m" . date('n', strtotime('+2 month', strtotime($leadtime)));
 
                 $qmps1 = $this->db->query("SELECT prod_plan_1, prod_plan_2, prod_plan_3 FROM mrp_ltpp WHERE CONCAT(p_month, p_year) = '$m1' and item_rm_id = '$item_rm_id' and revision = '$revision' and plant='$plant'");
                 $rpms1 = $qmps1->row();
@@ -1172,19 +1196,19 @@ class Purchase_order_npd extends CI_Controller
                 // $forecast = $this->forecast($item_rm_id, $record['p_month'], $record['p_year'], @$revision);
 
                 // if(@$rpms1->qty > 0){
-                    $prod1 = @$rpms1->prod_plan_1;
+                $prod1 = @$rpms1->prod_plan_1;
                 // }else{
                 //     $prod1 = @$forecast->$m11;
                 // }
 
                 // if(@$rpms2->qty > 0){
-                    $prod2 = @$rpms1->prod_plan_2;
+                $prod2 = @$rpms1->prod_plan_2;
                 // }else{
                 //     $prod2 = @$forecast->$m22;
                 // }
 
                 // if(@$rpms3->qty > 0){
-                    $prod3 = @$rpms1->prod_plan_3;
+                $prod3 = @$rpms1->prod_plan_3;
                 // }else{
                 //     $prod3 = @$forecast->$m33;
                 // }
@@ -1198,13 +1222,13 @@ class Purchase_order_npd extends CI_Controller
                     $digits = 0;
                 }
 
-                if(!empty($record['reason'])){
+                if (!empty($record['reason'])) {
                     $styles = "background:#FFDD9E;";
-                }else{
+                } else {
                     $styles = "";
                 }
-                
-                $html .= '  <tr style="'.$styles.'">
+
+                $html .= '  <tr style="' . $styles . '">
                                 <td  style="text-align:center;">' . $no . '</td>
                                 <td>' . $record['item_rm_id'] . '</td>
                                 <td>' . $record['item_rm_number'] . '</td>
@@ -1253,7 +1277,7 @@ class Purchase_order_npd extends CI_Controller
             } else {
                 $html .= '</table>';
             }
-            
+
             if (($i + 1) == $page) {
                 $html .= '  <div style="width:100%; display: grid; grid-template-columns: auto auto auto;">
                                 <div style="width:50%;">
@@ -1275,12 +1299,12 @@ class Purchase_order_npd extends CI_Controller
                                             <th colspan="2" width="800" style="text-align:center;">Approved By</th>
                                         </tr>
                                         <tr>
-                                            <th style="height:80px;"><img '.$qr_user_3.' width="80"/></th>
-                                            <th style="height:80px;"><img '.$qr_user_4.' width="80"/></th>
+                                            <th style="height:80px;"><img ' . $qr_user_3 . ' width="80"/></th>
+                                            <th style="height:80px;"><img ' . $qr_user_4 . ' width="80"/></th>
                                         </tr>
                                         <tr>
-                                            <th style="height:20px; text-align:center;">'.@$user_3->name.'<br>'.@$user_3->position.'</th>
-                                            <th style="height:20px; text-align:center;">'.@$user_4->name.'<br>'.@$user_4->position.'</th>
+                                            <th style="height:20px; text-align:center;">' . @$user_3->name . '<br>' . @$user_3->position . '</th>
+                                            <th style="height:20px; text-align:center;">' . @$user_4->name . '<br>' . @$user_4->position . '</th>
                                         </tr>
                                     </table>
                                     <br>
@@ -1308,7 +1332,7 @@ class Purchase_order_npd extends CI_Controller
                         PLEASE PROCESS OUR PO FORECAST
                     </div>
                 </div>';
-            }else{
+            } else {
                 $html .= "</div></div>";
             }
 
@@ -1319,11 +1343,11 @@ class Purchase_order_npd extends CI_Controller
 
             // <img '.$qr_user_4.' width="80"/>
         }
-        
-        if($export == ""){
+
+        if ($export == "") {
             $html .= '<script>window.print()</script>';
             die($html);
-        }else{
+        } else {
             // Load HTML content
             $this->dompdf_gen->loadHtml($html);
 
@@ -1336,7 +1360,7 @@ class Purchase_order_npd extends CI_Controller
             // Output the generated PDF (1 = download and 0 = preview)
             // $this->dompdf_gen->stream("sample.pdf", array("Attachment" => 0));
 
-            $filePath = FCPATH . 'assets/po/'.base64_decode($po_no).'.pdf'; // FCPATH ensures the path is relative to the project root
+            $filePath = FCPATH . 'assets/po/' . base64_decode($po_no) . '.pdf'; // FCPATH ensures the path is relative to the project root
             $this->dompdf_gen->save($filePath);
         }
     }
@@ -1351,18 +1375,18 @@ class Purchase_order_npd extends CI_Controller
         $filter_month = $purchase_order->p_month;
         $revision = $purchase_order->revision;
 
-        $period_1 = date("F Y", strtotime($filter_year."-".$filter_month."-01"));
-        $period_2 = date("F Y",  strtotime("1 month", strtotime($filter_year."-".$filter_month."-01")));
-        $period_3 = date("F Y",  strtotime("2 month", strtotime($filter_year."-".$filter_month."-01")));
-        $period_4 = date("F Y",  strtotime("3 month", strtotime($filter_year."-".$filter_month."-01")));
-        $period_5 = date("F Y",  strtotime("4 month", strtotime($filter_year."-".$filter_month."-01")));
-        $period_6 = date("F Y",  strtotime("5 month", strtotime($filter_year."-".$filter_month."-01")));
+        $period_1 = date("F Y", strtotime($filter_year . "-" . $filter_month . "-01"));
+        $period_2 = date("F Y",  strtotime("1 month", strtotime($filter_year . "-" . $filter_month . "-01")));
+        $period_3 = date("F Y",  strtotime("2 month", strtotime($filter_year . "-" . $filter_month . "-01")));
+        $period_4 = date("F Y",  strtotime("3 month", strtotime($filter_year . "-" . $filter_month . "-01")));
+        $period_5 = date("F Y",  strtotime("4 month", strtotime($filter_year . "-" . $filter_month . "-01")));
+        $period_6 = date("F Y",  strtotime("5 month", strtotime($filter_year . "-" . $filter_month . "-01")));
 
         $config = $this->db->get('config')->row();
 
         $html = '<html>
                     <head>
-                        <title>Schedule Delivery '.$po_no.'</title>
+                        <title>Schedule Delivery ' . $po_no . '</title>
                         <link rel="icon" href="' . base_url('assets/image/config/' . $config->favicon) . '" type="image/png" sizes="16x16">
                     </head>
                     <style>
@@ -1432,7 +1456,7 @@ class Purchase_order_npd extends CI_Controller
                                 <tr>
                                     <td width="20">Period</td>
                                     <td width="10">:</td>
-                                    <td width="100"><b>' . date("F Y", strtotime($purchase_order->p_year."-".$purchase_order->p_month."-01")) . '</b></td>
+                                    <td width="100"><b>' . date("F Y", strtotime($purchase_order->p_year . "-" . $purchase_order->p_month . "-01")) . '</b></td>
                                 </tr>
                                 <tr>
                                     <td width="20">Revision</td>
@@ -1455,12 +1479,12 @@ class Purchase_order_npd extends CI_Controller
                                     <th rowspan="2" width="50" style="text-align:center;">MPQ</th>
                                     <th rowspan="2" width="50" style="text-align:center;">MOQ</th>
                                     <th rowspan="2" width="50" style="text-align:center;">Qty</th>
-                                    <th colspan="3" width="50" style="text-align:center;">'.$period_1.'</th>
-                                    <th colspan="3" width="50" style="text-align:center;">'.$period_2.'</th>
-                                    <th colspan="3" width="50" style="text-align:center;">'.$period_3.'</th>
-                                    <th colspan="3" width="50" style="text-align:center;">'.$period_4.'</th>
-                                    <th colspan="3" width="50" style="text-align:center;">'.$period_5.'</th>
-                                    <th colspan="3" width="50" style="text-align:center;">'.$period_6.'</th>
+                                    <th colspan="3" width="50" style="text-align:center;">' . $period_1 . '</th>
+                                    <th colspan="3" width="50" style="text-align:center;">' . $period_2 . '</th>
+                                    <th colspan="3" width="50" style="text-align:center;">' . $period_3 . '</th>
+                                    <th colspan="3" width="50" style="text-align:center;">' . $period_4 . '</th>
+                                    <th colspan="3" width="50" style="text-align:center;">' . $period_5 . '</th>
+                                    <th colspan="3" width="50" style="text-align:center;">' . $period_6 . '</th>
                                     <th colspan="3" width="50" style="text-align:center;">> 6 Month</th>
                                 </tr>
                                 <tr>
@@ -1488,20 +1512,76 @@ class Purchase_order_npd extends CI_Controller
                                 </tr>';
         $no = 1;
         foreach ($records as $record) {
-            if($record['delivey_date_1'] == "0000-00-00"){ $eta_1 = "-"; }else{ $eta_1 = $record['delivey_date_1']; }
-            if($record['delivey_date_2'] == "0000-00-00"){ $eta_2 = "-"; }else{ $eta_2 = $record['delivey_date_2']; }
-            if($record['delivey_date_3'] == "0000-00-00"){ $eta_3 = "-"; }else{ $eta_3 = $record['delivey_date_3']; }
-            if($record['delivey_date_4'] == "0000-00-00"){ $eta_4 = "-"; }else{ $eta_4 = $record['delivey_date_4']; }
-            if($record['delivey_date_5'] == "0000-00-00"){ $eta_5 = "-"; }else{ $eta_5 = $record['delivey_date_5']; }
-            if($record['delivey_date_6'] == "0000-00-00"){ $eta_6 = "-"; }else{ $eta_6 = $record['delivey_date_6']; }
-            if($record['delivey_date_7'] == "0000-00-00"){ $eta_7 = "-"; }else{ $eta_7 = $record['delivey_date_7']; }
-            if($record['etd_1'] == "0000-00-00"){ $etd_1 = "-"; }else{ $etd_1 = $record['etd_1']; }
-            if($record['etd_2'] == "0000-00-00"){ $etd_2 = "-"; }else{ $etd_2 = $record['etd_2']; }
-            if($record['etd_3'] == "0000-00-00"){ $etd_3 = "-"; }else{ $etd_3 = $record['etd_3']; }
-            if($record['etd_4'] == "0000-00-00"){ $etd_4 = "-"; }else{ $etd_4 = $record['etd_4']; }
-            if($record['etd_5'] == "0000-00-00"){ $etd_5 = "-"; }else{ $etd_5 = $record['etd_5']; }
-            if($record['etd_6'] == "0000-00-00"){ $etd_6 = "-"; }else{ $etd_6 = $record['etd_6']; }
-            if($record['etd_7'] == "0000-00-00"){ $etd_7 = "-"; }else{ $etd_7 = $record['etd_7']; }
+            if ($record['delivey_date_1'] == "0000-00-00") {
+                $eta_1 = "-";
+            } else {
+                $eta_1 = $record['delivey_date_1'];
+            }
+            if ($record['delivey_date_2'] == "0000-00-00") {
+                $eta_2 = "-";
+            } else {
+                $eta_2 = $record['delivey_date_2'];
+            }
+            if ($record['delivey_date_3'] == "0000-00-00") {
+                $eta_3 = "-";
+            } else {
+                $eta_3 = $record['delivey_date_3'];
+            }
+            if ($record['delivey_date_4'] == "0000-00-00") {
+                $eta_4 = "-";
+            } else {
+                $eta_4 = $record['delivey_date_4'];
+            }
+            if ($record['delivey_date_5'] == "0000-00-00") {
+                $eta_5 = "-";
+            } else {
+                $eta_5 = $record['delivey_date_5'];
+            }
+            if ($record['delivey_date_6'] == "0000-00-00") {
+                $eta_6 = "-";
+            } else {
+                $eta_6 = $record['delivey_date_6'];
+            }
+            if ($record['delivey_date_7'] == "0000-00-00") {
+                $eta_7 = "-";
+            } else {
+                $eta_7 = $record['delivey_date_7'];
+            }
+            if ($record['etd_1'] == "0000-00-00") {
+                $etd_1 = "-";
+            } else {
+                $etd_1 = $record['etd_1'];
+            }
+            if ($record['etd_2'] == "0000-00-00") {
+                $etd_2 = "-";
+            } else {
+                $etd_2 = $record['etd_2'];
+            }
+            if ($record['etd_3'] == "0000-00-00") {
+                $etd_3 = "-";
+            } else {
+                $etd_3 = $record['etd_3'];
+            }
+            if ($record['etd_4'] == "0000-00-00") {
+                $etd_4 = "-";
+            } else {
+                $etd_4 = $record['etd_4'];
+            }
+            if ($record['etd_5'] == "0000-00-00") {
+                $etd_5 = "-";
+            } else {
+                $etd_5 = $record['etd_5'];
+            }
+            if ($record['etd_6'] == "0000-00-00") {
+                $etd_6 = "-";
+            } else {
+                $etd_6 = $record['etd_6'];
+            }
+            if ($record['etd_7'] == "0000-00-00") {
+                $etd_7 = "-";
+            } else {
+                $etd_7 = $record['etd_7'];
+            }
 
             $html .= '  <tr>
                             <td  style="text-align:center;">' . $no . '</td>
@@ -1513,26 +1593,26 @@ class Purchase_order_npd extends CI_Controller
                             <td style="text-align:right;">' . number_format($record['moq']) . '</td>
                             <td style="text-align:right;">' . number_format($record['qty']) . '</td>
                             <td style="text-align:right;">' . number_format($record['delivey_qty_1']) . '</td>
-                            <td style="text-align:center;">'.$etd_1.'</td>
-                            <td style="text-align:center;">'.$eta_1.'</td>
+                            <td style="text-align:center;">' . $etd_1 . '</td>
+                            <td style="text-align:center;">' . $eta_1 . '</td>
                             <td style="text-align:right;">' . number_format($record['delivey_qty_2']) . '</td>
-                            <td style="text-align:center;">'.$etd_2.'</td>
-                            <td style="text-align:center;">'.$eta_2.'</td>
+                            <td style="text-align:center;">' . $etd_2 . '</td>
+                            <td style="text-align:center;">' . $eta_2 . '</td>
                             <td style="text-align:right;">' . number_format($record['delivey_qty_3']) . '</td>
-                            <td style="text-align:center;">'.$etd_3.'</td>
-                            <td style="text-align:center;">'.$eta_3.'</td>
+                            <td style="text-align:center;">' . $etd_3 . '</td>
+                            <td style="text-align:center;">' . $eta_3 . '</td>
                             <td style="text-align:right;">' . number_format($record['delivey_qty_4']) . '</td>
-                            <td style="text-align:center;">'.$etd_4.'</td>
-                            <td style="text-align:center;">'.$eta_4.'</td>
+                            <td style="text-align:center;">' . $etd_4 . '</td>
+                            <td style="text-align:center;">' . $eta_4 . '</td>
                             <td style="text-align:right;">' . number_format($record['delivey_qty_5']) . '</td>
-                            <td style="text-align:center;">'.$etd_5.'</td>
-                            <td style="text-align:center;">'.$eta_5.'</td>
+                            <td style="text-align:center;">' . $etd_5 . '</td>
+                            <td style="text-align:center;">' . $eta_5 . '</td>
                             <td style="text-align:right;">' . number_format($record['delivey_qty_6']) . '</td>
-                            <td style="text-align:center;">'.$etd_6.'</td>
-                            <td style="text-align:center;">'.$eta_6.'</td>
+                            <td style="text-align:center;">' . $etd_6 . '</td>
+                            <td style="text-align:center;">' . $eta_6 . '</td>
                             <td style="text-align:right;">' . number_format($record['delivey_qty_7']) . '</td>
-                            <td style="text-align:center;">'.$etd_7.'</td>
-                            <td style="text-align:center;">'.$eta_7.'</td>
+                            <td style="text-align:center;">' . $etd_7 . '</td>
+                            <td style="text-align:center;">' . $eta_7 . '</td>
                         </tr>';
             $no++;
         }
@@ -1547,8 +1627,32 @@ class Purchase_order_npd extends CI_Controller
         header("Content-Disposition: attachment; filename=purchase_orders_" . time() . ".csv");
         $output = fopen("php://output", "w");
         fputcsv($output, array(
-            "Month", "Year", "Revision", "PR No", "PO No", "PO Date", "Part No Original", "Part No BEI", "Part No Vendor", "Part Name", "Product Family", "Vendor No",
-            "Vendor Name", "Vendor Type", "Maker Name", "Maker Type", "Qty", "ETD", "ETA", "Price", "Total", "Currency", "Uom", "Leadtime", "Created By", "Created Date"
+            "Month",
+            "Year",
+            "Revision",
+            "PR No",
+            "PO No",
+            "PO Date",
+            "Part No Original",
+            "Part No BEI",
+            "Part No Vendor",
+            "Part Name",
+            "Product Family",
+            "Vendor No",
+            "Vendor Name",
+            "Vendor Type",
+            "Maker Name",
+            "Maker Type",
+            "Qty",
+            "ETD",
+            "ETA",
+            "Price",
+            "Total",
+            "Currency",
+            "Uom",
+            "Leadtime",
+            "Created By",
+            "Created Date"
         ));
 
         $this->db->select('a.*, b.name as item_rm_name, b.number as item_rm_number, c.number as supplier_no, 
@@ -1575,9 +1679,9 @@ class Purchase_order_npd extends CI_Controller
 
         $no = 1;
         foreach ($records as $data) {
-            if($data['maker_type'] == "LOCAL"){
+            if ($data['maker_type'] == "LOCAL") {
                 $etd = date("Y-m-d", strtotime("-14 days", strtotime($data['delivery_date'])));
-            }else{
+            } else {
                 $etd = date("Y-m-d", strtotime("-21 days", strtotime($data['delivery_date'])));
             }
 
@@ -1660,22 +1764,22 @@ class Purchase_order_npd extends CI_Controller
         $this->db->like('a.p_month', $filter_month);
         $this->db->like('a.p_year', $filter_year);
         $this->db->like('a.revision', $filter_revision);
-        if($filter_item_family != ""){
+        if ($filter_item_family != "") {
             $this->db->where('d.id', $filter_item_family);
         }
-        if($filter_item_rm != ""){
+        if ($filter_item_rm != "") {
             $this->db->where('a.item_rm_id', $filter_item_rm);
         }
-        if($filter_supplier != ""){
+        if ($filter_supplier != "") {
             $this->db->where('a.supplier_id', $filter_supplier);
         }
-        if($filter_po != ""){
+        if ($filter_po != "") {
             $this->db->where('a.po_no', $filter_po);
         }
-        if($filter_type != ""){
+        if ($filter_type != "") {
             $this->db->where('c.type', $filter_type);
         }
-        if($filter_status != ""){
+        if ($filter_status != "") {
             $this->db->where('a.status', $filter_status);
         }
         $this->db->order_by('c.name', 'asc');
@@ -1751,25 +1855,25 @@ class Purchase_order_npd extends CI_Controller
 
         $no = 1;
         foreach ($records as $data) {
-            if($data['status'] == "0"){
+            if ($data['status'] == "0") {
                 $status = "OPEN";
-            }else{
+            } else {
                 $status = "CLOSE";
             }
-            
-            if($data['complete'] == 1){
+
+            if ($data['complete'] == 1) {
                 $status = "COMPLETE";
             }
 
-            if($data['approved_to'] == ""){
+            if ($data['approved_to'] == "") {
                 $approved = "APPROVED";
-            }else{
+            } else {
                 $approved = "CHECKING";
             }
 
-            if($data['maker_type'] == "LOCAL"){
+            if ($data['maker_type'] == "LOCAL") {
                 $etd = date("Y-m-d", strtotime("-14 days", strtotime($data['delivery_date'])));
-            }else{
+            } else {
                 $etd = date("Y-m-d", strtotime("-21 days", strtotime($data['delivery_date'])));
             }
 
@@ -1810,30 +1914,32 @@ class Purchase_order_npd extends CI_Controller
         echo $html;
     }
 
-    public function sendMail(){
+    public function sendMail()
+    {
         $po_no = $this->input->post('po_no');
         $status = $this->input->post('status');
 
-        if($status == "SENT"){
+        if ($status == "SENT") {
             $this->db->where("po_no", $po_no);
             $this->db->update('purchase_orders', ["email_date" => date("Y-m-d H:i:s"), "email_status" => "SENT"]);
             echo json_encode(array("title" => "Successs", "message" => "Email Sending Successfully", "theme" => "success"));
-        }else{
+        } else {
             $this->db->where("po_no", $po_no);
             $this->db->update('purchase_orders', ["email_date" => null, "email_status" => "PENDING"]);
             echo json_encode(array("title" => "Successs", "message" => "Email Cancel Successfully", "theme" => "success"));
         }
     }
 
-    public function sendConfirm(){
+    public function sendConfirm()
+    {
         $po_no = $this->input->post('po_no');
         $status = $this->input->post('status');
 
-        if($status == "YES"){
+        if ($status == "YES") {
             $this->db->where("po_no", $po_no);
             $this->db->update('purchase_orders', ["confirm_date" => date("Y-m-d H:i:s"), "confirm" => $status]);
             echo json_encode(array("title" => "Successs", "message" => "Confirm Successfully", "theme" => "success"));
-        }else{
+        } else {
             $this->db->where("po_no", $po_no);
             $this->db->update('purchase_orders', ["confirm_date" => null, "confirm" => $status]);
             echo json_encode(array("title" => "Successs", "message" => "Unconfirm Successfully", "theme" => "success"));
@@ -1904,7 +2010,7 @@ class Purchase_order_npd extends CI_Controller
     //                 'charset' => 'iso-8859-1',
     //                 'wordwrap' => TRUE
     //             );
-                
+
     //             $description = $message->description;
     //             $description = str_replace("{{contact}}", $contact_name, $description);
     //             $description = str_replace("{{po_no}}", $mail_po, $description);
@@ -1924,7 +2030,7 @@ class Purchase_order_npd extends CI_Controller
     //             $attachment3 = 'assets/po/'.$file3; // Replace with the path to your PDF file
     //             $attachment4 = 'assets/po/'.$file4; // Replace with the path to your PDF file
     //             $attachment5 = 'assets/po/'.$file5; // Replace with the path to your PDF file
-                
+
     //             $this->email->attach($attachment);
     //             $this->email->attach($attachment2);
     //             if($file3 != ""){
@@ -1936,7 +2042,7 @@ class Purchase_order_npd extends CI_Controller
     //             if($file5 != ""){
     //                 $this->email->attach($attachment5);
     //             }
-                
+
     //             if ($this->email->send()) {
     //                 echo json_encode(array("title" => "Successs", "message" => "Email Sending Successfully", "theme" => "success"));
 
