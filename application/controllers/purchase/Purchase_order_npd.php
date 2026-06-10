@@ -411,7 +411,8 @@ class Purchase_order_npd extends CI_Controller
                     "month_1" => $prod1,
                     "month_2" => $prod2,
                     "month_3" => $prod3,
-                    "type" => "NPD"
+                    "type" => "NPD",
+                    "remarks" => $purchase_request['remarks']
                 );
 
                 $end_currency = $purchase_request['currency'];
@@ -560,6 +561,7 @@ class Purchase_order_npd extends CI_Controller
                     "month_2" => $post['month_2'],
                     "month_3" => $post['month_3'],
                     "type" => $post['type'],
+                    "remarks" => $post['remarks'],
                 );
 
 
@@ -673,7 +675,7 @@ class Purchase_order_npd extends CI_Controller
                 "periode" => date("Ym"),
                 "etd_date" => $post['delivery_date'],
                 "poc_remark" => $post['reason'],
-                "poc_status_order" => "REGULAR",
+                "poc_status_order" => "NPD",
             );
 
             // if($poc){poc

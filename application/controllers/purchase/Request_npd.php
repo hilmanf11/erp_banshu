@@ -30,15 +30,16 @@ class request_npd extends CI_Controller
         }
     }
 
-    public function request_no(){
-        $code       = "NPD-".date("Ym");
-        $sqlGetID	= $this->db->query("SELECT max(request_no) as kode FROM request_npd WHERE request_no LIKE '%$code%'");
+    public function request_no()
+    {
+        $code       = "NPD-" . date("Ym");
+        $sqlGetID    = $this->db->query("SELECT max(request_no) as kode FROM request_npd WHERE request_no LIKE '%$code%'");
         $rowID      = $sqlGetID->row();
-        $kode 		= $rowID->kode;
+        $kode         = $rowID->kode;
 
         $urutan = (int) substr($kode, -3);
         $urutan++;
-        $autoID	= sprintf("%03s", $urutan);
+        $autoID    = sprintf("%03s", $urutan);
 
         die(json_encode(array("name" => $code . $autoID)));
     }
@@ -92,12 +93,13 @@ class request_npd extends CI_Controller
         }
     }
 
-    public function datatableDetails($request_no){
+    public function datatableDetails($request_no)
+    {
         $request_no = base64_decode($request_no);
         $filter_item_npd_id = trim(base64_decode($this->input->get('filter_item_npd_id')));
 
         //Select Query
-        $this->db->select('a.id, a.plant, a.receive_status, a.receive_date, a.item_npd_id, a.item_npd_name, a.product_family, a.maker, a.uom, a.qty, a.requirement_date, a.confirm, a.confirm_date, a.confirm_by, a.confirm_reason, b.name as supplier_name, c.number as item_rm_number, a.item_supplier, d.request_no, e.po_no, e.delivery_date');
+        $this->db->select('a.id, a.plant, a.receive_status, a.receive_date, a.item_npd_id, a.item_npd_name, a.product_family, a.maker, a.uom, a.qty, a.requirement_date, a.confirm, a.confirm_date, a.confirm_by,a.request_reason, a.confirm_reason, b.name as supplier_name, c.number as item_rm_number, a.item_supplier, d.request_no, e.po_no, e.delivery_date');
         $this->db->from('request_npd a');
         $this->db->join('suppliers b', 'a.supplier_id = b.id', 'left');
         $this->db->join('item_rm c', 'a.item_rm_id = c.id', 'left');
@@ -130,7 +132,8 @@ class request_npd extends CI_Controller
         echo json_encode($result);
     }
 
-    public function datatableUpdates(){
+    public function datatableUpdates()
+    {
         $request_no = base64_decode($this->input->get('request_no'));
 
         //Select Query
@@ -153,7 +156,7 @@ class request_npd extends CI_Controller
 
     public function create()
     {
-        if($this->input->post()){
+        if ($this->input->post()) {
             $jsonData = file_get_contents("php://input");
             $post = json_decode($jsonData, true);
             $datas = $post['data'];
@@ -178,7 +181,7 @@ class request_npd extends CI_Controller
 
     public function update()
     {
-        if($this->input->post()){
+        if ($this->input->post()) {
             $jsonData = file_get_contents("php://input");
             $post = json_decode($jsonData, true);
             $datas = $post['data'];
@@ -218,16 +221,16 @@ class request_npd extends CI_Controller
         $data = new Spreadsheet_Excel_Reader($file, false);
         $total_row = $data->rowcount($sheet_index = 0);
 
-        $code       = "NPD-".date("Ym");
-        $sqlGetID	= $this->db->query("SELECT max(request_no) as kode FROM request_npd WHERE request_no LIKE '%$code%'");
+        $code       = "NPD-" . date("Ym");
+        $sqlGetID    = $this->db->query("SELECT max(request_no) as kode FROM request_npd WHERE request_no LIKE '%$code%'");
         $rowID      = $sqlGetID->row();
-        $kode 		= $rowID->kode;
+        $kode         = $rowID->kode;
 
         $urutan = (int) substr($kode, -3);
         $urutan++;
-        $autoID	= sprintf("%03s", $urutan);
+        $autoID    = sprintf("%03s", $urutan);
 
-        for ($i = 5; $i <= $total_row; $i++) {
+        for ($i = 4; $i <= $total_row; $i++) {
             $datas[] = array(
                 'item_npd_id' => $data->val($i, 2),
                 'item_npd_name' => $data->val($i, 3),
@@ -236,9 +239,9 @@ class request_npd extends CI_Controller
                 'qty' => $data->val($i, 6),
                 'uom' => $data->val($i, 7),
                 'requirement_date' => $data->val($i, 8),
+                'request_reason' => $data->val($i, 9),
                 'category' => $data->val(2, 3),
-                'request_reason' => $data->val(3, 3),
-                "request_no" => $code . $autoID, 
+                "request_no" => $code . $autoID,
             );
         }
 
@@ -253,13 +256,13 @@ class request_npd extends CI_Controller
         if ($this->input->post()) {
             $post = $this->input->post('data');
 
-            if($post['item_npd_id'] != "" && $post['item_npd_name'] != "" && $post['product_family'] != "" && $post['maker'] != "" && $post['qty'] != "" && $post['uom'] != ""){
+            if ($post['item_npd_id'] != "" && $post['item_npd_name'] != "" && $post['product_family'] != "" && $post['maker'] != "" && $post['qty'] != "" && $post['uom'] != "") {
                 $this->crud->create('request_npd', array_merge($post, [
-                    "request_date" => date("Y-m-d"), 
-                    "request_by" => $this->session->name, 
+                    "request_date" => date("Y-m-d"),
+                    "request_by" => $this->session->name,
                 ]));
                 echo json_encode(array("title" => "Good Job", "message" => "Product No " . $post['item_npd_id'] . " Created Successfully", "theme" => "success"));
-            }else{
+            } else {
                 echo json_encode(array("title" => "Error", "message" => "Item ID " . $post['item_npd_id'] . " Not Completed data", "theme" => "error"));
             }
         }

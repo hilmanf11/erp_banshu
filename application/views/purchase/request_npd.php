@@ -1,6 +1,6 @@
 <table id="dg" class="easyui-datagrid" style="width:100%;" toolbar="#toolbar">
     <thead>
-    <tr>
+        <tr>
             <th rowspan="2" field="ck" checkbox="true"></th>
             <th rowspan="2" data-options="field:'status',width:80,align:'center',styler:cellStyler, formatter:cellFormatter">Convert PR</th>
             <th rowspan="2" data-options="field:'confirm',width:80,align:'center',styler:cellStyler2, formatter:cellFormatter2">Status</th>
@@ -10,7 +10,7 @@
             <th rowspan="2" data-options="field:'request_by',width:150,halign:'center'">Request By</th>
             <th rowspan="2" data-options="field:'request_date',width:100,align:'center'">Request Date</th>
             <th rowspan="2" data-options="field:'category',width:100,align:'center'">Category</th>
-            <th rowspan="2" data-options="field:'request_reason',width:250,halign:'center'">Remarks</th>
+            <!-- <th rowspan="2" data-options="field:'request_reason',width:250,halign:'center'">Remarks</th> -->
             <th rowspan="2" data-options="field:'total_qty',width:100,halign:'center',align:'right',formatter:numberformat">Total Qty</th>
             <th rowspan="2" data-options="field:'detail',width:80,halign:'center',formatter:BtnDetail">Detail</th>
             <th rowspan="2" data-options="field:'attachment',width:80,halign:'center',formatter:BtnAtt">Attachment</th>
@@ -88,6 +88,7 @@
                 <th rowspan="2" data-options="field:'uom',width:80,align:'center'">Uom</th>
                 <th rowspan="2" data-options="field:'qty',width:100,halign:'center',align:'right',formatter:numberformat">Qty</th>
                 <th rowspan="2" data-options="field:'requirement_date',width:100,align:'center'">Requirement<br>Date</th>
+                <th rowspan="2" data-options="field:'request_reason',width:250,halign:'center'">Remarks</th>
                 <th colspan="4" data-options="field:'procurement1',width:100,halign:'center'">Confirmation</th>
                 <th colspan="3" data-options="field:'procurement2',width:100,halign:'center'">Procurement</th>
                 <th colspan="2" data-options="field:'procurement3',width:100,halign:'center'">Receiving</th>
@@ -123,7 +124,7 @@
 </div>
 
 <!-- DIALOG SAVE -->
-<div id="dlg_insert" class="easyui-dialog" title="Add New" data-options="closed: true,modal:true" style="width: 1100px; height: 550px; padding:10px; top: 20px; left:10px;">
+<div id="dlg_insert" class="easyui-dialog" title="Add New" data-options="closed: true,modal:true" style="width: 1300px; height: 550px; padding:10px; top: 20px; left:10px;">
     <form id="frm_insert" method="post" enctype="multipart/form-data" novalidate>
         <div style="width: 100%; display: grid; grid-template-columns: auto auto auto; grid-gap: 5px; display: flex;">
             <fieldset style="width:100%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px;">
@@ -152,10 +153,6 @@
                             <option value="DIEGO">DIE GO</option>
                             <option value="OTHER">OTHER</option>
                         </select>
-                    </div>
-                    <div class="fitem">
-                        <span style="width:35%; display:inline-block;">Remarks</span>
-                        <input style="width:60%;" name="request_reason" id="request_reason" required class="easyui-textbox">
                     </div>
                     <div class="fitem">
                         <span style="width:35%; display:inline-block;">Attachment</span>
@@ -205,6 +202,7 @@
         $('#dg2').datagrid('loadData', []);
         $("#request_date").datebox('setValue', "<?= date("Y-m-d") ?>");
         $("#request_by").textbox('setValue', "<?= $this->session->name ?>");
+        $("#plant").combobox('setValue', "GE");
         addTable();
         autoId();
     }
@@ -215,9 +213,9 @@
             if (row.approved_to != "") {
                 $('#dlg_insert').dialog('open');
                 $('#frm_insert').form('load', row);
-                
+
                 addTable('<?= base_url('purchase/request_npd/datatableUpdates?request_no=') ?>' + window.btoa(row.request_no));
-            }else{
+            } else {
                 toastr.warning("Cannot Update because status already close, or approved");
             }
         } else {
@@ -225,7 +223,7 @@
         }
     }
 
-    function saveData(){
+    function saveData() {
         $('#dg_request').datagrid('acceptChanges');
         var rows = $('#dg_request').datagrid('getRows');
         var totalrows = rows.length;
@@ -256,11 +254,13 @@
                 $.ajax({
                     type: "post",
                     url: '<?= base_url('purchase/request_npd/update') ?>',
-                    data: JSON.stringify({ data: combined }),
+                    data: JSON.stringify({
+                        data: combined
+                    }),
                     dataType: "json",
-                    success: function (result) {
+                    success: function(result) {
                         Swal.close();
-                        
+
                         Swal.fire({
                             title: result.message,
                             icon: result.theme,
@@ -271,8 +271,9 @@
                                 $('#dg').datagrid('reload');
                             }
                         });
-                        
-                    }, error: function(jqXHR, textStatus, errorThrown){
+
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
                         Swal.close();
                         $('#dlg_request').dialog('open');
                         let response = JSON.parse(jqXHR.responseText);
@@ -286,7 +287,7 @@
     function details(request_no) {
         $("#dlg_request").dialog('open');
         var filter_item_npd_id = $("#filter_item_npd_id").textbox('getValue');
-        
+
         var lastIndex2;
         $('#dg_request').datagrid({
             url: '<?= base_url('purchase/request_npd/datatableDetails/') ?>' + btoa(request_no) + "?filter_item_npd_id=" + btoa(filter_item_npd_id),
@@ -294,7 +295,7 @@
             remoteFilter: true,
             rownumbers: true,
             singleSelect: true,
-            fit:true,
+            fit: true,
             onClickRow: function(rowIndex2) {
                 if ($('#dg_request').datagrid('validateRow', lastIndex2)) {
                     if (lastIndex2 != rowIndex2) {
@@ -307,12 +308,12 @@
         });
     }
 
-    function autoId(){
+    function autoId() {
         $.ajax({
             type: "post",
             url: "<?= base_url("purchase/request_npd/request_no/") ?>",
             dataType: "json",
-            success: function (response) {
+            success: function(response) {
                 $("#request_no").textbox('setValue', response.name);
             }
         });
@@ -333,7 +334,7 @@
                     editor: {
                         type: 'textbox'
                     }
-                },{
+                }, {
                     field: 'item_npd_id',
                     width: 200,
                     halign: 'center',
@@ -405,11 +406,14 @@
                         type: 'combobox',
                         options: {
                             url: '<?php echo base_url('master/uom/reads'); ?>',
-                            valueField: 'number',
+                            valueField: 'name',
                             textField: 'name',
                             prompt: 'Select Unit of Measure',
                             required: true,
                         }
+                    },
+                    formatter: function(value, row) {
+                        return row.uom;
                     }
                 }, {
                     field: 'requirement_date',
@@ -420,12 +424,23 @@
                         type: 'datebox',
                         options: {
                             required: true,
-                            formatter:myformatter,
-                            parser:myparser, 
-                            editable:false
+                            formatter: myformatter,
+                            parser: myparser,
+                            editable: false
                         }
                     }
-                }]
+                }, {
+                    field: 'request_reason',
+                    width: 250,
+                    halign: 'center',
+                    title: "Remarks",
+                    editor: {
+                        type: 'textbox',
+                        options: {
+                            required: true,
+                        }
+                    }
+                }, ]
             ],
             onClickCell: onClickCell
         });
@@ -437,6 +452,15 @@
             return true
         }
         if ($('#dg2').datagrid('validateRow', editIndex)) {
+            var ed1 = $('#dg2').datagrid('getEditor', {
+                index: editIndex,
+                field: 'uom'
+            });
+            if (ed1) {
+                var text = $(ed1.target).combobox('getText');
+                var row = $('#dg2').datagrid('getRows')[editIndex];
+                row.name = text;
+            }
             $('#dg2').datagrid('endEdit', editIndex);
             editIndex = undefined;
             return true;
@@ -445,20 +469,23 @@
         }
     }
 
-    function onClickCell(index, field){
-        if (editIndex != index){
-            if (endEditing()){
+    function onClickCell(index, field) {
+        if (editIndex != index) {
+            if (endEditing()) {
                 $('#dg2').datagrid('selectRow', index)
-                        .datagrid('beginEdit', index);
-                var ed = $('#dg2').datagrid('getEditor', {index:index,field:field});
-                if (ed){
+                    .datagrid('beginEdit', index);
+                var ed = $('#dg2').datagrid('getEditor', {
+                    index: index,
+                    field: field
+                });
+                if (ed) {
                     ($(ed.target).data('textbox') ? $(ed.target).textbox('textbox') : $(ed.target)).focus();
                 }
                 editIndex = index;
             } else {
-                setTimeout(function(){
+                setTimeout(function() {
                     $('#dg2').datagrid('selectRow', editIndex);
-                },0);
+                }, 0);
             }
         }
     }
@@ -483,7 +510,7 @@
         editIndex = undefined;
     }
 
-    function detailEdit(){
+    function detailEdit() {
         var row = $('#dg_request').datagrid('getSelected');
         if (row) {
             $('#dlg_update').dialog('open');
@@ -502,7 +529,7 @@
                 if (r) {
                     for (var i = 0; i < rows.length; i++) {
                         var row = rows[i];
-                        if(row.total_status > 0){
+                        if (row.total_status > 0) {
                             $.ajax({
                                 method: 'post',
                                 url: '<?= base_url('purchase/request_npd/delete') ?>',
@@ -520,7 +547,7 @@
                                     $('#dg').datagrid('reload');
                                 }
                             });
-                        }else{
+                        } else {
                             toastr.error("Cannot delete data because data has been push to MRP");
                         }
                     }
@@ -554,7 +581,7 @@
                 remoteFilter: true,
                 rownumbers: true,
                 singleSelect: true,
-                fit:true,
+                fit: true,
             });
 
             $("#printout").contents().find('html').html("<center><br><br><br><b style='font-size:20px;'>Please Wait...</b></center>");
@@ -612,7 +639,7 @@
         $('#attachment_upload').filebox({
             buttonText: 'Browse File',
             accept: '.jpg, .png, .pdf',
-            onChange: function () {
+            onChange: function() {
                 var files = $(this).filebox('files');
                 var formData = new FormData();
 
@@ -628,7 +655,7 @@
                     contentType: false,
                     processData: false,
                     dataType: 'json',
-                    success: function (data) {
+                    success: function(data) {
                         if (data.success == true) {
                             toastr.success(data.message);
                             $('#attachment').textbox('setValue', data.filename); // Mengatur nilai pada textbox
@@ -648,12 +675,11 @@
                     var request_no = $("#request_no").textbox('getValue');
                     var request_date = $("#request_date").datebox('getValue');
                     var request_by = $("#request_by").textbox('getValue');
-                    var request_reason = $("#request_reason").textbox('getValue');
                     var category = $("#category").combobox('getValue');
                     var plant = $("#plant").combobox('getValue');
                     var attachment = $("#attachment").textbox('getValue');
 
-                    if (request_reason == "" || request_date == "" || category == "") {
+                    if (request_date == "" || category == "") {
                         toastr.error("please complete your input data");
                     } else {
                         $('#dg2').datagrid('acceptChanges');
@@ -683,7 +709,6 @@
                                         request_by: request_by,
                                         category: category,
                                         plant: plant,
-                                        request_reason: request_reason,
                                         attachment: attachment,
                                         id: rows[i].id,
                                         item_npd_id: rows[i].item_npd_id,
@@ -692,18 +717,21 @@
                                         maker: rows[i].maker,
                                         qty: rows[i].qty,
                                         uom: rows[i].uom,
-                                        requirement_date: rows[i].requirement_date
+                                        requirement_date: rows[i].requirement_date,
+                                        request_reason: rows[i].request_reason
                                     });
                                 }
 
                                 $.ajax({
                                     type: "post",
                                     url: '<?= base_url('purchase/request_npd/create') ?>',
-                                    data: JSON.stringify({ data: combined }),
+                                    data: JSON.stringify({
+                                        data: combined
+                                    }),
                                     dataType: "json",
-                                    success: function (result) {
+                                    success: function(result) {
                                         Swal.close();
-                                        
+
                                         Swal.fire({
                                             title: result.message,
                                             icon: result.theme,
@@ -714,8 +742,9 @@
                                                 $('#dg').datagrid('reload');
                                             }
                                         });
-                                        
-                                    }, error: function(jqXHR, textStatus, errorThrown){
+
+                                    },
+                                    error: function(jqXHR, textStatus, errorThrown) {
                                         Swal.close();
                                         $('#dlg_insert').dialog('open');
                                         let response = JSON.parse(jqXHR.responseText);
@@ -866,13 +895,13 @@
     }
 
     function BtnDetail(val, row) {
-        var details = "details('"+row.request_no+"')";
-        return '<a class="btn btn-primary w-100" style="pointer-events: visible; opacity:1;" onClick="'+details+'"><i class="fa fa-eye"></i> View</a>';
+        var details = "details('" + row.request_no + "')";
+        return '<a class="btn btn-primary w-100" style="pointer-events: visible; opacity:1;" onClick="' + details + '"><i class="fa fa-eye"></i> View</a>';
     }
 
     function BtnAtt(val, row) {
-        if(val != "" && val != null){
-            return '<a target="_blank" class="btn btn-primary w-100" href="<?= base_url('assets/documents/npd/') ?>'+val+'" style="pointer-events: visible; opacity:1;"><i class="fa fa-download"></i> View</a>';
+        if (val != "" && val != null) {
+            return '<a target="_blank" class="btn btn-primary w-100" href="<?= base_url('assets/documents/npd/') ?>' + val + '" style="pointer-events: visible; opacity:1;"><i class="fa fa-download"></i> View</a>';
         }
     }
 
@@ -931,7 +960,7 @@
     function cellStylerApproval(value, row, index) {
         if (row.approved_to == null) {
             return 'background: #FF5F5F; color:white;';
-        } else if(row.approved_to == ""){
+        } else if (row.approved_to == "") {
             return 'background: #53D636; color:white;';
         } else {
             return 'background: #FF5F5F; color:white;';
@@ -941,7 +970,7 @@
     function cellFormatterApproval(val, row) {
         if (row.approved_to == null) {
             return 'Not Setting';
-        } else if(row.approved_to == ""){
+        } else if (row.approved_to == "") {
             return 'Approved';
         } else {
             return 'Checking';
@@ -951,7 +980,7 @@
     function cellStylerConfirm(value, row, index) {
         if (value == null || value == "") {
             return 'background: #6d83ffff; color:white;';
-        } else if(value == "CONFIRMED"){
+        } else if (value == "CONFIRMED") {
             return 'background: #53D636; color:white;';
         } else {
             return 'background: #FF5F5F; color:white;';
@@ -961,7 +990,7 @@
     function cellFormatterConfirm(value, row) {
         if (value == null || value == "") {
             return 'PENDING';
-        } else if(value == "CONFIRMED"){
+        } else if (value == "CONFIRMED") {
             return 'CONFIRMED';
         } else {
             return value;

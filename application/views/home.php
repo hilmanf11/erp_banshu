@@ -184,7 +184,9 @@
 
 	<div id="dlg_approval_detail" class="easyui-window" title="Approval Data" data-options="closed: true,minimizable:false,collapsible:false" style="width: 1000px; height: 400px; top: 60px;">
 		<!-- <table id="dg_approval" class="easyui-datagrid" style="width:100%;" toolbar="#toolbar_approval" data-options="fitColumns: false, rownumbers: true"></table> -->
-		<center><h2 style="margin: 10px; font-size: 20px !important;" id="header_approval"></h2></center>
+		<center>
+			<h2 style="margin: 10px; font-size: 20px !important;" id="header_approval"></h2>
+		</center>
 		<iframe src="" scrolling="yes" id="pageApproval" style="border: 0; width: 100%; height: 93%; margin:0;"></iframe>
 	</div>
 
@@ -197,7 +199,9 @@
 
 	<div id="dlg_notification_detail" class="easyui-window" title="Notification Data" data-options="closed: true,minimizable:false,collapsible:false" style="width: 800px; height: 550px; top: 60px;">
 		<!-- <table id="dg_approval" class="easyui-datagrid" style="width:100%;" toolbar="#toolbar_approval" data-options="fitColumns: false, rownumbers: true"></table> -->
-		<center><h2 style="margin: 10px; font-size: 20px !important;" id="header_notification"></h2></center>
+		<center>
+			<h2 style="margin: 10px; font-size: 20px !important;" id="header_notification"></h2>
+		</center>
 		<iframe src="" scrolling="yes" id="pageNotification" style="border: 0; width: 100%; height: 93%; margin:0;"></iframe>
 	</div>
 
@@ -235,7 +239,7 @@
 </body>
 
 <script>
-	function searchMenu(e){
+	function searchMenu(e) {
 		menu(e);
 	};
 
@@ -319,7 +323,7 @@
 		menu();
 	});
 
-	function menu(searchName = ""){
+	function menu(searchName = "") {
 		$('#menu').tree({
 			url: '<?= base_url('home/menus?name=') ?>' + searchName,
 			method: 'get',
@@ -570,7 +574,7 @@
 			$('#pageNotification').attr('src', '<?= base_url("notifications/getData/") ?>' + btoa(name) + "/" + btoa(user_from) + "/" + btoa(user_to));
 		}
 	}
-	
+
 	function logout() {
 		Swal.fire({
 			title: 'Please Wait for Logout System',
@@ -602,13 +606,13 @@
 		}
 	}
 
-	function btnDrawing(val){
-        if(val == null || val == ""){
-            return "-";
-        }else{
-            return "<a class='btn btn-primary btn-sm' style='pointer-events: auto; opacity:1; width:100%;' target='_blank' href='<?= base_url('assets/documents/bom/') ?>"+val+"'><i class='fa fa-eye'></i> View</a>";
-        }
-    }
+	function btnDrawing(val) {
+		if (val == null || val == "") {
+			return "-";
+		} else {
+			return "<a class='btn btn-primary btn-sm' style='pointer-events: auto; opacity:1; width:100%;' target='_blank' href='<?= base_url('assets/documents/bom/') ?>" + val + "'><i class='fa fa-eye'></i> View</a>";
+		}
+	}
 
 	function numberformat(value, row) {
 		const formatter = new Intl.NumberFormat('id-ID');

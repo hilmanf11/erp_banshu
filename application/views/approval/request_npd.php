@@ -19,7 +19,7 @@
             <th data-options="field:'qty',width:80,halign:'center',align:'right'">Qty</th>
             <th data-options="field:'uom',width:80,align:'center'">Uom</th>
             <th data-options="field:'requirement_date',width:100,align:'center'">Requirement</th>
-            <th data-options="field:'request_reason',width:200,halign:'center'">Reason</th>
+            <th data-options="field:'request_reason',width:200,halign:'center'">Remarks</th>
         </tr>
     </thead>
 </table>

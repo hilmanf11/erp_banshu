@@ -10,7 +10,7 @@
             <th rowspan="2" data-options="field:'request_by',width:150,halign:'center'">Request By</th>
             <th rowspan="2" data-options="field:'request_date',width:100,align:'center'">Request Date</th>
             <th rowspan="2" data-options="field:'category',width:100,align:'center'">Category</th>
-            <th rowspan="2" data-options="field:'request_reason',width:350,halign:'center'">Remarks</th>
+            <!-- <th rowspan="2" data-options="field:'request_reason',width:350,halign:'center'">Remarks</th> -->
             <th rowspan="2" data-options="field:'total_qty',width:100,halign:'center',align:'right',formatter:numberformat">Total Qty</th>
             <th rowspan="2" data-options="field:'detail',width:80,halign:'center',formatter:BtnDetail">Detail</th>
             <th colspan="2" data-options="field:'create',width:100,halign:'center'">Created</th>
@@ -72,6 +72,7 @@
                 <th rowspan="2" data-options="field:'uom',width:80,align:'center'">Uom</th>
                 <th rowspan="2" data-options="field:'qty',width:100,halign:'center',align:'right',formatter:numberformat">Qty</th>
                 <th rowspan="2" data-options="field:'requirement_date',width:100,align:'center'">Requirement<br>Date</th>
+                <th rowspan="2" data-options="field:'request_reason',width:250,align:'center'">Remarks</th>
                 <th rowspan="2" data-options="field:'confirm',width:100,align:'center', styler:cellStylerConfirm, formatter:cellFormatterConfirm, editor: {
                     type: 'combobox',
                     options: {
