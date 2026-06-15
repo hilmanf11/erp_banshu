@@ -148,13 +148,16 @@ class Request_npd_confirm extends CI_Controller
                 if (!empty($data['item_rm_id'])) {
                     $item_rm = $this->crud->read("item_rm", [], ["number" => $data['item_rm_id']]);
                     $supplier = $this->crud->read("suppliers", [], ["name" => $data['supplier_id']]);
+                    $supplier_items = $this->crud->read("supplier_items", [], ["supplier_id" => @$supplier->id, "item_rm_id" => @$item_rm->id]);
 
                     if (empty($item_rm)) {
                         die(json_encode(array("title" => "Failed", "message" => "Part No Not Found in Master", "theme" => "error")));
                     }
-
                     if (empty($supplier)) {
                         die(json_encode(array("title" => "Failed", "message" => "Supplier Not Found in Master", "theme" => "error")));
+                    }
+                    if (empty($supplier_items)) {
+                        die(json_encode(array("title" => "Failed", "message" => "Part No Not Found in Vendor Contract", "theme" => "error")));
                     }
 
                     $data['item_rm_id'] = $item_rm->id;
