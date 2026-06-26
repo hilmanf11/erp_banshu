@@ -36,7 +36,7 @@ class Makers extends CI_Controller
         $send = $this->crud->reads('makers', ["name" => $post]);
         echo json_encode($send);
     }
-    
+
     public function readsnotfg()
     {
         $post = isset($_POST['q']) ? $_POST['q'] : "";
@@ -182,11 +182,12 @@ class Makers extends CI_Controller
             $makers = $this->crud->read('makers', [], ["number" => $data['number']]);
 
             if (!empty($makers->number)) {
-                echo json_encode(array("title" => "Duplicated", "message" => " Maker Code " . $data['number'] . " is Duplicate Data", "theme" => "error"));
+                // echo json_encode(array("title" => "Duplicated", "message" => " Maker Code " . $data['number'] . " is Duplicate Data", "theme" => "error"));
+                $send = $this->crud->update('makers', ["id" => $makers->id], $data);
             } else {
                 $send   = $this->crud->create('makers', $data);
-                echo $send;
             }
+            echo $send;
         }
     }
 
@@ -208,7 +209,7 @@ class Makers extends CI_Controller
         $this->db->where('deleted', 0);
         $this->db->order_by('id', 'ASC');
         $records = $this->db->get()->result_array();
-        
+
         $html = '<html><head><title>Print Data</title></head><style>body {font-family: Arial, Helvetica, sans-serif;}#customers {border-collapse: collapse;width: 100%;font-size: 12px;}#customers td, #customers th {border: 1px solid #ddd;padding: 2px;}#customers tr:nth-child(even){background-color: #f2f2f2;}#customers tr:hover {background-color: #ddd;}#customers th {padding-top: 2px;padding-bottom: 2px;text-align: left;color: black;}</style><body>
         <center>
             <div style="float: left; font-size: 12px; text-align: left;">
@@ -237,7 +238,7 @@ class Makers extends CI_Controller
         <table id="customers" border="1">
             <tr>
                 <th width="20">No</th>
-                <th>ID</th>
+                <th>Code</th>
                 <th>Name</th>
                 <th>Description</th>
                 <th>Type</th>
@@ -247,9 +248,8 @@ class Makers extends CI_Controller
         foreach ($records as $data) {
             $html .= '<tr>
                     <td>' . $no . '</td>
-                    <td>' . $data['id'] . '</td>
-                    <td>' . $data['name'] . '</td>
                     <td>' . $data['number'] . '</td>
+                    <td>' . $data['name'] . '</td>
                     <td>' . $data['description'] . '</td>
                     <td>' . $data['type'] . '</td>
                     <td>' . $data['origin'] . '</td>';
