@@ -27,7 +27,7 @@ class Purchase_request_npd extends CI_Controller
         } elseif ($this->checkuserAccess($this->id_menu()) > 0) {
             $data['button'] = $this->getbutton($this->id_menu());
             $data['id_menu'] = $this->id_menu();
-            
+
             $this->load->view('template/header', $data);
             $this->load->view('purchase/purchase_request_npd');
         } else {
@@ -35,14 +35,16 @@ class Purchase_request_npd extends CI_Controller
         }
     }
 
-    public function reads(){
+    public function reads()
+    {
         $query = $this->db->query("SELECT DISTINCT request_no FROM purchase_requests WHERE type = 'NPD' ORDER BY request_no DESC LIMIT 1000");
         $records = $query->result_array();
 
         echo json_encode($records);
     }
 
-    public function readprodfam($supplier_id){
+    public function readprodfam($supplier_id)
+    {
         $supplier_id = base64_decode($supplier_id);
         $query = $this->db->query("SELECT DISTINCT a.id, a.number, a.name 
             FROM item_familys a 
@@ -54,13 +56,14 @@ class Purchase_request_npd extends CI_Controller
         echo json_encode($records);
     }
 
-    public function readParts($supplier_id, $item_famiy_id, $plant){
+    public function readParts($supplier_id, $item_famiy_id, $plant)
+    {
         $post = isset($_POST['q']) ? $_POST['q'] : "";
 
         $supplier_id = base64_decode($supplier_id);
         $item_famiy_id = base64_decode($item_famiy_id);
         $plant = base64_decode($plant);
-        
+
         $query = $this->db->query("SELECT b.id, b.number, b.name, a.mpq, a.moq, a.share_order, a.leadtime
             FROM supplier_items a 
             JOIN item_rm b ON a.item_rm_id = b.id
@@ -72,12 +75,13 @@ class Purchase_request_npd extends CI_Controller
         echo json_encode($records);
     }
 
-    public function readPr($supplier_id, $item_family_id){
+    public function readPr($supplier_id, $item_family_id)
+    {
         $post = isset($_POST['q']) ? $_POST['q'] : "";
 
         $supplier_id = base64_decode($supplier_id);
         $item_family_id = base64_decode($item_family_id);
-        
+
         $query = $this->db->query("SELECT a.request_no, b.name as supplier_name
             FROM purchase_requests a 
             JOIN suppliers b ON a.supplier_id = b.id
@@ -108,27 +112,28 @@ class Purchase_request_npd extends CI_Controller
         die(json_encode($monthName));
     }
 
-    public function purchaseRequestNo($code, $add = ""){
-        if($add != ""){
+    public function purchaseRequestNo($code, $add = "")
+    {
+        if ($add != "") {
             $code = base64_decode($code);
         }
 
-        $sqlGetID	= $this->db->query("SELECT max(request_no) as kode FROM purchase_requests WHERE request_no LIKE '%$code%'");
+        $sqlGetID    = $this->db->query("SELECT max(request_no) as kode FROM purchase_requests WHERE request_no LIKE '%$code%'");
         $rowID      = $sqlGetID->row();
-        $kode 		= $rowID->kode;
-        
+        $kode         = $rowID->kode;
+
         if ($kode == NULL) {
             $autoID = sprintf("%02s", $kode + 1);
         } else {
             $urutan = (int) substr($kode, -2);
             $urutan++;
-            $autoID	= sprintf("%02s", $urutan);
+            $autoID    = sprintf("%02s", $urutan);
         }
 
-        if($add == ""){
-            return $code.$autoID;
-        }else{
-            echo $code.$autoID;
+        if ($add == "") {
+            return $code . $autoID;
+        } else {
+            echo $code . $autoID;
         }
     }
 
@@ -144,7 +149,7 @@ class Purchase_request_npd extends CI_Controller
             $filter_plant = base64_decode($this->input->get('filter_plant'));
 
             //Select Query
-            $this->db->select('a.item_rm_id, a.supplier_id, b.item_family_id, a.plant, a.request_no, a.request_date, a.request_reason, a.requirement_date, a.qty, e.number as supplier_no, d.number as item_family_number');
+            $this->db->select('a.item_rm_id, a.supplier_id, b.item_family_id, a.plant, a.request_no, a.request_date, a.request_reason, a.requirement_date, a.qty, e.number as supplier_no, d.number as item_family_number, c.moq');
             $this->db->from('request_npd a');
             $this->db->join('item_rm b', 'a.item_rm_id = b.id');
             $this->db->join('supplier_items c', 'a.item_rm_id = c.item_rm_id and a.supplier_id = c.supplier_id and c.share_order > 0');
@@ -154,13 +159,13 @@ class Purchase_request_npd extends CI_Controller
             $this->db->where('a.confirm', "CONFIRMED");
             $this->db->where("a.request_date BETWEEN '$filter_from' and '$filter_to'");
             $this->db->where('a.plant', $filter_plant);
-            if($filter_item_family != ""){
+            if ($filter_item_family != "") {
                 $this->db->where('b.item_family_id', $filter_item_family);
             }
-            if($filter_supplier != ""){
+            if ($filter_supplier != "") {
                 $this->db->where('a.supplier_id', $filter_supplier);
             }
-            if($filter_item_rm != ""){
+            if ($filter_item_rm != "") {
                 $this->db->where('b.id', $filter_item_rm);
             }
             $this->db->group_by('c.supplier_id');
@@ -177,13 +182,15 @@ class Purchase_request_npd extends CI_Controller
                 $supplier_no = $generate['supplier_no'];
                 $request_date = $generate['request_date'];
 
-                if($supplier_no == $end_supplier && $generate['item_family_number'] == $end_product_family){
+                if ($supplier_no == $end_supplier && $generate['item_family_number'] == $end_product_family) {
                     $request_no = $end_request_no;
                     $no++;
-                }else{
-                    $request_no = $this->purchaseRequestNo("NPD".@trim($supplier_no.date("Ym")). "-" .trim($generate['item_family_number']));
+                } else {
+                    $request_no = $this->purchaseRequestNo("NPD" . @trim($supplier_no . date("Ym")) . "-" . trim($generate['item_family_number']));
                     $no = 1;
                 }
+
+                $qty = ceil($generate['qty'] / $generate['moq']) * $generate['moq'];
 
                 $arr[] = array(
                     "p_month" => date("m", strtotime($request_date)),
@@ -199,7 +206,8 @@ class Purchase_request_npd extends CI_Controller
                     "item_family_id" => $generate['item_family_id'],
                     "need" => $generate['qty'],
                     "mrp" => $generate['qty'],
-                    "qty" => $generate['qty'],
+                    // "qty" => $generate['qty'],
+                    "qty" => $qty,
                     "remarks" => $generate['request_reason'],
                     "type" => "NPD",
                     "status_data" => "GENERATE",
@@ -243,16 +251,16 @@ class Purchase_request_npd extends CI_Controller
             $this->db->where('a.type', "NPD");
             $this->db->where('a.request_date >=', $filter_from);
             $this->db->where('a.request_date <=', $filter_to);
-            if($filter_item_family != ""){
+            if ($filter_item_family != "") {
                 $this->db->like('a.item_family_id', $filter_item_family);
             }
-            if($filter_item_rm != ""){
+            if ($filter_item_rm != "") {
                 $this->db->like('a.item_rm_id', $filter_item_rm);
             }
-            if($filter_supplier != ""){
+            if ($filter_supplier != "") {
                 $this->db->like('a.supplier_id', $filter_supplier);
             }
-            if($filter_request_no != ""){
+            if ($filter_request_no != "") {
                 $this->db->like('a.request_no', $filter_request_no);
             }
             $this->db->group_by('a.request_no');
@@ -315,8 +323,8 @@ class Purchase_request_npd extends CI_Controller
         //Mapping Data
         $result['total'] = $totalRows;
         $result = array_merge($result, [
-        'rows' => $records, 
-        'footer' => array([
+            'rows' => $records,
+            'footer' => array([
                 "item_rm_number" => "Grand Total",
                 "qty" => $total_purchase_request,
                 "need" => $total_need,
@@ -380,7 +388,8 @@ class Purchase_request_npd extends CI_Controller
         }
     }
 
-    public function updateConfirm(){
+    public function updateConfirm()
+    {
         if ($this->input->post()) {
             $request_no = $this->input->post('request_no');
             $approval = $this->crud->read('approvals', [], ["table_name" => "purchase_requests"]);
@@ -394,9 +403,9 @@ class Purchase_request_npd extends CI_Controller
         if ($this->input->post()) {
             $post = $this->input->post('data');
             $purchase_requests = $this->crud->reads("purchase_requests", [], ["item_rm_id" => $post['item_rm_id'], "request_no" => $post['request_no']]);
-            if(count($purchase_requests) > 0){
+            if (count($purchase_requests) > 0) {
                 echo json_encode(array("message" => "Duplicate", "title" => "Double", "theme" => "error"));
-            }else{
+            } else {
                 $send = $this->crud->create('purchase_requests', $post, "", "approval");
                 $this->db->update('request_npd', ["status" => 1], ["request_no" => $post['request_npd'], "item_rm_id" => $post['item_rm_id']]);
                 echo json_encode(array("message" => "Covert NPD to Purchase Request has been Successfully", "title" => "Successfull", "theme" => "success"));
@@ -534,45 +543,45 @@ class Purchase_request_npd extends CI_Controller
                         <th style="text-align:center;">REASON</th>
                     </tr>';
 
-                    $no = 1;
+            $no = 1;
 
-                    $productTotals = [];
-                    foreach ($records as $record) {
-                        $product = $record['item_rm_id'];
-                        $shareOrder = $record['share_order'];
-                        $productTotals[$product] = isset($productTotals[$product]) ? $productTotals[$product] + $shareOrder : $shareOrder;
-                    }
-                    foreach ($records as $record) {
-                        $class = ($productTotals[$record['item_rm_id']] >= 100) ? 'red' : '';
-                        if($class == ""){
-                            $style = "style='background:#FFD2D2;'";
-                        }else{
-                            $style = "";
-                        }
+            $productTotals = [];
+            foreach ($records as $record) {
+                $product = $record['item_rm_id'];
+                $shareOrder = $record['share_order'];
+                $productTotals[$product] = isset($productTotals[$product]) ? $productTotals[$product] + $shareOrder : $shareOrder;
+            }
+            foreach ($records as $record) {
+                $class = ($productTotals[$record['item_rm_id']] >= 100) ? 'red' : '';
+                if ($class == "") {
+                    $style = "style='background:#FFD2D2;'";
+                } else {
+                    $style = "";
+                }
 
-                        $html .= "  <tr ".$style.">
-                                        <td>".$no."</td>
-                                        <td>".$record['flag']."</td>
-                                        <td>".$record['plant']."</td>
-                                        <td>".$record['p_year'] . $record['p_month']."</td>
-                                        <td>".$record['revision']."</td>
-                                        <td>".$record['request_no']."</td>
-                                        <td>".$record['supplier_name']."</td>
-                                        <td style='mso-number-format:\@;'>".trim($record['item_rm_number'])."</td>
-                                        <td style='mso-number-format:\@;'>".trim($record['item_supplier'])."</td>
-                                        <td>".$record['item_rm_name']."</td>
-                                        <td>".$record['item_family_name']."</td>
-                                        <td>".$record['share_order']."</td>
-                                        <td>".$record['mpq']."</td>
-                                        <td>".$record['moq']."</td>
-                                        <td>".$record['leadtime']."</td>
-                                        <td style='text-align:right;'>".round($record['need'])."</td>
-                                        <td style='text-align:right;'>".round($record['mrp'])."</td>
-                                        <td style='text-align:right;'>".round($record['qty'])."</td>
-                                        <td style='text-align:right;'>".$record['remarks']."</td>
+                $html .= "  <tr " . $style . ">
+                                        <td>" . $no . "</td>
+                                        <td>" . $record['flag'] . "</td>
+                                        <td>" . $record['plant'] . "</td>
+                                        <td>" . $record['p_year'] . $record['p_month'] . "</td>
+                                        <td>" . $record['revision'] . "</td>
+                                        <td>" . $record['request_no'] . "</td>
+                                        <td>" . $record['supplier_name'] . "</td>
+                                        <td style='mso-number-format:\@;'>" . trim($record['item_rm_number']) . "</td>
+                                        <td style='mso-number-format:\@;'>" . trim($record['item_supplier']) . "</td>
+                                        <td>" . $record['item_rm_name'] . "</td>
+                                        <td>" . $record['item_family_name'] . "</td>
+                                        <td>" . $record['share_order'] . "</td>
+                                        <td>" . $record['mpq'] . "</td>
+                                        <td>" . $record['moq'] . "</td>
+                                        <td>" . $record['leadtime'] . "</td>
+                                        <td style='text-align:right;'>" . round($record['need']) . "</td>
+                                        <td style='text-align:right;'>" . round($record['mrp']) . "</td>
+                                        <td style='text-align:right;'>" . round($record['qty']) . "</td>
+                                        <td style='text-align:right;'>" . $record['remarks'] . "</td>
                                     </tr>";
-                        $no++;
-                    }
+                $no++;
+            }
 
             $html .= '</table></body></html>';
             echo $html;
@@ -596,16 +605,16 @@ class Purchase_request_npd extends CI_Controller
         $qr_user_1 = "";
         $qr_user_2 = "";
 
-        if($purchase_requests->approved_by == @$approval->user_approval_1){
-            $qr_user_1 = "src='" .base_url('assets/image/qrcode/' . @$user_1->name . '.png')."'";
-        }elseif($purchase_requests->approved_by == @$approval->user_approval_2){
-            $qr_user_1 = "src='" .base_url('assets/image/qrcode/' . @$user_1->name . '.png')."'";
-            $qr_user_2 = "src='" .base_url('assets/image/qrcode/' . @$user_2->name . '.png')."'";
+        if ($purchase_requests->approved_by == @$approval->user_approval_1) {
+            $qr_user_1 = "src='" . base_url('assets/image/qrcode/' . @$user_1->name . '.png') . "'";
+        } elseif ($purchase_requests->approved_by == @$approval->user_approval_2) {
+            $qr_user_1 = "src='" . base_url('assets/image/qrcode/' . @$user_1->name . '.png') . "'";
+            $qr_user_2 = "src='" . base_url('assets/image/qrcode/' . @$user_2->name . '.png') . "'";
         }
 
         $this->createQrcode(@$user_1->name, "assets/image/qrcode/");
         $this->createQrcode(@$user_2->name, "assets/image/qrcode/");
-        
+
         //Config Page
         $rows = 35;
         $page = ceil(count($purchase_request_total) / $rows);
@@ -653,7 +662,7 @@ class Purchase_request_npd extends CI_Controller
                                         <tr>
                                             <td width="50" style="vertical-align: top;"><b>To</b></td>
                                             <td width="30" style="vertical-align: top;">:</td>
-                                            <td><b>' . @$supplier->name . '</b><br>'.@$supplier->address.'</td>
+                                            <td><b>' . @$supplier->name . '</b><br>' . @$supplier->address . '</td>
                                         </tr>
                                     </table>
                                 </div>
@@ -677,7 +686,7 @@ class Purchase_request_npd extends CI_Controller
                                         <tr>
                                             <td width="50">Page</td>
                                             <td width="10">:</td>
-                                            <td><b>' .$i.'/'.$page.'</b></td>
+                                            <td><b>' . $i . '/' . $page . '</b></td>
                                         </tr>
                                     </table>
                                 </div>
@@ -701,7 +710,7 @@ class Purchase_request_npd extends CI_Controller
                                 <td>' . $record['item_rm_number'] . '</td>
                                 <td>' . $record['item_supplier'] . '</td>
                                 <td>' . $record['item_rm_name'] . '</td>
-                                <td>' . date("Y-m-d", strtotime("+".$record['leadtime']." day", strtotime($record['request_date']))) . '</td>
+                                <td>' . date("Y-m-d", strtotime("+" . $record['leadtime'] . " day", strtotime($record['request_date']))) . '</td>
                                 <td style="text-align:right">' . number_format($record['qty'], 0) . '</td>
                                 <td>' . $record['uom'] . '</td>
                                 <td>' . $record['currency'] . '</td>
@@ -712,7 +721,7 @@ class Purchase_request_npd extends CI_Controller
                 $no++;
             }
             $html .= '</table>';
-            
+
             if (($i + 1) < $page) {
                 $html .= '<div style="page-break-after:always;"></div></div>';
             }
@@ -737,20 +746,20 @@ class Purchase_request_npd extends CI_Controller
                             <div style="width:40%; float:right;">
                                 <table id="customers" style="margin-top:20px;">
                                     <tr>
-                                        <th colspan="2" style="text-align:center;">'.$config->name.'</th>
+                                        <th colspan="2" style="text-align:center;">' . $config->name . '</th>
                                     </tr>
                                     <tr>
-                                            <th style="height:80px;"><img '.$qr_user_1.' width="80"/></th>
-                                            <th style="height:80px;"><img '.$qr_user_2.' width="80"/></th>
+                                            <th style="height:80px;"><img ' . $qr_user_1 . ' width="80"/></th>
+                                            <th style="height:80px;"><img ' . $qr_user_2 . ' width="80"/></th>
                                         </tr>
                                     <tr>
-                                        <th style="height:20px; text-align:center;">'.@$user_1->name.'</th>
-                                        <th style="height:20px; text-align:center;">'.@$user_2->name.'</th>
+                                        <th style="height:20px; text-align:center;">' . @$user_1->name . '</th>
+                                        <th style="height:20px; text-align:center;">' . @$user_2->name . '</th>
                                     </tr>
                                 </table>
                             </div>';
             }
-            
+
             $html .= '</div>';
         }
         $html .= '<script>window.print()</script>';
