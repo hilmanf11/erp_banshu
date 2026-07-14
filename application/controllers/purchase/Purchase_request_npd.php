@@ -193,8 +193,10 @@ class Purchase_request_npd extends CI_Controller
                 $qty = ceil($generate['qty'] / $generate['moq']) * $generate['moq'];
 
                 $arr[] = array(
-                    "p_month" => date("m", strtotime($request_date)),
-                    "p_year" => date("Y", strtotime($request_date)),
+                    // "p_month" => date("m", strtotime($request_date)),
+                    // "p_year" => date("Y", strtotime($request_date)),
+                    "p_month" => date("m"),
+                    "p_year" => date("Y"),
                     "plant" => $generate['plant'],
                     "request_npd" => $generate['request_no'],
                     "request_no" => $request_no,
