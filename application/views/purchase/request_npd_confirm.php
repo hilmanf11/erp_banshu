@@ -234,7 +234,7 @@
                     combined.push({
                         id: rows[i].id,
                         confirm: rows[i].confirm,
-                        confirm_reason: rows[i].confirm_reason,
+                        confirm_reason: rows[i].confirm_reason.replace(/'/g, ''),
                         supplier_id: rows[i].supplier_id,
                         item_rm_id: rows[i].item_rm_id,
                         item_supplier: rows[i].item_supplier

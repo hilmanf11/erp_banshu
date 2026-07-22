@@ -189,7 +189,7 @@ class request_npd extends CI_Controller
             $send = "";
             $this->db->trans_start();
             foreach ($datas as $data) {
-                $this->crud->update('request_npd', ["id" => $data['id']], $data, "logs");
+                $this->db->update('request_npd', $data, ["id" => $data['id']]);
             }
             $this->db->trans_complete();
 
@@ -371,10 +371,12 @@ class request_npd extends CI_Controller
         $filter_item_npd_id = trim(base64_decode($this->input->get('filter_item_npd_id')));
 
         //Select Query
-        $this->db->select('a.*, b.number as item_rm_number, b.name as item_rm_name, c.name as supplier_name');
+        $this->db->select('a.*, b.number as item_rm_number, b.name as item_rm_name, c.name as supplier_name,  d.request_no as pr_no, e.po_no, e.delivery_date');
         $this->db->from('request_npd a');
         $this->db->join('item_rm b', 'a.item_rm_id = b.id', 'left');
         $this->db->join('suppliers c', 'a.supplier_id = c.id', 'left');
+        $this->db->join('purchase_requests d', 'a.item_rm_id = d.item_rm_id and a.request_no = d.request_npd', 'left');
+        $this->db->join('purchase_orders e', 'd.request_no = e.request_no and d.item_rm_id = e.item_rm_id', 'left');
         if ($filter_from != "" and $filter_to != "") {
             $this->db->where("a.request_date >=", $filter_from);
             $this->db->where("a.request_date <=", $filter_to);
@@ -383,6 +385,7 @@ class request_npd extends CI_Controller
         $this->db->like('a.request_by', $filter_request_by);
         $this->db->like('a.item_npd_id', $filter_item_npd_id);
         $this->db->order_by('a.request_no', "desc");
+        $this->db->order_by('a.item_npd_id');
         $records = $this->db->get()->result_array();
 
         $html = '<html><head><title>Print Data</title></head><style>body {font-family: Arial, Helvetica, sans-serif;}#customers {border-collapse: collapse;width: 100%;font-size: 12px;}#customers td, #customers th {border: 1px solid #ddd;padding: 2px;}#customers tr:nth-child(even){background-color: #f2f2f2;}#customers tr:hover {background-color: #ddd;}#customers th {padding-top: 2px;padding-bottom: 2px;text-align: left;color: black;}</style><body>
@@ -417,15 +420,22 @@ class request_npd extends CI_Controller
                 <th style="text-align:center;">Part NPD No</th>
                 <th style="text-align:center;">Part NPD Name</th>
                 <th style="text-align:center;">Product Family</th>
+                 <th style="text-align:center;">PR No</th>
+                <th style="text-align:center;">PO No</th>
+                <th style="text-align:center;">ETA</th>
                 <th style="text-align:center;">Maker</th>
                 <th style="text-align:center;">Qty</th>
                 <th style="text-align:center;">Uom</th>
                 <th style="text-align:center;">Requirement<br>Date</th>
+                <th style="text-align:center;">Remarks</th>
                 <th style="text-align:center;">Confirm</th>
                 <th style="text-align:center;">Confirm Date</th>
                 <th style="text-align:center;">Confirm Reason</th>
+                <th style="text-align:center;">Vendor Name</th>
                 <th style="text-align:center;">Part No BEI</th>
-                <th style="text-align:center;">Supplier Name</th>
+                <th style="text-align:center;">Part No Vendor</th>
+                <th style="text-align:center;">Status Receiving</th>
+                <th style="text-align:center;">Receiving Date</th>
             </tr>';
 
         $no = 1;
@@ -440,15 +450,22 @@ class request_npd extends CI_Controller
                             <td style="mso-number-format:\@;">' . $data['item_npd_id'] . '</td>
                             <td style="mso-number-format:\@;">' . $data['item_npd_name'] . '</td>
                             <td>' . $data['product_family'] . '</td>
+                            <td>' . $data['pr_no'] . '</td>
+                            <td>' . $data['po_no'] . '</td>
+                            <td>' . $data['delivery_date'] . '</td>
                             <td>' . $data['maker'] . '</td>
                             <td style="text-align:right;">' . $data['qty'] . '</td>
                             <td>' . $data['uom'] . '</td>
                             <td>' . $data['requirement_date'] . '</td>
+                            <td>' . $data['request_reason'] . '</td>
                             <td style="text-align:center;">' . $data['confirm'] . '</td>
                             <td style="text-align:center;">' . $data['confirm_date'] . '</td>
                             <td style="text-align:left;">' . $data['confirm_reason'] . '</td>
-                            <td style="mso-number-format:\@;">' . $data['item_rm_number'] . '</td>
                             <td style="mso-number-format:\@;">' . $data['supplier_name'] . '</td>
+                            <td style="mso-number-format:\@;">' . $data['item_rm_number'] . '</td>
+                            <td style="mso-number-format:\@;">' . $data['item_supplier'] . '</td>
+                            <td>' . $data['receive_status'] . '</td>
+                            <td>' . $data['receive_date'] . '</td>
                         </tr>';
             $no++;
         }

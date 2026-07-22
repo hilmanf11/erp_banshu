@@ -735,7 +735,7 @@ class Purchase_order_npd extends CI_Controller
                     "remarks" => $post['remarks'],
                     "etd" => $post['etd_date'],
                     "delivery_date" => $post['delivery_date'],
-                    "reason" => $post['reason'],
+                    "reason" => str_replace("'", "", $post['reason']),
                     "status_edit" => 1,
                     "rev" => (@$maxRev->rev + 1),
                     "log" => json_encode(["qty" => $databf->qty, "total" => $databf->total, "revision" => $databf->revision, "log" => $databf->log, "remarks" => $databf->remarks])
@@ -1655,6 +1655,8 @@ class Purchase_order_npd extends CI_Controller
             "Currency",
             "Uom",
             "Leadtime",
+            "Reason",
+            "Remarks",
             "Created By",
             "Created Date"
         ));
@@ -1683,10 +1685,14 @@ class Purchase_order_npd extends CI_Controller
 
         $no = 1;
         foreach ($records as $data) {
-            if ($data['maker_type'] == "LOCAL") {
-                $etd = date("Y-m-d", strtotime("-14 days", strtotime($data['delivery_date'])));
+            if (empty($data['etd'])) {
+                if ($data['maker_type'] == "LOCAL") {
+                    $etd = date("Y-m-d", strtotime("-14 days", strtotime($data['delivery_date'])));
+                } else {
+                    $etd = date("Y-m-d", strtotime("-21 days", strtotime($data['delivery_date'])));
+                }
             } else {
-                $etd = date("Y-m-d", strtotime("-21 days", strtotime($data['delivery_date'])));
+                $etd = $data['etd'];
             }
 
             $data = array(
@@ -1714,6 +1720,8 @@ class Purchase_order_npd extends CI_Controller
                 $data['currency'],
                 $data['uom'],
                 $data['leadtime'],
+                $data['reason'],
+                $data['remarks'],
                 $data['created_by'],
                 $data['created_date']
             );
@@ -1853,6 +1861,8 @@ class Purchase_order_npd extends CI_Controller
                 <th style="text-align:center;">Uom</th>
                 <th style="text-align:center;">Leadtime</th>
                 <th style="text-align:center;">Status</th>
+                <th style="text-align:center;">Reason</th>
+                <th style="text-align:center;">Remarks</th>
                 <th style="text-align:center;">Created By</th>
                 <th style="text-align:center;">Created Date</th>
             </tr>';
@@ -1875,10 +1885,14 @@ class Purchase_order_npd extends CI_Controller
                 $approved = "CHECKING";
             }
 
-            if ($data['maker_type'] == "LOCAL") {
-                $etd = date("Y-m-d", strtotime("-14 days", strtotime($data['delivery_date'])));
+            if (empty($data['etd'])) {
+                if ($data['maker_type'] == "LOCAL") {
+                    $etd = date("Y-m-d", strtotime("-14 days", strtotime($data['delivery_date'])));
+                } else {
+                    $etd = date("Y-m-d", strtotime("-21 days", strtotime($data['delivery_date'])));
+                }
             } else {
-                $etd = date("Y-m-d", strtotime("-21 days", strtotime($data['delivery_date'])));
+                $etd = $data['etd'];
             }
 
             $html .= '  <tr>
@@ -1908,6 +1922,8 @@ class Purchase_order_npd extends CI_Controller
                             <td>' . $data['uom'] . '</td>
                             <td>' . $data['leadtime'] . '</td>
                             <td>' . $status . '</td>
+                            <td>' . $data['reason'] . '</td>
+                            <td>' . $data['remarks'] . '</td>
                             <td>' . $data['created_by'] . '</td>
                             <td>' . $data['created_date'] . '</td>
                         </tr>';

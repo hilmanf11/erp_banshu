@@ -718,7 +718,7 @@
                                         qty: rows[i].qty,
                                         uom: rows[i].uom,
                                         requirement_date: rows[i].requirement_date,
-                                        request_reason: rows[i].request_reason
+                                        request_reason: rows[i].request_reason.replace(/'/g, '')
                                     });
                                 }
 
