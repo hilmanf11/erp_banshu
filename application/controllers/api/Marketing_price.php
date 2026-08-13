@@ -65,13 +65,16 @@ class Marketing_price extends CI_Controller
 
         $this->db->select('a.*, c.number as item_rm_number, (case when g.uom_po is not null then g.uom_po else c.uom end) as uom,
             c.name as item_rm_name, a.item_supplier, b.number as supplier_number, b.origin, b.name as supplier_name,
-            d.name as item_family_name, b.type, b.supplier_po, e.name as maker_name, e.type as maker_type, e.number as maker_code');
+            d.name as item_family_name, b.type, b.supplier_po, e.name as maker_name, e.type as maker_type, e.number as maker_code, 
+            (case when i.currency_to is not null then i.currency_to else a.currency end) as currency_converted, 
+            a.currency as currency_original');
         $this->db->from('supplier_items a');
         $this->db->join('suppliers b', 'b.id = a.supplier_id');
         $this->db->join('item_rm c', 'c.id = a.item_rm_id');
         $this->db->join('item_familys d', "c.item_family_id = d.id and d.item_category_id IN ('C01')");
         $this->db->join('makers e', 'a.maker_id = e.id', 'left');
         $this->db->join('convertions g', 'a.item_rm_id = g.item_rm_id', 'left');
+        $this->db->join("exchange_rates i", 'i.start_date <= a.valid_date AND i.end_date >= a.valid_date and i.currency_from = a.currency', 'left');
         if ($filter_check == "true") {
             $this->db->join("(SELECT item_rm_id FROM supplier_items GROUP BY item_rm_id HAVING COUNT(*) > 1) h", 'a.item_rm_id = h.item_rm_id');
         }
@@ -143,7 +146,8 @@ class Marketing_price extends CI_Controller
                 "maker_name" => $record['maker_name'],
                 "maker_type" => $record['maker_type'],
                 "price" => $record['price'],
-                "currency" => $record['currency'],
+                "currency" => $record['currency_converted'],
+                "currency_original" => $record['currency_original'],
                 "start_date" => $record['start_date'],
                 "valid_date" => $record['valid_date'],
                 "assurance_price" => $assurance_price,

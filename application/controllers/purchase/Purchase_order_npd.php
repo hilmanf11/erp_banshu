@@ -696,6 +696,9 @@ class Purchase_order_npd extends CI_Controller
             //     }
             // }
 
+            // print_r(json_encode($postFinal));
+            // die();
+
             $send = $this->mrp_push->push_purchase_orders($postFinal);
 
             $this->db->where("item_rm_id", $post['item_rm_id']);

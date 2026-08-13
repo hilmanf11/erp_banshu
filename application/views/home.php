@@ -502,8 +502,8 @@
 	approvalCount();
 	notificationList();
 	notificationCount();
-	setInterval(approvalList, 10000);
-	setInterval(approvalCount, 10000);
+	setInterval(approvalList, 100000);
+	setInterval(approvalCount, 100000);
 
 	function approvalList() {
 		$.ajax({

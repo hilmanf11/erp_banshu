@@ -11,17 +11,19 @@
             <th rowspan="2" data-options="field:'item_rm_id',width:120,halign:'center'">Original Part No</th>
             <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No BEI</th>
             <th rowspan="2" data-options="field:'item_supplier',width:150,halign:'center'">Part No Vendor</th>
-            <th rowspan="2" data-options="field:'item_rm_name',width:150,halign:'center'">Description</th>
+            <th rowspan="2" data-options="field:'item_rm_name',width:150,halign:'center'">Part Name</th>
             <th rowspan="2" data-options="field:'type',width:100,align:'center'">Vendor Type</th>
             <th rowspan="2" data-options="field:'origin',width:120,halign:'center'">Vendor Origin</th>
             <th rowspan="2" data-options="field:'item_family_name',width:120,halign:'center'">Product Family</th>
             <th rowspan="2" data-options="field:'maker_name',width:150,halign:'center'">Maker</th>
             <th rowspan="2" data-options="field:'maker_type',width:100,halign:'center'">Maker Type</th>
+            <th rowspan="2" data-options="field:'maker_origin',width:150,halign:'center'">Country Of Origin</th>
             <th rowspan="2" data-options="field:'coo_name',width:120,halign:'center'">COO Name</th>
             <th rowspan="2" data-options="field:'spq',width:80,halign:'center',align:'right',formatter:numberformatComa">SPQ</th>
             <th rowspan="2" data-options="field:'mpq',width:80,halign:'center',align:'right',formatter:numberformatComa">MPQ</th>
             <th rowspan="2" data-options="field:'moq',width:80,halign:'center',align:'right',formatter:numberformatComa">MOQ</th>
             <th rowspan="2" data-options="field:'uom',width:80,align:'center'">UoM</th>
+            <th rowspan="2" data-options="field:'uom_convertion',width:80,align:'center'">UoM<br>Convertion</th>
             <th rowspan="2" data-options="field:'currency',width:80,align:'center'">Currency</th>
             <th rowspan="2" data-options="field:'price',width:80,halign:'center',align:'right',formatter:numberformat">Price</th>
             <th rowspan="2" data-options="field:'start_date',width:100,align:'center'">Start Date</th>
@@ -29,6 +31,11 @@
             <th rowspan="2" data-options="field:'attachment',width:100,halign:'center',formatter:BtnAttachment">Attachment</th>
             <th rowspan="2" data-options="field:'attachment2',width:100,halign:'center',formatter:BtnAttachment2">Attachment 2</th>
             <th rowspan="2" data-options="field:'attachment3',width:100,halign:'center',formatter:BtnAttachment3">Attachment 3</th>
+            <th rowspan="2" data-options="field:'exchange_rate',width:100,align:'center'">Exchange Rate</th>
+            <th rowspan="2" data-options="field:'incoterm',width:100,align:'center'">Incoterm</th>
+            <th rowspan="2" data-options="field:'total_ddp',width:120,align:'center'">Total DDP %</th>
+            <th rowspan="2" data-options="field:'price_procurement',width:100,halign:'center',align:'right',formatter:numberformat">Procurement<br>Price (IDR)</th>
+            <th rowspan="2" data-options="field:'cheaper',width:120,align:'center'">Cheaper</th>
             <th rowspan="2" data-options="field:'landed_cost',width:80,align:'center'">Landed<br>Cost</th>
             <th rowspan="2" data-options="field:'import_duty',width:80,align:'center'">Import<br>Duty</th>
             <th rowspan="2" data-options="field:'leadtime',width:80,align:'center'">Leadtime</th>
@@ -37,6 +44,7 @@
             <th rowspan="2" data-options="field:'safety_stock',width:80,halign:'center',align:'right',formatter:numberformatComa">Safety <br>Stock<br>(%)</th>
             <th rowspan="2" data-options="field:'calculate',width:80,align:'center'">Calculate<br>MPQ</th>
             <th rowspan="2" data-options="field:'rounded',width:80,align:'center'">Rounded<br>MPQ/MOQ</th>
+            <th rowspan="2" data-options="field:'provide',width:80,halign:'center'">Provide<br>Customer</th>
             <th rowspan="2" data-options="field:'remarks',width:250,halign:'center'">Remarks</th>
             <th colspan="4" data-options="field:'',width:100,halign:'center'">Approved</th>
             <th colspan="2" data-options="field:'',width:100,halign:'center'"> Created</th>
@@ -193,6 +201,10 @@
                     <span style="width:35%; display:inline-block;">Leadtime</span>
                     <input style="width:60%;" name="leadtime" id="leadtime" required="" class="easyui-numberbox">
                 </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Incoterm</span>
+                    <input style="width:60%;" name="incoterm_code" id="incoterm_code" required class="easyui-combogrid">
+                </div>
                 <div class="fitem" hidden>
                     <span style="width:35%; display:inline-block;">Transit (Days)</span>
                     <input style="width:60%;" name="transit" id="transit" class="easyui-numberbox">
@@ -236,6 +248,13 @@
                         <option value="MPQ">MPQ</option>
                         <option value="MOQ">MOQ</option>
                         <option value="SPQ">SPQ</option>
+                    </select>
+                </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Provide Cust</span>
+                    <select style="width:60%;" name="provide" class="easyui-combobox" panelHeight="auto">
+                        <option value="YES">YES</option>
+                        <option value="NO">NO</option>
                     </select>
                 </div>
                 <div class="fitem">
@@ -319,7 +338,6 @@
 <!-- PDF -->
 <iframe id="printout" style="width: 100%;" hidden></iframe>
 <script>
-
     //ADD DATA
     function add() {
         $('#dlg_insert').dialog('open');
@@ -378,9 +396,10 @@
                     });
 
                     requestDelete(rows.length, rows);
+
                     function requestDelete(total, json, number = 1, value = 0) {
                         if (value < 100) {
-                            var row = json[number-1];
+                            var row = json[number - 1];
                             value = Math.floor((number / total) * 100);
 
                             $.ajax({
@@ -499,7 +518,7 @@
         window.location.assign('<?= base_url('master/supplier_items/print/excel') ?>' + url);
     }
 
-    function excel_price(){
+    function excel_price() {
         var filter_category = $("#filter_category").combobox('getValue');
         var filter_suppliers = $("#filter_suppliers").combogrid('getValue');
         var filter_maker = $("#filter_maker").combogrid('getValue');
@@ -547,7 +566,7 @@
     }
 
     function cellStylerApproval(value, row, index) {
-        if(row.approved_to == "" || row.approved_to == null){
+        if (row.approved_to == "" || row.approved_to == null) {
             return 'background: #53D636; color:white;';
         } else {
             return 'background: #FF5F5F; color:white;';
@@ -555,7 +574,7 @@
     }
 
     function cellFormatterApproval(val, row) {
-        if(row.approved_to == "" || row.approved_to == null){
+        if (row.approved_to == "" || row.approved_to == null) {
             return 'Approved';
         } else {
             return 'Checking';
@@ -563,31 +582,31 @@
     };
 
     function BtnDetail(val, row) {
-        var details = "details('"+row.supplier_id+"','"+row.item_rm_id+"')";
-        return '<a class="btn btn-primary w-100" style="pointer-events: visible; opacity:1;" onClick="'+details+'"><i class="fa fa-eye"></i> View</a>';
+        var details = "details('" + row.supplier_id + "','" + row.item_rm_id + "')";
+        return '<a class="btn btn-primary w-100" style="pointer-events: visible; opacity:1;" onClick="' + details + '"><i class="fa fa-eye"></i> View</a>';
     }
 
     function BtnAttachment(val, row) {
-        if(val == "" || val == null){
+        if (val == "" || val == null) {
             return "-";
-        }else{
-            return '<a class="btn btn-primary w-100" style="pointer-events: visible; opacity:1;" target="_blank" href="'+val+'"><i class="fa fa-eye"></i> View</a>';
+        } else {
+            return '<a class="btn btn-primary w-100" style="pointer-events: visible; opacity:1;" target="_blank" href="' + val + '"><i class="fa fa-eye"></i> View</a>';
         }
     }
 
     function BtnAttachment2(val, row) {
-        if(val == "" || val == null){
+        if (val == "" || val == null) {
             return "-";
-        }else{
-            return '<a class="btn btn-primary w-100" style="pointer-events: visible; opacity:1;" target="_blank" href="'+val+'"><i class="fa fa-eye"></i> View</a>';
+        } else {
+            return '<a class="btn btn-primary w-100" style="pointer-events: visible; opacity:1;" target="_blank" href="' + val + '"><i class="fa fa-eye"></i> View</a>';
         }
     }
 
     function BtnAttachment3(val, row) {
-        if(val == "" || val == null){
+        if (val == "" || val == null) {
             return "-";
-        }else{
-            return '<a class="btn btn-primary w-100" style="pointer-events: visible; opacity:1;" target="_blank" href="'+val+'"><i class="fa fa-eye"></i> View</a>';
+        } else {
+            return '<a class="btn btn-primary w-100" style="pointer-events: visible; opacity:1;" target="_blank" href="' + val + '"><i class="fa fa-eye"></i> View</a>';
         }
     }
 
@@ -600,7 +619,7 @@
             remoteFilter: true,
             rownumbers: true,
             singleSelect: false,
-            fit:true,
+            fit: true,
         });
 
         $('#dg_history2').datagrid({
@@ -609,7 +628,7 @@
             remoteFilter: true,
             rownumbers: true,
             singleSelect: false,
-            fit:true,
+            fit: true,
         });
     }
 
@@ -646,8 +665,8 @@
                 iconCls: 'icon-ok',
                 handler: function() {
                     var valid_date2 = $("#valid_date").datebox('getValue');
-                    
-                    if(valid_date > valid_date2){
+
+                    if (valid_date > valid_date2) {
                         toastr.error("Valid Date Cannot < Valid Date Before");
                         return false;
                     }
@@ -655,7 +674,7 @@
                     $('#frm_insert').form('submit', {
                         url: url_save,
                         onSubmit: function() {
-                            if($(this).form('validate') === true){
+                            if ($(this).form('validate') === true) {
                                 var valid_date = $("#valid_date").datebox('getValue');
                                 var mpq = $("#mpq").numberbox('getValue');
                                 var moq = $("#moq").numberbox('getValue');
@@ -663,13 +682,13 @@
                                 var leadtime = $("#leadtime").numberbox('getValue');
                                 var transit = $("#transit").numberbox('getValue');
 
-                                if(mpq <= 0 || moq <= 0 || price <= 0 || leadtime <= 0){
+                                if (mpq <= 0 || moq <= 0 || price <= 0 || leadtime <= 0) {
                                     toastr.error("MPQ, MOQ, Price, Leadtime Cannot be 0");
                                     return false;
                                 }
 
                                 $('#dlg_insert').dialog('close');
-                                
+
                                 Swal.fire({
                                     title: 'Please Wait...',
                                     showConfirmButton: false,
@@ -679,7 +698,7 @@
                                         Swal.showLoading();
                                     },
                                 });
-                            }else{
+                            } else {
                                 return $(this).form('validate');
                             }
                         },
@@ -695,7 +714,7 @@
                             $('#dg').datagrid('reload');
                             Swal.close();
                         },
-                        error: function(){
+                        error: function() {
                             toastr.error("Failed to save data, please check your data requirements again", "error");
                             $('#dg').datagrid('reload');
                             Swal.close();
@@ -796,11 +815,11 @@
                     field: 'number',
                     title: 'Code',
                     width: 100
-                },{
+                }, {
                     field: 'name',
                     title: 'Name',
                     width: 200
-                },{
+                }, {
                     field: 'type',
                     title: 'Type',
                     width: 100
@@ -855,11 +874,11 @@
                     field: 'number',
                     title: 'Code',
                     width: 100
-                },{
+                }, {
                     field: 'name',
                     title: 'Name',
                     width: 200
-                },{
+                }, {
                     field: 'type',
                     title: 'Type',
                     width: 100
@@ -966,9 +985,9 @@
                 $("#supplier_po").textbox("setValue", row.supplier_po);
                 $("#currency").textbox("setValue", row.currency);
                 //if(row.commodity == "NO"){
-                    //$("#valid_date").datebox("disable");
+                //$("#valid_date").datebox("disable");
                 //}else{
-                    //$("#valid_date").datebox("enable");
+                //$("#valid_date").datebox("enable");
                 //}
             }
         });
@@ -992,11 +1011,11 @@
                     width: 200
                 }, {
                     field: 'name',
-                    title: 'Description',
+                    title: 'Part Name',
                     width: 200
                 }, ]
             ],
-            onSelect:function(valMaker, rowMaker){
+            onSelect: function(valMaker, rowMaker) {
                 $("#maker_id").combogrid('setValue', rowMaker.maker_id);
             }
         });
@@ -1020,7 +1039,7 @@
                     width: 200
                 }]
             ],
-            onSelect: function(val, coa){
+            onSelect: function(val, coa) {
                 $("#account_name").textbox('setValue', coa.account_name);
             }
         });
@@ -1037,6 +1056,27 @@
             valueField: 'number',
             textField: 'name',
             prompt: 'Select Plant',
+        });
+
+        $('#incoterm_code').combogrid({
+            url: '<?php echo base_url('master/incoterms/reads'); ?>',
+            panelWidth: 550,
+            idField: 'number',
+            textField: 'name',
+            mode: 'remote',
+            fitColumns: true,
+            prompt: "Select Incoterm",
+            columns: [
+                [{
+                    field: 'number',
+                    title: 'Code',
+                    width: 100
+                }, {
+                    field: 'name',
+                    title: 'Name',
+                    width: 200
+                }, ]
+            ]
         });
 
         $('#filter_plant').combobox({
