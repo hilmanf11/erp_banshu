@@ -792,6 +792,7 @@ class Supplier_items extends CI_Controller
                 <th>Plant</th>
                 <th>Vendor ID</th>
                 <th>Vendor Name</th>
+                <th>Quotation No</th>
                 <th>Original Part No</th>
                 <th>Part No BEI</th>
                 <th>Part No Vendor</th>
@@ -872,6 +873,7 @@ class Supplier_items extends CI_Controller
                     <td>' . $data['plant'] . '</td>
                     <td style="mso-number-format:\@;">' . $data['supplier_id'] . '</td>
                     <td>' . $data['supplier_name'] . '</td>
+                    <td>' . $data['quotation_number'] . '</td>
                     <td>' . $data['item_rm_id'] . '</td>
                     <td style="mso-number-format:\@;">' . $data['item_rm_number'] . '</td>
                     <td style="mso-number-format:\@;">' . $data['item_supplier'] . '</td>

@@ -8,6 +8,7 @@
             <th rowspan="2" data-options="field:'supplier_id',width:80,halign:'center'">Vendor ID</th>
             <!-- <th rowspan="2" data-options="field:'supplier_po',width:150,halign:'center'">Supplier PO</th> -->
             <th rowspan="2" data-options="field:'supplier_name',width:250,halign:'center'">Vendor Name</th>
+            <th rowspan="2" data-options="field:'quotation_number',width:250,halign:'center'">Quotation No</th>
             <th rowspan="2" data-options="field:'item_rm_id',width:120,halign:'center'">Original Part No</th>
             <th rowspan="2" data-options="field:'item_rm_number',width:200,halign:'center'">Part No BEI</th>
             <th rowspan="2" data-options="field:'item_supplier',width:150,halign:'center'">Part No Vendor</th>
@@ -146,6 +147,14 @@
                     <span style="width:35%; display:inline-block;">Vendor</span>
                     <input style="width:60%;" name="supplier_id" id="supplier_id" required="" class="easyui-combogrid">
                 </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Quotation No</span>
+                    <input style="width:60%;" name="quotation_number" id="quotation_number" required="" class="easyui-textbox">
+                </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Quotation Date</span>
+                    <input style="width:60%;" name="quotation_date" id="quotation_date" class="easyui-datebox" required data-options="formatter:myformatter,parser:myparser, editable:false">
+                </div>
                 <div class="fitem" hidden>
                     <span style="width:35%; display:inline-block;">PO No</span>
                     <input style="width:60%;" name="supplier_po" id="supplier_po" disabled class="easyui-textbox">
@@ -170,6 +179,8 @@
                     <span style="width:35%; display:inline-block;">SPQ</span>
                     <input style="width:60%;" name="spq" id="spq" class="easyui-numberbox" required data-options="precision:2">
                 </div>
+            </div>
+            <div style="width: 35%; float: left;">
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">MPQ</span>
                     <input style="width:60%;" name="mpq" id="mpq" class="easyui-numberbox" required data-options="precision:2">
@@ -178,9 +189,6 @@
                     <span style="width:35%; display:inline-block;">MOQ</span>
                     <input style="width:60%;" name="moq" id="moq" class="easyui-numberbox" required data-options="precision:2">
                 </div>
-            </div>
-
-            <div style="width: 35%; float: left;">
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Landed Cost</span>
                     <input style="width:60%;" name="landed_cost" id="landed_cost" class="easyui-numberbox" required data-options="precision:2">
@@ -217,12 +225,12 @@
                     <span style="width:35%; display:inline-block;">Price</span>
                     <input style="width:60%;" name="price" id="price" class="easyui-numberbox" required data-options="precision:4">
                 </div>
+            </div>
+            <div style="width: 30%; float: left;">
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Start Date</span>
                     <input style="width:60%;" name="start_date" id="start_date" class="easyui-datebox" required data-options="formatter:myformatter,parser:myparser, editable:false">
                 </div>
-            </div>
-            <div style="width: 30%; float: left;">
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Valid Date</span>
                     <input style="width:60%;" name="valid_date" id="valid_date" class="easyui-datebox" required data-options="formatter:myformatter,parser:myparser, editable:false">
