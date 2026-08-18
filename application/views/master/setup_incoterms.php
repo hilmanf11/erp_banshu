@@ -49,7 +49,7 @@
             </div>
             <div class="fitem">
                 <span style="width:35%; display:inline-block;">Sub Product Family</span>
-                <input style="width:60%;" name="sub_prodfam" id="sub_prodfam" required="" class="easyui-combobox">
+                <input style="width:60%;" name="sub_prodfam" id="sub_prodfam" class="easyui-combobox">
             </div>
             <div class="fitem">
                 <span style="width:35%; display:inline-block;">Insurance (%)</span>
