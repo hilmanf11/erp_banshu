@@ -204,25 +204,32 @@ class Supplier_items extends CI_Controller
             if ($cmp !== 0) {
                 return $cmp;
             }
+
+            $plantCmp = strcmp((string) $a['plant'], (string) $b['plant']);
+            if ($plantCmp !== 0) {
+                return $plantCmp;
+            }
+
             return $a['price_procurement'] <=> $b['price_procurement'];
         });
 
         $cheaperMap = [];
-        $lastItemId = null;
+        $lastGroupKey = null;
         $cheaperRank = 0;
         foreach ($sortedRecords as $row) {
-            if ($lastItemId !== $row['item_rm_id']) {
-                $lastItemId = $row['item_rm_id'];
+            $groupKey = $row['item_rm_id'] . '|' . $row['plant'];
+            if ($lastGroupKey !== $groupKey) {
+                $lastGroupKey = $groupKey;
                 $cheaperRank = 1;
             } else {
                 $cheaperRank++;
             }
-            $lookupKey = $row['supplier_id'] . '|' . $row['item_rm_id'];
+            $lookupKey = $row['supplier_id'] . '|' . $row['item_rm_id'] . '|' . $row['plant'];
             $cheaperMap[$lookupKey] = 'CHEAPER ' . $cheaperRank;
         }
 
         foreach ($records as $key => $value) {
-            $lookupKey = $value['supplier_id'] . '|' . $value['item_rm_id'];
+            $lookupKey = $value['supplier_id'] . '|' . $value['item_rm_id'] . '|' . $value['plant'];
             $records[$key]['cheaper'] = isset($cheaperMap[$lookupKey]) ? $cheaperMap[$lookupKey] : '';
         }
         $result['total'] = $totalRows;
@@ -498,6 +505,7 @@ class Supplier_items extends CI_Controller
     //UPLOAD CREATE DATA
     public function uploadcreate()
     {
+        error_reporting(0);
         if ($this->input->post()) {
             $data = $this->input->post('data');
             if ($data['action'] == "") {
@@ -545,18 +553,18 @@ class Supplier_items extends CI_Controller
                     if ($this->isValidDate($data['start_date'])) {
                         //
                     } else {
-                        die(json_encode(array("title" => "Not Found", "message" => "Format Date " . $data['start_date'] . " rejected, use YYYY-MM-DD format and format type is text", "theme" => "error")));
+                        die(json_encode(array("title" => "Not Found", "message" => "Start Date " . $data['start_date'] . " rejected, use YYYY-MM-DD format and format type is text", "theme" => "error")));
                     }
 
                     if ($this->isValidDate($data['valid_date'])) {
                         //
                     } else {
-                        die(json_encode(array("title" => "Not Found", "message" => "Format Date " . $data['valid_date'] . " rejected, use YYYY-MM-DD format and format type is text", "theme" => "error")));
+                        die(json_encode(array("title" => "Not Found", "message" => "Valid Date " . $data['valid_date'] . " rejected, use YYYY-MM-DD format and format type is text", "theme" => "error")));
                     }
                     if ($this->isValidDate($data['quotation_date'])) {
                         //
                     } else {
-                        die(json_encode(array("title" => "Not Found", "message" => "Format Date " . $data['quotation_date'] . " rejected, use YYYY-MM-DD format and format type is text", "theme" => "error")));
+                        die(json_encode(array("title" => "Not Found", "message" => "Quotation Date " . $data['quotation_date'] . " rejected, use YYYY-MM-DD format and format type is text", "theme" => "error")));
                     }
 
                     $dataFinal = array(
@@ -585,8 +593,8 @@ class Supplier_items extends CI_Controller
                         "incoterm_code" => $data['incoterm_code'],
                     );
 
-                    $send = $this->crud->create('supplier_items', $dataFinal);
-                    $this->crud->create('supplier_item_histories', $dataFinal);
+                    $send = $this->crud->create('supplier_items', $dataFinal, "logs");
+                    $this->crud->create('supplier_item_histories', $dataFinal, "logs");
                     echo $send;
                 }
             } elseif (strtolower($data['action']) == "update") {
@@ -639,19 +647,25 @@ class Supplier_items extends CI_Controller
                     if ($this->isValidDate($start_date)) {
                         //
                     } else {
-                        die(json_encode(array("title" => "Not Found", "message" => "Format Date " . $start_date . " rejected, use YYYY-MM-DD format and format type is text", "theme" => "error")));
+                        if (!empty($data['start_date'])) {
+                            die(json_encode(array("title" => "Not Found", "message" => "Start Date " . $start_date . " rejected, use YYYY-MM-DD format and format type is text", "theme" => "error")));
+                        }
                     }
 
                     if ($this->isValidDate($valid_date)) {
                         //
                     } else {
-                        die(json_encode(array("title" => "Not Found", "message" => "Format Date " . $valid_date . " rejected, use YYYY-MM-DD format and format type is text", "theme" => "error")));
+                        if (!empty($data['valid_date'])) {
+                            die(json_encode(array("title" => "Not Found", "message" => "Valid Date " . $valid_date . " rejected, use YYYY-MM-DD format and format type is text", "theme" => "error")));
+                        }
                     }
 
                     if ($this->isValidDate($quotation_date)) {
                         //
                     } else {
-                        die(json_encode(array("title" => "Not Found", "message" => "Format Date " . $quotation_date . " rejected, use YYYY-MM-DD format and format type is text", "theme" => "error")));
+                        if (!empty($data['quotation_date'])) {
+                            die(json_encode(array("title" => "Not Found", "message" => "Quotation Date " . $quotation_date . " rejected, use YYYY-MM-DD format and format type is text", "theme" => "error")));
+                        }
                     }
 
                     if ((@$rowSupItm->share_order + $share_order) > 100) {
@@ -662,11 +676,11 @@ class Supplier_items extends CI_Controller
                         //     $this->db->update('supplier_items', $dataFinal, ["supplier_id" => @$supplier->id, "item_rm_id" => @$item_rm->id, "plant" => $data['plant']]);
                         //     echo json_encode(array("title" => "Good Job", "message" => "Change Data Success, By Pass Approval", "theme" => "success"));
                     } else {
-                        $send = $this->crud->update('supplier_items', ["supplier_id" => @$supplier->id, "item_rm_id" => @$item_rm->id, "plant" => $data['plant']], $dataFinal);
+                        $send = $this->crud->update('supplier_items', ["supplier_id" => @$supplier->id, "item_rm_id" => @$item_rm->id, "plant" => $data['plant']], $dataFinal, "logs");
                         echo $send;
                     }
 
-                    $this->crud->create('supplier_item_histories', $dataFinal);
+                    $this->crud->create('supplier_item_histories', $dataFinal, "logs");
                 } else {
                     echo json_encode(array("title" => "Not Found", "message" => "Vendor " . $data['supplier_id'] . " and Part No " . $data['item_rm_number'] . " Not Found in Vendor Items", "theme" => "error"));
                 }
@@ -840,20 +854,27 @@ class Supplier_items extends CI_Controller
             if ($cmp !== 0) {
                 return $cmp;
             }
+
+            $plantCmp = strcmp((string) $a['plant'], (string) $b['plant']);
+            if ($plantCmp !== 0) {
+                return $plantCmp;
+            }
+
             return $a['price_procurement'] <=> $b['price_procurement'];
         });
 
         $cheaperMap = [];
-        $lastItemId = null;
+        $lastGroupKey = null;
         $cheaperRank = 0;
         foreach ($sortedRecords as $row) {
-            if ($lastItemId !== $row['item_rm_id']) {
-                $lastItemId = $row['item_rm_id'];
+            $groupKey = $row['item_rm_id'] . '|' . $row['plant'];
+            if ($lastGroupKey !== $groupKey) {
+                $lastGroupKey = $groupKey;
                 $cheaperRank = 1;
             } else {
                 $cheaperRank++;
             }
-            $lookupKey = $row['supplier_id'] . '|' . $row['item_rm_id'];
+            $lookupKey = $row['supplier_id'] . '|' . $row['item_rm_id'] . '|' . $row['plant'];
             $cheaperMap[$lookupKey] = 'CHEAPER ' . $cheaperRank;
         }
 
@@ -863,7 +884,7 @@ class Supplier_items extends CI_Controller
             } else {
                 $approved = "CHECKING";
             }
-            $lookupKey = $data['supplier_id'] . '|' . $data['item_rm_id'];
+            $lookupKey = $data['supplier_id'] . '|' . $data['item_rm_id'] . '|' . $data['plant'];
             $cheaper = isset($cheaperMap[$lookupKey]) ? $cheaperMap[$lookupKey] : '';
             $html .= '<tr>
                     <td>' . $no . '</td>
