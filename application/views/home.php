@@ -498,12 +498,12 @@
 		$('#dlg_notif').dialog('open');
 	}
 
-	approvalList();
-	approvalCount();
-	notificationList();
-	notificationCount();
-	setInterval(approvalList, 100000);
-	setInterval(approvalCount, 100000);
+	// approvalList();
+	// approvalCount();
+	// notificationList();
+	// notificationCount();
+	// setInterval(approvalList, 100000);
+	// setInterval(approvalCount, 100000);
 
 	function approvalList() {
 		$.ajax({
