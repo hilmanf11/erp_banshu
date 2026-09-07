@@ -244,11 +244,11 @@
 	};
 
 	$(function() {
-		var isMobile = /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+		// var isMobile = /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-		if (isMobile) {
-			window.location.assign('home/device');
-		}
+		// if (isMobile) {
+		// 	window.location.assign('home/device');
+		// }
 
 		//Deteksi Internet
 		window.addEventListener('load', function(event) {
@@ -498,12 +498,12 @@
 		$('#dlg_notif').dialog('open');
 	}
 
-	// approvalList();
-	// approvalCount();
-	// notificationList();
-	// notificationCount();
-	// setInterval(approvalList, 100000);
-	// setInterval(approvalCount, 100000);
+	approvalList();
+	approvalCount();
+	notificationList();
+	notificationCount();
+	setInterval(approvalList, 100000);
+	setInterval(approvalCount, 100000);
 
 	function approvalList() {
 		$.ajax({

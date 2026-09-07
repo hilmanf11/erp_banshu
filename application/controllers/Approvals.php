@@ -26,12 +26,12 @@ class Approvals extends CI_Controller
         $tablename = $this->input->post('tablename');
         $message = $this->input->post('message');
         $approval = $this->crud->read('approvals', [], ["table_name" => $tablename]);
+        $where = ["approved_to" => $approved_to, "approved_by" => $approved_by];
 
-        if ($tablename == "forecast_supplier") {
-            $data = $this->crud->read($tablename, [], ["approved_to" => $approved_to, "approved_by" => $approved_by]);
-        } else {
-            $data = $this->crud->read($tablename, [], ["supplier_id" => $supplier_id, "revision" => $revision, "p_year" => $p_year, "p_month" => $p_month]);
+        if (!in_array($tablename, ["forecast_supplier", "new_part_price_procurements"])) {
+            $where = ["supplier_id" => $supplier_id, "revision" => $revision, "p_year" => $p_year, "p_month" => $p_month];
         }
+        $data = $this->crud->read($tablename, [], $where);
 
         if ($data->approved == 1) {
             $users_id = @$approval->user_approval_2;
@@ -57,10 +57,14 @@ class Approvals extends CI_Controller
             "approved" => $approved,
         );
 
-        if ($tablename == "forecast_supplier") {
-            $send = $this->db->update($tablename, $values, ["approved_to" => $approved_to, "approved_by" => $approved_by]);
-        } else {
-            $send = $this->db->update($tablename, $values, ["supplier_id" => $supplier_id, "revision" => $revision, "p_year" => $p_year, "p_month" => $p_month]);
+        $send = $this->db->update($tablename, $values, $where);
+
+        if ($tablename == "new_part_price_procurements") {
+            $send = $this->processApprove(
+                "new_part_price_procurements",
+                [],
+                json_decode(base64_decode($this->input->post('datas')))
+            );
         }
 
         if ($send) {
@@ -68,6 +72,67 @@ class Approvals extends CI_Controller
         } else {
             echo log_message('error', 'There is an error in your system or data');
         }
+    }
+
+    public function processApprove($table, $where, $datas = [])
+    {
+        $send = true;
+        $this->db->trans_start();
+        if ($table == "new_part_price_procurements") {
+            $fullname = $this->crud->read("users", [], ["username" => $this->session->username])->name;
+            $this->crm = $this->load->database('crm', TRUE);
+            $this->crm->trans_start();
+
+            foreach ($datas as $key => $value) {
+                if ($send) {
+                    $id = $value->id;
+                    $data = [
+                        "updated_by_name" => $fullname,
+                        "approved_by_name" => $fullname,
+                        "currency" => $value->currency,
+                        "price" => $value->price,
+                        "new_price" => 0,
+                        "percentage" => 0,
+                        "moq" => $value->moq,
+                        "mpq" => $value->mpq,
+                        "spq" => $value->spq,
+                        "leadtime" => $value->leadtime,
+                        "status" => 1,
+                        "remarks1" => $value->remarks1,
+                        "remarks2" => $value->remarks2,
+                        "remarks3" => $value->remarks3,
+                        "procurement_respons_date" => $value->procurement_respons_date,
+                        "item_id_maker" => $value->item_id_maker,
+                        "quot_req" => $value->quot_req,
+                        "quotation" => $value->quotation,
+                        "incoterms" => $value->incoterms
+                    ];
+                    $send = $this->crud->update("new_part_price_procurements", ["id" => $id], $data);
+                    if ($send) {
+                        $new_data = $this->crud->read("new_part_price_procurements", [], ["id" => $id]);
+                        $this->crud->create("new_part_price_procurement_history", [
+                            "action" => "UPDATE",
+                            "descriptions" => json_encode($new_data)
+                        ]);
+                        $this->crm->where("id", $id)->update("new_part_price_procurements", $new_data);
+                    }
+                }
+            }
+
+            if (!$send) {
+                $this->crm->trans_rollback();
+            } else {
+                $this->crm->trans_commit();
+            }
+        }
+
+        if (!$send) {
+            $this->db->trans_rollback();
+        } else {
+            $this->db->trans_commit();
+        }
+
+        return $send;
     }
 
     public function approve()
@@ -130,6 +195,17 @@ class Approvals extends CI_Controller
             );
         }
 
+        $valueLog = array(
+            "table_name" => $tablename,
+            "table_id" => $id,
+            "approved_by" => $this->session->username,
+            "approved_date" => date('Y-m-d H:i:s'),
+            "approved_to" => $users_id,
+            "approved" => $approved,
+            "approved_data" => json_encode($data),
+            "status" => "APPROVED",
+        );
+
         if ($tablename == "bom") {
             $boms = $this->crud->reads("bom", [], ["item_fg_id" => $id]);
             foreach ($boms as $bom) {
@@ -142,6 +218,8 @@ class Approvals extends CI_Controller
         } else {
             $send = $this->db->update($tablename, $values, ["id" => $id]);
         }
+
+        $this->db->insert('approval_logs', $valueLog);
 
         if ($send) {
             echo json_encode(array("title" => "Approved", "message" => "Data Approved Successfully", "theme" => "success"));
@@ -261,6 +339,17 @@ class Approvals extends CI_Controller
                 "logs" => json_encode($read),
             ];
 
+            $valueLog = array(
+                "table_name" => $tablename,
+                "table_id" => $id,
+                "approved_by" => $this->session->username,
+                "approved_date" => date('Y-m-d H:i:s'),
+                "approved_to" => "-",
+                "approved" => "-",
+                "approved_data" => json_encode($read),
+                "status" => "DISAPPROVED",
+            );
+
             /* Default */
             if (empty($data)) {
                 $this->db->insert('notifications', $notificationData);
@@ -286,6 +375,8 @@ class Approvals extends CI_Controller
                     $this->db->delete("supplier_item_histories", ["supplier_id" => @$read->supplier_id, "item_rm_id" => @$read->item_rm_id, "price" => @$read->price]);
                 }
             }
+
+            $this->db->insert('approval_logs', $valueLog);
         }
 
         echo json_encode(array("title" => "Disapproved", "message" => "Data Disapproved Successfully", "theme" => "success"));
@@ -371,7 +462,7 @@ class Approvals extends CI_Controller
         // $generate_mrp_finals = $this->crud->reads('generate_mrp_finals', [], ["approved_to" => $this->session->username], "", "", "", ["approved_to", "approved_by"]);
         $generate_mrp_finals = $this->crud->query("SELECT * FROM generate_mrp_finals WHERE purchase_order > 0 and approved_to = '$username' GROUP BY approved_to, approved_by");
 
-        $purchase_requests = $this->crud->reads('purchase_requests', [], ["approved_to" => $this->session->username, "flag" => "OK"], "", "", "", ["approved_to", "approved_by"]);
+        $purchase_requests = $this->crud->reads('purchase_requests', [], ["approved_to" => $this->session->username, "confirm" => "1", "flag" => "OK"], "", "", "", ["approved_to", "approved_by"]);
         $purchase_request_others = $this->crud->reads('purchase_request_others', [], ["approved_to" => $this->session->username], "", "", "", ["approved_to", "approved_by"]);
         $supply_materials = $this->crud->reads('supply_materials', [], ["approved_to" => $this->session->username], "", "", "", ["approved_to", "approved_by"]);
         $supply_sheets = $this->crud->reads('supply_sheets', [], ["approved_to" => $this->session->username, "type" => "REQ"], "", "", "", ["approved_to", "approved_by"]);
@@ -387,6 +478,7 @@ class Approvals extends CI_Controller
         $scrap_booking = $this->crud->reads('scrap_booking', [], ["approved_to" => $this->session->username], "", "", "", ["approved_to", "approved_by"]);
         $request_npd_confirm = $this->crud->reads('request_npd', [], ["created_by" => $this->session->username, "confirm_status" => 1], "", "", "", ["request_no", "item_supplier"]);
         $request_npd = $this->crud->reads('request_npd', [], ["approved_to" => $this->session->username], "", "", "", ["approved_to", "approved_by"]);
+        $new_part_price_procurements = $this->crud->reads('new_part_price_procurements', [], ["approved_to" => $this->session->username], "", "", "", ["approved_to", "approved_by"]);
 
         $totalRows = (count($users) +
             count($purchase_orders) +
@@ -418,7 +510,8 @@ class Approvals extends CI_Controller
             count($scrap_booking) +
             count($forecast_supplier) +
             count($forecasts) +
-            count($request_npd_confirm)
+            count($request_npd_confirm) +
+            count($new_part_price_procurements)
         );
 
         if ($totalRows > 0) {
@@ -451,7 +544,7 @@ class Approvals extends CI_Controller
 
         $forecast_supplier = $this->crud->reads('forecast_supplier', [], ["approved_to" => $this->session->username], "", "", "", ["approved_to", "approved_by"]);
         $forecasts = $this->crud->reads('forecasts', [], ["approved_to" => $this->session->username], "", "", "", ["approved_to", "approved_by"]);
-        $purchase_requests = $this->crud->reads('purchase_requests', [], ["approved_to" => $this->session->username, "flag" => "OK"], "", "", "", ["approved_to", "approved_by"]);
+        $purchase_requests = $this->crud->reads('purchase_requests', [], ["approved_to" => $this->session->username, "confirm" => "1", "flag" => "OK"], "", "", "", ["approved_to", "approved_by"]);
         $purchase_request_others = $this->crud->reads('purchase_request_others', [], ["approved_to" => $this->session->username], "", "", "", ["approved_to", "approved_by"]);
         $supply_materials = $this->crud->reads('supply_materials', [], ["approved_to" => $this->session->username], "", "", "", ["approved_to", "approved_by"]);
         $supply_sheets = $this->crud->reads('supply_sheets', [], ["approved_to" => $this->session->username, "type" => "REQ"], "", "", "", ["approved_to", "approved_by"]);
@@ -467,6 +560,7 @@ class Approvals extends CI_Controller
         $scrap_booking = $this->crud->reads('scrap_booking', [], ["approved_to" => $this->session->username], "", "", "", ["approved_to", "approved_by"]);
         $request_npd_confirm = $this->crud->reads('request_npd', [], ["created_by" => $this->session->username, "confirm_status" => 1], "", "", "", ["request_no", "item_supplier"]);
         $request_npd = $this->crud->reads('request_npd', [], ["approved_to" => $this->session->username], "", "", "", ["approved_to", "approved_by"]);
+        $new_part_price_procurements = $this->crud->reads('new_part_price_procurements', [], ["approved_to" => $this->session->username], "", "", "", ["approved_to", "approved_by"]);
 
         foreach ($users as $user) {
             $this->approvalMessage($user->approved_by, $user->approved_to, $user->created_by, "users");
@@ -586,6 +680,10 @@ class Approvals extends CI_Controller
 
         foreach ($forecast_supplier as $fcs) {
             $this->approvalMessage($fcs->approved_by, $fcs->approved_to, $fcs->created_by, "forecast_supplier");
+        }
+
+        foreach ($new_part_price_procurements as $nppp) {
+            $this->approvalMessage($nppp->approved_by, $nppp->approved_to, $nppp->created_by, "new_part_price_procurements");
         }
     }
 
@@ -1094,6 +1192,19 @@ class Approvals extends CI_Controller
         }
     }
 
+    public function new_part_price_procurements($approved_to, $approved_by)
+    {
+        if (empty($this->session->username)) {
+            redirect('error_session');
+        } else {
+            $data['approved_to'] = base64_decode($approved_to);
+            $data['approved_by'] = base64_decode($approved_by);
+            $data['table'] = "new_part_price_procurements";
+            $this->load->view('template/header', $data);
+            $this->load->view('approval/new_part_price_procurements');
+        }
+    }
+
     public function approvalUsers($approved_to, $approved_by)
     {
         $approved_to = base64_decode($approved_to);
@@ -1376,6 +1487,7 @@ class Approvals extends CI_Controller
         $this->db->join('request_npd g', 'a.request_npd = g.request_no and a.item_rm_id = g.item_rm_id', 'left');
         $this->db->where('a.approved_to', $approved_to);
         $this->db->where('a.approved_by', $approved_by);
+        $this->db->where('a.confirm', "1");
         $this->db->where('a.flag', "OK");
         $this->db->order_by('a.qty', 'DESC');
         $records = $this->db->get()->result_array();
@@ -1405,7 +1517,7 @@ class Approvals extends CI_Controller
         $approved_to = base64_decode($approved_to);
         $approved_by = base64_decode($approved_by);
 
-        $this->db->select('a.po_no, a.attachment, a.po_date, a.supplier_id, b.number as supplier_number, b.name as supplier_name, b.type, b.state, a.currency, a.note, SUM(a.total) as grandtotal');
+        $this->db->select('a.po_no, a.plant, a.attachment, a.po_date, a.supplier_id, b.number as supplier_number, b.name as supplier_name, b.type, b.state, a.currency, a.note, SUM(a.total) as grandtotal');
         $this->db->from('purchase_orders a');
         $this->db->join('suppliers b', 'a.supplier_id = b.id');
         $this->db->where('a.approved_to', $approved_to);
@@ -2084,6 +2196,51 @@ class Approvals extends CI_Controller
         // $this->db->limit($rows, $offset);
         //Get Data Array
         $records = $this->db->get()->result_array();
+        //Mapping Data
+        $result['total'] = $totalRows;
+        $result = array_merge($result, ['rows' => $records]);
+        echo json_encode($result);
+    }
+
+    public function approvalNewPartPriceProcurements($approved_to, $approved_by)
+    {
+        $approved_to = base64_decode($approved_to);
+        $approved_by = base64_decode($approved_by);
+
+        $filters = json_decode($this->input->post('filterRules'));
+        $page = $this->input->post('page');
+        $rows = $this->input->post('rows');
+        $sort = $this->input->post('sort');
+        $order = $this->input->post('order');
+
+        //Pagination 1-10
+        $page   = isset($page) ? intval($page) : 1;
+        $rows   = isset($rows) ? intval($rows) : 10;
+        $offset = ($page - 1) * $rows;
+        $result = array();
+
+        // Sort
+        $sort   = isset($sort) ? strval($sort) : 'item_id';
+        $order   = isset($order) ? strval($order) : 'ASC';
+        if ($sort == 'item_id') { //pengecekan jika kolom alphanumeric contoh : 1, 1A, 1B
+            $sort = 'CAST(' . $sort . ' as UNSIGNED) ' . $order;
+        } else {
+            $sort = $sort . ' ' . $order;
+        }
+        $result = array();
+        //Select Query
+        $this->db->select('*')->from('new_part_price_procurements')
+            ->where(["approved_to" => $approved_to, "approved_by" => $approved_by])->order_by($sort);
+        //Total Data
+        $totalRows = $this->db->count_all_results('', false);
+        //Limit 1 - 10
+        // $this->db->limit($rows, $offset);
+        //Get Data Array
+        $records = [];
+        foreach ($this->db->get()->result() as $index => $row) {
+            // $row->status = 1;
+            $records[] = $row;
+        }
         //Mapping Data
         $result['total'] = $totalRows;
         $result = array_merge($result, ['rows' => $records]);
