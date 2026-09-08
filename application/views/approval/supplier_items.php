@@ -1,6 +1,6 @@
 <!-- TABLE DATAGRID -->
 <table id="dg" class="easyui-datagrid" style="width:99.5%;" toolbar="#toolbar" data-options="
-    url: '<?= base_url('approvals/approvalSupplierItems/'.base64_encode($approved_to).'/'.base64_encode($approved_by)) ?>',
+    url: '<?= base_url('approvals/approvalSupplierItems/' . base64_encode($approved_to) . '/' . base64_encode($approved_by)) ?>',
     pagination: false,
     clientPaging: false,
     rownumbers: true,
@@ -28,7 +28,7 @@
 <!-- TOOLBAR DATAGRID -->
 <div id="toolbar2" style="height: 35px;">
     <a href="javascript:void(0)" id="approveacheck" class="easyui-linkbutton" data-options="plain:true" onclick="approve()"><i class="fa fa-check"></i> Approve</a>
-	<a href="javascript:void(0)" id="approveacheck" class="easyui-linkbutton" data-options="plain:true" onclick="disapprove()"><i class="fa fa-times"></i> Disapprove</a>
+    <a href="javascript:void(0)" id="approveacheck" class="easyui-linkbutton" data-options="plain:true" onclick="disapprove()"><i class="fa fa-times"></i> Disapprove</a>
     <a href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true" onclick="export_excel()"><i class="fa fa-file"></i> Export Excel</a>
 </div>
 <div id="dlg_details" class="easyui-window" title="Detail Data" data-options="closed: true, modal:true, closed: true, minimizable:false, collapsible:false" style="width: 800px; height: 500px; top: 50px;">
@@ -75,15 +75,17 @@
     function reload() {
         window.location.reload();
     }
+
     function export_excel() {
-		$('#dg_details').datagrid('toExcel', "approval_<?= $table ?>.xls");
-	}
-	function approve() {
-		var rows = $('#dg_details').datagrid('getSelections');
+        $('#dg_details').datagrid('toExcel', "approval_<?= $table ?>.xls");
+    }
+
+    function approve() {
+        var rows = $('#dg_details').datagrid('getSelections');
         if (rows.length > 0) {
             $("#dlg_details").window('close');
-            $.messager.prompt('Remarks', 'Please input your Remarks!!', function(message){
-                if (message){
+            $.messager.prompt('Remarks', 'Please input your Remarks!!', function(message) {
+                if (message) {
                     Swal.fire({
                         title: 'Please Wait...',
                         showConfirmButton: false,
@@ -94,9 +96,10 @@
                         },
                     });
                     requestApprove(rows.length, rows);
+
                     function requestApprove(total, json, number = 1, value = 0) {
                         if (value < 100) {
-                            var row = json[number-1];
+                            var row = json[number - 1];
                             value = Math.floor((number / total) * 100);
                             $.ajax({
                                 method: 'post',
@@ -131,9 +134,10 @@
         } else {
             toastr.info("Please select one of the data in the table first");
         }
-	}
-	function disapprove() {
-		var rows = $('#dg_details').datagrid('getSelections');
+    }
+
+    function disapprove() {
+        var rows = $('#dg_details').datagrid('getSelections');
         if (rows.length > 0) {
             $("#dlg_details").window('close');
             Swal.fire({
@@ -146,8 +150,8 @@
                 confirmButtonText: 'Yes, Dispprove it!'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    $.messager.prompt('Reason', 'Please input your reason!!', function(message){
-                        if (message){
+                    $.messager.prompt('Reason', 'Please input your reason!!', function(message) {
+                        if (message) {
                             Swal.fire({
                                 title: 'Please Wait...',
                                 showConfirmButton: false,
@@ -158,9 +162,10 @@
                                 },
                             });
                             requestApprove(rows.length, rows);
+
                             function requestApprove(total, json, number = 1, value = 0) {
                                 if (value < 100) {
-                                    var row = json[number-1];
+                                    var row = json[number - 1];
                                     value = Math.floor((number / total) * 100);
                                     $.ajax({
                                         method: 'post',
@@ -190,7 +195,7 @@
                                     });
                                 }
                             }
-                        }else{
+                        } else {
                             Swal.fire(
                                 'Cannot Process',
                                 'Please Input your reason to Process Disapprove',
@@ -203,52 +208,62 @@
         } else {
             toastr.info("Please select one of the data in the table first");
         }
-	}
+    }
+
     function numberformat(value, row) {
-		const formatter = new Intl.NumberFormat('ja-JP');
-		return "<b>" + formatter.format(value) + "</b>";
-	}
-	function numberformatPrice(value, row){
+        const formatter = new Intl.NumberFormat('ja-JP');
+        return "<b>" + formatter.format(value) + "</b>";
+    }
+
+    function numberformatPrice(value, row) {
         const formatter = new Intl.NumberFormat('ja-JP', {
             minimumFractionDigits: 4
         });
         return "<b>" + formatter.format(value) + "</b>";
     }
+
     function BtnAttachment(val, row) {
-        if(val == "" || val == null){
+        if (val == "" || val == null) {
             return '-';
-        }else{
+        } else {
             return '<a class="btn btn-primary w-100" style="pointer-events: visible; opacity:1;" target="_blank" href="' + val + '"><i class="fa fa-paperclip"></i> View</a>';
         }
     }
+
     function BtnAttachment2(val, row) {
-        if(val == "" || val == null){
+        if (val == "" || val == null) {
             return '-';
-        }else{
+        } else {
             return '<a class="btn btn-primary w-100" style="pointer-events: visible; opacity:1;" target="_blank" href="' + val + '"><i class="fa fa-paperclip"></i> View</a>';
         }
     }
+
     function BtnAttachment3(val, row) {
-        if(val == "" || val == null){
+        if (val == "" || val == null) {
             return '-';
-        }else{
+        } else {
             return '<a class="btn btn-primary w-100" style="pointer-events: visible; opacity:1;" target="_blank" href="' + val + '"><i class="fa fa-paperclip"></i> View</a>';
         }
     }
+
     function BtnDetail(val, row) {
-        var details = "details('"+row.supplier_id+"','"+row.supplier_name+"')";
-        return '<a class="btn btn-primary w-100" style="pointer-events: visible; opacity:1;" onClick="'+details+'"><i class="fa fa-eye"></i> View</a>';
+        var details = "details('" + row.supplier_id + "','" + row.supplier_name + "')";
+        return '<a class="btn btn-primary w-100" style="pointer-events: visible; opacity:1;" onClick="' + details + '"><i class="fa fa-eye"></i> View</a>';
     }
+
     function details(supplier_id, supplier_name) {
         $("#dlg_details").window('open');
         $('#dlg_details').window('setTitle', 'Detail of ' + supplier_name);
         $('#dg_details').datagrid({
-            url: '<?= base_url('approvals/approvalSupplierItemDetails/'.base64_encode($approved_to).'/'.base64_encode($approved_by)) ?>?supplier_id=' + btoa(supplier_id),
+            url: '<?= base_url('approvals/approvalSupplierItemDetails/' . base64_encode($approved_to) . '/' . base64_encode($approved_by)) ?>?supplier_id=' + btoa(supplier_id),
             clientPaging: false,
             remoteFilter: true,
             rownumbers: true,
             singleSelect: false,
-            fit:true,
+            fit: true,
+            pagination: true,
+            pageList: [100, 500, 1000, 5000, 10000],
+            pageSize: 1000,
         });
     }
 </script>

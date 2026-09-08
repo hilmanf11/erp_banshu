@@ -1711,6 +1711,14 @@ class Approvals extends CI_Controller
         $approved_by = base64_decode($approved_by);
         $supplier_id = base64_decode($this->input->get("supplier_id"));
 
+        $page = $this->input->post('page');
+        $rows = $this->input->post('rows');
+        //Pagination 1-10
+        $page   = isset($page) ? intval($page) : 1;
+        $rows   = isset($rows) ? intval($rows) : 10;
+        $offset = ($page - 1) * $rows;
+        $result = array();
+
         $subquery_price_before = '(SELECT e.price 
             FROM supplier_item_histories e 
             WHERE e.supplier_id = a.supplier_id 
@@ -1726,16 +1734,23 @@ class Approvals extends CI_Controller
         $this->db->join('suppliers b', 'a.supplier_id = b.id');
         $this->db->join('item_rm c', 'a.item_rm_id = c.id');
         $this->db->join('item_familys d', 'c.item_family_id = d.id');
-        // $this->db->join("(SELECT * FROM supplier_item_histories ORDER BY id DESC) e", "a.supplier_id = e.supplier_id and a.item_rm_id = e.item_rm_id and a.plant = e.plant and a.price != e.price", "left");
         $this->db->join('makers f', 'a.maker_id = f.id', 'left');
         $this->db->where('a.approved_to', $approved_to);
         $this->db->where('a.approved_by', $approved_by);
         $this->db->where('a.supplier_id', $supplier_id);
         $this->db->group_by('a.id');
         $this->db->order_by('a.id', 'ASC');
+
+        // Total count before limit
+        $totalRows = $this->db->count_all_results('', false);
+
+        // Apply pagination
+        $this->db->limit($rows, $offset);
         $records = $this->db->get()->result_array();
 
-        die(json_encode($records));
+        $result['total'] = $totalRows;
+        $result['rows'] = $records;
+        die(json_encode($result));
     }
 
     public function approvalSupplierItemPrices($approved_to, $approved_by)

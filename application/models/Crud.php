@@ -1,7 +1,6 @@
 <?php
 date_default_timezone_set("Asia/Kolkata");
 defined('BASEPATH') or exit('No direct script access allowed');
-
 class Crud extends CI_Model
 {
     function __construct()
@@ -10,42 +9,35 @@ class Crud extends CI_Model
         $this->default = $this->load->database('default', TRUE);
         $this->load->library('uuid');
     }
-
     function index()
     {
         show_404();
     }
-
     function uuid_key()
     {
         $id = $this->uuid->v4();
         $id = str_replace('-', '', $id);
         return $id;
     }
-
     function autoid($table)
     {
         $date = date("Ymd");
         $sql = $this->db->query("SELECT max(`id`) as kode FROM $table WHERE id like '%$date%'");
         $row = $sql->row();
         $kode = $row->kode;
-
         if ($kode == NULL) {
             $autoid = $date . sprintf("%06s", $kode + 1);
         } else {
             $autoid = (int) $kode + 1;
         }
-
         return $autoid;
     }
-
     function query($query)
     {
         $query = $this->db->query($query);
         $records = $query->result_object();
         return $records;
     }
-
     function read($table, $like = [], $where = [], $limit = "", $orderfield = "", $orderby = "", $groupby = [])
     {
         $this->db->select('*');
@@ -68,7 +60,6 @@ class Crud extends CI_Model
         $records = $this->db->get()->row();
         return $records;
     }
-
     function reads($table, $like = [], $where = [], $limit = "", $orderfield = "", $orderby = "", $groupby = [])
     {
         $this->db->select('*');
@@ -91,7 +82,6 @@ class Crud extends CI_Model
         $records = $this->db->get()->result_object();
         return $records;
     }
-
     function create($table, $values, $logs = "")
     {
         if ($this->session->username != "") {
@@ -100,18 +90,15 @@ class Crud extends CI_Model
             }else{
                 $id = $values['id'];
             }
-
             $data = array_merge($values, [
                 "id" => $id,
                 "created_by" => $this->session->username,
                 "created_date" => date('Y-m-d H:i:s')
             ]);
-
             if ($this->db->insert($table, $data)) {
                 if($logs == ""){
                     $this->logs("Create", json_encode($data), $table);
                 }
-
                 $this->approvals($table, $id);
                 return json_encode(array("title" => "Good Job", "message" => "Data Saved Successfully", "theme" => "success", "id" => $id));
             } else {
@@ -121,7 +108,6 @@ class Crud extends CI_Model
             return log_message('error', 'Your Session has been Expired');
         }
     }
-
     function update($table, $where, $values, $logs = "")
     {
         if ($this->session->username != "") {
@@ -129,19 +115,15 @@ class Crud extends CI_Model
                 "updated_by" => $this->session->username,
                 "updated_date" => date('Y-m-d H:i:s')
             ]);
-
             $dataBefore = $this->read($table, [], $where);
-
             $this->db->where($where);
             if ($this->db->update($table, $data)) {
                 if($logs == ""){
                     $this->logs("Update Before", json_encode($dataBefore), $table);
                     $this->logs("Update New", json_encode($data), $table);
                 }
-
                 $read = $this->read($table, [], $where);
                 $this->approvals($table, @$read->id, $dataBefore);
-
                 return json_encode(array("title" => "Good Job", "message" => "Data Updated Successfully", "theme" => "success", "id" => $read->id));
             } else {
                 return log_message('error', 'There is an error in your system or data');
@@ -150,12 +132,10 @@ class Crud extends CI_Model
             return log_message('error', 'Your Session has been Expired');
         }
     }
-
     function delete($table, $data)
     {
         if ($this->session->username != "") {
             $dataBefore = $this->read($table, [], $data);
-
             if ($this->db->delete($table, $data)) {
                 $this->logs("Delete", json_encode($dataBefore), $table);
                 return json_encode(array("title" => "Good Job", "message" => "Data Deleted Successfully", "theme" => "success"));
@@ -166,7 +146,6 @@ class Crud extends CI_Model
             return log_message('error', 'Your Session has been Expired');
         }
     }
-
     function upload($filename, $extension, $path, $id = [], $table = "", $field = "")
     {
         //Setting Upload Image
@@ -177,7 +156,6 @@ class Crud extends CI_Model
         $temporary = $_FILES[$filename]['tmp_name'];
         $newname  = round(microtime(true)) . '.' . $extension_final;
         $fileSave  = base_url($path) . round(microtime(true)) . '.' . $extension_final;
-
         if (in_array($extension_final, $extension) === true || $file == "") {
             if ($size < 2097152) {
                 if ($file == "") {
@@ -195,7 +173,6 @@ class Crud extends CI_Model
                         @unlink('"' . $records->$field . '"');
                         // @unlink("assets/image/$table/" . $records->$field);
                     }
-
                     @move_uploaded_file($temporary, $path . $newname);
                     return $fileSave;
                 }
@@ -208,7 +185,6 @@ class Crud extends CI_Model
             exit;
         }
     }
-
     function logs($action, $records, $table)
     {
         $id = $this->autoid('logs');
@@ -221,18 +197,14 @@ class Crud extends CI_Model
             "menu" => $table,
             "description" => $records
         );
-
         $this->db->insert('logs', $data);
     }
-
     function approvals($table, $table_id, $dataBefore = null)
     {
         $query = $this->db->query("DESCRIBE $table");
         $fields = $query->result_array();
-
         $user = $this->read('users', [], ["username" => $this->session->username]);
         $approval = $this->read('approvals', [], ["table_name" => $table]);
-
         $fieldExists = false;
         foreach ($fields as $field) {
             if ($field['Field'] == "approved") {
@@ -240,7 +212,6 @@ class Crud extends CI_Model
                 break;
             }
         }
-
         if ($fieldExists) {
             if (!empty($approval)) {
                 $formApprove = [
@@ -249,22 +220,18 @@ class Crud extends CI_Model
                     "approved_by" => $this->session->username,
                     "approved_data" => json_encode($dataBefore),
                 ];
-
                 $this->db->where(["id" => $table_id]);
                 $this->db->update($table, $formApprove);
             }
         }
     }
-
     // function approvals($table, $table_id)
     // {
     //     $id = $this->autoid('notifications');
-
     //     $user = $this->read('users', [], ["username" => $this->session->username]);
     //     //Approval
     //     $approval = $this->read('approvals', [], ["table_name" => $table, "departement_id" => @$user->departement_id]);
     //     $notifications = $this->read('notifications', [], ["table_name" => $table, "table_id" => $table_id]);
-        
     //     if (!empty($approval)) {
     //         if(empty($notifications->table_id)){
     //             $this->db->insert("notifications", [
@@ -300,7 +267,6 @@ class Crud extends CI_Model
     //         }
     //     }
     // }
-
     function connectionInfo()
     {
         switch (connection_status()) {
@@ -320,7 +286,6 @@ class Crud extends CI_Model
                 $txt = json_encode(array("title" => "Unknown", "message" => "UNKNOWN Connection", "theme" => "conn_unknown"));
                 break;
         }
-
         echo $txt;
     }
 }
