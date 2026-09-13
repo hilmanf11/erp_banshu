@@ -188,7 +188,7 @@ class Purchase_order_mcl extends CI_Controller
             $this->db->join('supplier_items c', "ia.id = c.item_rm_id and a.supplier_id = c.supplier_id and a.plant = c.plant", 'left');
             $this->db->join('makers d', 'c.maker_id = d.id', 'left');
             $this->db->where('a.po_no', base64_decode($po_no));
-            $this->db->where('a.qty >', 0);
+            // $this->db->where('a.qty >', 0);
             $this->db->order_by('b.number', 'asc');
             $this->db->limit(20, ($i * 20));
             $records = $this->db->get()->result_array();
