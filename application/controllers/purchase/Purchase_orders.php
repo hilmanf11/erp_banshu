@@ -1022,9 +1022,9 @@ class Purchase_orders extends CI_Controller
             } elseif (empty($purchase_order)) {
                 echo json_encode(array("title" => "Not Found", "message" => "PO No " . $post['po_no'] . " and Part No " . $post['number'] . " Not Found", "theme" => "error"));
             } elseif ($this->validasiTanggal($post['etd']) === false) {
-                echo json_encode(array("title" => "Not Valid", "message" => "ETD " . $post['etd'] . " Not Valid Format Date", "theme" => "error"));
+                echo json_encode(array("title" => "Not Valid", "message" => "ETD must use the YYYY-MM-DD date format as text", "theme" => "error"));
             } elseif ($this->validasiTanggal($post['delivery_date']) === false) {
-                echo json_encode(array("title" => "Not Valid", "message" => "ETA " . $post['delivery_date'] . " Not Valid Format Date", "theme" => "error"));
+                echo json_encode(array("title" => "Not Valid", "message" => "ETA must use the YYYY-MM-DD date format as text", "theme" => "error"));
             } else {
                 $postFinal = array(
                     "etd" => $post['etd'],
