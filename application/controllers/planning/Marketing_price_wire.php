@@ -8,7 +8,7 @@ use PhpOffice\PhpSpreadsheet\Cell\DataType;
 
 class Marketing_price_wire extends CI_Controller
 {
-	public function __construct()
+    public function __construct()
     {
         parent::__construct();
         $this->load->helper('url');
@@ -38,8 +38,10 @@ class Marketing_price_wire extends CI_Controller
         $post = isset($_POST['q']) ? $_POST['q'] : "";
 
         $this->db->select("DISTINCT TRIM(a.plant_id) AS id, TRIM(b.name) AS plant")
-        ->from("lme_prices a")->join('plants b', 'a.plant_id = b.number');
-        if (!empty($post)) { $this->db->like('a.plant_id', $post); }
+            ->from("lme_prices a")->join('plants b', 'a.plant_id = b.number');
+        if (!empty($post)) {
+            $this->db->like('a.plant_id', $post);
+        }
         $this->db->order_by("plant");
         $get = $this->db->get()->result_object();
 
@@ -49,19 +51,25 @@ class Marketing_price_wire extends CI_Controller
     public function readRanges()
     {
         $post = isset($_POST['q']) ? $_POST['q'] : "";
-    	$result = [];
-    	$data = [];
+        $result = [];
+        $data = [];
 
         $this->db->select("DISTINCT TRIM(data_lme) AS data")->from("lme_prices");
-        if (!empty($post)) { $this->db->like('data_lme', $post); }
+        if (!empty($post)) {
+            $this->db->like('data_lme', $post);
+        }
         $this->db->order_by("data");
         $get = $this->db->get()->result_object();
         foreach ($get as $key => $value) {
-        	$datas = json_decode($value->data);
-        	foreach ($datas as $key2 => $value2) { array_push($data, $value2->range); }
+            $datas = json_decode($value->data);
+            foreach ($datas as $key2 => $value2) {
+                array_push($data, $value2->range);
+            }
         }
 
-        foreach ($data as $key => $value) { array_push($result, ['range' => $value]); }
+        foreach ($data as $key => $value) {
+            array_push($result, ['range' => $value]);
+        }
 
         echo json_encode($result);
     }
@@ -71,8 +79,10 @@ class Marketing_price_wire extends CI_Controller
         $post = isset($_POST['q']) ? $_POST['q'] : "";
 
         $this->db->select("DISTINCT TRIM(a.ven_id) AS id, TRIM(b.name) AS supplier")
-        ->from("lme_prices a")->join('suppliers b', 'a.ven_id = b.number');
-        if (!empty($post)) { $this->db->like('a.ven_id', $post); }
+            ->from("lme_prices a")->join('suppliers b', 'a.ven_id = b.number');
+        if (!empty($post)) {
+            $this->db->like('a.ven_id', $post);
+        }
         $this->db->order_by("supplier");
         $get = $this->db->get()->result_object();
 
@@ -84,7 +94,9 @@ class Marketing_price_wire extends CI_Controller
         $post = isset($_POST['q']) ? $_POST['q'] : "";
 
         $this->db->select("DISTINCT TRIM(item_id) AS item")->from("lme_prices");
-        if (!empty($post)) { $this->db->like('item_id', $post); }
+        if (!empty($post)) {
+            $this->db->like('item_id', $post);
+        }
         $this->db->order_by("item");
         $get = $this->db->get()->result_object();
 
@@ -97,33 +109,47 @@ class Marketing_price_wire extends CI_Controller
         $plant = base64_decode(($act == 'print') ? $this->input->get('plant') : $this->input->post('plant'));
         $range = base64_decode(($act == 'print') ? $this->input->get('range') : $this->input->post('range'));
         $item = base64_decode(($act == 'print') ? $this->input->get('item') : $this->input->post('item'));
+
+        $page = $this->input->post('page');
+        $rows = $this->input->post('rows');
+        //Pagination 1-10
+        $page   = isset($page) ? intval($page) : 1;
+        $rows   = isset($rows) ? intval($rows) : 10;
+        $offset = ($page - 1) * $rows;
+        
         $datas = [];
 
         $this->db->distinct()->select(
-             "TRIM(a.plant_id) AS plant,"
-            ."TRIM(a.item_id) AS item,"
-            ."COALESCE(TRIM(c.name),'') AS item_name,"
-            ."COALESCE(TRIM(h.name),'') AS family_name,"
-            ."TRIM(a.ven_id) AS supplier,"
-            ."COALESCE(TRIM(b.name),'') AS supplier_name,"
-            ."COALESCE(TRIM(b.type),'') AS type,"
-            ."TRIM(a.maker_code) AS maker,"
-            ."COALESCE(TRIM(g.name),'') AS maker_name,"
-            ."TRIM(a.data_lme) AS lme,"
-            ."COALESCE(TRIM(d.percentage),0) AS duty,"
-            ."COALESCE(TRIM(e.percentage),0) AS insurance,"
-            ."COALESCE(TRIM(f.percentage),0) AS transport"
+            "TRIM(a.plant_id) AS plant,"
+                . "TRIM(a.item_id) AS item,"
+                . "COALESCE(TRIM(c.name),'') AS item_name,"
+                . "COALESCE(TRIM(h.name),'') AS family_name,"
+                . "TRIM(a.ven_id) AS supplier,"
+                . "COALESCE(TRIM(b.name),'') AS supplier_name,"
+                . "COALESCE(TRIM(b.type),'') AS type,"
+                . "TRIM(a.maker_code) AS maker,"
+                . "COALESCE(TRIM(g.name),'') AS maker_name,"
+                . "TRIM(a.data_lme) AS lme,"
+                . "COALESCE(TRIM(d.percentage),0) AS duty,"
+                . "COALESCE(TRIM(e.percentage),0) AS insurance,"
+                . "COALESCE(TRIM(f.percentage),0) AS transport"
         )->from("lme_prices a")
             ->join("suppliers b", "a.ven_id = b.number")
-            ->join("item_rm c", "a.item_id = c.number")
+            ->join("item_rm c", "a.item_id = c.number", "left")
             ->join("mst_import_duty d", "a.plant_id = d.plant AND b.id = d.supplier_id AND c.id = d.item_id", "left")
             ->join("mst_assurance e", "b.type = e.type")
             ->join("mst_transportation f", "b.type = f.type")
             ->join("makers g", "a.maker_code = g.number")
-            ->join("item_familys h", "c.item_family_id = h.id");
-        if (!empty($supplier)) { $this->db->where("a.ven_id", $supplier); }
-        if (!empty($plant)) { $this->db->where("a.plant_id", $plant); }
-        if (!empty($item)) { $this->db->where("a.item_id", $item); }
+            ->join("item_familys h", "c.item_family_id = h.id", "left");
+        if (!empty($supplier)) {
+            $this->db->where("a.ven_id", $supplier);
+        }
+        if (!empty($plant)) {
+            $this->db->where("a.plant_id", $plant);
+        }
+        if (!empty($item)) {
+            $this->db->where("a.item_id", $item);
+        }
         $this->db->order_by('plant, item');
         $get = $this->db->get()->result_object();
         // die(var_dump($get));
@@ -227,8 +253,9 @@ class Marketing_price_wire extends CI_Controller
             $html .= '</table></body></html>';
             echo $html;
         } else {
-            $result = array('total' => count($datas), 'rows' => $datas);
-            echo json_encode($result);
+            $total = count($datas);
+            $rows_out = array_slice($datas, $offset, $rows);
+            echo json_encode(array('total' => $total, 'rows' => $rows_out));
         }
     }
 
@@ -292,16 +319,16 @@ class Marketing_price_wire extends CI_Controller
                     $style_row['alignment']['horizontal'] = 'center';
 
                     $spreadsheet->setCellValue('A1', $title);
-                    $spreadsheet->mergeCells('A1:'.$alfa.'1');
+                    $spreadsheet->mergeCells('A1:' . $alfa . '1');
                     $spreadsheet->getStyle('A1')->applyFromArray($style_row);
-                    $spreadsheet->getStyle('A1:'.$alfa.'1')->getFont()->setSize(20);
+                    $spreadsheet->getStyle('A1:' . $alfa . '1')->getFont()->setSize(20);
 
-                    $spreadsheet->setCellValue($alfa.'3', 'Print Date : ' . date("d M Y H:m:s"));
-                    $spreadsheet->setCellValue($alfa.'4', 'Print By : ' . $fullname);
+                    $spreadsheet->setCellValue($alfa . '3', 'Print Date : ' . date("d M Y H:m:s"));
+                    $spreadsheet->setCellValue($alfa . '4', 'Print By : ' . $fullname);
                 }
 
-                $spreadsheet->setCellValue($alfa.'6', $value);
-                $spreadsheet->getStyle($alfa.'6')->applyFromArray($style_col);
+                $spreadsheet->setCellValue($alfa . '6', $value);
+                $spreadsheet->getStyle($alfa . '6')->applyFromArray($style_col);
 
                 $alfa++;
             }
@@ -313,30 +340,36 @@ class Marketing_price_wire extends CI_Controller
             $datas = [];
 
             $this->db->distinct()->select(
-                 "TRIM(a.plant_id) AS plant,"
-                ."TRIM(a.item_id) AS item,"
-                ."COALESCE(TRIM(c.name),'') AS item_name,"
-                ."COALESCE(TRIM(h.name),'') AS family_name,"
-                ."TRIM(a.ven_id) AS supplier,"
-                ."COALESCE(TRIM(b.name),'') AS supplier_name,"
-                ."COALESCE(TRIM(b.type),'') AS type,"
-                ."TRIM(a.maker_code) AS maker,"
-                ."COALESCE(TRIM(g.name),'') AS maker_name,"
-                ."TRIM(a.data_lme) AS lme,"
-                ."COALESCE(TRIM(d.percentage),0) AS duty,"
-                ."COALESCE(TRIM(e.percentage),0) AS insurance,"
-                ."COALESCE(TRIM(f.percentage),0) AS transport"
+                "TRIM(a.plant_id) AS plant,"
+                    . "TRIM(a.item_id) AS item,"
+                    . "COALESCE(TRIM(c.name),'') AS item_name,"
+                    . "COALESCE(TRIM(h.name),'') AS family_name,"
+                    . "TRIM(a.ven_id) AS supplier,"
+                    . "COALESCE(TRIM(b.name),'') AS supplier_name,"
+                    . "COALESCE(TRIM(b.type),'') AS type,"
+                    . "TRIM(a.maker_code) AS maker,"
+                    . "COALESCE(TRIM(g.name),'') AS maker_name,"
+                    . "TRIM(a.data_lme) AS lme,"
+                    . "COALESCE(TRIM(d.percentage),0) AS duty,"
+                    . "COALESCE(TRIM(e.percentage),0) AS insurance,"
+                    . "COALESCE(TRIM(f.percentage),0) AS transport"
             )->from("lme_prices a")
                 ->join("suppliers b", "a.ven_id = b.number")
-                ->join("item_rm c", "a.item_id = c.number")
+                ->join("item_rm c", "a.item_id = c.number", "left")
                 ->join("mst_import_duty d", "a.plant_id = d.plant AND b.id = d.supplier_id AND c.id = d.item_id", "left")
                 ->join("mst_assurance e", "b.type = e.type")
                 ->join("mst_transportation f", "b.type = f.type")
                 ->join("makers g", "a.maker_code = g.number")
-                ->join("item_familys h", "c.item_family_id = h.id");
-            if (!empty($supplier)) { $this->db->where("a.ven_id", $supplier); }
-            if (!empty($plant)) { $this->db->where("a.plant_id", $plant); }
-            if (!empty($item)) { $this->db->where("a.item_id", $item); }
+                ->join("item_familys h", "c.item_family_id = h.id", "left");
+            if (!empty($supplier)) {
+                $this->db->where("a.ven_id", $supplier);
+            }
+            if (!empty($plant)) {
+                $this->db->where("a.plant_id", $plant);
+            }
+            if (!empty($item)) {
+                $this->db->where("a.item_id", $item);
+            }
             $this->db->order_by('plant, item');
             $get = $this->db->get()->result_object();
             // die(var_dump($get));
@@ -374,21 +407,26 @@ class Marketing_price_wire extends CI_Controller
                 $alfa = 'A';
 
                 $style_row['alignment']['horizontal'] = 'center';
-                $spreadsheet->setCellValue($alfa.$row_no, $no);
-                $spreadsheet->getStyle($alfa.$row_no)->applyFromArray($style_row);
+                $spreadsheet->setCellValue($alfa . $row_no, $no);
+                $spreadsheet->getStyle($alfa . $row_no)->applyFromArray($style_row);
 
                 foreach ($row as $key => $value) {
                     $alfa++;
 
                     $style_row['alignment']['horizontal'] = 'left';
-                    if (in_array($key, ['supp_type'])) { $style_row['alignment']['horizontal'] = 'center'; }
-                    if (in_array($key, ['price','duty','insurance','transport','total']))
-                        { $style_row['alignment']['horizontal'] = 'right'; }
+                    if (in_array($key, ['supp_type'])) {
+                        $style_row['alignment']['horizontal'] = 'center';
+                    }
+                    if (in_array($key, ['price', 'duty', 'insurance', 'transport', 'total'])) {
+                        $style_row['alignment']['horizontal'] = 'right';
+                    }
 
-                    if (in_array($key, ['item_id', 'maker_id']))
-                        { $spreadsheet->setCellValueExplicit($alfa.$row_no, $value, DataType::TYPE_STRING); }
-                    else { $spreadsheet->setCellValue($alfa.$row_no, $value); }
-                    $spreadsheet->getStyle($alfa.$row_no)->applyFromArray($style_row);
+                    if (in_array($key, ['item_id', 'maker_id'])) {
+                        $spreadsheet->setCellValueExplicit($alfa . $row_no, $value, DataType::TYPE_STRING);
+                    } else {
+                        $spreadsheet->setCellValue($alfa . $row_no, $value);
+                    }
+                    $spreadsheet->getStyle($alfa . $row_no)->applyFromArray($style_row);
                     $spreadsheet->getColumnDimension($alfa)->setAutoSize(true);
                 }
 
@@ -401,7 +439,7 @@ class Marketing_price_wire extends CI_Controller
             $excel->setActiveSheetIndex(0);
             // Redirect output to a client’s web browser (Xlsx)
             header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            header('Content-Disposition: attachment;filename="'.$title.'.xls"');
+            header('Content-Disposition: attachment;filename="' . $title . '.xls"');
             header('Cache-Control: max-age=0');
             header('Cache-Control: max-age=1');
 
@@ -417,4 +455,3 @@ class Marketing_price_wire extends CI_Controller
         }
     }
 }
-?>

@@ -2,7 +2,7 @@
 defined('BASEPATH') or exit('No direct script access allowed');
 
 // Load library phpspreadsheet
-require('./excel/vendor/autoload.php');
+require(APPPATH . 'libraries/excel/vendor/autoload.php');
 
 use PhpOffice\PhpSpreadsheet\Helper\Sample;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -18,7 +18,7 @@ class Tmp_lme_price extends CI_Controller
         $this->load->helper(array('form', 'url'));
         $this->load->library('form_validation');
         $this->load->library('session');
-        $this->load->model('api');
+        $this->load->model('crud');
     }
 
     public function index()
@@ -75,14 +75,20 @@ class Tmp_lme_price extends CI_Controller
             //SHEET 1 ------------------------------------------------------------------------------------------------------------
             //Coloumn
             $alfa = 'A';
-            $spreadsheet->setCellValue($alfa.'1', 'ITEM ID'); $alfa++;
-            $spreadsheet->setCellValue($alfa.'1', 'MAKER CODE'); $alfa++;
-            $spreadsheet->setCellValue($alfa.'1', 'SUPPLIER CODE'); $alfa++;
-            $spreadsheet->setCellValue($alfa.'1', 'LME RANGE'); $alfa++;
-            $spreadsheet->setCellValue($alfa.'1', 'LME PRICE');
+            $spreadsheet->setCellValue($alfa . '1', 'PLANT');
+            $alfa++;
+            $spreadsheet->setCellValue($alfa . '1', 'ITEM ID');
+            $alfa++;
+            $spreadsheet->setCellValue($alfa . '1', 'MAKER CODE');
+            $alfa++;
+            $spreadsheet->setCellValue($alfa . '1', 'SUPPLIER CODE');
+            $alfa++;
+            $spreadsheet->setCellValue($alfa . '1', 'LME RANGE');
+            $alfa++;
+            $spreadsheet->setCellValue($alfa . '1', 'LME PRICE');
 
-            for ($i='A'; $i <= $alfa; $i++) {
-                $spreadsheet->getStyle($i.'1')->applyFromArray($style_col);
+            for ($i = 'A'; $i <= $alfa; $i++) {
+                $spreadsheet->getStyle($i . '1')->applyFromArray($style_col);
                 //Set Width
                 $spreadsheet->getColumnDimension($i)->setAutoSize(true);
             }
@@ -98,11 +104,11 @@ class Tmp_lme_price extends CI_Controller
             $spreadsheet->getStyle('A1')->applyFromArray($style_col);
             $spreadsheet->getColumnDimension('A')->setAutoSize(true);
 
-            $this->db->select("DISTINCT TRIM(item_id) AS item")->from("supplier_items")->order_by('item');
+            $this->db->select("DISTINCT TRIM(item_supplier) AS item")->from("supplier_items")->order_by('item_supplier');
             foreach ($this->db->get()->result_object() as $key => $value) {
                 $row = $key + 2;
-                $spreadsheet->setCellValue('A'.$row, $value->item);
-                $spreadsheet->getStyle('A'.$row)->applyFromArray($style_row);
+                $spreadsheet->setCellValue('A' . $row, $value->item);
+                $spreadsheet->getStyle('A' . $row)->applyFromArray($style_row);
             }
 
             $spreadsheet->setTitle('ITEM ID');
@@ -112,22 +118,23 @@ class Tmp_lme_price extends CI_Controller
             $spreadsheet = $excel->createSheet($sheet);
 
             $alfa = 'A';
-            $spreadsheet->setCellValue($alfa.'1', 'MAKER CODE'); $alfa++;
-            $spreadsheet->setCellValue($alfa.'1', 'MAKER NAME');
+            $spreadsheet->setCellValue($alfa . '1', 'MAKER CODE');
+            $alfa++;
+            $spreadsheet->setCellValue($alfa . '1', 'MAKER NAME');
 
-            $get = $this->db->select("DISTINCT TRIM(a.maker_code) AS code, TRIM(b.name) AS maker")
-            ->from("supplier_items a")->join("mst_maker b","a.maker_code = b.number")->order_by("maker");
+            $get = $this->db->select("DISTINCT TRIM(b.number) AS code, TRIM(b.name) AS maker")
+                ->from("supplier_items a")->join("makers b", "a.maker_id = b.id")->order_by("maker");
             foreach ($this->db->get()->result_object() as $key => $value) {
                 $row = $key + 2;
-                $spreadsheet->setCellValue('A'.$row, $value->code);
-                $spreadsheet->setCellValue('B'.$row, $value->maker);
+                $spreadsheet->setCellValue('A' . $row, $value->code);
+                $spreadsheet->setCellValue('B' . $row, $value->maker);
 
-                $spreadsheet->getStyle('A'.$row)->applyFromArray($style_row);
-                $spreadsheet->getStyle('B'.$row)->applyFromArray($style_row);
+                $spreadsheet->getStyle('A' . $row)->applyFromArray($style_row);
+                $spreadsheet->getStyle('B' . $row)->applyFromArray($style_row);
             }
 
-            for ($i='A'; $i <= $alfa; $i++) {
-                $spreadsheet->getStyle($i.'1')->applyFromArray($style_col);
+            for ($i = 'A'; $i <= $alfa; $i++) {
+                $spreadsheet->getStyle($i . '1')->applyFromArray($style_col);
                 $spreadsheet->getColumnDimension($i)->setAutoSize(true);
             }
 
@@ -138,22 +145,23 @@ class Tmp_lme_price extends CI_Controller
             $spreadsheet = $excel->createSheet($sheet);
 
             $alfa = 'A';
-            $spreadsheet->setCellValue($alfa.'1', 'SUPPLIER CODE'); $alfa++;
-            $spreadsheet->setCellValue($alfa.'1', 'SUPPLIER NAME');
+            $spreadsheet->setCellValue($alfa . '1', 'SUPPLIER CODE');
+            $alfa++;
+            $spreadsheet->setCellValue($alfa . '1', 'SUPPLIER NAME');
 
             $get = $this->db->select("DISTINCT TRIM(b.number) AS id, TRIM(b.name) AS name")
-            ->from("supplier_items a")->join("suppliers b", "a.supplier_id = b.id")->order_by("name");
+                ->from("supplier_items a")->join("suppliers b", "a.supplier_id = b.id")->order_by("name");
             foreach ($this->db->get()->result_object() as $key => $value) {
                 $row = $key + 2;
-                $spreadsheet->setCellValue('A'.$row, $value->id);
-                $spreadsheet->setCellValue('B'.$row, $value->name);
+                $spreadsheet->setCellValue('A' . $row, $value->id);
+                $spreadsheet->setCellValue('B' . $row, $value->name);
 
-                $spreadsheet->getStyle('A'.$row)->applyFromArray($style_row);
-                $spreadsheet->getStyle('B'.$row)->applyFromArray($style_row);
+                $spreadsheet->getStyle('A' . $row)->applyFromArray($style_row);
+                $spreadsheet->getStyle('B' . $row)->applyFromArray($style_row);
             }
 
-            for ($i='A'; $i <= $alfa; $i++) {
-                $spreadsheet->getStyle($i.'1')->applyFromArray($style_col);
+            for ($i = 'A'; $i <= $alfa; $i++) {
+                $spreadsheet->getStyle($i . '1')->applyFromArray($style_col);
                 $spreadsheet->getColumnDimension($i)->setAutoSize(true);
             }
 
@@ -170,13 +178,39 @@ class Tmp_lme_price extends CI_Controller
                 ->from('lme_ranges')->order_by('id');
             foreach ($this->db->get()->result_object() as $key => $value) {
                 $row = $key + 2;
-                $spreadsheet->setCellValue('A'.$row, $value->ranges);
-                $spreadsheet->getStyle('A'.$row)->applyFromArray($style_row);
+                $spreadsheet->setCellValue('A' . $row, $value->ranges);
+                $spreadsheet->getStyle('A' . $row)->applyFromArray($style_row);
             }
 
             $spreadsheet->getColumnDimension('A')->setAutoSize(true);
 
             $spreadsheet->setTitle('LME RANGE');
+
+            //SHEET 6 ------------------------------------------------------------------------------------------------------------
+            $sheet++;
+            $spreadsheet = $excel->createSheet($sheet);
+            $alfa = 'A';
+            $spreadsheet->setCellValue($alfa . '1', 'PLANT CODE');
+            $alfa++;
+            $spreadsheet->setCellValue($alfa . '1', 'PLANT NAME');
+
+            $this->db->select("number, name")
+                ->from('plants')->where('number <> "GS"')->order_by('id');
+            foreach ($this->db->get()->result_object() as $key => $value) {
+                $row = $key + 2;
+                $spreadsheet->setCellValue('A' . $row, $value->number);
+                $spreadsheet->setCellValue('B' . $row, $value->name);
+
+                $spreadsheet->getStyle('A' . $row)->applyFromArray($style_row);
+                $spreadsheet->getStyle('B' . $row)->applyFromArray($style_row);
+            }
+
+            for ($i = 'A'; $i <= $alfa; $i++) {
+                $spreadsheet->getStyle($i . '1')->applyFromArray($style_col);
+                $spreadsheet->getColumnDimension($i)->setAutoSize(true);
+            }
+
+            $spreadsheet->setTitle('PLANT');
 
             $excel->setActiveSheetIndex(0);
             // Redirect output to a client’s web browser (Xlsx)

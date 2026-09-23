@@ -53,7 +53,9 @@
             	{field: 'insurance', title: 'Insurance', halign: 'center', align: 'right'},
             	{field: 'transport', title: 'Transportation', halign: 'center', align: 'right'},
             	{field: 'total', title: 'Total Price', halign: 'center', align: 'right'}
-            ]]
+            ]],
+            pageList: [20, 50, 100, 500, 1000],
+            pageSize: 20,
         });
 
         $('#f_plant').combogrid({

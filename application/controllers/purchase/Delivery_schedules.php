@@ -43,7 +43,7 @@ class Delivery_schedules extends CI_Controller
 
         die(json_encode($monthName));
     }
-    
+
     public function readPo($filter_month, $filter_year, $filter_revision)
     {
         $post = isset($_POST['q']) ? $_POST['q'] : "";
@@ -91,137 +91,137 @@ class Delivery_schedules extends CI_Controller
                 $filter_revision = $generate['revision'];
 
                 // if($generate['mpq'] > 0){
-                    $mrp = $this->db->query("SELECT balance_1, balance_2, balance_3, balance_4, balance_5, balance_6, avg_balance
+                $mrp = $this->db->query("SELECT balance_1, balance_2, balance_3, balance_4, balance_5, balance_6, avg_balance
                         FROM generate_mrp_finals 
                         WHERE p_month = '$filter_month' 
                         AND p_year = '$filter_year'
                         AND revision = '$filter_revision'
                         AND item_rm_id = '$item_rm_id'");
-                    $data = $mrp->row();
-                    
-                    if(@$data->balance_1 > 0){
-                        $roundup_1 = 0;
-                        $eta_1 = NULL;
-                        $etd_1 = NULL;
-                    }else{
-                        $eta_1 = date("Y-m-d", strtotime("+17 days", strtotime($filter_year."-".$filter_month."-01")));
-                        $etd_1 = date("Y-m-d", strtotime("+3 days", strtotime($filter_year."-".$filter_month."-01")));
-                        $roundup_1 = (ceil(abs(@$data->balance_1) / $generate['mpq']) * $generate['mpq']);
-                        if($roundup_1 > $generate['qty']){
-                            $roundup_1 = $generate['qty'];
-                        }
-                    }
+                $data = $mrp->row();
 
-                    if(@$data->balance_2 > 0 || $roundup_1 >= $generate['qty']){
-                        $roundup_2 = 0;
-                        $eta_2 = NULL;
-                        $etd_2 = NULL;
-                    }else{
-                        $eta_2 = date("Y-m-01",  strtotime("1 month", strtotime($filter_year."-".$filter_month."-01")));
-                        $etd_2 = date("Y-m-d", strtotime("-21 days", strtotime($eta_2)));
-                        $roundup_2 = (ceil(abs(@$data->balance_2) / $generate['mpq']) * $generate['mpq']);
-                        if(($roundup_1 + $roundup_2) > $generate['qty']){
-                            $roundup_2 = abs($roundup_1 - $generate['qty']);
-                        }
+                if (@$data->balance_1 > 0) {
+                    $roundup_1 = 0;
+                    $eta_1 = NULL;
+                    $etd_1 = NULL;
+                } else {
+                    $eta_1 = date("Y-m-d", strtotime("+17 days", strtotime($filter_year . "-" . $filter_month . "-01")));
+                    $etd_1 = date("Y-m-d", strtotime("+3 days", strtotime($filter_year . "-" . $filter_month . "-01")));
+                    $roundup_1 = (ceil(abs(@$data->balance_1) / $generate['mpq']) * $generate['mpq']);
+                    if ($roundup_1 > $generate['qty']) {
+                        $roundup_1 = $generate['qty'];
                     }
+                }
 
-                    if(@$data->balance_3 > 0 || ($roundup_1 + $roundup_2) >= $generate['qty']){
-                        $roundup_3 = 0;
-                        $eta_3 = NULL;
-                        $etd_3 = NULL;
-                    }else{
-                        $eta_3 = date("Y-m-01", strtotime("2 month", strtotime($filter_year."-".$filter_month."-01")));
-                        $etd_3 = date("Y-m-d", strtotime("-21 day", strtotime($eta_3)));
-                        $roundup_3 = (ceil(abs(@$data->balance_3) / $generate['mpq']) * $generate['mpq']);
-                        if(($roundup_1 + $roundup_2 + $roundup_3) > $generate['qty']){
-                            $roundup_3 = abs($roundup_1 + $roundup_2 - $generate['qty']);
-                        }
+                if (@$data->balance_2 > 0 || $roundup_1 >= $generate['qty']) {
+                    $roundup_2 = 0;
+                    $eta_2 = NULL;
+                    $etd_2 = NULL;
+                } else {
+                    $eta_2 = date("Y-m-01",  strtotime("1 month", strtotime($filter_year . "-" . $filter_month . "-01")));
+                    $etd_2 = date("Y-m-d", strtotime("-21 days", strtotime($eta_2)));
+                    $roundup_2 = (ceil(abs(@$data->balance_2) / $generate['mpq']) * $generate['mpq']);
+                    if (($roundup_1 + $roundup_2) > $generate['qty']) {
+                        $roundup_2 = abs($roundup_1 - $generate['qty']);
                     }
+                }
 
-                    if(@$data->balance_4 > 0 || ($roundup_1 + $roundup_2 + $roundup_3) >= $generate['qty']){
-                        $roundup_4 = 0;
-                        $eta_4 = NULL;
-                        $etd_4 = NULL;
-                    }else{
-                        $eta_4 = date("Y-m-01",  strtotime("3 month", strtotime($filter_year."-".$filter_month."-01")));
-                        $etd_4 = date("Y-m-d", strtotime("-21 days", strtotime($eta_4)));
-                        $roundup_4 = (ceil(abs(@$data->balance_4) / $generate['mpq']) * $generate['mpq']);
-                        if(($roundup_1 + $roundup_2 + $roundup_3 + $roundup_4) > $generate['qty']){
-                            $roundup_4 = abs($roundup_1 + $roundup_2 + $roundup_3 - $generate['qty']);
-                        }
+                if (@$data->balance_3 > 0 || ($roundup_1 + $roundup_2) >= $generate['qty']) {
+                    $roundup_3 = 0;
+                    $eta_3 = NULL;
+                    $etd_3 = NULL;
+                } else {
+                    $eta_3 = date("Y-m-01", strtotime("2 month", strtotime($filter_year . "-" . $filter_month . "-01")));
+                    $etd_3 = date("Y-m-d", strtotime("-21 day", strtotime($eta_3)));
+                    $roundup_3 = (ceil(abs(@$data->balance_3) / $generate['mpq']) * $generate['mpq']);
+                    if (($roundup_1 + $roundup_2 + $roundup_3) > $generate['qty']) {
+                        $roundup_3 = abs($roundup_1 + $roundup_2 - $generate['qty']);
                     }
+                }
 
-                    if(@$data->balance_5 > 0 || ($roundup_1 + $roundup_2 + $roundup_3 + $roundup_4) >= $generate['qty']){
-                        $roundup_5 = 0;
-                        $eta_5 = NULL;
-                        $etd_5 = NULL;
-                    }else{
-                        $eta_5 = date("Y-m-01",  strtotime("4 month", strtotime($filter_year."-".$filter_month."-01")));
-                        $etd_5 = date("Y-m-d", strtotime("-21 days", strtotime($eta_5)));
-                        $roundup_5 = (ceil(abs(@$data->balance_5) / $generate['mpq']) * $generate['mpq']);
-                        if(($roundup_1 + $roundup_2 + $roundup_3 + $roundup_4 + $roundup_5) > $generate['qty']){
-                            $roundup_5 = abs($roundup_1 + $roundup_2 + $roundup_3 + $roundup_4 - $generate['qty']);
-                        }
+                if (@$data->balance_4 > 0 || ($roundup_1 + $roundup_2 + $roundup_3) >= $generate['qty']) {
+                    $roundup_4 = 0;
+                    $eta_4 = NULL;
+                    $etd_4 = NULL;
+                } else {
+                    $eta_4 = date("Y-m-01",  strtotime("3 month", strtotime($filter_year . "-" . $filter_month . "-01")));
+                    $etd_4 = date("Y-m-d", strtotime("-21 days", strtotime($eta_4)));
+                    $roundup_4 = (ceil(abs(@$data->balance_4) / $generate['mpq']) * $generate['mpq']);
+                    if (($roundup_1 + $roundup_2 + $roundup_3 + $roundup_4) > $generate['qty']) {
+                        $roundup_4 = abs($roundup_1 + $roundup_2 + $roundup_3 - $generate['qty']);
                     }
+                }
 
-                    if(@$data->balance_6 > 0 || ($roundup_1 + $roundup_2 + $roundup_3 + $roundup_4 + $roundup_5) >= $generate['qty']){
-                        $roundup_6 = 0;
-                        $eta_6 = NULL;
-                        $etd_6 = NULL;
-                    }else{
-                        $eta_6 = date("Y-m-01",  strtotime("5 month", strtotime($filter_year."-".$filter_month."-01")));
-                        $etd_6 = date("Y-m-d", strtotime("-21 days", strtotime($eta_6)));
-                        $roundup_6 = (ceil(abs(@$data->balance_6) / $generate['mpq']) * $generate['mpq']);
-                        if(($roundup_1 + $roundup_2 + $roundup_3 + $roundup_4 + $roundup_5 + $roundup_6) > $generate['qty']){
-                            $roundup_6 = abs($roundup_1 + $roundup_2 + $roundup_3 + $roundup_4 + $roundup_5 - $generate['qty']);
-                        }
+                if (@$data->balance_5 > 0 || ($roundup_1 + $roundup_2 + $roundup_3 + $roundup_4) >= $generate['qty']) {
+                    $roundup_5 = 0;
+                    $eta_5 = NULL;
+                    $etd_5 = NULL;
+                } else {
+                    $eta_5 = date("Y-m-01",  strtotime("4 month", strtotime($filter_year . "-" . $filter_month . "-01")));
+                    $etd_5 = date("Y-m-d", strtotime("-21 days", strtotime($eta_5)));
+                    $roundup_5 = (ceil(abs(@$data->balance_5) / $generate['mpq']) * $generate['mpq']);
+                    if (($roundup_1 + $roundup_2 + $roundup_3 + $roundup_4 + $roundup_5) > $generate['qty']) {
+                        $roundup_5 = abs($roundup_1 + $roundup_2 + $roundup_3 + $roundup_4 - $generate['qty']);
                     }
+                }
 
-                    if(@$data->avg_balance > 0 || ($roundup_1 + $roundup_2 + $roundup_3 + $roundup_4 + $roundup_5 + $roundup_6) >= $generate['qty']){
-                        $roundup_7 = 0;
-                        $eta_7 = NULL;
-                        $etd_7 = NULL;
-                    }else{
-                        $eta_7 = date("Y-m-01",  strtotime("6 month", strtotime($filter_year."-".$filter_month."-01")));
-                        $etd_7 = date("Y-m-d", strtotime("-21 days", strtotime($eta_7)));
-                        $roundup_7 = (ceil(abs(@$data->avg_balance) / $generate['mpq']) * $generate['mpq']);
-                        if(($roundup_1 + $roundup_2 + $roundup_3 + $roundup_4 + $roundup_5 + $roundup_6 + $roundup_7) > $generate['qty']){
-                            $roundup_7 = abs($roundup_1 + $roundup_2 + $roundup_3 + $roundup_4 + $roundup_5 + $roundup_6 - $generate['qty']);
-                        }
+                if (@$data->balance_6 > 0 || ($roundup_1 + $roundup_2 + $roundup_3 + $roundup_4 + $roundup_5) >= $generate['qty']) {
+                    $roundup_6 = 0;
+                    $eta_6 = NULL;
+                    $etd_6 = NULL;
+                } else {
+                    $eta_6 = date("Y-m-01",  strtotime("5 month", strtotime($filter_year . "-" . $filter_month . "-01")));
+                    $etd_6 = date("Y-m-d", strtotime("-21 days", strtotime($eta_6)));
+                    $roundup_6 = (ceil(abs(@$data->balance_6) / $generate['mpq']) * $generate['mpq']);
+                    if (($roundup_1 + $roundup_2 + $roundup_3 + $roundup_4 + $roundup_5 + $roundup_6) > $generate['qty']) {
+                        $roundup_6 = abs($roundup_1 + $roundup_2 + $roundup_3 + $roundup_4 + $roundup_5 - $generate['qty']);
                     }
+                }
 
-                    $arr[] = array(
-                        "p_month" => $filter_month,
-                        "p_year" => $filter_year,
-                        "revision" => $filter_revision,
-                        "plant" => $generate['plant'],
-                        "po_no" => $generate['po_no'],
-                        "supplier_id" => $generate['supplier_id'],
-                        "item_rm_id" => $generate['item_rm_id'],
-                        "mpq" => $generate['mpq'],
-                        "qty" => $generate['qty'],
-                        "delivey_qty_1" => @$roundup_1,
-                        "delivey_qty_2" => @$roundup_2,
-                        "delivey_qty_3" => @$roundup_3,
-                        "delivey_qty_4" => @$roundup_4,
-                        "delivey_qty_5" => @$roundup_5,
-                        "delivey_qty_6" => @$roundup_6,
-                        "delivey_qty_7" => @$roundup_7,
-                        "delivey_date_1" => @$eta_1,
-                        "delivey_date_2" => @$eta_2,
-                        "delivey_date_3" => @$eta_3,
-                        "delivey_date_4" => @$eta_4,
-                        "delivey_date_5" => @$eta_5,
-                        "delivey_date_6" => @$eta_6,
-                        "delivey_date_7" => @$eta_7,
-                        "etd_1" => @$etd_1,
-                        "etd_2" => @$etd_2,
-                        "etd_3" => @$etd_3,
-                        "etd_4" => @$etd_4,
-                        "etd_5" => @$etd_5,
-                        "etd_6" => @$etd_6,
-                        "etd_7" => @$etd_7,
-                    );
+                if (@$data->avg_balance > 0 || ($roundup_1 + $roundup_2 + $roundup_3 + $roundup_4 + $roundup_5 + $roundup_6) >= $generate['qty']) {
+                    $roundup_7 = 0;
+                    $eta_7 = NULL;
+                    $etd_7 = NULL;
+                } else {
+                    $eta_7 = date("Y-m-01",  strtotime("6 month", strtotime($filter_year . "-" . $filter_month . "-01")));
+                    $etd_7 = date("Y-m-d", strtotime("-21 days", strtotime($eta_7)));
+                    $roundup_7 = (ceil(abs(@$data->avg_balance) / $generate['mpq']) * $generate['mpq']);
+                    if (($roundup_1 + $roundup_2 + $roundup_3 + $roundup_4 + $roundup_5 + $roundup_6 + $roundup_7) > $generate['qty']) {
+                        $roundup_7 = abs($roundup_1 + $roundup_2 + $roundup_3 + $roundup_4 + $roundup_5 + $roundup_6 - $generate['qty']);
+                    }
+                }
+
+                $arr[] = array(
+                    "p_month" => $filter_month,
+                    "p_year" => $filter_year,
+                    "revision" => $filter_revision,
+                    "plant" => $generate['plant'],
+                    "po_no" => $generate['po_no'],
+                    "supplier_id" => $generate['supplier_id'],
+                    "item_rm_id" => $generate['item_rm_id'],
+                    "mpq" => $generate['mpq'],
+                    "qty" => $generate['qty'],
+                    "delivey_qty_1" => @$roundup_1,
+                    "delivey_qty_2" => @$roundup_2,
+                    "delivey_qty_3" => @$roundup_3,
+                    "delivey_qty_4" => @$roundup_4,
+                    "delivey_qty_5" => @$roundup_5,
+                    "delivey_qty_6" => @$roundup_6,
+                    "delivey_qty_7" => @$roundup_7,
+                    "delivey_date_1" => @$eta_1,
+                    "delivey_date_2" => @$eta_2,
+                    "delivey_date_3" => @$eta_3,
+                    "delivey_date_4" => @$eta_4,
+                    "delivey_date_5" => @$eta_5,
+                    "delivey_date_6" => @$eta_6,
+                    "delivey_date_7" => @$eta_7,
+                    "etd_1" => @$etd_1,
+                    "etd_2" => @$etd_2,
+                    "etd_3" => @$etd_3,
+                    "etd_4" => @$etd_4,
+                    "etd_5" => @$etd_5,
+                    "etd_6" => @$etd_6,
+                    "etd_7" => @$etd_7,
+                );
                 // }
             }
 
@@ -261,19 +261,19 @@ class Delivery_schedules extends CI_Controller
             $this->db->join('purchase_orders f', 'a.po_no = f.po_no and a.item_rm_id = f.item_rm_id');
             $this->db->where('a.p_month', $filter_month);
             $this->db->where('a.p_year', $filter_year);
-            if($filter_revision != ""){
+            if ($filter_revision != "") {
                 $this->db->where('a.revision', $filter_revision);
             }
-            if($filter_supplier != ""){
+            if ($filter_supplier != "") {
                 $this->db->like('b.id', $filter_supplier);
             }
-            if($filter_po_no != ""){
+            if ($filter_po_no != "") {
                 $this->db->where('a.po_no', $filter_po_no);
             }
-            if($filter_item_family != ""){
+            if ($filter_item_family != "") {
                 $this->db->like('c.item_family_id', $filter_item_family);
             }
-            if($filter_item_rm != ""){
+            if ($filter_item_rm != "") {
                 $this->db->like('a.item_rm_id', $filter_item_rm);
             }
             $this->db->group_by('a.id');
@@ -331,51 +331,51 @@ class Delivery_schedules extends CI_Controller
             $post = $this->input->post();
 
             $today = date("Y-m-d", strtotime("+3 days"));
-            if(empty($post['delivey_date_1']) || $post['delivey_date_1'] > $today || $post['delivey_qty_1'] == 0){
+            if (empty($post['delivey_date_1']) || $post['delivey_date_1'] > $today || $post['delivey_qty_1'] == 0) {
                 //
-            }else{
+            } else {
                 die(json_encode(array("theme" => "error", "message" => "ETA must bigger on $today")));
             }
 
-            if(empty($post['delivey_date_2']) || $post['delivey_date_2'] > $today || $post['delivey_qty_2'] == 0){
+            if (empty($post['delivey_date_2']) || $post['delivey_date_2'] > $today || $post['delivey_qty_2'] == 0) {
                 //
-            }else{
+            } else {
                 die(json_encode(array("theme" => "error", "message" => "ETA must bigger on $today")));
             }
 
-            if(empty($post['delivey_date_3']) || $post['delivey_date_3'] > $today || $post['delivey_qty_3'] == 0){
+            if (empty($post['delivey_date_3']) || $post['delivey_date_3'] > $today || $post['delivey_qty_3'] == 0) {
                 //
-            }else{
+            } else {
                 die(json_encode(array("theme" => "error", "message" => "ETA must bigger on $today")));
             }
 
-            if(empty($post['delivey_date_4']) || $post['delivey_date_4'] > $today || $post['delivey_qty_4'] == 0){
+            if (empty($post['delivey_date_4']) || $post['delivey_date_4'] > $today || $post['delivey_qty_4'] == 0) {
                 //
-            }else{
+            } else {
                 die(json_encode(array("theme" => "error", "message" => "ETA must bigger on $today")));
             }
 
-            if(empty($post['delivey_date_5']) || $post['delivey_date_5'] > $today || $post['delivey_qty_5'] == 0){
+            if (empty($post['delivey_date_5']) || $post['delivey_date_5'] > $today || $post['delivey_qty_5'] == 0) {
                 //
-            }else{
+            } else {
                 die(json_encode(array("theme" => "error", "message" => "ETA must bigger on $today")));
             }
 
-            if(empty($post['delivey_date_6']) || $post['delivey_date_6'] > $today || $post['delivey_qty_6'] == 0){
+            if (empty($post['delivey_date_6']) || $post['delivey_date_6'] > $today || $post['delivey_qty_6'] == 0) {
                 //
-            }else{
+            } else {
                 die(json_encode(array("theme" => "error", "message" => "ETA must bigger on $today")));
             }
 
-            if(empty($post['delivey_date_7']) || $post['delivey_date_7'] > $today || $post['delivey_qty_7'] == 0){
+            if (empty($post['delivey_date_7']) || $post['delivey_date_7'] > $today || $post['delivey_qty_7'] == 0) {
                 //
-            }else{
+            } else {
                 die(json_encode(array("theme" => "error", "message" => "ETA must bigger on $today")));
             }
 
             // if(($post['qty'] - ($post['delivey_qty_1'] + $post['delivey_qty_2'] + $post['delivey_qty_3'] + $post['delivey_qty_4'] + $post['delivey_qty_5'] + $post['delivey_qty_6'] + $post['delivey_qty_7'])) == 0){
-                $send = $this->crud->update('delivery_schedules', ["id" => $id], $post);
-                echo $send;
+            $send = $this->crud->update('delivery_schedules', ["id" => $id], $post);
+            echo $send;
             // }else{
             //     show_error("Period Qty must be the same as Qty Delivery");
             // }
@@ -509,7 +509,10 @@ class Delivery_schedules extends CI_Controller
         $this->db->from('delivery_schedules a');
         $this->db->join('suppliers b', 'a.supplier_id = b.id');
         $this->db->join('item_rm c', 'a.item_rm_id = c.id');
+        $this->db->join('item_rm ia', "TRIM(LEADING '+' FROM c.number) = ia.number");
         $this->db->join('item_familys d', 'c.item_family_id = d.id');
+        $this->db->join('supplier_items e', 'a.supplier_id = e.supplier_id and ia.id = e.item_rm_id and a.plant = e.plant');
+        $this->db->join('purchase_orders f', 'a.po_no = f.po_no and a.item_rm_id = f.item_rm_id');
         $this->db->where('a.p_month', $filter_month);
         $this->db->where('a.p_year', $filter_year);
         $this->db->like('a.revision', $filter_revision);
@@ -561,22 +564,78 @@ class Delivery_schedules extends CI_Controller
             </tr>';
         $no = 1;
         foreach ($records as $data) {
-            if($data['delivey_date_1'] == "0000-00-00"){ $eta_1 = "-"; }else{ $eta_1 = $data['delivey_date_1']; }
-            if($data['delivey_date_2'] == "0000-00-00"){ $eta_2 = "-"; }else{ $eta_2 = $data['delivey_date_2']; }
-            if($data['delivey_date_3'] == "0000-00-00"){ $eta_3 = "-"; }else{ $eta_3 = $data['delivey_date_3']; }
-            if($data['delivey_date_4'] == "0000-00-00"){ $eta_4 = "-"; }else{ $eta_4 = $data['delivey_date_4']; }
-            if($data['delivey_date_5'] == "0000-00-00"){ $eta_5 = "-"; }else{ $eta_5 = $data['delivey_date_5']; }
-            if($data['delivey_date_6'] == "0000-00-00"){ $eta_6 = "-"; }else{ $eta_6 = $data['delivey_date_6']; }
-            if($data['delivey_date_7'] == "0000-00-00"){ $eta_7 = "-"; }else{ $eta_7 = $data['delivey_date_7']; }
-            if($data['etd_1'] == "0000-00-00"){ $etd_1 = "-"; }else{ $etd_1 = $data['etd_1']; }
-            if($data['etd_2'] == "0000-00-00"){ $etd_2 = "-"; }else{ $etd_2 = $data['etd_2']; }
-            if($data['etd_3'] == "0000-00-00"){ $etd_3 = "-"; }else{ $etd_3 = $data['etd_3']; }
-            if($data['etd_4'] == "0000-00-00"){ $etd_4 = "-"; }else{ $etd_4 = $data['etd_4']; }
-            if($data['etd_5'] == "0000-00-00"){ $etd_5 = "-"; }else{ $etd_5 = $data['etd_5']; }
-            if($data['etd_6'] == "0000-00-00"){ $etd_6 = "-"; }else{ $etd_6 = $data['etd_6']; }
-            if($data['etd_7'] == "0000-00-00"){ $etd_7 = "-"; }else{ $etd_7 = $data['etd_7']; }
+            if ($data['delivey_date_1'] == "0000-00-00") {
+                $eta_1 = "-";
+            } else {
+                $eta_1 = $data['delivey_date_1'];
+            }
+            if ($data['delivey_date_2'] == "0000-00-00") {
+                $eta_2 = "-";
+            } else {
+                $eta_2 = $data['delivey_date_2'];
+            }
+            if ($data['delivey_date_3'] == "0000-00-00") {
+                $eta_3 = "-";
+            } else {
+                $eta_3 = $data['delivey_date_3'];
+            }
+            if ($data['delivey_date_4'] == "0000-00-00") {
+                $eta_4 = "-";
+            } else {
+                $eta_4 = $data['delivey_date_4'];
+            }
+            if ($data['delivey_date_5'] == "0000-00-00") {
+                $eta_5 = "-";
+            } else {
+                $eta_5 = $data['delivey_date_5'];
+            }
+            if ($data['delivey_date_6'] == "0000-00-00") {
+                $eta_6 = "-";
+            } else {
+                $eta_6 = $data['delivey_date_6'];
+            }
+            if ($data['delivey_date_7'] == "0000-00-00") {
+                $eta_7 = "-";
+            } else {
+                $eta_7 = $data['delivey_date_7'];
+            }
+            if ($data['etd_1'] == "0000-00-00") {
+                $etd_1 = "-";
+            } else {
+                $etd_1 = $data['etd_1'];
+            }
+            if ($data['etd_2'] == "0000-00-00") {
+                $etd_2 = "-";
+            } else {
+                $etd_2 = $data['etd_2'];
+            }
+            if ($data['etd_3'] == "0000-00-00") {
+                $etd_3 = "-";
+            } else {
+                $etd_3 = $data['etd_3'];
+            }
+            if ($data['etd_4'] == "0000-00-00") {
+                $etd_4 = "-";
+            } else {
+                $etd_4 = $data['etd_4'];
+            }
+            if ($data['etd_5'] == "0000-00-00") {
+                $etd_5 = "-";
+            } else {
+                $etd_5 = $data['etd_5'];
+            }
+            if ($data['etd_6'] == "0000-00-00") {
+                $etd_6 = "-";
+            } else {
+                $etd_6 = $data['etd_6'];
+            }
+            if ($data['etd_7'] == "0000-00-00") {
+                $etd_7 = "-";
+            } else {
+                $etd_7 = $data['etd_7'];
+            }
 
-            if($data['delivey_qty_1'] > 0){
+            if ($data['delivey_qty_1'] > 0) {
                 $html .= '  <tr>
                                 <td>' . $no . '</td>
                                 <td style="mso-number-format:\@;">' . $data['po_no'] . '</td>
@@ -586,12 +645,12 @@ class Delivery_schedules extends CI_Controller
                                 <td style="mso-number-format:\@;">' . $data['item_rm_name'] . '</td>
                                 <td style="text-align:right;">' . $data['qty'] . '</td>
                                 <td style="text-align:right;">' . number_format($data['delivey_qty_1']) . '</td>
-                                <td style="text-align:center;">'.$etd_1.'</td>
-                                <td style="text-align:center;">'.$eta_1.'</td>
-                            </tr>';  
+                                <td style="text-align:center;">' . $etd_1 . '</td>
+                                <td style="text-align:center;">' . $eta_1 . '</td>
+                            </tr>';
             }
 
-            if($data['delivey_qty_2'] > 0){
+            if ($data['delivey_qty_2'] > 0) {
                 $html .= '  <tr>
                                 <td>' . $no . '</td>
                                 <td style="mso-number-format:\@;">' . $data['po_no'] . '</td>
@@ -601,12 +660,12 @@ class Delivery_schedules extends CI_Controller
                                 <td style="mso-number-format:\@;">' . $data['item_rm_name'] . '</td>
                                 <td style="text-align:right;">' . $data['qty'] . '</td>
                                 <td style="text-align:right;">' . number_format($data['delivey_qty_2']) . '</td>
-                                <td style="text-align:center;">'.$etd_2.'</td>
-                                <td style="text-align:center;">'.$eta_2.'</td>
-                            </tr>'; 
+                                <td style="text-align:center;">' . $etd_2 . '</td>
+                                <td style="text-align:center;">' . $eta_2 . '</td>
+                            </tr>';
             }
 
-            if($data['delivey_qty_3'] > 0){
+            if ($data['delivey_qty_3'] > 0) {
                 $html .= '  <tr>
                                 <td>' . $no . '</td>
                                 <td style="mso-number-format:\@;">' . $data['po_no'] . '</td>
@@ -616,12 +675,12 @@ class Delivery_schedules extends CI_Controller
                                 <td style="mso-number-format:\@;">' . $data['item_rm_name'] . '</td>
                                 <td style="text-align:right;">' . $data['qty'] . '</td>
                                 <td style="text-align:right;">' . number_format($data['delivey_qty_3']) . '</td>
-                                <td style="text-align:center;">'.$etd_3.'</td>
-                                <td style="text-align:center;">'.$eta_3.'</td>
-                            </tr>';  
+                                <td style="text-align:center;">' . $etd_3 . '</td>
+                                <td style="text-align:center;">' . $eta_3 . '</td>
+                            </tr>';
             }
 
-            if($data['delivey_qty_4'] > 0){
+            if ($data['delivey_qty_4'] > 0) {
                 $html .= '  <tr>
                                 <td>' . $no . '</td>
                                 <td style="mso-number-format:\@;">' . $data['po_no'] . '</td>
@@ -631,12 +690,12 @@ class Delivery_schedules extends CI_Controller
                                 <td style="mso-number-format:\@;">' . $data['item_rm_name'] . '</td>
                                 <td style="text-align:right;">' . $data['qty'] . '</td>
                                 <td style="text-align:right;">' . number_format($data['delivey_qty_4']) . '</td>
-                                <td style="text-align:center;">'.$etd_4.'</td>
-                                <td style="text-align:center;">'.$eta_4.'</td>
-                            </tr>';  
+                                <td style="text-align:center;">' . $etd_4 . '</td>
+                                <td style="text-align:center;">' . $eta_4 . '</td>
+                            </tr>';
             }
 
-            if($data['delivey_qty_5'] > 0){
+            if ($data['delivey_qty_5'] > 0) {
                 $html .= '  <tr>
                                 <td>' . $no . '</td>
                                 <td style="mso-number-format:\@;">' . $data['po_no'] . '</td>
@@ -646,12 +705,12 @@ class Delivery_schedules extends CI_Controller
                                 <td style="mso-number-format:\@;">' . $data['item_rm_name'] . '</td>
                                 <td style="text-align:right;">' . $data['qty'] . '</td>
                                 <td style="text-align:right;">' . number_format($data['delivey_qty_5']) . '</td>
-                                <td style="text-align:center;">'.$etd_5.'</td>
-                                <td style="text-align:center;">'.$eta_5.'</td>
-                            </tr>'; 
+                                <td style="text-align:center;">' . $etd_5 . '</td>
+                                <td style="text-align:center;">' . $eta_5 . '</td>
+                            </tr>';
             }
 
-            if($data['delivey_qty_6'] > 0){
+            if ($data['delivey_qty_6'] > 0) {
                 $html .= '  <tr>
                             <td>' . $no . '</td>
                             <td style="mso-number-format:\@;">' . $data['po_no'] . '</td>
@@ -661,12 +720,12 @@ class Delivery_schedules extends CI_Controller
                             <td style="mso-number-format:\@;">' . $data['item_rm_name'] . '</td>
                             <td style="text-align:right;">' . $data['qty'] . '</td>
                             <td style="text-align:right;">' . number_format($data['delivey_qty_6']) . '</td>
-                            <td style="text-align:center;">'.$etd_6.'</td>
-                            <td style="text-align:center;">'.$eta_6.'</td>
-                        </tr>'; 
+                            <td style="text-align:center;">' . $etd_6 . '</td>
+                            <td style="text-align:center;">' . $eta_6 . '</td>
+                        </tr>';
             }
 
-            if($data['delivey_qty_7'] > 0){
+            if ($data['delivey_qty_7'] > 0) {
                 $html .= '  <tr>
                             <td>' . $no . '</td>
                             <td style="mso-number-format:\@;">' . $data['po_no'] . '</td>
@@ -676,9 +735,9 @@ class Delivery_schedules extends CI_Controller
                             <td style="mso-number-format:\@;">' . $data['item_rm_name'] . '</td>
                             <td style="text-align:right;">' . $data['qty'] . '</td>
                             <td style="text-align:right;">' . number_format($data['delivey_qty_7']) . '</td>
-                            <td style="text-align:center;">'.$etd_7.'</td>
-                            <td style="text-align:center;">'.$eta_7.'</td>
-                        </tr>'; 
+                            <td style="text-align:center;">' . $etd_7 . '</td>
+                            <td style="text-align:center;">' . $eta_7 . '</td>
+                        </tr>';
             }
 
             $no++;
@@ -709,19 +768,22 @@ class Delivery_schedules extends CI_Controller
         $filter_po_no = trim(base64_decode($this->input->get('filter_po_no')));
         $filter_supplier = trim(base64_decode($this->input->get('filter_supplier')));
 
-        $period_1 = date("F Y", strtotime($filter_year."-".$filter_month."-01"));
-        $period_2 = date("F Y",  strtotime("1 month", strtotime($filter_year."-".$filter_month."-01")));
-        $period_3 = date("F Y",  strtotime("2 month", strtotime($filter_year."-".$filter_month."-01")));
-        $period_4 = date("F Y",  strtotime("3 month", strtotime($filter_year."-".$filter_month."-01")));
-        $period_5 = date("F Y",  strtotime("4 month", strtotime($filter_year."-".$filter_month."-01")));
-        $period_6 = date("F Y",  strtotime("5 month", strtotime($filter_year."-".$filter_month."-01")));
+        $period_1 = date("F Y", strtotime($filter_year . "-" . $filter_month . "-01"));
+        $period_2 = date("F Y",  strtotime("1 month", strtotime($filter_year . "-" . $filter_month . "-01")));
+        $period_3 = date("F Y",  strtotime("2 month", strtotime($filter_year . "-" . $filter_month . "-01")));
+        $period_4 = date("F Y",  strtotime("3 month", strtotime($filter_year . "-" . $filter_month . "-01")));
+        $period_5 = date("F Y",  strtotime("4 month", strtotime($filter_year . "-" . $filter_month . "-01")));
+        $period_6 = date("F Y",  strtotime("5 month", strtotime($filter_year . "-" . $filter_month . "-01")));
 
         //Select Query
         $this->db->select('a.*, b.name as supplier_name, c.number as item_rm_number, c.name as item_rm_name, c.uom, d.name as product_family');
         $this->db->from('delivery_schedules a');
         $this->db->join('suppliers b', 'a.supplier_id = b.id');
         $this->db->join('item_rm c', 'a.item_rm_id = c.id');
+        $this->db->join('item_rm ia', "TRIM(LEADING '+' FROM c.number) = ia.number");
         $this->db->join('item_familys d', 'c.item_family_id = d.id');
+        $this->db->join('supplier_items e', 'a.supplier_id = e.supplier_id and ia.id = e.item_rm_id and a.plant = e.plant');
+        $this->db->join('purchase_orders f', 'a.po_no = f.po_no and a.item_rm_id = f.item_rm_id');
         $this->db->where('a.p_month', $filter_month);
         $this->db->where('a.p_year', $filter_year);
         $this->db->like('a.revision', $filter_revision);
@@ -765,12 +827,12 @@ class Delivery_schedules extends CI_Controller
                 <th rowspan="2" width="80" style="text-align:center;">Part No</th>
                 <th rowspan="2" width="50" style="text-align:center;">Part Name</th>
                 <th rowspan="2" width="50" style="text-align:center;">Qty</th>
-                <th colspan="3" width="50" style="text-align:center;">'.$period_1.'</th>
-                <th colspan="3" width="50" style="text-align:center;">'.$period_2.'</th>
-                <th colspan="3" width="50" style="text-align:center;">'.$period_3.'</th>
-                <th colspan="3" width="50" style="text-align:center;">'.$period_4.'</th>
-                <th colspan="3" width="50" style="text-align:center;">'.$period_5.'</th>
-                <th colspan="3" width="50" style="text-align:center;">'.$period_6.'</th>
+                <th colspan="3" width="50" style="text-align:center;">' . $period_1 . '</th>
+                <th colspan="3" width="50" style="text-align:center;">' . $period_2 . '</th>
+                <th colspan="3" width="50" style="text-align:center;">' . $period_3 . '</th>
+                <th colspan="3" width="50" style="text-align:center;">' . $period_4 . '</th>
+                <th colspan="3" width="50" style="text-align:center;">' . $period_5 . '</th>
+                <th colspan="3" width="50" style="text-align:center;">' . $period_6 . '</th>
                 <th colspan="3" width="50" style="text-align:center;">> 6 Month</th>
             </tr>
             <tr>
@@ -798,20 +860,76 @@ class Delivery_schedules extends CI_Controller
             </tr>';
         $no = 1;
         foreach ($records as $data) {
-            if($data['delivey_date_1'] == "0000-00-00"){ $eta_1 = "-"; }else{ $eta_1 = $data['delivey_date_1']; }
-            if($data['delivey_date_2'] == "0000-00-00"){ $eta_2 = "-"; }else{ $eta_2 = $data['delivey_date_2']; }
-            if($data['delivey_date_3'] == "0000-00-00"){ $eta_3 = "-"; }else{ $eta_3 = $data['delivey_date_3']; }
-            if($data['delivey_date_4'] == "0000-00-00"){ $eta_4 = "-"; }else{ $eta_4 = $data['delivey_date_4']; }
-            if($data['delivey_date_5'] == "0000-00-00"){ $eta_5 = "-"; }else{ $eta_5 = $data['delivey_date_5']; }
-            if($data['delivey_date_6'] == "0000-00-00"){ $eta_6 = "-"; }else{ $eta_6 = $data['delivey_date_6']; }
-            if($data['delivey_date_7'] == "0000-00-00"){ $eta_7 = "-"; }else{ $eta_7 = $data['delivey_date_7']; }
-            if($data['etd_1'] == "0000-00-00"){ $etd_1 = "-"; }else{ $etd_1 = $data['etd_1']; }
-            if($data['etd_2'] == "0000-00-00"){ $etd_2 = "-"; }else{ $etd_2 = $data['etd_2']; }
-            if($data['etd_3'] == "0000-00-00"){ $etd_3 = "-"; }else{ $etd_3 = $data['etd_3']; }
-            if($data['etd_4'] == "0000-00-00"){ $etd_4 = "-"; }else{ $etd_4 = $data['etd_4']; }
-            if($data['etd_5'] == "0000-00-00"){ $etd_5 = "-"; }else{ $etd_5 = $data['etd_5']; }
-            if($data['etd_6'] == "0000-00-00"){ $etd_6 = "-"; }else{ $etd_6 = $data['etd_6']; }
-            if($data['etd_7'] == "0000-00-00"){ $etd_7 = "-"; }else{ $etd_7 = $data['etd_7']; }
+            if ($data['delivey_date_1'] == "0000-00-00") {
+                $eta_1 = "-";
+            } else {
+                $eta_1 = $data['delivey_date_1'];
+            }
+            if ($data['delivey_date_2'] == "0000-00-00") {
+                $eta_2 = "-";
+            } else {
+                $eta_2 = $data['delivey_date_2'];
+            }
+            if ($data['delivey_date_3'] == "0000-00-00") {
+                $eta_3 = "-";
+            } else {
+                $eta_3 = $data['delivey_date_3'];
+            }
+            if ($data['delivey_date_4'] == "0000-00-00") {
+                $eta_4 = "-";
+            } else {
+                $eta_4 = $data['delivey_date_4'];
+            }
+            if ($data['delivey_date_5'] == "0000-00-00") {
+                $eta_5 = "-";
+            } else {
+                $eta_5 = $data['delivey_date_5'];
+            }
+            if ($data['delivey_date_6'] == "0000-00-00") {
+                $eta_6 = "-";
+            } else {
+                $eta_6 = $data['delivey_date_6'];
+            }
+            if ($data['delivey_date_7'] == "0000-00-00") {
+                $eta_7 = "-";
+            } else {
+                $eta_7 = $data['delivey_date_7'];
+            }
+            if ($data['etd_1'] == "0000-00-00") {
+                $etd_1 = "-";
+            } else {
+                $etd_1 = $data['etd_1'];
+            }
+            if ($data['etd_2'] == "0000-00-00") {
+                $etd_2 = "-";
+            } else {
+                $etd_2 = $data['etd_2'];
+            }
+            if ($data['etd_3'] == "0000-00-00") {
+                $etd_3 = "-";
+            } else {
+                $etd_3 = $data['etd_3'];
+            }
+            if ($data['etd_4'] == "0000-00-00") {
+                $etd_4 = "-";
+            } else {
+                $etd_4 = $data['etd_4'];
+            }
+            if ($data['etd_5'] == "0000-00-00") {
+                $etd_5 = "-";
+            } else {
+                $etd_5 = $data['etd_5'];
+            }
+            if ($data['etd_6'] == "0000-00-00") {
+                $etd_6 = "-";
+            } else {
+                $etd_6 = $data['etd_6'];
+            }
+            if ($data['etd_7'] == "0000-00-00") {
+                $etd_7 = "-";
+            } else {
+                $etd_7 = $data['etd_7'];
+            }
 
             $html .= '  <tr>
                             <td>' . $no . '</td>
@@ -822,26 +940,26 @@ class Delivery_schedules extends CI_Controller
                             <td style="mso-number-format:\@;">' . $data['item_rm_name'] . '</td>
                             <td style="text-align:right;">' . $data['qty'] . '</td>
                             <td style="text-align:right;">' . number_format($data['delivey_qty_1']) . '</td>
-                            <td style="text-align:center;">'.$etd_1.'</td>
-                            <td style="text-align:center;">'.$eta_1.'</td>
+                            <td style="text-align:center;">' . $etd_1 . '</td>
+                            <td style="text-align:center;">' . $eta_1 . '</td>
                             <td style="text-align:right;">' . number_format($data['delivey_qty_2']) . '</td>
-                            <td style="text-align:center;">'.$etd_2.'</td>
-                            <td style="text-align:center;">'.$eta_2.'</td>
+                            <td style="text-align:center;">' . $etd_2 . '</td>
+                            <td style="text-align:center;">' . $eta_2 . '</td>
                             <td style="text-align:right;">' . number_format($data['delivey_qty_3']) . '</td>
-                            <td style="text-align:center;">'.$etd_3.'</td>
-                            <td style="text-align:center;">'.$eta_3.'</td>
+                            <td style="text-align:center;">' . $etd_3 . '</td>
+                            <td style="text-align:center;">' . $eta_3 . '</td>
                             <td style="text-align:right;">' . number_format($data['delivey_qty_4']) . '</td>
-                            <td style="text-align:center;">'.$etd_4.'</td>
-                            <td style="text-align:center;">'.$eta_4.'</td>
+                            <td style="text-align:center;">' . $etd_4 . '</td>
+                            <td style="text-align:center;">' . $eta_4 . '</td>
                             <td style="text-align:right;">' . number_format($data['delivey_qty_5']) . '</td>
-                            <td style="text-align:center;">'.$etd_5.'</td>
-                            <td style="text-align:center;">'.$eta_5.'</td>
+                            <td style="text-align:center;">' . $etd_5 . '</td>
+                            <td style="text-align:center;">' . $eta_5 . '</td>
                             <td style="text-align:right;">' . number_format($data['delivey_qty_6']) . '</td>
-                            <td style="text-align:center;">'.$etd_6.'</td>
-                            <td style="text-align:center;">'.$eta_6.'</td>
+                            <td style="text-align:center;">' . $etd_6 . '</td>
+                            <td style="text-align:center;">' . $eta_6 . '</td>
                             <td style="text-align:right;">' . number_format($data['delivey_qty_7']) . '</td>
-                            <td style="text-align:center;">'.$etd_7.'</td>
-                            <td style="text-align:center;">'.$eta_7.'</td>
+                            <td style="text-align:center;">' . $etd_7 . '</td>
+                            <td style="text-align:center;">' . $eta_7 . '</td>
                         </tr>';
             $no++;
         }
@@ -850,4 +968,3 @@ class Delivery_schedules extends CI_Controller
         echo $html;
     }
 }
-?>
