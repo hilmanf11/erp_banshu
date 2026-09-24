@@ -35,14 +35,26 @@ class Marketing_price_wire extends CI_Controller
 
     public function readPlants()
     {
+        // $post = isset($_POST['q']) ? $_POST['q'] : "";
+
+        // $this->db->select("DISTINCT TRIM(a.plant_id) AS id, TRIM(b.name) AS plant")
+        //     ->from("lme_prices a")->join('plants b', 'a.plant_id = b.number');
+        // if (!empty($post)) {
+        //     $this->db->like('a.plant_id', $post);
+        // }
+        // $this->db->order_by("plant");
+        // $get = $this->db->get()->result_object();
+
+        // echo json_encode($get);
+
         $post = isset($_POST['q']) ? $_POST['q'] : "";
 
-        $this->db->select("DISTINCT TRIM(a.plant_id) AS id, TRIM(b.name) AS plant")
-            ->from("lme_prices a")->join('plants b', 'a.plant_id = b.number');
+        $this->db->select("DISTINCT TRIM(number) AS id, TRIM(name) AS plant")
+            ->from("plants a")->where("number <> 'GS'");
         if (!empty($post)) {
-            $this->db->like('a.plant_id', $post);
+            $this->db->like('a.number', $post);
         }
-        $this->db->order_by("plant");
+        $this->db->order_by("name");
         $get = $this->db->get()->result_object();
 
         echo json_encode($get);
@@ -116,7 +128,7 @@ class Marketing_price_wire extends CI_Controller
         $page   = isset($page) ? intval($page) : 1;
         $rows   = isset($rows) ? intval($rows) : 10;
         $offset = ($page - 1) * $rows;
-        
+
         $datas = [];
 
         $this->db->distinct()->select(
