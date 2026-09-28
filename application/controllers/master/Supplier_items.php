@@ -313,6 +313,7 @@ class Supplier_items extends CI_Controller
                 "start_date" => $post['start_date'],
                 "valid_date" => $valid_date,
                 "calculate" => $post['calculate'],
+                "rounded" => $post['rounded'],
                 "remarks" => $post['remarks'],
             );
 
@@ -375,6 +376,7 @@ class Supplier_items extends CI_Controller
                 "start_date" => $post['start_date'],
                 "valid_date" => $post['valid_date'],
                 "calculate" => $post['calculate'],
+                "rounded" => $post['rounded'],
                 "remarks" => $post['remarks'],
             );
 
@@ -459,7 +461,9 @@ class Supplier_items extends CI_Controller
                 'quotation_number' => $data->val($i, 21),
                 'quotation_date' => $data->val($i, 22),
                 'incoterm_code' => $data->val($i, 23),
-                'action' => $data->val($i, 24)
+                'calculate' => $data->val($i, 24),
+                'rounded' => $data->val($i, 25),
+                'action' => $data->val($i, 26)
             );
         }
         $datas['total'] = count($datas);
@@ -591,6 +595,8 @@ class Supplier_items extends CI_Controller
                         "quotation_number" => $data['quotation_number'],
                         "quotation_date" => $data['quotation_date'],
                         "incoterm_code" => $data['incoterm_code'],
+                        "calculate" => $data['calculate'],
+                        "rounded" => $data['rounded'],
                     );
 
                     $send = $this->crud->create('supplier_items', $dataFinal, "logs");
@@ -618,6 +624,8 @@ class Supplier_items extends CI_Controller
                     $quotation_number = ($data['quotation_number'] == '') ? @$supplier_items->quotation_number : @$data['quotation_number'];
                     $quotation_date = ($data['quotation_date'] == '') ? @$supplier_items->quotation_date : @$data['quotation_date'];
                     $incoterm_code = ($data['incoterm_code'] == '') ? @$supplier_items->incoterm_code : @$data['incoterm_code'];
+                    $calculate = ($data['calculate'] == '') ? @$supplier_items->calculate : @$data['calculate'];
+                    $rounded = ($data['rounded'] == '') ? @$supplier_items->rounded : @$data['rounded'];
 
                     $dataFinal = array(
                         "item_rm_id" => @$item_rm->id,
@@ -642,6 +650,8 @@ class Supplier_items extends CI_Controller
                         "quotation_number" => $quotation_number,
                         "quotation_date" => $quotation_date,
                         "incoterm_code" => $incoterm_code,
+                        "calculate" => $calculate,
+                        "rounded" => $rounded
                     );
 
                     if ($this->isValidDate($start_date)) {
@@ -839,7 +849,8 @@ class Supplier_items extends CI_Controller
                 <th>Share Order</th>
                 <th>Safety<br>Stock (%)</th>
                 <th>Calculate MPQ</th>
-                <th>Account COA</th>
+                <th>Rounded</th>
+                <!-- <th>Account COA</th> -->
                 <th>Remarks</th>
                 <th>Created By</th>
                 <th>Created Date</th>
@@ -927,7 +938,8 @@ class Supplier_items extends CI_Controller
                     <td>' . $data['share_order'] . '</td>
                     <td>' . $data['safety_stock'] . '</td>
                     <td>' . $data['calculate'] . '</td>
-                    <td>' . $data['account_number'] . '</td>
+                    <td>' . $data['rounded'] . '</td>
+                    <!-- <td>' . $data['account_number'] . '</td> -->
                     <td>' . $data['remarks'] . '</td>
                     <td>' . $data['created_by'] . '</td>
                     <td>' . $data['created_date'] . '</td>

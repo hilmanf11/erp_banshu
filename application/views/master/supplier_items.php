@@ -219,7 +219,7 @@
                 </div>
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Currency</span>
-                    <input style="width:60%;" name="currency" id="currency" readonly panelHeight="auto" class="easyui-combobox">
+                    <input style="width:60%;" name="currency" id="currency" panelHeight="auto" class="easyui-combobox">
                 </div>
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Price</span>
@@ -781,11 +781,11 @@
                                         success: function(result) {
                                             if (result.theme == "success") {
                                                 $('#p_success').html(success);
-                                                var title = "<b style='color: green;'>" + result.title + "</b> | " + result.message;
+                                                var title = "<b style='color: green;'>Row " + number + "</b> | " + result.message;
                                                 requestData(total, json, number + 1, value, success + 1, failed + 0);
                                             } else {
                                                 $('#p_failed').html(failed);
-                                                var title = "<b style='color: red;'>" + result.title + "</b> | " + result.message;
+                                                var title = "<b style='color: red;'>Row " + number + "</b> | " + result.message;
                                                 //Json Failed
                                                 $.ajax({
                                                     type: "POST",
@@ -793,7 +793,7 @@
                                                     url: "<?= base_url('master/supplier_items/uploadcreateFailed') ?>",
                                                     data: {
                                                         data: json[number - 1],
-                                                        message: result.message
+                                                        message: "Row " + number + " | " + result.message
                                                     },
                                                     cache: false
                                                 });
