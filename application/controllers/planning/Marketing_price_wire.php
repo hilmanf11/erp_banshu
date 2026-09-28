@@ -185,8 +185,8 @@ class Marketing_price_wire extends CI_Controller
                         "ranges" => $value->range,
                         "price" => $price,
                         "duty" => $duty_price,
-                        "insurance" => $insurance_price,
-                        "transport" => $transport_price,
+                        "insurance" => number_format($insurance_price, 4),
+                        "transport" => number_format($transport_price, 4),
                         "total" => $total_price
                     ]);
                 }
