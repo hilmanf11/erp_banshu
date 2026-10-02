@@ -3,6 +3,8 @@
         <tr>
             <th rowspan="2" field="ck" checkbox="true"></th>
             <th rowspan="2" data-options="field:'id',width:200,halign:'center'">LME Code</th>
+            <th rowspan="2" data-options="field:'supplier_id',width:200,halign:'center'">Supplier ID</th>
+            <th rowspan="2" data-options="field:'supplier',width:200,halign:'center'">Supplier Name</th>
             <th rowspan="2" data-options="field:'lme_range',width:150,halign:'center'">LME Range</th>
             <th rowspan="2" data-options="field:'remarks',width:300,halign:'center'">Remarks</th>
             <th colspan="2" data-options="field:'',width:100,halign:'center'"> Created</th>
@@ -26,8 +28,12 @@
         <fieldset style="width:100%; border:1px solid #d0d0d0; margin-bottom: 10px; border-radius:4px; float: left;">
             <legend><b>Form Data</b></legend>
             <div class="fitem">
+                <span style="width:35%; display:inline-block;">Supplier</span>
+                <input style="width:60%;" name="supplier_id" id="supplier" class="easyui-combogrid">
+            </div>
+            <div class="fitem">
                 <span style="width:35%; display:inline-block;">LME Range</span>
-                <input style="width:29%;" name="lme_start" id="lme_start" required="true" class="easyui-numberbox"> - <input style="width:28.5%;" name="lme_end" id="lme_end" required="true" class="easyui-numberbox">
+                <input style="width:29%;" name="lme_start" id="lme_start" class="easyui-numberbox" required> - <input style="width:28.5%;" name="lme_end" id="lme_end" class="easyui-numberbox" required>
             </div>
             <div class="fitem">
                 <span style="width:35%; display:inline-block;">Remarks</span>
@@ -64,9 +70,10 @@
 <script>
     //Add Data
     function add() {
-        $('#dlg_insert').dialog('open');
         url_save = '<?= base_url('planning/lme_ranges/create') ?>';
+        $('#dlg_insert').dialog('open');
         $('#frm_insert').form('clear');
+        $('#supplier').combogrid("enable");
     }
 
     //Edit Data
@@ -75,6 +82,7 @@
         if (row) {
             $('#dlg_insert').dialog('open');
             $('#frm_insert').form('load', row);
+            $('#supplier').combogrid("disable");
             url_save = '<?= base_url('planning/lme_ranges/update') ?>?id=' + btoa(row.id);
         } else {
             toastr.warning("Please select one of the data in the table first!", "Information");
@@ -160,30 +168,57 @@
                             var result = eval('(' + result + ')');
 
                             if (result.theme == "success") {
+                                $('#dlg_insert').dialog('close');
+                                $('#dg').datagrid('reload');
+
                                 toastr.success(result.message, result.title);
                             } else {
                                 toastr.error(result.message, result.title);
                             }
-
-                            $('#dlg_insert').dialog('close');
-                            $('#dg').datagrid('reload');
                         }
                     });
                 }
             }]
         });
 
+        $('#supplier').combogrid({
+            url: "<?= base_url('planning/lme_ranges/readSuppliers') ?>",
+            idField: "number",
+            textField: "name",
+            remoteFilter: true,
+            pagination: true,
+            rownumbers: true,
+            panelWidth: 550,
+            mode: 'remote',
+            columns: [
+                [{
+                        field: "number",
+                        title: "ID",
+                        width: "25%",
+                        halign: "center"
+                    },
+                    {
+                        field: "name",
+                        title: "Name",
+                        width: "70%",
+                        halign: "center"
+                    }
+                ]
+            ]
+        });
         $('#lme_start').numberbox({
             min: 1,
-            max: 99999,
+            // max: 99999,
             opacity: 0,
-            onChange: function (newValue, oldValue) { $('#lme_end').numberbox('clear').numberbox('textbox').focus(); }
+            onChange: function(newValue, oldValue) {
+                $('#lme_end').numberbox('clear').numberbox('textbox').focus();
+            }
         });
         $('#lme_end').numberbox({
             min: 1,
-            max: 99999,
+            // max: 99999,
             opacity: 0,
-            onChange: function (newValue, oldValue) {
+            onChange: function(newValue, oldValue) {
                 if (parseFloat($('#lme_start').numberbox('getValue')) >= newValue) {
                     $('#lme_end').numberbox('clear').numberbox('textbox').focus();
                 }
@@ -215,23 +250,23 @@
 
                             function requestData(total, json, number = 1, value = 0) {
                                 if (value < 100) {
-                                    value = Math.floor((number / total) * 100);
-                                    $('#p_upload').progressbar('setValue', value);
-                                    $('#p_start').html(number);
-                                    $('#p_finish').html(total);
 
                                     $.post('<?= base_url('planning/lme_ranges/uploadCreate') ?>', {
                                         data: json[number - 1]
                                     }, function(note) {
                                         var result = eval('(' + note + ')');
-                                        if (result.theme == "success") {
-                                            var title = "<b style='color: green;'>" + result.title + "</b> | " + result.message;
-                                        } else {
-                                            var title = "<b style='color: red;'>" + result.title + "</b> | " + result.message;
-                                        }
-                                        $("#p_remarks").append(title + "<br>");
+                                        var style = (result.theme == "success") ? "green" : "red";
+                                        value = Math.floor((number / total) * 100);
+
+                                        $('#p_upload').progressbar('setValue', value);
+                                        $('#p_start').html(number);
+                                        $('#p_finish').html(total);
+                                        $("#p_remarks").append("<b style='color: " + style + ";'>" + result.title + "</b> | " + result.message + "<br>");
+
                                         requestData(total, json, number + 1, value);
                                     });
+                                } else {
+                                    $('#dg').datagrid('reload');
                                 }
                             }
                         }

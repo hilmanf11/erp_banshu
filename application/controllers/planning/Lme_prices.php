@@ -114,14 +114,14 @@ class LME_prices extends CI_Controller
         $maker = isset($_POST['maker']) ? base64_decode($_POST['maker']) : "";
         $post = isset($_POST['q']) ? $_POST['q'] : "";
 
-        $this->db->select("DISTINCT TRIM(b.number) AS item")
-            ->from("supplier_items a")->join("item_rm b", "a.item_rm_id = b.id")
-            ->where("b.item_family_id", "P01");
+        $this->db->select("number as item")
+            ->from("item_rm")
+            ->where("item_family_id", "P01");
         if (!empty($maker)) {
-            $this->db->where("a.maker_id", $maker);
+            $this->db->where("maker_id", $maker);
         }
         if (!empty($post)) {
-            $this->db->like("a.item_rm_id", $post);
+            $this->db->like("number", $post);
         }
         $this->db->order_by("item");
         $get = $this->db->get()->result_object();

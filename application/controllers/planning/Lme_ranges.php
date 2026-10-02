@@ -12,9 +12,11 @@ class LME_ranges extends CI_Controller
         $this->load->library('session');
         $this->load->model('crud');
 
-        //Validasi Form
-        $this->form_validation->set_rules('lme_start', 'LME Range', 'required|integer|greater_than_equal_to[1]|less_than_equal_to[99999]');
-        $this->form_validation->set_rules('lme_end', 'LME Range', 'required|integer|greater_than_equal_to[1]|less_than_equal_to[99999]');
+        // //Validasi Form
+        // $this->form_validation->set_rules('lme_start', 'LME Range', 'required|integer|greater_than_equal_to[1]|less_than_equal_to[99999]');
+        // $this->form_validation->set_rules('lme_end', 'LME Range', 'required|integer|greater_than_equal_to[1]|less_than_equal_to[99999]');
+        $this->form_validation->set_rules('lme_start', 'LME Range', 'required|integer|greater_than_equal_to[1]');
+        $this->form_validation->set_rules('lme_end', 'LME Range', 'required|integer|greater_than_equal_to[1]');
     }
 
     public function index()
@@ -37,9 +39,18 @@ class LME_ranges extends CI_Controller
         echo json_encode($lme_ranges);
     }
 
+
+    public function readSuppliers()
+    {
+        $suppliers = $this->crud->reads('suppliers');
+        echo json_encode($suppliers);
+    }
+
+
     public function datatables()
     {
         if ($this->input->post()) {
+            $filters = json_decode($this->input->post('filterRules'));
             $page = $this->input->post('page');
             $rows = $this->input->post('rows');
             $page = isset($page) ? intval($page) : 1;
@@ -47,14 +58,24 @@ class LME_ranges extends CI_Controller
             $offset = ($page - 1) * $rows;
 
             $this->db->select(
-                 "a.*,"
-                ."CONCAT(a.lme_start,'-',a.lme_end) AS lme_range,"
-                ."TRIM(b.name) AS c_by,"
-                ."TRIM(c.name) AS u_by"
-            )->from('lme_ranges a')
+                "a.*,"
+                    . "CONCAT(a.lme_start,'-',a.lme_end) AS lme_range,"
+                    . "TRIM(b.name) AS c_by,"
+                    . "TRIM(c.name) AS u_by,"
+                    . "TRIM(d.name) AS supplier"
+            )
+                ->from('lme_ranges a')
                 ->join('users b', 'a.created_by = b.username', 'left')
                 ->join('users c', 'a.updated_by = c.username', 'left')
-            ->order_by('id');
+                ->join('suppliers d', 'a.supplier_id = d.number', 'left');
+
+            if (@count($filters) > 0) {
+                foreach ($filters as $filter) {
+                    $this->db->like($filter->field, $filter->value);
+                }
+            }
+
+            $this->db->order_by('id');
             $records = $this->db->get()->result_array();
 
             echo json_encode(array('total' => count($records), 'rows' => array_splice($records, $offset, $rows)));
@@ -68,8 +89,9 @@ class LME_ranges extends CI_Controller
                 $post = $this->input->post();
 
                 $exists = $this->db->where('lme_start', $post['lme_start'])->where('lme_end', $post['lme_end'])->get('lme_ranges')->row();
-                if ($exists) { show_error("LME Range already available"); }
-                else {
+                if ($exists) {
+                    show_error("LME Range already available");
+                } else {
                     $send = $this->crud->create('lme_ranges', $post, "LME", "lme_ranges");
                     echo $send;
                 }
@@ -91,9 +113,10 @@ class LME_ranges extends CI_Controller
                 ->where('lme_start', $post['lme_start'])
                 ->where('lme_end', $post['lme_end'])
                 ->where('id !=', $id)
-            ->get('lme_ranges')->row();
-            if ($exists) { show_error("LME Range already available"); }
-            else {
+                ->get('lme_ranges')->row();
+            if ($exists) {
+                show_error("LME Range already available");
+            } else {
                 $send = $this->crud->update('lme_ranges', ["id" => $id], $post);
                 echo $send;
             }
@@ -121,13 +144,15 @@ class LME_ranges extends CI_Controller
         $total_row = $data->rowcount($sheet_index = 0);
 
         for ($i = 3; $i <= $total_row; $i++) {
-            $start = intval($data->val($i, 1));
-            $end = intval($data->val($i, 2));
+            $supplier_id = $data->val($i, 1);
+            $start = intval($data->val($i, 2));
+            $end = intval($data->val($i, 3));
             if ($start != 0 && $end != 0) {
                 $datas[] = array(
+                    'supplier_id' => $supplier_id,
                     'lme_start' => $start,
                     'lme_end' => $end,
-                    'remarks' => $data->val($i, 3)
+                    'remarks' => $data->val($i, 4)
                 );
             }
         }
@@ -147,6 +172,7 @@ class LME_ranges extends CI_Controller
             $end = intval($data['lme_end']);
 
             $datas = $this->crud->read('lme_ranges', [], [
+                "supplier_id" => $data['supplier_id'],
                 "lme_start" => $start,
                 "lme_end" => $end
             ]);
@@ -154,16 +180,19 @@ class LME_ranges extends CI_Controller
             if ($start <= 0) {
                 $result['title'] = 'Less';
                 $result['message'] = "LME Range Start $start less than 1";
-            } elseif ($end > 99999) {
-                $result['title'] = 'More';
-                $result['message'] = "LME Range End $end more than 99999";
-            } elseif (!empty($datas)) {
+            }
+            // elseif ($end > 99999) {
+            //     $result['title'] = 'More';
+            //     $result['message'] = "LME Range End $end more than 99999";
+            // } 
+            elseif (!empty($datas)) {
                 $result['title'] = 'Duplicated';
                 $result['message'] = "LME Range $start-$end has been Duplicated";
             }
 
-            if (!empty($result['title'])) { echo json_encode($result); }
-            else {
+            if (!empty($result['title'])) {
+                echo json_encode($result);
+            } else {
                 $send = $this->crud->create('lme_ranges', $data, "LME", "LME");
                 echo $send;
             }
@@ -186,8 +215,9 @@ class LME_ranges extends CI_Controller
         $this->db->select('TRIM(name) AS name')->from('users')->where('username', $this->session->username);
         $fullname = $this->db->get()->row()->name;
 
-        $this->db->select('*');
-        $this->db->from('lme_ranges');
+        $this->db->select('a.*, b.name AS supplier_name');
+        $this->db->from('lme_ranges a');
+        $this->db->join('suppliers b', 'a.supplier_id = b.number', 'left');
         $this->db->order_by('id', 'asc');
 
         $records = $this->db->get()->result_array();
@@ -217,6 +247,8 @@ class LME_ranges extends CI_Controller
         <table id="lme_ranges" border="1">
             <tr>
                 <th width="20">No</th>
+                <th>Supplier ID</th>
+                <th>Supplier Name</th>
                 <th>LME Range</th>
                 <th>Remarks</th>
             </tr>';
@@ -224,7 +256,9 @@ class LME_ranges extends CI_Controller
         foreach ($records as $data) {
             $html .= '  <tr>
                 <td>' . $no . '</td>
-                <td>' . $data['lme_start'].'-'.$data['lme_end'] . '</td>
+                <td>' . $data['supplier_id'] . '</td>
+                <td>' . $data['supplier_name'] . '</td>
+                <td>' . $data['lme_start'] . '-' . $data['lme_end'] . '</td>
                 <td>' . $data['remarks'] . '</td>
             </tr>';
             $no++;
