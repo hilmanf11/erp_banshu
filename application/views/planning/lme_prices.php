@@ -10,7 +10,7 @@
             <th rowspan="2" data-options="field:'id',width:'100',halign:'center',align:'center',formatter:btnHistory">History</th>
             <th rowspan="2" data-options="field:'currency',width:'150',halign:'center'"><span id="hdr_currency">Original Currency</span></th>
             <th rowspan="2" data-options="field:'uom',width:'150',halign:'center'">UoM</th>
-            <th colspan="<?= $colspan ?>" data-options="field:'', halign:'center'" style="text-align:center;"><span id="hdr_lme_range">Auto after type selected</span></th>
+            <th colspan="<?= $colspan ?>" data-options="field:'', halign:'center'" style="text-align:center;"><span id="hdr_lme_range"><?= $type_label ?></span></th>
             <th rowspan="2" data-options="field:'u_date',width:'150',halign:'center',align:'center'">Last Date</th>
             <th rowspan="2" data-options="field:'u_by',width:'100',halign:'center'">By</th>
         </tr>
@@ -147,6 +147,8 @@
 <iframe id="printout" src="" style="width: 100%;" hidden></iframe>
 
 <script>
+    var colsInitial = <?= json_encode(array_values($cols)) ?>;
+    var typeLabelInitial = '<?= $type_label ?>';
     var url_supp = '<?= base_url('planning/lme_prices/readItemsSupplier'); ?>';
     var url_patno = '<?= base_url('planning/lme_prices/readPartNoBEI'); ?>';
     var url_range = '<?= base_url('planning/lme_prices/readLMERanges'); ?>';
@@ -172,17 +174,12 @@
             "&f_exchange_rate=" + window.btoa(f_exchange_rate) +
             "&f_display=" + window.btoa(f_display);
 
-        $('#dg').datagrid({
-            url: '<?= base_url('planning/lme_prices/datatables') ?>' + url
-        });
-
         var hdrTitle = 'Auto after type selected';
         if (f_type == 'SHMET') {
             hdrTitle = 'TYPE : SHMET';
         } else if (f_type == 'LME') {
             hdrTitle = 'TYPE : LME';
         }
-        $('#hdr_lme_range').text(hdrTitle);
 
         var currencyTitle = 'Original Currency';
         if (f_display == 'USD CURRENCY') {
@@ -190,8 +187,66 @@
         }
         $('#hdr_currency').text(currencyTitle);
 
-        $("#printout").contents().find('html').html("<center><br><br><br><b style='font-size:20px;'>Please Wait...</b></center>");
-        $("#printout").attr('src', '<?= base_url('planning/lme_prices/print') ?>' + url);
+        // Get dynamic headers first
+        $.ajax({
+            url: '<?= base_url('planning/lme_prices/getHeaders') ?>?f_type=' + window.btoa(f_type),
+            type: 'GET',
+            dataType: 'json',
+            success: function(headers) {
+                $('#hdr_lme_range').text(hdrTitle);
+                $('#hdr_currency').text(currencyTitle);
+
+                // Remove old table and build fresh one
+                $('#dg').remove();
+                var lmeTh = '';
+                for (var i = 0; i < headers.cols.length; i++) {
+                    lmeTh += '<th data-options="field:\'' + headers.cols[i].field + '\',width:\'' + headers.cols[i].width + '\',halign:\'' + headers.cols[i].halign + '\',align:\'' + headers.cols[i].align + '\'">' + headers.cols[i].title + '</th>';
+                }
+
+                var html = '<table id="dg" class="easyui-datagrid" style="width:100%;" toolbar="#toolbar">' +
+                    '<thead><tr>' +
+                    '<th rowspan="2" data-options="field:\'ck\',checkbox:true"></th>' +
+                    '<th rowspan="2" data-options="field:\'plant_id\',width:\'100\',halign:\'center\'">Plant ID</th>' +
+                    '<th rowspan="2" data-options="field:\'part_no\',width:\'100\',halign:\'center\'">Item ID</th>' +
+                    '<th rowspan="2" data-options="field:\'supplier\',width:\'200\',halign:\'center\'">Supplier</th>' +
+                    '<th rowspan="2" data-options="field:\'maker_name\',width:\'300\',halign:\'center\'">WIRE Name Maker</th>' +
+                    '<th rowspan="2" data-options="field:\'part_no\',width:\'100\',halign:\'center\'">Part No</th>' +
+                    '<th rowspan="2" data-options="field:\'id\',width:\'100\',halign:\'center\',align:\'center\',formatter:btnHistory">History</th>' +
+                    '<th rowspan="2" data-options="field:\'currency\',width:\'150\',halign:\'center\'"><span id="hdr_currency">' + currencyTitle + '</span></th>' +
+                    '<th rowspan="2" data-options="field:\'uom\',width:\'150\',halign:\'center\'">UoM</th>' +
+                    '<th colspan="' + headers.colspan + '" data-options="field:\'\', halign:\'center\'" style="text-align:center;"><span id="hdr_lme_range">' + hdrTitle + '</span></th>' +
+                    '<th rowspan="2" data-options="field:\'u_date\',width:\'150\',halign:\'center\',align:\'center\'">Last Date</th>' +
+                    '<th rowspan="2" data-options="field:\'u_by\',width:\'100\',halign:\'center\'">By</th>' +
+                    '</tr><tr>' + lmeTh + '</tr></thead></table>';
+
+                $('#toolbar').after(html);
+
+                $('#dg').datagrid({
+                    url: '<?= base_url('planning/lme_prices/datatables') ?>' + url,
+                    clientPaging: false,
+                    remoteFilter: true,
+                    rownumbers: true,
+                    pagination: true,
+                    fit: true,
+                    onLoadSuccess: function() {
+                        $('.easyui-linkbutton').linkbutton();
+                    }
+                });
+
+                $("#printout").contents().find('html').html("<center><br><br><br><b style='font-size:20px;'>Please Wait...</b></center>");
+                $("#printout").attr('src', '<?= base_url('planning/lme_prices/print') ?>' + url);
+            },
+            error: function() {
+                // Fallback: reload data only
+                $('#hdr_lme_range').text(hdrTitle);
+                $('#hdr_currency').text(currencyTitle);
+                $('#dg').datagrid({
+                    url: '<?= base_url('planning/lme_prices/datatables') ?>' + url
+                });
+                $("#printout").contents().find('html').html("<center><br><br><br><b style='font-size:20px;'>Please Wait...</b></center>");
+                $("#printout").attr('src', '<?= base_url('planning/lme_prices/print') ?>' + url);
+            }
+        });
     }
 
     //Add Data

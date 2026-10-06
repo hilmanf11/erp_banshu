@@ -20,6 +20,7 @@ class LME_prices extends CI_Controller
         } elseif ($this->checkuserAccess($this->id_menu()) > 0) {
             $data['button'] = $this->getbutton($this->id_menu());
             $data['cols'] = [];
+            $data['type_label'] = 'Auto after type selected';
 
             $f_type = $this->input->get('f_type');
 
@@ -27,6 +28,7 @@ class LME_prices extends CI_Controller
                 ->from('lme_ranges');
             if (!empty($f_type)) {
                 $this->db->where('type', $f_type);
+                $data['type_label'] = 'TYPE : ' . strtoupper($f_type);
             }
             $this->db->order_by('CAST(lme_start AS UNSIGNED)', 'ASC');
             foreach ($this->db->get()->result_object() as $key => $value) {
@@ -237,6 +239,33 @@ class LME_prices extends CI_Controller
         }
 
         echo json_encode($result);
+    }
+
+    public function getHeaders()
+    {
+        $f_type = base64_decode($this->input->get('f_type'));
+
+        $this->db->select("id, CONCAT(lme_start,'-',lme_end) AS ranges")
+            ->from('lme_ranges');
+        if (!empty($f_type)) {
+            $this->db->where('type', $f_type);
+        }
+        $this->db->order_by('CAST(lme_start AS UNSIGNED)', 'ASC');
+        $get = $this->db->get()->result_object();
+
+        $cols = [];
+        foreach ($get as $key => $value) {
+            $cols[] = [
+                'field' => 'lme' . ($key + 1),
+                'title' => $value->ranges,
+                'width' => '100',
+                'halign' => 'center',
+                'align' => 'right'
+            ];
+        }
+        $colspan = count($cols);
+
+        echo json_encode(['cols' => $cols, 'colspan' => $colspan]);
     }
 
     public function datatables()
@@ -593,8 +622,21 @@ class LME_prices extends CI_Controller
             header("Content-Disposition: attachment; filename=LME Range $format.xls");
         }
 
+        $f_lme_range = base64_decode($this->input->get('f_lme_range'));
+        $f_supplier = base64_decode($this->input->get('f_supplier'));
+        $f_part_no = base64_decode($this->input->get('f_part_no'));
+        $f_maker = base64_decode($this->input->get('f_maker'));
+        $f_plant = base64_decode($this->input->get('f_plant'));
+        $f_type = base64_decode($this->input->get('f_type'));
+        $f_exchange_rate = base64_decode($this->input->get('f_exchange_rate'));
+        $f_display = base64_decode($this->input->get('f_display'));
+
         $get = $this->db->select("id, CONCAT(lme_start,'-',lme_end) AS ranges")
-            ->from("lme_ranges")->order_by("id")->get()->result_object();
+            ->from("lme_ranges");
+        if (!empty($f_type)) {
+            $get = $get->where('type', $f_type);
+        }
+        $get = $get->order_by('CAST(lme_start AS UNSIGNED)', 'ASC')->get()->result_object();
         $ranges = [];
         $cols = "";
         $ths = "";
@@ -612,15 +654,6 @@ class LME_prices extends CI_Controller
 
         $this->db->select('TRIM(name) AS name')->from('users')->where('username', $this->session->username);
         $fullname = $this->db->get()->row()->name;
-
-        $f_lme_range = base64_decode($this->input->get('f_lme_range'));
-        $f_supplier = base64_decode($this->input->get('f_supplier'));
-        $f_part_no = base64_decode($this->input->get('f_part_no'));
-        $f_maker = base64_decode($this->input->get('f_maker'));
-        $f_plant = base64_decode($this->input->get('f_plant'));
-        $f_type = base64_decode($this->input->get('f_type'));
-        $f_exchange_rate = base64_decode($this->input->get('f_exchange_rate'));
-        $f_display = base64_decode($this->input->get('f_display'));
         $this->db->select(
             "TRIM(a.id) AS id,"
                 . "TRIM(a.data_lme) AS prices,"
@@ -659,6 +692,9 @@ class LME_prices extends CI_Controller
         }
         if (!empty($f_plant)) {
             $this->db->where("a.plant_id", $f_plant);
+        }
+        if (!empty($f_type)) {
+            $this->db->where("a.type", $f_type);
         }
         $this->db->order_by('id');
 
