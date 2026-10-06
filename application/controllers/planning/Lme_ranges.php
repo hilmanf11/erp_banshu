@@ -1,6 +1,10 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 
+require(APPPATH . 'libraries/excel/vendor/autoload.php');
+
+use PhpOffice\PhpSpreadsheet\IOFactory;
+
 class LME_ranges extends CI_Controller
 {
     public function __construct()
@@ -71,7 +75,11 @@ class LME_ranges extends CI_Controller
 
             if (@count($filters) > 0) {
                 foreach ($filters as $filter) {
-                    $this->db->like($filter->field, $filter->value);
+                    if ($filter->field == "lme_range") {
+                        $this->db->like("CONCAT(a.lme_start,'-',a.lme_end)", $filter->value);
+                    } else {
+                        $this->db->like("a." . $filter->field, $filter->value);
+                    }
                 }
             }
 
@@ -135,24 +143,74 @@ class LME_ranges extends CI_Controller
     public function upload()
     {
         error_reporting(0);
-        require_once 'assets/vendors/excel_reader2.php';
+
+        // Check if file was uploaded
+        if (!isset($_FILES['file_upload']) || $_FILES['file_upload']['error'] !== UPLOAD_ERR_OK) {
+            echo json_encode(['error' => 'No file uploaded']);
+            exit;
+        }
+
         $target = basename($_FILES['file_upload']['name']);
-        move_uploaded_file($_FILES['file_upload']['tmp_name'], $target);
-        chmod($_FILES['file_upload']['name'], 0777);
-        $file = $_FILES['file_upload']['name'];
-        $data = new Spreadsheet_Excel_Reader($file, false);
-        $total_row = $data->rowcount($sheet_index = 0);
+        $tmp_name = $_FILES['file_upload']['tmp_name'];
+
+        // Validate file type (.xls or .xlsx supported by PhpSpreadsheet)
+        $ext = strtolower(pathinfo($target, PATHINFO_EXTENSION));
+        if (!in_array($ext, ['xls', 'xlsx'])) {
+            echo json_encode(['error' => 'Only .xls or .xlsx files are supported']);
+            exit;
+        }
+
+        // Move uploaded file
+        if (!move_uploaded_file($tmp_name, $target)) {
+            echo json_encode(['error' => 'Failed to move uploaded file']);
+            exit;
+        }
+
+        chmod($target, 0777);
+
+        // Read Excel file using PhpSpreadsheet (supports both .xls and .xlsx)
+        try {
+            $spreadsheet = IOFactory::load($target);
+        } catch (\Exception $e) {
+            echo json_encode(['error' => 'Failed to read Excel file: ' . $e->getMessage()]);
+            exit;
+        }
+
+        $sheet = $spreadsheet->getActiveSheet();
+        $total_row = $sheet->getHighestRow();
+
+        // Check if file has data
+        if ($total_row < 3) {
+            echo json_encode(['error' => 'Excel file has no data (expected rows starting from 3)']);
+            exit;
+        }
+
+        $datas = [];
 
         for ($i = 3; $i <= $total_row; $i++) {
-            $supplier_id = $data->val($i, 1);
-            $start = intval($data->val($i, 2));
-            $end = intval($data->val($i, 3));
+            // Read values - PhpSpreadsheet uses 1-based indexing
+            $supplier_id = $sheet->getCellByColumnAndRow(1, $i)->getValue();
+            $start = $sheet->getCellByColumnAndRow(2, $i)->getValue();
+            $end = $sheet->getCellByColumnAndRow(3, $i)->getValue();
+
+            // Validate that start and end are numeric and not zero
+            if (!is_numeric($start) || !is_numeric($end)) {
+                continue; // Skip rows with invalid data
+            }
+
+            $start = intval($start);
+            $end = intval($end);
+
             if ($start != 0 && $end != 0) {
+                $remarks = $sheet->getCellByColumnAndRow(4, $i)->getValue();
+                $type = $sheet->getCellByColumnAndRow(5, $i)->getValue();
+
                 $datas[] = array(
                     'supplier_id' => $supplier_id,
                     'lme_start' => $start,
                     'lme_end' => $end,
-                    'remarks' => $data->val($i, 4)
+                    'remarks' => $remarks,
+                    'type' => $type
                 );
             }
         }
@@ -160,7 +218,10 @@ class LME_ranges extends CI_Controller
         $datas['total'] = count($datas);
         echo json_encode($datas);
 
-        unlink($_FILES['file_upload']['name']);
+        // Clean up uploaded file
+        if (file_exists($target)) {
+            unlink($target);
+        }
     }
 
     public function uploadcreate()
@@ -170,22 +231,30 @@ class LME_ranges extends CI_Controller
             $data = $this->input->post('data');
             $start = intval($data['lme_start']);
             $end = intval($data['lme_end']);
+            $suppliers = $this->crud->read('suppliers', [], ['number' => $data['supplier_id']]);
 
             $datas = $this->crud->read('lme_ranges', [], [
                 "supplier_id" => $data['supplier_id'],
                 "lme_start" => $start,
-                "lme_end" => $end
+                "lme_end" => $end,
+                "type" => $data['type']
             ]);
 
             if ($start <= 0) {
                 $result['title'] = 'Less';
                 $result['message'] = "LME Range Start $start less than 1";
+            } elseif (empty($suppliers)) {
+                $result['title'] = 'Undefine';
+                $result['message'] = "Supplier Code " . $data['supplier_id'] . " not found!";
             }
             // elseif ($end > 99999) {
             //     $result['title'] = 'More';
             //     $result['message'] = "LME Range End $end more than 99999";
             // } 
-            elseif (!empty($datas)) {
+            elseif (empty($data['type']) || ! in_array($data['type'], ['LME', 'SHMET'])) {
+                $result['title'] = 'Undefine';
+                $result['message'] = "Type " . $data['type'] . " not found!";
+            } elseif (!empty($datas)) {
                 $result['title'] = 'Duplicated';
                 $result['message'] = "LME Range $start-$end has been Duplicated";
             }
@@ -251,6 +320,7 @@ class LME_ranges extends CI_Controller
                 <th>Supplier Name</th>
                 <th>LME Range</th>
                 <th>Remarks</th>
+                <th>Type</th>
             </tr>';
         $no = 1;
         foreach ($records as $data) {
@@ -260,6 +330,7 @@ class LME_ranges extends CI_Controller
                 <td>' . $data['supplier_name'] . '</td>
                 <td>' . $data['lme_start'] . '-' . $data['lme_end'] . '</td>
                 <td>' . $data['remarks'] . '</td>
+                <td>' . $data['type'] . '</td>
             </tr>';
             $no++;
         }

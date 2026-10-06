@@ -8,7 +8,9 @@
             <th rowspan="2" data-options="field:'maker_name',width:'300',halign:'center'">WIRE Name Maker</th>
             <th rowspan="2" data-options="field:'part_no',width:'100',halign:'center'">Part No</th>
             <th rowspan="2" data-options="field:'id',width:'100',halign:'center',align:'center',formatter:btnHistory">History</th>
-            <th colspan="<?= $colspan ?>" data-options="field:''">Unit Packing MOQ Price & LME Range (USD/MTR)</th>
+            <th rowspan="2" data-options="field:'currency',width:'150',halign:'center'"><span id="hdr_currency">Original Currency</span></th>
+            <th rowspan="2" data-options="field:'uom',width:'150',halign:'center'">UoM</th>
+            <th colspan="<?= $colspan ?>" data-options="field:'', halign:'center'" style="text-align:center;"><span id="hdr_lme_range">Auto after type selected</span></th>
             <th rowspan="2" data-options="field:'u_date',width:'150',halign:'center',align:'center'">Last Date</th>
             <th rowspan="2" data-options="field:'u_by',width:'100',halign:'center'">By</th>
         </tr>
@@ -51,6 +53,27 @@
                 <input style="width:60%;" name="f_part_no" id="f_part_no" class="easyui-combogrid">
             </div>
         </div>
+        <div style="width: 30%; float: left;">
+            <div class="fitem">
+                <span style="width:35%; display:inline-block;">Type</span>
+                <select style="width:60%;" name="f_type" id="f_type" panelHeight="auto" class="easyui-combobox">
+                    <option value="LME">LME</option>
+                    <option value="SHMET">SHMET</option>
+                </select>
+            </div>
+            <div class="fitem">
+                <span style="width:35%; display:inline-block;">Exchange Rate</span>
+                <input style="width:60%;" name="f_exchange_rate" id="f_exchange_rate" class="easyui-combogrid">
+            </div>
+            <div class="fitem">
+                <span style="width:35%; display:inline-block;">Display</span>
+                <select style="width:60%;" name="f_display" id="f_display" panelHeight="auto" class="easyui-combobox">
+                    <option value="">All</option>
+                    <option value="ORIGINAL CURRENCY">ORIGINAL CURRENCY</option>
+                    <option value="USD CURRENCY">USD CURRENCY</option>
+                </select>
+            </div>
+        </div>
     </fieldset>
     <?= $button ?>
 </div>
@@ -75,6 +98,17 @@
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Supplier</span>
                     <input style="width:60%;" name="supp_id" id="supp_id" class="easyui-combogrid">
+                </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Type</span>
+                    <select style="width:60%;" name="type" id="type" required="" panelHeight="auto" class="easyui-combobox">
+                        <option value="LME">LME</option>
+                        <option value="SHMET">SHMET</option>
+                    </select>
+                </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Currency Original</span>
+                    <input style="width:60%;" name="currency" id="currency" required="" class="easyui-combogrid">
                 </div>
             </fieldset>
         </form><br>
@@ -125,16 +159,36 @@
         var f_part_no = $("#f_part_no").combogrid('getValue');
         var f_maker = $("#f_maker").combogrid('getValue');
         var f_plant = $("#f_plant").combogrid('getValue');
+        var f_type = $("#f_type").combobox('getValue');
+        var f_exchange_rate = $("#f_exchange_rate").combogrid('getValue');
+        var f_display = $("#f_display").combobox('getValue');
 
         var url = "?f_lme_range=" + window.btoa(f_lme_range) +
             "&f_supp_id=" + window.btoa(f_supp_id) +
             "&f_part_no=" + window.btoa(f_part_no) +
             "&f_maker=" + window.btoa(f_maker) +
-            "&f_plant=" + window.btoa(f_plant);
+            "&f_plant=" + window.btoa(f_plant) +
+            "&f_type=" + window.btoa(f_type) +
+            "&f_exchange_rate=" + window.btoa(f_exchange_rate) +
+            "&f_display=" + window.btoa(f_display);
 
         $('#dg').datagrid({
             url: '<?= base_url('planning/lme_prices/datatables') ?>' + url
         });
+
+        var hdrTitle = 'Auto after type selected';
+        if (f_type == 'SHMET') {
+            hdrTitle = 'TYPE : SHMET';
+        } else if (f_type == 'LME') {
+            hdrTitle = 'TYPE : LME';
+        }
+        $('#hdr_lme_range').text(hdrTitle);
+
+        var currencyTitle = 'Original Currency';
+        if (f_display == 'USD CURRENCY') {
+            currencyTitle = 'USD CURRENCY';
+        }
+        $('#hdr_currency').text(currencyTitle);
 
         $("#printout").contents().find('html').html("<center><br><br><br><b style='font-size:20px;'>Please Wait...</b></center>");
         $("#printout").attr('src', '<?= base_url('planning/lme_prices/print') ?>' + url);
@@ -149,6 +203,9 @@
         $('#supp_id').combogrid('disable');
         $('#bnt_add').linkbutton('disable');
         $('#bnt_del').linkbutton('disable');
+        $('#supp_id').combogrid('disable');
+        $('#type').combobox('enable');
+        $('#currency').combogrid('enable');
         $('#dg_insert').datagrid('loadData', []);
         $('#dlg_insert').dialog('open');
         $('#frm_insert').form('clear');
@@ -158,11 +215,15 @@
     function update() {
         var row = $('#dg').datagrid('getSelected');
         if (row) {
+            $('#frm_insert').form('clear');
+            $('#dlg_insert').dialog('open');
             $('#maker').combogrid('disable').combogrid('grid').datagrid('reload');
             $('#plant').combogrid('disable').combogrid('grid').datagrid('reload');
             $('#part_no').combogrid('disable').combogrid('grid').datagrid('reload');
             $('#supp_id').combogrid('disable').combogrid('grid').datagrid('reload');
             $('#plant').combogrid('disable').combogrid('grid').datagrid('reload');
+            $('#type').combobox('disable');
+            $('#currency').combogrid('disable').combogrid('grid').datagrid('reload');
             $('#maker').combogrid({
                 onLoadSuccess: function(data) {
                     $('#maker').combogrid('setValue', row.maker_code);
@@ -183,11 +244,20 @@
                     $('#supp_id').combogrid('setValue', row.ven_id);
                 }
             });
+            $('#type').combobox({
+                onLoadSuccess: function(data) {
+                    $('#type').combobox('setValue', row.type);
+                }
+            });
+            $('#currency').combogrid({
+                onLoadSuccess: function(data) {
+                    $('#currency').combogrid('setValue', row.currency);
+                }
+            });
             $('#dg_insert').datagrid('loadData', JSON.parse(row.prices));
             $('#bnt_add').linkbutton('enable');
             $('#bnt_del').linkbutton('enable');
             // $('#frm_insert').form('load', row);
-            $('#dlg_insert').dialog('open');
             url_save = '<?= base_url('planning/lme_prices/update') ?>?id=' + btoa(row.id);
         } else {
             toastr.warning("Please select one of the data in the table first!", "Information");
@@ -246,12 +316,18 @@
         var f_part_no = $("#f_part_no").combogrid('getValue');
         var f_maker = $("#f_maker").combogrid('getValue');
         var f_plant = $("#f_plant").combogrid('getValue');
+        var f_type = $("#f_type").combobox('getValue');
+        var f_exchange_rate = $("#f_exchange_rate").combogrid('getValue');
+        var f_display = $("#f_display").combobox('getValue');
 
         var url = "?f_lme_range=" + window.btoa(f_lme_range) +
             "&f_supp_id=" + window.btoa(f_supp_id) +
             "&f_part_no=" + window.btoa(f_part_no) +
             "&f_maker=" + window.btoa(f_maker) +
-            "&f_plant=" + window.btoa(f_plant);
+            "&f_plant=" + window.btoa(f_plant) +
+            "&f_type=" + window.btoa(f_type) +
+            "&f_exchange_rate=" + window.btoa(f_exchange_rate) +
+            "&f_display=" + window.btoa(f_display);
         window.location.assign('<?= base_url('planning/lme_prices/print/excel') ?>' + url);
     }
 
@@ -288,12 +364,27 @@
     }
 
     function viewHistory(id) {
+        var f_type = $("#f_type").combobox('getValue');
+        var f_exchange_rate = $("#f_exchange_rate").combogrid('getValue');
+        var f_display = $("#f_display").combobox('getValue');
+        var hdrTitle = 'Auto after type selected';
+        if (f_type == 'SHMET') {
+            hdrTitle = 'TYPE : SHMET';
+        } else if (f_type == 'LME') {
+            hdrTitle = 'TYPE : LME';
+        }
+        var currencyTitle = 'Original Currency';
+        if (f_display == 'USD CURRENCY') {
+            currencyTitle = 'USD CURRENCY';
+        }
         $.messager.progress({
             title: 'Please Wait',
             msg: 'Loading...'
         });
         $.post('<?= base_url('planning/lme_prices/historys') ?>', {
-            id: id
+            id: id,
+            f_exchange_rate: window.btoa(f_exchange_rate),
+            f_display: window.btoa(f_display)
         }, function(result, status) {
             $.messager.progress('close');
             if (result.span.length != 0) {
@@ -339,7 +430,21 @@
                                 rowspan: 2
                             },
                             {
-                                title: 'Unit Packing MOQ Price  & LME Range (USD/MTR)',
+                                field: 'currency',
+                                title: currencyTitle,
+                                width: '150',
+                                halign: 'center',
+                                rowspan: 2
+                            },
+                            {
+                                field: 'uom',
+                                title: 'UoM',
+                                width: '100',
+                                halign: 'center',
+                                rowspan: 2
+                            },
+                            {
+                                title: hdrTitle,
                                 width: '100',
                                 halign: 'center',
                                 colspan: result.span.length
@@ -683,6 +788,96 @@
                 $('#bnt_del').linkbutton('enable');
                 $('#dg_insert').datagrid('loadData', []);
             }
+        });
+
+        $('#currency').combogrid({
+            url: "<?= base_url('master/currencies/reads') ?>",
+            idField: "name",
+            textField: "name",
+            remoteFilter: true,
+            pagination: true,
+            rownumbers: true,
+            panelWidth: 550,
+            mode: 'remote',
+            columns: [
+                [{
+                        field: "name",
+                        title: "Code",
+                        width: "25%",
+                        halign: "center"
+                    },
+                    {
+                        field: "description",
+                        title: "Name",
+                        width: "70%",
+                        halign: "center"
+                    }
+                ]
+            ]
+        });
+
+        $('#f_exchange_rate').combogrid({
+            url: "<?= base_url('planning/lme_prices/readExchangeRates') ?>",
+            panelWidth: 700,
+            idField: "middle",
+            textField: "middle",
+            mode: 'remote',
+            fitColumns: true,
+            prompt: "Select Exchange Rate",
+            icons: [{
+                iconCls: 'icon-clear',
+                handler: function(e) {
+                    $(e.data.target).combogrid('clear').combogrid('textbox').focus();
+                }
+            }],
+            columns: [
+                [{
+                        field: "start_date",
+                        title: "Start Date",
+                        halign: "center",
+                        width: "15%"
+                    },
+                    {
+                        field: "end_date",
+                        title: "End Date",
+                        halign: "center",
+                        width: "15%"
+                    },
+                    {
+                        field: "currency_from",
+                        title: "Currency From",
+                        halign: "center",
+                        width: "15%"
+                    },
+                    {
+                        field: "currency_to",
+                        title: "Currency To",
+                        halign: "center",
+                        width: "15%"
+                    },
+                    {
+                        field: "selling",
+                        title: "Selling",
+                        halign: "center",
+                        align: "right",
+                        width: "15%"
+                    },
+                    {
+                        field: "buying",
+                        title: "Buying",
+                        halign: "center",
+                        align: "right",
+                        width: "15%"
+                    },
+                    {
+                        field: "middle",
+                        title: "Middle",
+                        halign: "center",
+                        align: "right",
+                        width: "15%"
+                    }
+                ]
+            ]
         });
 
         var idx = -1;

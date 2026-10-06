@@ -21,8 +21,14 @@ class LME_prices extends CI_Controller
             $data['button'] = $this->getbutton($this->id_menu());
             $data['cols'] = [];
 
+            $f_type = $this->input->get('f_type');
+
             $this->db->select("id, CONCAT(lme_start,'-',lme_end) AS ranges")
-                ->from('lme_ranges')->order_by('id');
+                ->from('lme_ranges');
+            if (!empty($f_type)) {
+                $this->db->where('type', $f_type);
+            }
+            $this->db->order_by('CAST(lme_start AS UNSIGNED)', 'ASC');
             foreach ($this->db->get()->result_object() as $key => $value) {
                 $data['cols']['lme' . ($key + 1)] = $value->ranges;
             }
@@ -76,14 +82,14 @@ class LME_prices extends CI_Controller
     {
         $post = isset($_POST['q']) ? $_POST['q'] : "";
 
-        $this->db->select("DISTINCT TRIM(a.maker_id) AS code, TRIM(c.name) AS maker")
+        $this->db->select("DISTINCT TRIM(c.number) AS code, TRIM(c.name) AS maker")
             ->from("supplier_items a")
             ->join("item_rm b", "a.item_rm_id = b.id")
             ->join("makers c", "a.maker_id = c.id")
             ->where("b.item_family_id", "P01");
         if (!empty($post)) {
             $this->db->group_start()
-                ->like("a.maker_id", $post)
+                ->like("c.number", $post)
                 ->or_like("c.name", $post)
                 ->group_end();
         }
@@ -117,9 +123,9 @@ class LME_prices extends CI_Controller
         $this->db->select("number as item")
             ->from("item_rm")
             ->where("item_family_id", "P01");
-        if (!empty($maker)) {
-            $this->db->where("maker_id", $maker);
-        }
+        // if (!empty($maker)) {
+        //     $this->db->where("maker_id", $maker);
+        // }
         if (!empty($post)) {
             $this->db->like("number", $post);
         }
@@ -151,9 +157,22 @@ class LME_prices extends CI_Controller
         echo json_encode($get);
     }
 
+    public function readExchangeRates()
+    {
+        $today = date('Y-m-d');
+        $this->db->select("*")
+            ->from('exchange_rates');
+        // ->where('start_date <=', $today)
+        // ->where('end_date >=', $today);
+        $get = $this->db->get()->result_object();
+        echo json_encode($get);
+    }
+
     public function historys()
     {
-        $id = base64_decode($_POST['id']);
+        $id = base64_decode($this->input->post('id'));
+        $f_exchange_rate = base64_decode($this->input->post('f_exchange_rate'));
+        $f_display = base64_decode($this->input->post('f_display'));
         $result = ['span' => [], 'data' => []];
         $ranges = [];
 
@@ -161,7 +180,10 @@ class LME_prices extends CI_Controller
             "TRIM(a.id) AS id,"
                 . "TRIM(a.data_lme) AS prices,"
                 . "TRIM(a.maker_code) AS maker_code,"
+                . "TRIM(a.currency) AS currency,"
                 . "TRIM(a.ven_id) AS ven_id,"
+                . "TRIM(a.type) AS type,"
+                . "TRIM(g.uom) AS uom,"
                 . "TRIM(a.item_id) AS part_no,"
                 . "COALESCE(TRIM(d.name), '') AS supplier,"
                 . "COALESCE(TRIM(f.name), '') AS maker_name,"
@@ -204,7 +226,13 @@ class LME_prices extends CI_Controller
             $range = json_decode($column['prices'], true);
             foreach ($ranges as $key => $value) {
                 $idx = array_search($value, array_column($range, 'range'));
-                $result['data'][$index]['lme_' . $key] = (gettype($idx) == 'boolean') ? 0 : $range[$idx]['price'];
+                $price = (gettype($idx) == 'boolean') ? 0 : $range[$idx]['price'];
+
+                if (!empty($f_display) && $f_display == 'USD CURRENCY' && !empty($f_exchange_rate) && $column['currency'] != 'USD') {
+                    $price = $price * floatval($f_exchange_rate);
+                }
+
+                $result['data'][$index]['lme_' . $key] = round($price, 4);
             }
         }
 
@@ -224,9 +252,16 @@ class LME_prices extends CI_Controller
         $f_part_no = base64_decode($this->input->get('f_part_no'));
         $f_maker = base64_decode($this->input->get('f_maker'));
         $f_plant = base64_decode($this->input->get('f_plant'));
+        $f_type = base64_decode($this->input->get('f_type'));
+        $f_exchange_rate = base64_decode($this->input->get('f_exchange_rate'));
+        $f_display = base64_decode($this->input->get('f_display'));
 
         $get = $this->db->select("id, CONCAT(lme_start,'-',lme_end) AS ranges")
-            ->from("lme_ranges")->order_by("id")->get()->result_object();
+            ->from("lme_ranges");
+        if (!empty($f_type)) {
+            $this->db->where("type", $f_type);
+        }
+        $get = $get->order_by("CAST(lme_start AS UNSIGNED)", "ASC")->get()->result_object();
         $ranges = [];
         $cols = "";
         foreach ($get as $key => $value) {
@@ -239,9 +274,12 @@ class LME_prices extends CI_Controller
         $this->db->select(
             "TRIM(a.id) AS id,"
                 . "TRIM(a.data_lme) AS prices,"
+                . "TRIM(a.currency) AS currency,"
                 . "TRIM(a.maker_code) AS maker_code,"
                 . "TRIM(a.ven_id) AS ven_id,"
                 . "TRIM(a.item_id) AS part_no,"
+                . "TRIM(a.type) AS type,"
+                . "TRIM(g.uom) AS uom,"
                 . "COALESCE(TRIM(d.name), '') AS supplier,"
                 . "COALESCE(TRIM(f.name), '') AS maker_name,"
                 . "COALESCE(TRIM(h.name), '') AS plant_name,"
@@ -272,13 +310,20 @@ class LME_prices extends CI_Controller
         if (!empty($f_plant)) {
             $this->db->where("a.plant_id", $f_plant);
         }
+        if (!empty($f_type)) {
+            $this->db->where("a.type", $f_type);
+        }
         $this->db->order_by('id');
         $result = $this->db->get()->result_array();
-
+        // die($this->db->last_query());
         foreach ($result as $key => $value) {
             foreach (json_decode($value['prices']) as $key2 => $value2) {
                 if (isset($ranges[$value2->range])) {
-                    $result[$key][$ranges[$value2->range]] = floatval($value2->price);
+                    $price = floatval($value2->price);
+                    if (!empty($f_display) && $f_display == 'USD CURRENCY' && !empty($f_exchange_rate) && $value['currency'] != 'USD') {
+                        $price = $price * floatval($f_exchange_rate);
+                    }
+                    $result[$key][$ranges[$value2->range]] = $price;
                 }
             }
         }
@@ -294,6 +339,8 @@ class LME_prices extends CI_Controller
             $maker = $post['maker'];
             $part_no = $post['part_no'];
             $supp_id = $post['supp_id'];
+            $currency = $post['currency'];
+            $type = $post['type'];
             // die(var_dump($post));
 
             $exists = $this->db->where('maker_code', $maker)->where('ven_id', $supp_id)->where('item_id', $part_no)->where('plant_id', $plant)
@@ -306,7 +353,8 @@ class LME_prices extends CI_Controller
                     'ven_id' => $supp_id,
                     'item_id' => $part_no,
                     'plant_id' => $plant,
-                    'currency' => 'USD',
+                    'currency' => $currency,
+                    'type' => $type,
                     'data_lme' => $post['datas']
                 ], "LMEP", "lme_prices");
                 $get = json_decode($send, true);
@@ -317,7 +365,8 @@ class LME_prices extends CI_Controller
                         'ven_id' => $supp_id,
                         'item_id' => $part_no,
                         'plant_id' => $plant,
-                        'currency' => 'USD',
+                        'currency' => $currency,
+                        'type' => $type,
                         'data_lme' => $post['datas']
                     ], "LMEH", "lme_price_logs");
                 }
@@ -340,6 +389,8 @@ class LME_prices extends CI_Controller
                     . "TRIM(item_id) AS part_no,"
                     . "TRIM(ven_id) AS supp_id,"
                     . "TRIM(plant_id) AS plant,"
+                    . "TRIM(type) AS type,"
+                    . "TRIM(currency) AS currency,"
                     . "TRIM(data_lme) AS datas"
             )->from('lme_prices')->where('id', $id)->get()->row();
             // die($this->db->last_query());
@@ -348,6 +399,8 @@ class LME_prices extends CI_Controller
             $part_no = $get->part_no;
             $supp_id = $get->supp_id;
             $plant = $get->plant;
+            $type = $get->type;
+            $currency = $get->currency;
             $datas = json_decode($get->datas);
 
             $merge = array_merge($datas, json_decode($post['datas']));
@@ -406,7 +459,9 @@ class LME_prices extends CI_Controller
                 'maker' => $value[3],
                 'supp' => $value[4],
                 'range' => $value[5],
-                'price' => number_format($value[6], 4, '.', '')
+                'price' => number_format($value[6], 4, '.', ''),
+                'type' => $value[7],
+                'currency' => $value[8],
             ]);
         }
 
@@ -429,10 +484,13 @@ class LME_prices extends CI_Controller
             $item = $data['item'];
             $price = $data['price'];
             $range_arr = explode('-', $range);
+            $type = $data['type'];
+            $currency = $data['currency'];
 
             $makers = $this->crud->read('makers', [], ['number' => $maker]);
             $plants = $this->crud->read('plants', [], ['number' => $plant]);
             $suppliers = $this->crud->read('suppliers', [], ['number' => $supp]);
+            $currency = $this->crud->read('currencies', [], ['name' => $currency]);
             // $items = $this->crud->read('item_rm', [], ['item_id' => $item]);
             $ranges = $this->crud->read('lme_ranges', [], [
                 "lme_start" => $range_arr[0],
@@ -455,6 +513,12 @@ class LME_prices extends CI_Controller
             } elseif (empty($ranges)) {
                 $result['title'] = 'Undefine';
                 $result['message'] = "LME Range $range no found!";
+            } elseif (empty($currency)) {
+                $result['title'] = 'Undefine';
+                $result['message'] = "Currency $currency no found!";
+            } elseif (empty($type) || ! in_array($type, ['LME', 'SHMET'])) {
+                $result['title'] = 'Undefine';
+                $result['message'] = "Type $type no found!";
             } else {
                 $id = 'in';
                 $exists = $this->db->where('maker_code', $maker)->where('ven_id', $supp)->where('item_id', $item)->where('plant_id', $plant)
@@ -477,7 +541,8 @@ class LME_prices extends CI_Controller
                         'plant_id' => $plant,
                         'ven_id' => $supp,
                         'item_id' => $item,
-                        'currency' => 'USD',
+                        'type' => $data['type'],
+                        'currency' => $data['currency'],
                         'data_lme' => $lme
                     ];
 
@@ -495,7 +560,11 @@ class LME_prices extends CI_Controller
                     }
                     $lme = json_encode(array_values($lme));
 
-                    $send = $this->crud->update('lme_prices', ["id" => $id], ['data_lme' => $lme]);
+                    $send = $this->crud->update('lme_prices', ["id" => $id], [
+                        'data_lme' => $lme,
+                        'type' => $data['type'],
+                        'currency' => $data['currency']
+                    ]);
                 }
                 $get = json_decode($send, true);
                 if ($get['theme'] == 'success') {
@@ -505,7 +574,8 @@ class LME_prices extends CI_Controller
                         'plant_id' => $plant,
                         'ven_id' => $supp,
                         'item_id' => $item,
-                        'currency' => 'USD',
+                        'type' => $data['type'],
+                        'currency' => $data['currency'],
                         'data_lme' => $lme
                     ], "LMEH", "lme_price_logs");
                 }
@@ -548,12 +618,18 @@ class LME_prices extends CI_Controller
         $f_part_no = base64_decode($this->input->get('f_part_no'));
         $f_maker = base64_decode($this->input->get('f_maker'));
         $f_plant = base64_decode($this->input->get('f_plant'));
+        $f_type = base64_decode($this->input->get('f_type'));
+        $f_exchange_rate = base64_decode($this->input->get('f_exchange_rate'));
+        $f_display = base64_decode($this->input->get('f_display'));
         $this->db->select(
             "TRIM(a.id) AS id,"
                 . "TRIM(a.data_lme) AS prices,"
+                . "TRIM(a.currency) AS currency,"
                 . "TRIM(a.maker_code) AS maker_code,"
                 . "TRIM(a.ven_id) AS ven_id,"
                 . "TRIM(a.item_id) AS part_no,"
+                . "TRIM(a.type) AS type,"
+                . "TRIM(g.uom) AS uom,"
                 . "COALESCE(TRIM(a.plant_id), '') AS plant_id,"
                 . "COALESCE(TRIM(h.name), '') AS plant_name,"
                 . "COALESCE(TRIM(d.name), '') AS supplier,"
@@ -595,6 +671,18 @@ class LME_prices extends CI_Controller
             }
         }
 
+        if ($f_type == 'LME') {
+            $type = 'TYPE : LME';
+        } else {
+            $type = 'TYPE : SHMET';
+        }
+
+        if ($f_display == 'ORIGINAL CURRENCY') {
+            $currency_head = 'ORIGINAL CURRENCY';
+        } else {
+            $currency_head = 'USD CURRENCY';
+        }
+
         $html = '<html><head><title>Print Data</title></head><style>body {font-family: Arial, Helvetica, sans-serif;}#lme_prices {border-collapse: collapse;width: 100%;font-size: 12px;}#lme_prices td, #lme_prices th {border: 1px solid #ddd;padding: 2px;}#lme_prices tr:nth-child(even){background-color: #f2f2f2;}#lme_prices tr:hover {background-color: #ddd;}#lme_prices th {padding-top: 2px;padding-bottom: 2px;text-align: left;color: black;}</style><body>
         <center>
             <div style="float: left; font-size: 12px; text-align: left;">
@@ -625,7 +713,9 @@ class LME_prices extends CI_Controller
                 <th rowspan="2">Supplier</th>
                 <th rowspan="2">WIRE Name Maker</th>
                 <th rowspan="2">Part No</th>
-                <th colspan="' . count($ranges) . '">Unit Packing MOQ Price  & LME Range (USD/MTR)</th>
+                <th rowspan="2">' . $currency_head . '</th>
+                <th rowspan="2">UoM</th>
+                <th colspan="' . count($ranges) . '">' . $type . '</th>
                 <th rowspan="2">Last Date</th>
                 <th rowspan="2">By</th>
             </tr>
@@ -640,9 +730,15 @@ class LME_prices extends CI_Controller
                 <td>' . $data['part_no'] . '</td>
                 <td>' . $data['supplier'] . '</td>
                 <td>' . $data['maker_name'] . '</td>
-                <td>' . $data['part_no'] . '</td>';
+                <td>' . $data['part_no'] . '</td>
+                <td>' . $data['currency'] . '</td>
+                <td>' . $data['uom'] . '</td>';
             foreach ($ranges as $key => $value) {
-                $html .= '<td>' . $data[$value] . '</td>';
+                $price = floatval($data[$value]);
+                if (!empty($f_display) && $f_display == 'USD CURRENCY' && !empty($f_exchange_rate) && $data['currency'] != 'USD') {
+                    $price = $price * floatval($f_exchange_rate);
+                }
+                $html .= '<td>' . round($price, 4) . '</td>';
             }
             $html .= '<td align="center">' . $data['u_date'] . '</td>
                 <td>' . $data['u_by'] . '</td>

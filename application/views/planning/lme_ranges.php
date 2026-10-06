@@ -7,6 +7,7 @@
             <th rowspan="2" data-options="field:'supplier',width:200,halign:'center'">Supplier Name</th>
             <th rowspan="2" data-options="field:'lme_range',width:150,halign:'center'">LME Range</th>
             <th rowspan="2" data-options="field:'remarks',width:300,halign:'center'">Remarks</th>
+            <th rowspan="2" data-options="field:'type',width:80,halign:'center'">Type</th>
             <th colspan="2" data-options="field:'',width:100,halign:'center'"> Created</th>
             <th colspan="2" data-options="field:'',width:100,halign:'center'"> Updated</th>
         </tr>
@@ -39,6 +40,13 @@
                 <span style="width:35%; display:inline-block;">Remarks</span>
                 <input style="width:60%;" name="remarks" id="remarks" class="easyui-textbox">
             </div>
+            <div class="fitem">
+                <span style="width:35%; display:inline-block;">Type</span>
+                <select style="width:60%;" name="type" id="type" required="" panelHeight="auto" class="easyui-combobox">
+                    <option value="LME">LME</option>
+                    <option value="SHMET">SHMET</option>
+                </select>
+            </div>
         </fieldset>
     </form>
 </div>
@@ -50,7 +58,7 @@
             <legend><b>Form Data</b></legend>
             <div class="fitem">
                 <span style="width:35%; display:inline-block;">File Upload</span>
-                <input name="file_upload" style="width: 60%;" required="" accept=".xls" id="file_excel" class="easyui-filebox">
+                <input name="file_upload" style="width: 60%;" required="" accept=".xlsx" id="file_excel" class="easyui-filebox">
             </div>
         </fieldset>
     </form>
@@ -74,6 +82,7 @@
         $('#dlg_insert').dialog('open');
         $('#frm_insert').form('clear');
         $('#supplier').combogrid("enable");
+        $('#type').combobox('setValue', "LME");
     }
 
     //Edit Data

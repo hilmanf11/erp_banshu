@@ -85,7 +85,11 @@ class Tmp_lme_price extends CI_Controller
             $alfa++;
             $spreadsheet->setCellValue($alfa . '1', 'LME RANGE');
             $alfa++;
-            $spreadsheet->setCellValue($alfa . '1', 'LME PRICE');
+            $spreadsheet->setCellValue($alfa . '1', 'LME PRICE ORIGINAL CCY)');
+            $alfa++;
+            $spreadsheet->setCellValue($alfa . '1', 'TYPE');
+            $alfa++;
+            $spreadsheet->setCellValue($alfa . '1', 'CURRENCY ORIGINAL');
 
             for ($i = 'A'; $i <= $alfa; $i++) {
                 $spreadsheet->getStyle($i . '1')->applyFromArray($style_col);
@@ -211,6 +215,46 @@ class Tmp_lme_price extends CI_Controller
             }
 
             $spreadsheet->setTitle('PLANT');
+
+            //SHEET 7 ------------------------------------------------------------------------------------------------------------
+            $sheet++;
+            $spreadsheet = $excel->createSheet($sheet);
+            $alfa = 'A';
+            $spreadsheet->setCellValue($alfa . '1', 'CURRENCY CODE');
+            $alfa++;
+            $spreadsheet->setCellValue($alfa . '1', 'CURRENCY NAME');
+
+            $this->db->select("name, description")->from('currencies')->order_by('id');
+            foreach ($this->db->get()->result_object() as $key => $value) {
+                $row = $key + 2;
+                $spreadsheet->setCellValue('A' . $row, $value->name);
+                $spreadsheet->setCellValue('B' . $row, $value->description);
+
+                $spreadsheet->getStyle('A' . $row)->applyFromArray($style_row);
+                $spreadsheet->getStyle('B' . $row)->applyFromArray($style_row);
+            }
+
+            for ($i = 'A'; $i <= $alfa; $i++) {
+                $spreadsheet->getStyle($i . '1')->applyFromArray($style_col);
+                $spreadsheet->getColumnDimension($i)->setAutoSize(true);
+            }
+
+            $spreadsheet->setTitle('CURRENCY');
+
+            //SHEET 8 ------------------------------------------------------------------------------------------------------------
+            $sheet++;
+            $spreadsheet = $excel->createSheet($sheet);
+            $spreadsheet->setCellValue('A1', 'TYPE');
+            $spreadsheet->getStyle('A1')->applyFromArray($style_col);
+
+            foreach (array('LME', 'SHMET') as $key => $type) {
+                $row = $key + 2;
+                $spreadsheet->setCellValue('A' . $row, $type);
+                $spreadsheet->getStyle('A' . $row)->applyFromArray($style_row);
+            }
+
+            $spreadsheet->getColumnDimension('A')->setAutoSize(true);
+            $spreadsheet->setTitle('TYPE');
 
             $excel->setActiveSheetIndex(0);
             // Redirect output to a client’s web browser (Xlsx)
