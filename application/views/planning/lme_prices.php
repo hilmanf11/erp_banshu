@@ -62,16 +62,16 @@
                 </select>
             </div>
             <div class="fitem">
-                <span style="width:35%; display:inline-block;">Exchange Rate</span>
-                <input style="width:60%;" name="f_exchange_rate" id="f_exchange_rate" class="easyui-combogrid">
-            </div>
-            <div class="fitem">
                 <span style="width:35%; display:inline-block;">Display</span>
                 <select style="width:60%;" name="f_display" id="f_display" panelHeight="auto" class="easyui-combobox">
                     <option value="">All</option>
                     <option value="ORIGINAL CURRENCY">ORIGINAL CURRENCY</option>
                     <option value="USD CURRENCY">USD CURRENCY</option>
                 </select>
+            </div>
+            <div class="fitem">
+                <span style="width:35%; display:inline-block;">Exchange Rate</span>
+                <input style="width:60%;" name="f_exchange_rate" id="f_exchange_rate" class="easyui-combogrid">
             </div>
         </div>
     </fieldset>
@@ -152,6 +152,7 @@
     var url_supp = '<?= base_url('planning/lme_prices/readItemsSupplier'); ?>';
     var url_patno = '<?= base_url('planning/lme_prices/readPartNoBEI'); ?>';
     var url_range = '<?= base_url('planning/lme_prices/readLMERanges'); ?>';
+    var url_rangedlg = '';
     var url_maker = '<?= base_url('planning/lme_prices/readMakers'); ?>';
     var url_plant = '<?= base_url('planning/lme_prices/readPlants'); ?>';
 
@@ -304,6 +305,8 @@
                     $('#type').combobox('setValue', row.type);
                 }
             });
+            url_rangedlg = '<?= base_url('planning/lme_prices/readLMERanges') ?>?type=' + window.btoa(row.type);
+            $('#dg_insert').datagrid('options').columns[0][1].editor.options.url = url_rangedlg;
             $('#currency').combogrid({
                 onLoadSuccess: function(data) {
                     $('#currency').combogrid('setValue', row.currency);
@@ -394,6 +397,9 @@
         if ($('#maker').combogrid('getValue') == '' || $('#plant').combogrid('getValue') == '') {
             toastr.warning("Please fill in the Form Data fields!", "Information");
         } else {
+            type = $('#type').combobox('getValue');
+            url_rangedlg = '<?= base_url('planning/lme_prices/readLMERanges') ?>?type=' + window.btoa(type);
+            $('#dg_insert').datagrid('options').columns[0][1].editor.options.url = url_rangedlg;
             $('#dg_insert').datagrid('appendRow', {
                 range: null,
                 price: null
@@ -839,9 +845,9 @@
                 ]
             ],
             onSelect: function(index, row) {
-                $('#bnt_add').linkbutton('enable');
-                $('#bnt_del').linkbutton('enable');
-                $('#dg_insert').datagrid('loadData', []);
+                // $('#bnt_add').linkbutton('enable');
+                // $('#bnt_del').linkbutton('enable');
+                // $('#dg_insert').datagrid('loadData', []);
             }
         });
 
@@ -854,6 +860,14 @@
             rownumbers: true,
             panelWidth: 550,
             mode: 'remote',
+            icons: [{
+                iconCls: 'icon-clear',
+                handler: function(e) {
+                    $('#bnt_add').linkbutton('disable');
+                    $('#bnt_del').linkbutton('disable');
+                    $(e.data.target).combogrid('clear').combogrid('textbox').focus();
+                }
+            }],
             columns: [
                 [{
                         field: "name",
@@ -868,72 +882,87 @@
                         halign: "center"
                     }
                 ]
-            ]
+            ],
+            onSelect: function(index, row) {
+                $('#bnt_add').linkbutton('enable');
+                $('#bnt_del').linkbutton('enable');
+                $('#dg_insert').datagrid('loadData', []);
+            }
         });
 
-        $('#f_exchange_rate').combogrid({
-            url: "<?= base_url('planning/lme_prices/readExchangeRates') ?>",
-            panelWidth: 700,
-            idField: "middle",
-            textField: "middle",
-            mode: 'remote',
-            fitColumns: true,
-            prompt: "Select Exchange Rate",
-            icons: [{
-                iconCls: 'icon-clear',
-                handler: function(e) {
-                    $(e.data.target).combogrid('clear').combogrid('textbox').focus();
+        $('#f_display').combobox({
+            onSelect: function(display) {
+                var url;
+                if (display.value == 'USD CURRENCY') {
+                    var url = "<?= base_url('planning/lme_prices/readExchangeRates/USD') ?>";
                 }
-            }],
-            columns: [
-                [{
-                        field: "start_date",
-                        title: "Start Date",
-                        halign: "center",
-                        width: "15%"
-                    },
-                    {
-                        field: "end_date",
-                        title: "End Date",
-                        halign: "center",
-                        width: "15%"
-                    },
-                    {
-                        field: "currency_from",
-                        title: "Currency From",
-                        halign: "center",
-                        width: "15%"
-                    },
-                    {
-                        field: "currency_to",
-                        title: "Currency To",
-                        halign: "center",
-                        width: "15%"
-                    },
-                    {
-                        field: "selling",
-                        title: "Selling",
-                        halign: "center",
-                        align: "right",
-                        width: "15%"
-                    },
-                    {
-                        field: "buying",
-                        title: "Buying",
-                        halign: "center",
-                        align: "right",
-                        width: "15%"
-                    },
-                    {
-                        field: "middle",
-                        title: "Middle",
-                        halign: "center",
-                        align: "right",
-                        width: "15%"
-                    }
-                ]
-            ]
+                $('#f_exchange_rate').combogrid({
+                    url: url,
+                    panelWidth: 700,
+                    idField: "middle",
+                    textField: "middle",
+                    mode: 'remote',
+                    fitColumns: true,
+                    prompt: "Select Exchange Rate",
+                    icons: [{
+                        iconCls: 'icon-clear',
+                        handler: function(e) {
+                            $(e.data.target).combogrid('clear').combogrid('textbox').focus();
+                        }
+                    }],
+                    columns: [
+                        [{
+                                field: "start_date",
+                                title: "Start Date",
+                                halign: "center",
+                                width: "15%"
+                            },
+                            {
+                                field: "end_date",
+                                title: "End Date",
+                                halign: "center",
+                                width: "15%"
+                            },
+                            {
+                                field: "currency_from",
+                                title: "Currency From",
+                                halign: "center",
+                                width: "15%"
+                            },
+                            {
+                                field: "currency_to",
+                                title: "Currency To",
+                                halign: "center",
+                                width: "15%"
+                            },
+                            {
+                                field: "selling",
+                                title: "Selling",
+                                halign: "center",
+                                align: "right",
+                                width: "15%"
+                            },
+                            {
+                                field: "buying",
+                                title: "Buying",
+                                halign: "center",
+                                align: "right",
+                                width: "15%"
+                            },
+                            {
+                                field: "middle",
+                                title: "Middle",
+                                halign: "center",
+                                align: "right",
+                                width: "15%"
+                            }
+                        ]
+                    ]
+                });
+            }
         });
+
+
 
         var idx = -1;
         $('#dg_insert').datagrid({
@@ -954,7 +983,7 @@
                         editor: {
                             type: 'combobox',
                             options: {
-                                url: url_range,
+                                url: url_rangedlg,
                                 valueField: 'ranges',
                                 textField: 'ranges',
                                 mode: 'remote',

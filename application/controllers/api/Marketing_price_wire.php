@@ -17,6 +17,7 @@ class Marketing_price_wire extends CI_Controller
         $this->db->distinct()->select(
             "TRIM(a.plant_id) AS plant,"
                 . "TRIM(a.item_id) AS item,"
+                . "TRIM(a.type) AS type_range,"
                 . "TRIM(a.ven_id) AS supplier,"
                 . "COALESCE(TRIM(b.name),'') AS supplier_name,"
                 . "COALESCE(TRIM(b.type),'') AS type,"
@@ -25,6 +26,7 @@ class Marketing_price_wire extends CI_Controller
                 . "TRIM(a.data_lme) AS lme,"
                 . "COALESCE(TRIM(d.percentage),0) AS duty,"
                 . "COALESCE(TRIM(e.percentage),0) AS insurance,"
+                . "TRIM(a.currency) AS currency,"
                 . "COALESCE(TRIM(f.percentage),0) AS transport"
         )->from("lme_prices a")
             ->join("suppliers b", "a.ven_id = b.number")
@@ -52,6 +54,7 @@ class Marketing_price_wire extends CI_Controller
                     "maker_code" => $row->maker,
                     "maker_name" => $row->maker_name,
                     "type" => $row->type,
+                    "type_range" => $row->type_range,
                     "ranges" => $value->range,
                     "supp_id" => $row->supplier,
                     "price" => $price,
@@ -62,6 +65,7 @@ class Marketing_price_wire extends CI_Controller
                     "duty_price" => $duty_price,
                     "insurance_price" => $insurance_price,
                     "transport_price" => $transport_price,
+                    "currency" => $row->currency,
                     "total_price" => $total_price
                 ]);
             }

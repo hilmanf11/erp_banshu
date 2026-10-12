@@ -105,13 +105,17 @@ class LME_prices extends CI_Controller
     public function readLMERanges()
     {
         $post = isset($_POST['q']) ? $_POST['q'] : "";
+        $type = base64_decode(isset($_GET['type']) ? $_GET['type'] : "");
 
         $this->db->select("id, CONCAT(lme_start,'-',lme_end) AS ranges")
             ->from("lme_ranges");
+        if (!empty($type)) {
+            $this->db->where('type', $type);
+        }
         if (!empty($post)) {
             $this->db->like("CONCAT(lme_start,'-',lme_end)", $post);
         }
-        $this->db->order_by("id");
+        $this->db->order_by("CAST(lme_start AS UNSIGNED)", "ASC");
         $get = $this->db->get()->result_object();
 
         echo json_encode($get);
@@ -159,11 +163,14 @@ class LME_prices extends CI_Controller
         echo json_encode($get);
     }
 
-    public function readExchangeRates()
+    public function readExchangeRates($currency = "")
     {
         $today = date('Y-m-d');
         $this->db->select("*")
             ->from('exchange_rates');
+        if ($currency == "USD") {
+            $this->db->where('currency_to', 'USD');
+        }
         // ->where('start_date <=', $today)
         // ->where('end_date >=', $today);
         $get = $this->db->get()->result_object();
