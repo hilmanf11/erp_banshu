@@ -135,45 +135,53 @@ class Request_npd_confirm extends CI_Controller
 
     public function update()
     {
-        if ($this->input->post()) {
-            $post = $this->input->post();
+        if (empty($this->session->name)) {
+            echo json_encode(array("title" => "Error", "message" => "Your Session Expired, Please Login Again", "theme" => "error"));
+        } else {
+            if ($this->input->post()) {
+                $post = $this->input->post();
 
-            $jsonData = file_get_contents("php://input");
-            $post = json_decode($jsonData, true);
-            $datas = $post['data'];
+                $jsonData = file_get_contents("php://input");
+                $post = json_decode($jsonData, true);
+                $datas = $post['data'];
 
-            $send = "";
-            $this->db->trans_start();
-            foreach ($datas as $data) {
-                if (!empty($data['item_rm_id'])) {
-                    $item_rm = $this->crud->read("item_rm", [], ["number" => $data['item_rm_id']]);
-                    $supplier = $this->crud->read("suppliers", [], ["name" => $data['supplier_id']]);
-                    $supplier_items = $this->crud->read("supplier_items", [], ["supplier_id" => @$supplier->id, "item_rm_id" => @$item_rm->id]);
+                $send = "";
+                $this->db->trans_start();
+                foreach ($datas as $data) {
+                    if (!empty($data['item_rm_id'])) {
+                        $item_rm = $this->crud->read("item_rm", [], ["number" => $data['item_rm_id']]);
+                        $supplier = $this->crud->read("suppliers", [], ["name" => $data['supplier_id']]);
+                        $supplier_items = $this->crud->read("supplier_items", [], ["supplier_id" => @$supplier->id, "item_rm_id" => @$item_rm->id]);
 
-                    if (empty($item_rm)) {
-                        die(json_encode(array("title" => "Failed", "message" => "Part No Not Found in Master", "theme" => "error")));
-                    }
-                    if (empty($supplier)) {
-                        die(json_encode(array("title" => "Failed", "message" => "Supplier Not Found in Master", "theme" => "error")));
-                    }
-                    if (empty($supplier_items)) {
-                        die(json_encode(array("title" => "Failed", "message" => "Part No Not Found in Vendor Contract", "theme" => "error")));
-                    }
+                        if (empty($item_rm)) {
+                            die(json_encode(array("title" => "Failed", "message" => "Part No Not Found in Master", "theme" => "error")));
+                        }
+                        if (empty($supplier)) {
+                            die(json_encode(array("title" => "Failed", "message" => "Supplier Not Found in Master", "theme" => "error")));
+                        }
+                        if (empty($supplier_items)) {
+                            die(json_encode(array("title" => "Failed", "message" => "Part No Not Found in Vendor Contract", "theme" => "error")));
+                        }
 
-                    $data['item_rm_id'] = $item_rm->id;
-                    $data['supplier_id'] = $supplier->id;
+                        $data['item_rm_id'] = $item_rm->id;
+                        $data['supplier_id'] = $supplier->id;
 
-                    if ($data['confirm'] != "") {
-                        $this->db->update('request_npd', array_merge($data, ["confirm_date" => date("Y-m-d H:i:s"), "confirm_by" => $this->session->name, "confirm_status" => 1]), ["id" => $data['id']]);
+                        if ($data['confirm'] != "") {
+                            $this->db->update('request_npd', array_merge($data, ["confirm_date" => date("Y-m-d H:i:s"), "confirm_by" => $this->session->name, "confirm_status" => 1]), ["id" => $data['id']]);
+                        }
+                    } else {
+                        if ($data['confirm'] != "") {
+                            $this->db->update('request_npd', array_merge($data, ["confirm_date" => date("Y-m-d H:i:s"), "confirm_by" => $this->session->name, "confirm_status" => 1]), ["id" => $data['id']]);
+                        }
                     }
                 }
-            }
-            $this->db->trans_complete();
+                $this->db->trans_complete();
 
-            if ($this->db->trans_status() === FALSE) {
-                echo json_encode(array("title" => "Failed", "message" => "Data Updated Failed", "theme" => "error"));
-            } else {
-                echo json_encode(array("title" => "Good Job", "message" => "Data Updated Successfully", "theme" => "success"));
+                if ($this->db->trans_status() === FALSE) {
+                    echo json_encode(array("title" => "Failed", "message" => "Data Updated Failed", "theme" => "error"));
+                } else {
+                    echo json_encode(array("title" => "Good Job", "message" => "Data Updated Successfully", "theme" => "success"));
+                }
             }
         }
     }
