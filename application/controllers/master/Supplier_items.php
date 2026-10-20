@@ -147,7 +147,8 @@ class Supplier_items extends CI_Controller
         $this->db->join('item_familys d', "c.item_family_id = d.id and d.item_category_id IN ('C01')");
         $this->db->join('makers e', 'a.maker_id = e.id', 'left');
         $this->db->join('convertions g', 'a.item_rm_id = g.item_rm_id', 'left');
-        $this->db->join("exchange_rates i", 'i.start_date <= a.valid_date AND i.end_date >= a.valid_date and i.currency_from = a.currency', 'left');
+        // $this->db->join("exchange_rates i", 'i.start_date <= a.valid_date AND i.end_date >= a.valid_date and i.currency_from = a.currency', 'left');
+        $this->db->join("exchange_rates i", 'i.start_date = a.start_date and i.currency_from = a.currency', 'left');
         if ($filter_check == "true") {
             $this->db->join("(SELECT item_rm_id FROM supplier_items GROUP BY item_rm_id HAVING COUNT(*) > 1) h", 'a.item_rm_id = h.item_rm_id');
         }
@@ -740,7 +741,8 @@ class Supplier_items extends CI_Controller
         $this->db->join('item_familys d', "c.item_family_id = d.id and d.item_category_id IN ('C01')");
         $this->db->join('makers e', 'a.maker_id = e.id', 'left');
         $this->db->join('convertions g', 'a.item_rm_id = g.item_rm_id', 'left');
-        $this->db->join("exchange_rates i", 'i.start_date <= a.valid_date AND i.end_date >= a.valid_date and i.currency_from = a.currency', 'left');
+        // $this->db->join("exchange_rates i", 'i.start_date <= a.valid_date AND i.end_date >= a.valid_date and i.currency_from = a.currency', 'left');
+        $this->db->join("exchange_rates i", 'i.start_date = a.start_date and i.currency_from = a.currency', 'left');
         if ($filter_check == "true") {
             $this->db->join("(SELECT item_rm_id FROM supplier_items GROUP BY item_rm_id HAVING COUNT(*) > 1) h", 'a.item_rm_id = h.item_rm_id');
         }

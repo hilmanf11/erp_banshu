@@ -8,6 +8,7 @@
     <thead>
         <tr>
             <th data-options="field:'detail',width:80,halign:'center',formatter:BtnDetail">Details</th>
+            <th data-options="field:'plant',width:80,halign:'center'">Plant</th>
             <th data-options="field:'supplier_id',width:100,halign:'center'">Supplier ID</th>
             <th data-options="field:'supplier_po',width:150,halign:'center'">Supplier PO</th>
             <th data-options="field:'supplier_name',width:300,halign:'center'">Supplier Name</th>
@@ -36,6 +37,7 @@
         <thead frozen="true">
             <tr>
                 <th field="ck" checkbox="true"></th>
+                <th data-options="field:'plant',width:80,halign:'center'">Plant</th>
                 <th data-options="field:'item_rm_number',width:150,halign:'center'">Part No</th>
                 <th data-options="field:'item_rm_name',width:250,halign:'center'">Part Name</th>
             </tr>
@@ -261,9 +263,6 @@
             rownumbers: true,
             singleSelect: false,
             fit: true,
-            pagination: true,
-            pageList: [100, 500, 1000, 5000, 10000],
-            pageSize: 1000,
         });
     }
 </script>

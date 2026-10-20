@@ -1482,8 +1482,8 @@ class Approvals extends CI_Controller
         $this->db->join('item_rm b', 'a.item_rm_id = b.id');
         $this->db->join('suppliers c', 'a.supplier_id = c.id');
         $this->db->join('item_familys d', 'b.item_family_id = d.id');
-        $this->db->join('generate_mrp_finals e', 'a.p_month = e.p_month and a.p_year = e.p_year and a.revision = e.revision and a.item_rm_id = e.item_rm_id', 'left');
-        $this->db->join('generate_mrp_finals f', 'a.p_month = f.p_month and a.p_year = f.p_year and a.revision = f.revision and e.item_rm_alias = f.item_rm_id', 'left');
+        $this->db->join('generate_mrp_finals e', 'a.p_month = e.p_month and a.p_year = e.p_year and a.revision = e.revision and a.item_rm_id = e.item_rm_id and a.plant = e.plant', 'left');
+        $this->db->join('generate_mrp_finals f', 'a.p_month = f.p_month and a.p_year = f.p_year and a.revision = f.revision and e.item_rm_alias = f.item_rm_id and a.plant = e.plant', 'left');
         $this->db->join('request_npd g', 'a.request_npd = g.request_no and a.item_rm_id = g.item_rm_id', 'left');
         $this->db->where('a.approved_to', $approved_to);
         $this->db->where('a.approved_by', $approved_by);
@@ -1562,7 +1562,7 @@ class Approvals extends CI_Controller
         $this->db->join('item_rm b', 'a.item_rm_id = b.id');
         $this->db->join('item_familys c', 'b.item_family_id = c.id');
         $this->db->join('suppliers d', 'a.supplier_id = d.id');
-        $this->db->join('supplier_items e', 'a.item_rm_id = e.item_rm_id and a.supplier_id = e.supplier_id', 'left');
+        $this->db->join('supplier_items e', 'a.item_rm_id = e.item_rm_id and a.supplier_id = e.supplier_id and a.plant = e.plant', 'left');
         $this->db->join('convertions f', 'a.item_rm_id = f.item_rm_id', 'left');
         $this->db->where('a.approved_to', $approved_to);
         $this->db->where('a.approved_by', $approved_by);
@@ -1693,7 +1693,7 @@ class Approvals extends CI_Controller
         $approved_to = base64_decode($approved_to);
         $approved_by = base64_decode($approved_by);
 
-        $this->db->select('a.supplier_id, b.supplier_po, b.number as supplier_number, b.name as supplier_name, b.type, b.state, b.currency, a.remarks1, a.remarks2, a.remarks3, a.remarks4, COUNT(a.id) as total_item');
+        $this->db->select('a.plant,a.supplier_id, b.supplier_po, b.number as supplier_number, b.name as supplier_name, b.type, b.state, b.currency, a.remarks1, a.remarks2, a.remarks3, a.remarks4, COUNT(a.id) as total_item');
         $this->db->from('supplier_items a');
         $this->db->join('suppliers b', 'a.supplier_id = b.id');
         $this->db->where('a.approved_to', $approved_to);
