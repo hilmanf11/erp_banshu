@@ -259,10 +259,10 @@
         $('#dg_details').datagrid({
             url: '<?= base_url('approvals/approvalSupplierItemDetails/' . base64_encode($approved_to) . '/' . base64_encode($approved_by)) ?>?supplier_id=' + btoa(supplier_id),
             clientPaging: false,
-            remoteFilter: true,
+            remoteFilter: false,
             rownumbers: true,
             singleSelect: false,
             fit: true,
-        });
+        }).datagrid('enableFilter').datagrid('removeFilterRule');
     }
 </script>
