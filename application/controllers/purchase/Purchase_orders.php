@@ -131,8 +131,10 @@ class Purchase_orders extends CI_Controller
     public function datatables()
     {
         if ($this->input->post()) {
-            $filter_month = base64_decode($this->input->get('filter_month'));
-            $filter_year = base64_decode($this->input->get('filter_year'));
+            $filter_month_1 = base64_decode($this->input->get('filter_month_1'));
+            $filter_month_2 = base64_decode($this->input->get('filter_month_2'));
+            $filter_year_1 = base64_decode($this->input->get('filter_year_1'));
+            $filter_year_2 = base64_decode($this->input->get('filter_year_2'));
             $filter_revision = base64_decode($this->input->get('filter_revision'));
             $filter_plant = base64_decode($this->input->get('filter_plant'));
             $filter_item_family = base64_decode($this->input->get('filter_item_family'));
@@ -141,6 +143,9 @@ class Purchase_orders extends CI_Controller
             $filter_po = trim(base64_decode($this->input->get('filter_po')));
             $filter_type = trim(base64_decode($this->input->get('filter_type')));
             $filter_status = trim(base64_decode($this->input->get('filter_status')));
+
+            $start_period = $filter_year_1 . str_pad($filter_month_1, 2, '0', STR_PAD_LEFT);
+            $end_period   = $filter_year_2 . str_pad($filter_month_2, 2, '0', STR_PAD_LEFT);
 
             $page = $this->input->post('page');
             $rows = $this->input->post('rows');
@@ -157,8 +162,10 @@ class Purchase_orders extends CI_Controller
             $this->db->join('suppliers d', "a.supplier_id = d.id", 'left');
             $this->db->join('item_familys e', "b.item_family_id = e.id");
             $this->db->where('a.type', "PO");
-            $this->db->where('a.p_month', $filter_month);
-            $this->db->where('a.p_year', $filter_year);
+            // $this->db->where('a.p_month', $filter_month_1);
+            // $this->db->where('a.p_year', $filter_year_1);
+            $this->db->where("CONCAT(a.p_year, LPAD(a.p_month, 2, '0')) >=", $start_period);
+            $this->db->where("CONCAT(a.p_year, LPAD(a.p_month, 2, '0')) <=", $end_period);
             $this->db->like('a.revision', $filter_revision);
             $this->db->like('a.plant', $filter_plant);
             $this->db->like('b.item_family_id', $filter_item_family);
@@ -1826,8 +1833,10 @@ class Purchase_orders extends CI_Controller
         $this->db->from('config');
         $config = $this->db->get()->row();
 
-        $filter_month = base64_decode($this->input->get('filter_month'));
-        $filter_year = base64_decode($this->input->get('filter_year'));
+        $filter_month_1 = base64_decode($this->input->get('filter_month_1'));
+        $filter_month_2 = base64_decode($this->input->get('filter_month_2'));
+        $filter_year_1 = base64_decode($this->input->get('filter_year_1'));
+        $filter_year_2 = base64_decode($this->input->get('filter_year_2'));
         $filter_revision = base64_decode($this->input->get('filter_revision'));
         $filter_plant = base64_decode($this->input->get('filter_plant'));
         $filter_item_family = trim(base64_decode($this->input->get('filter_item_family')));
@@ -1836,6 +1845,9 @@ class Purchase_orders extends CI_Controller
         $filter_po = trim(base64_decode($this->input->get('filter_po')));
         $filter_type = trim(base64_decode($this->input->get('filter_type')));
         $filter_status = trim(base64_decode($this->input->get('filter_status')));
+
+        $start_period = $filter_year_1 . str_pad($filter_month_1, 2, '0', STR_PAD_LEFT);
+        $end_period   = $filter_year_2 . str_pad($filter_month_2, 2, '0', STR_PAD_LEFT);
 
         //Select Query
         $this->db->select('a.*, b.name as item_rm_name, b.number as item_rm_number, c.number as supplier_no, 
@@ -1855,8 +1867,10 @@ class Purchase_orders extends CI_Controller
         $this->db->join('makers f', 'e.maker_id = f.id', 'left');
         $this->db->group_by('a.id');
         $this->db->where('a.type', "PO");
-        $this->db->like('a.p_month', $filter_month);
-        $this->db->like('a.p_year', $filter_year);
+        // $this->db->like('a.p_month', $filter_month);
+        // $this->db->like('a.p_year', $filter_year);
+        $this->db->where("CONCAT(a.p_year, LPAD(a.p_month, 2, '0')) >=", $start_period);
+        $this->db->where("CONCAT(a.p_year, LPAD(a.p_month, 2, '0')) <=", $end_period);
         $this->db->like('a.revision', $filter_revision);
         $this->db->like('a.plant', $filter_plant);
         if ($filter_item_family != "") {
@@ -1907,7 +1921,7 @@ class Purchase_orders extends CI_Controller
             <tr>
                 <td width="80">PERIOD</td>
                 <td width="20">:</td>
-                <td>' . $filter_month . '/' . $filter_year . '<td>
+                <td>' . $filter_month_1 . '/' . $filter_year_1 . ' to ' . $filter_month_2 . '/' . $filter_year_2 . '<td>
             </tr>
             <tr>
                 <td width="80">REVISION</td>

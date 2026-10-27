@@ -17,7 +17,7 @@
 </style> -->
 <table id="dg" class="easyui-datagrid" style="width:100%;" toolbar="#toolbar">
     <thead>
-    <tr>
+        <tr>
             <th rowspan="2" field="ck" checkbox="true"></th>
             <th rowspan="2" data-options="field:'status',width:80,align:'center', styler:cellStylerStatus, formatter:cellFormatterStatus">Status</th>
             <th rowspan="2" data-options="field:'plant',width:80,halign:'center'">Plant</th>
@@ -62,15 +62,20 @@
     </thead>
 </table>
 
-<div id="toolbar" style="height: 230px; padding:10px;">
+<div id="toolbar" style="height: 270px; padding:10px;">
     <div style="width: 100%; display: grid; grid-template-columns: auto auto auto; grid-gap: 5px; display: flex;">
         <fieldset style="width: 80%; border:2px solid #d0d0d0; margin-bottom: 5px; margin-top: 5px; border-radius:4px;">
             <legend><b>Filter Data</b></legend>
             <div style="width: 35%; float: left;">
                 <div class="fitem">
-                    <span style="width:35%; display:inline-block;">Period Cutoff</span>
-                    <input style="width:30%;" name="filter_month" value="<?= date("m") ?>" id="filter_month" class="easyui-combobox" data-options="prompt:'Month'">
-                    <input style="width:30%;" name="filter_year" value="<?= date("Y") ?>" id="filter_year" class="easyui-combobox">
+                    <span style="width:35%; display:inline-block;">Period Start</span>
+                    <input style="width:30%;" name="filter_month_1" value="<?= date("m") ?>" id="filter_month_1" class="easyui-combobox" data-options="prompt:'Month'">
+                    <input style="width:30%;" name="filter_year_1" value="<?= date("Y") ?>" id="filter_year_1" class="easyui-combobox">
+                </div>
+                <div class="fitem">
+                    <span style="width:35%; display:inline-block;">Period To</span>
+                    <input style="width:30%;" name="filter_month_2" value="<?= date("m") ?>" id="filter_month_2" class="easyui-combobox" data-options="prompt:'Month'">
+                    <input style="width:30%;" name="filter_year_2" value="<?= date("Y") ?>" id="filter_year_2" class="easyui-combobox">
                 </div>
                 <div class="fitem">
                     <span style="width:35%; display:inline-block;">Revision</span>
@@ -140,7 +145,7 @@
 </div>
 
 <div id="toolbar2" style="height: auto; padding:10px;">
-    <div style="width: 100%; display: grid; grid-template-columns: auto auto auto; grid-gap: 5px; display: flex;">        
+    <div style="width: 100%; display: grid; grid-template-columns: auto auto auto; grid-gap: 5px; display: flex;">
         <fieldset style="width: 100%; border:2px solid #d0d0d0; margin-bottom: 5px; margin-top: 5px; border-radius:4px;">
             <legend><b>Form Detail</b></legend>
             <div style="width: 50%; float: left;">
@@ -267,25 +272,25 @@
 <iframe id="printout" src="" style="width: 100%;" hidden></iframe>
 
 <script>
-    function details(po_no, supplier, note, product_family, push="", email = "", email_cc = "") {
+    function details(po_no, supplier, note, product_family, push = "", email = "", email_cc = "") {
         $("#dlg_purchase_order").dialog('open');
 
         $("#d_po_no").textbox('setValue', po_no);
         $("#d_supplier").textbox('setValue', supplier);
         $("#d_product_family").textbox('setValue', product_family);
         $("#d_note").textbox('setValue', note);
-        
-        if(push == ""){
+
+        if (push == "") {
             $("#pushData").hide();
             $("#detailEdit").show();
             $("#sendMail").hide();
             $("#sendBlink").hide();
-        }else if(push == "push"){
+        } else if (push == "push") {
             $("#pushData").show();
             $("#detailEdit").hide();
             $("#sendMail").hide();
             $("#sendBlink").hide();
-        }else{
+        } else {
             $("#pushData").hide();
             $("#detailEdit").hide();
             $("#sendMail").show();
@@ -299,22 +304,22 @@
 
         var revision = $("#filter_revision").combobox('getValue');
         var filter_item_rm = $("#filter_item_rm").combogrid('getValue');
-        
+
         $('#dg_purchase_order').datagrid({
             url: '<?= base_url('purchase/purchase_orders/datatableDetails/') ?>' + btoa(po_no) + "/" + revision + "?filter_item_rm=" + btoa(filter_item_rm),
             clientPaging: false,
             remoteFilter: true,
             rownumbers: true,
             singleSelect: false,
-            fit:true,
+            fit: true,
         });
     }
 
-    function detailEdit(){
+    function detailEdit() {
         toastr.error("Cannot Edit Data");
     }
 
-    function disapproveData(){
+    function disapproveData() {
         $("#dlg_disapproveData").dialog('open');
         $('#dg_disapproveData').datagrid('disableFilter');
 
@@ -329,12 +334,12 @@
         $('#dg_disapproveData').treegrid('enableFilter');
     }
 
-    function pushData(){
+    function pushData() {
         // toastr.error("Still Development");
         var rows = $('#dg_purchase_order').datagrid('getSelections');
         if (rows.length > 0) {
-            $.messager.prompt('Push Data PO', 'Please input Password to Push', function(r){
-                if (r == "PUSHDATA"){
+            $.messager.prompt('Push Data PO', 'Please input Password to Push', function(r) {
+                if (r == "PUSHDATA") {
                     $('#dlg_purchase_order').dialog('close');
                     requestData2(rows.length, rows);
 
@@ -373,14 +378,14 @@
             });
 
             $('.messager-input').attr('type', 'password');
-        }else{
+        } else {
             toastr.warning("Please select one of the data in the table first!");
         }
     }
 
-    function sendMail(po_no, status){
-        $.messager.prompt('Update Send Mail', 'Please input "SENDMAIL" for Update Status', function(r){
-            if (r == "SENDMAIL"){
+    function sendMail(po_no, status) {
+        $.messager.prompt('Update Send Mail', 'Please input "SENDMAIL" for Update Status', function(r) {
+            if (r == "SENDMAIL") {
                 Swal.fire({
                     title: 'Please Wait for Create Data',
                     showConfirmButton: false,
@@ -394,9 +399,9 @@
                 $.ajax({
                     type: "post",
                     url: "<?= base_url("purchase/purchase_orders/sendMail") ?>",
-                    data: "po_no=" + po_no + "&status=" + status, 
+                    data: "po_no=" + po_no + "&status=" + status,
                     dataType: "json",
-                    success: function (response) {
+                    success: function(response) {
                         Swal.close();
                         Swal.fire('Good job!', 'Update Status Send Mail Completed!', 'success');
                         $("#dg").datagrid('reload');
@@ -406,9 +411,9 @@
         });
     }
 
-    function confirm(po_no, status){
-        $.messager.prompt('Update Status Confrim', 'Please input "CONFIRM" for Update Status', function(r){
-            if (r == "CONFIRM"){
+    function confirm(po_no, status) {
+        $.messager.prompt('Update Status Confrim', 'Please input "CONFIRM" for Update Status', function(r) {
+            if (r == "CONFIRM") {
                 Swal.fire({
                     title: 'Please Wait for Create Data',
                     showConfirmButton: false,
@@ -422,9 +427,9 @@
                 $.ajax({
                     type: "post",
                     url: "<?= base_url("purchase/purchase_orders/sendConfirm") ?>",
-                    data: "po_no=" + po_no + "&status=" + status, 
+                    data: "po_no=" + po_no + "&status=" + status,
                     dataType: "json",
-                    success: function (response) {
+                    success: function(response) {
                         Swal.close();
                         Swal.fire('Good job!', 'Update Status Confirm Completed!', 'success');
                         $("#dg").datagrid('reload');
@@ -434,9 +439,9 @@
         });
     }
 
-    function createsd(po_no){
-        $.messager.prompt('Create Delivery Schedule Import', 'Please input "DELIVERYIMP" for Generate, Be careful if data is generated for this period it will be deleted', function(r){
-            if (r == "DELIVERYIMP"){
+    function createsd(po_no) {
+        $.messager.prompt('Create Delivery Schedule Import', 'Please input "DELIVERYIMP" for Generate, Be careful if data is generated for this period it will be deleted', function(r) {
+            if (r == "DELIVERYIMP") {
                 Swal.fire({
                     title: 'Please Wait for Create Data',
                     showConfirmButton: false,
@@ -453,7 +458,7 @@
                     data: "&po_no=" + window.btoa(po_no),
                     dataType: "json",
                     success: function(rows) {
-                        if(rows['total'] > 0){
+                        if (rows['total'] > 0) {
                             requestData(rows['total'], rows);
 
                             function requestData(total, json, number = 1, value = 0, success = 1, failed = 1) {
@@ -489,7 +494,7 @@
                                     });
                                 }
                             }
-                        }else{
+                        } else {
                             Swal.close();
                             toastr.warning("Data not found, only IMPORT type maker can be created");
                         }
@@ -508,8 +513,10 @@
     }
 
     function filter() {
-        var filter_month = $("#filter_month").combobox('getValue');
-        var filter_year = $("#filter_year").combobox('getValue');
+        var filter_month_1 = $("#filter_month_1").combobox('getValue');
+        var filter_month_2 = $("#filter_month_2").combobox('getValue');
+        var filter_year_1 = $("#filter_year_1").combobox('getValue');
+        var filter_year_2 = $("#filter_year_2").combobox('getValue');
         var filter_revision = $("#filter_revision").combobox('getValue');
         var filter_item_family = $("#filter_item_family").combobox('getValue');
         var filter_po = $("#filter_po").combobox('getValue');
@@ -518,8 +525,10 @@
         var filter_type = $("#filter_type").combobox('getValue');
         var filter_status = $("#filter_status").combobox('getValue');
 
-        var url = "?filter_month=" + window.btoa(filter_month) +
-            "&filter_year=" + window.btoa(filter_year) +
+        var url = "?filter_month_1=" + window.btoa(filter_month_1) +
+            "&filter_month_2=" + window.btoa(filter_month_2) +
+            "&filter_year_1=" + window.btoa(filter_year_1) +
+            "&filter_year_2=" + window.btoa(filter_year_2) +
             "&filter_revision=" + window.btoa(filter_revision) +
             "&filter_supplier=" + window.btoa(filter_supplier) +
             "&filter_po=" + window.btoa(filter_po) +
@@ -528,8 +537,34 @@
             "&filter_status=" + window.btoa(filter_status) +
             "&filter_item_rm=" + window.btoa(filter_item_rm);
 
-        if (filter_month == "" || filter_year == "") {
-            toastr.warning("Please Choose Filter Date!", "Information");
+        // Variabel untuk validasi rentang waktu
+        var isOverOneYear = false;
+        var isNegativeDate = false;
+
+        // Lakukan pengecekan HANYA jika periode 1 dan 2 terisi lengkap
+        if (filter_month_1 !== "" && filter_year_1 !== "" && filter_month_2 !== "" && filter_year_2 !== "") {
+            // Konversi ke total bulan: (Tahun * 12) + Bulan
+            var start_months = (parseInt(filter_year_1) * 12) + parseInt(filter_month_1);
+            var end_months = (parseInt(filter_year_2) * 12) + parseInt(filter_month_2);
+
+            var diff = end_months - start_months;
+
+            if (diff < 0) {
+                isNegativeDate = true; // Periode akhir lebih kecil dari periode awal (mundur)
+            } else if (diff > 11) {
+                // diff > 11 berarti selisihnya 12 bulan atau lebih (Januari ke Januari tahun depan = 13 bulan berjalan). 
+                // Jika mau toleransi 12 bulan penuh (Jan-Des), biarkan angka 11.
+                isOverOneYear = true;
+            }
+        }
+
+        // Eksekusi validasi beruntun
+        if (filter_month_1 == "" || filter_year_1 == "") {
+            toastr.warning("Please Choose Filter Period!", "Information");
+        } else if (isNegativeDate) {
+            toastr.warning("End period cannot be less than start period!", "Information");
+        } else if (isOverOneYear) {
+            toastr.warning("Filter range cannot exceed 1 year (12 months)!", "Information");
         } else {
             $('#dg').datagrid({
                 url: '<?= base_url('purchase/purchase_orders/datatables') ?>' + url,
@@ -545,8 +580,10 @@
     }
 
     function excel() {
-        var filter_month = $("#filter_month").combobox('getValue');
-        var filter_year = $("#filter_year").combobox('getValue');
+        var filter_month_1 = $("#filter_month_1").combobox('getValue');
+        var filter_month_2 = $("#filter_month_2").combobox('getValue');
+        var filter_year_1 = $("#filter_year_1").combobox('getValue');
+        var filter_year_2 = $("#filter_year_2").combobox('getValue');
         var filter_revision = $("#filter_revision").combobox('getValue');
         var filter_item_family = $("#filter_item_family").combobox('getValue');
         var filter_po = $("#filter_po").combobox('getValue');
@@ -555,8 +592,10 @@
         var filter_type = $("#filter_type").combobox('getValue');
         var filter_status = $("#filter_status").combobox('getValue');
 
-        var url = "?filter_month=" + window.btoa(filter_month) +
-            "&filter_year=" + window.btoa(filter_year) +
+        var url = "?filter_month_1=" + window.btoa(filter_month_1) +
+            "&filter_month_2=" + window.btoa(filter_month_2) +
+            "&filter_year_1=" + window.btoa(filter_year_1) +
+            "&filter_year_2=" + window.btoa(filter_year_2) +
             "&filter_revision=" + window.btoa(filter_revision) +
             "&filter_supplier=" + window.btoa(filter_supplier) +
             "&filter_po=" + window.btoa(filter_po) +
@@ -565,8 +604,34 @@
             "&filter_status=" + window.btoa(filter_status) +
             "&filter_item_rm=" + window.btoa(filter_item_rm);
 
-        if (filter_month == "" || filter_year == "") {
-            toastr.warning("Please Choose Filter Date!", "Information");
+        // Variabel untuk validasi rentang waktu
+        var isOverOneYear = false;
+        var isNegativeDate = false;
+
+        // Lakukan pengecekan HANYA jika periode 1 dan 2 terisi lengkap
+        if (filter_month_1 !== "" && filter_year_1 !== "" && filter_month_2 !== "" && filter_year_2 !== "") {
+            // Konversi ke total bulan: (Tahun * 12) + Bulan
+            var start_months = (parseInt(filter_year_1) * 12) + parseInt(filter_month_1);
+            var end_months = (parseInt(filter_year_2) * 12) + parseInt(filter_month_2);
+
+            var diff = end_months - start_months;
+
+            if (diff < 0) {
+                isNegativeDate = true; // Periode akhir lebih kecil dari periode awal (mundur)
+            } else if (diff > 11) {
+                // diff > 11 berarti selisihnya 12 bulan atau lebih (Januari ke Januari tahun depan = 13 bulan berjalan). 
+                // Jika mau toleransi 12 bulan penuh (Jan-Des), biarkan angka 11.
+                isOverOneYear = true;
+            }
+        }
+
+        // Eksekusi validasi beruntun
+        if (filter_month_1 == "" || filter_year_1 == "") {
+            toastr.warning("Please Choose Filter Period!", "Information");
+        } else if (isNegativeDate) {
+            toastr.warning("End period cannot be less than start period!", "Information");
+        } else if (isOverOneYear) {
+            toastr.warning("Filter range cannot exceed 1 year (12 months)!", "Information");
         } else {
             window.location.assign('<?= base_url('purchase/purchase_orders/print/excel') ?>' + url);
         }
@@ -583,9 +648,9 @@
             remoteFilter: true,
             rownumbers: true,
             singleSelect: true,
-            fit:true,
-            rowStyler: function(index,row){
-                if (row.color == ""){
+            fit: true,
+            rowStyler: function(index, row) {
+                if (row.color == "") {
                     return 'background-color:#FFD2D2;';
                 }
             }
@@ -672,8 +737,8 @@
                 }
             }]
         });
-        
-        $('#filter_month').combobox({
+
+        $('#filter_month_1').combobox({
             url: '<?php echo base_url('planning/mst_data/readMonths'); ?>',
             valueField: 'id',
             textField: 'name',
@@ -686,7 +751,33 @@
             }],
         });
 
-        $('#filter_year').combobox({
+        $('#filter_month_2').combobox({
+            url: '<?php echo base_url('planning/mst_data/readMonths'); ?>',
+            valueField: 'id',
+            textField: 'name',
+            prompt: 'Select Month',
+            icons: [{
+                iconCls: 'icon-clear',
+                handler: function(e) {
+                    $(e.data.target).combobox('clear').combobox('textbox').focus();
+                }
+            }],
+        });
+
+        $('#filter_year_1').combobox({
+            url: '<?php echo base_url('planning/mst_data/readYears'); ?>',
+            valueField: 'id',
+            textField: 'name',
+            prompt: 'Select Year',
+            icons: [{
+                iconCls: 'icon-clear',
+                handler: function(e) {
+                    $(e.data.target).combobox('clear').combobox('textbox').focus();
+                }
+            }],
+        });
+
+        $('#filter_year_2').combobox({
             url: '<?php echo base_url('planning/mst_data/readYears'); ?>',
             valueField: 'id',
             textField: 'name',
@@ -730,7 +821,7 @@
                     $(e.data.target).combobox('clear').combobox('textbox').focus();
                 }
             }],
-            onSelect: function(row){
+            onSelect: function(row) {
                 $('#filter_item_rm').combogrid({
                     url: '<?= base_url('master/item_rm/reads/') ?>' + row.id,
                     panelWidth: 550,
@@ -820,7 +911,7 @@
                     width: 250
                 }]
             ],
-            onSelect: function(val, row){
+            onSelect: function(val, row) {
                 var filter_month = $("#filter_month").combobox('getValue');
                 var filter_year = $("#filter_year").combobox('getValue');
                 var filter_revision = $("#filter_revision").combobox('getValue');
@@ -879,7 +970,7 @@
         return "<b>" + formatter.format(value) + "</b>";
     }
 
-    function numberformatPrice(value, row){
+    function numberformatPrice(value, row) {
         const formatter = new Intl.NumberFormat('ja-JP', {
             minimumFractionDigits: 4
         });
@@ -887,13 +978,13 @@
         return "<b>" + formatter.format(value) + "</b>";
     }
 
-    function numberformatPrice2(value, row){
-        if(row.supplier_type == "LOCAL"){
+    function numberformatPrice2(value, row) {
+        if (row.supplier_type == "LOCAL") {
             var decimal = 0;
-        }else{
+        } else {
             var decimal = 2;
         }
-        
+
         const formatter = new Intl.NumberFormat('ja-JP', {
             minimumFractionDigits: decimal
         });
@@ -902,82 +993,82 @@
     }
 
     function BtnDetail(val, row) {
-        var details = "details('"+row.po_no+"','"+row.supplier_name+"','"+row.note+"','"+row.item_family_name+"')";
-        return '<a class="btn btn-primary w-100" style="pointer-events: visible; opacity:1;" onClick="'+details+'"><i class="fa fa-eye"></i> View</a>';
+        var details = "details('" + row.po_no + "','" + row.supplier_name + "','" + row.note + "','" + row.item_family_name + "')";
+        return '<a class="btn btn-primary w-100" style="pointer-events: visible; opacity:1;" onClick="' + details + '"><i class="fa fa-eye"></i> View</a>';
     }
 
     function BtnPrint(val, row) {
         // if(row.approved_to == "" || row.approved_to == null){
-            return '<a class="btn btn-primary w-100" target="_blank" href="<?= base_url('purchase/purchase_order_mcl/print_po/') ?>'+btoa(row.po_no)+'" style="pointer-events: visible; opacity:1;"><i class="fa fa-print"></i> Print</a>';
+        return '<a class="btn btn-primary w-100" target="_blank" href="<?= base_url('purchase/purchase_order_mcl/print_po/') ?>' + btoa(row.po_no) + '" style="pointer-events: visible; opacity:1;"><i class="fa fa-print"></i> Print</a>';
         // }else{
         //     return "-";
         // }
     }
 
     function BtnCreateSd(val, row) {
-        if(row.print_sd == 0){
-            var confirm = "createsd('"+row.po_no+"')";
-            return '<a class="btn btn-success w-100" style="pointer-events: visible; opacity:1;" onClick="'+confirm+'"><i class="fa fa-plus"></i> Create</a>';
+        if (row.print_sd == 0) {
+            var confirm = "createsd('" + row.po_no + "')";
+            return '<a class="btn btn-success w-100" style="pointer-events: visible; opacity:1;" onClick="' + confirm + '"><i class="fa fa-plus"></i> Create</a>';
         } else {
             return '-';
         }
     }
 
     function BtnPrintSd(val, row) {
-        if(row.print_sd > 0){
-            return '<a class="btn btn-primary w-100" target="_blank" href="<?= base_url('purchase/purchase_orders/print_delivery/') ?>'+btoa(row.po_no)+'" style="pointer-events: visible; opacity:1;"><i class="fa fa-print"></i> Print</a>';
+        if (row.print_sd > 0) {
+            return '<a class="btn btn-primary w-100" target="_blank" href="<?= base_url('purchase/purchase_orders/print_delivery/') ?>' + btoa(row.po_no) + '" style="pointer-events: visible; opacity:1;"><i class="fa fa-print"></i> Print</a>';
         } else {
             return '-';
         }
     }
-    
+
     function BtnConfirm(val, row) {
-        if(val == "YES") {
-            var details = "confirm('"+row.po_no+"','NO')";
-            return '<a class="btn btn-success w-100" style="pointer-events: visible; opacity:1;" onClick="'+details+'"><i class="fa fa-check"></i> Confirm</a>';
+        if (val == "YES") {
+            var details = "confirm('" + row.po_no + "','NO')";
+            return '<a class="btn btn-success w-100" style="pointer-events: visible; opacity:1;" onClick="' + details + '"><i class="fa fa-check"></i> Confirm</a>';
         } else {
-            var details = "confirm('"+row.po_no+"','YES')";
-            return '<a class="btn btn-danger w-100" style="pointer-events: visible; opacity:1;" onClick="'+details+'"><i class="fa fa-times"></i> Unconfirm</a>';
+            var details = "confirm('" + row.po_no + "','YES')";
+            return '<a class="btn btn-danger w-100" style="pointer-events: visible; opacity:1;" onClick="' + details + '"><i class="fa fa-times"></i> Unconfirm</a>';
         }
     }
 
     function BtnPush(val, row) {
-        if(row.push == "OK") {
+        if (row.push == "OK") {
             return 'DONE';
-        // } else if ((row.approved_to == null || row.approved_to == "") && row.email_status == "SEND") {
+            // } else if ((row.approved_to == null || row.approved_to == "") && row.email_status == "SEND") {
         } else if (row.approved_to == null || row.approved_to == "") {
-            var details = "details('"+row.po_no+"','"+row.supplier_name+"','"+row.note+"','"+row.item_family_name+"','push')";
-            return '<a class="btn btn-danger w-100" style="pointer-events: visible; opacity:1;" onClick="'+details+'"><i class="fa fa-share"></i> Push</a>';
+            var details = "details('" + row.po_no + "','" + row.supplier_name + "','" + row.note + "','" + row.item_family_name + "','push')";
+            return '<a class="btn btn-danger w-100" style="pointer-events: visible; opacity:1;" onClick="' + details + '"><i class="fa fa-share"></i> Push</a>';
         } else {
             return '-';
         }
     }
 
     function BtnSend(val, row) {
-        if(row.email_status == "SENT"){
-            var details = "sendMail('"+row.po_no+"','PENDING')";
-            return '<a class="btn btn-danger w-100" style="pointer-events: visible; opacity:1;" onClick="'+details+'"><i class="fa fa-times"></i> Cancel</a>';
+        if (row.email_status == "SENT") {
+            var details = "sendMail('" + row.po_no + "','PENDING')";
+            return '<a class="btn btn-danger w-100" style="pointer-events: visible; opacity:1;" onClick="' + details + '"><i class="fa fa-times"></i> Cancel</a>';
         } else if (row.approved_to == null || row.approved_to == "") {
             // var details = "sendMail('"+row.po_no+"','"+row.supplier_name+"','"+row.note+"','"+row.item_family_name+"','mail','"+row.email+"')";
-            var details = "sendMail('"+row.po_no+"','SENT')";
-            return '<a class="btn btn-success w-100" style="pointer-events: visible; opacity:1;" onClick="'+details+'"><i class="fa fa-send"></i> Send</a>';
+            var details = "sendMail('" + row.po_no + "','SENT')";
+            return '<a class="btn btn-success w-100" style="pointer-events: visible; opacity:1;" onClick="' + details + '"><i class="fa fa-send"></i> Send</a>';
         } else {
             return '-';
         }
     }
 
     function BtnStatus(val, row) {
-        if(row.status == 0){
-            var details = "statusChange('"+row.id+"','"+row.status+"')";
-            return '<a class="btn btn-success w-100" style="pointer-events: visible; opacity:1;" onClick="'+details+'">OPEN</a>';
+        if (row.status == 0) {
+            var details = "statusChange('" + row.id + "','" + row.status + "')";
+            return '<a class="btn btn-success w-100" style="pointer-events: visible; opacity:1;" onClick="' + details + '">OPEN</a>';
             // return '<a class="btn btn-success w-100" style="pointer-events: visible; opacity:1;">OPEN</a>';
-        } else if(row.complete == 1) {
-            var details = "statusChange('"+row.id+"','"+row.status+"')";
-            return '<a class="btn btn-warning w-100" style="pointer-events: visible; opacity:1;" onClick="'+details+'">COMPLETE</a>';
+        } else if (row.complete == 1) {
+            var details = "statusChange('" + row.id + "','" + row.status + "')";
+            return '<a class="btn btn-warning w-100" style="pointer-events: visible; opacity:1;" onClick="' + details + '">COMPLETE</a>';
             // return '<a class="btn btn-danger w-100" style="pointer-events: visible; opacity:1;">CLOSE</a>';
-        } else if(row.status == 1) {
-            var details = "statusChange('"+row.id+"','"+row.status+"')";
-            return '<a class="btn btn-danger w-100" style="pointer-events: visible; opacity:1;" onClick="'+details+'">CLOSE</a>';
+        } else if (row.status == 1) {
+            var details = "statusChange('" + row.id + "','" + row.status + "')";
+            return '<a class="btn btn-danger w-100" style="pointer-events: visible; opacity:1;" onClick="' + details + '">CLOSE</a>';
             // return '<a class="btn btn-danger w-100" style="pointer-events: visible; opacity:1;">CLOSE</a>';
         }
     }
@@ -985,7 +1076,7 @@
     function cellStylerApproval(value, row, index) {
         if (row.approved_to == null) {
             return 'background: #FF5F5F; color:white;';
-        } else if(row.approved_to == ""){
+        } else if (row.approved_to == "") {
             return 'background: #53D636; color:white;';
         } else {
             return 'background: #FF5F5F; color:white;';
@@ -995,7 +1086,7 @@
     function cellFormatterApproval(val, row) {
         if (row.approved_to == null) {
             return 'Not Setting';
-        } else if(row.approved_to == ""){
+        } else if (row.approved_to == "") {
             return 'Approved';
         } else {
             return 'Checking';
@@ -1017,7 +1108,7 @@
             return 'Delivered';
         }
     };
-    
+
     function cellStylerStatus(value, row, index) {
         if (value == 0) {
             return 'background: #53D636; color:white;';
@@ -1037,7 +1128,7 @@
     function cellStylerDelivery(value, row, index) {
         if (value == 0) {
             return 'background: #ffb26e; color:white;';
-        } else if(value == 1) {
+        } else if (value == 1) {
             return 'background: #53D636; color:white;';
         } else {
             return '-';
@@ -1047,7 +1138,7 @@
     function cellFormatterDelivery(value, row) {
         if (value == 0) {
             return 'Pending';
-        } else if(value == 1) {
+        } else if (value == 1) {
             return 'Delivered';
         } else {
             return '-';
@@ -1057,9 +1148,9 @@
     function cellStylerConfirm(value, row, index) {
         if (value == null) {
             return 'background: #FF5F5F; color:white;';
-        } else if(value == "Pending"){
+        } else if (value == "Pending") {
             return 'background: #AB6F2B; color:white;';
-        }else{
+        } else {
             return 'background: #53D636; color:white;';
         }
     }
@@ -1067,7 +1158,7 @@
     function cellFormatterConfirm(value, row) {
         if (value == null) {
             return 'Not Confirm';
-        } else if(value == "Pending"){
+        } else if (value == "Pending") {
             return 'Pending';
         } else {
             return 'Confirm';
