@@ -683,11 +683,11 @@ class Approvals extends CI_Controller
         }
 
         foreach ($new_part_price_procurements as $nppp) {
-            $this->approvalMessage($nppp->approved_by, $nppp->approved_to, $nppp->created_by, "new_part_price_procurements");
+            $this->approvalMessage($nppp->approved_by, $nppp->approved_to, $nppp->created_by, "new_part_price_procurements", $nppp->created_by_name);
         }
     }
 
-    public function approvalMessage($approved_by, $approved_to, $created_by, $table)
+    public function approvalMessage($approved_by, $approved_to, $created_by, $table, $created_by_name = "")
     {
         $user = $this->crud->read('users', [], ["username" => $approved_by]);
 
@@ -711,6 +711,12 @@ class Approvals extends CI_Controller
 
         $title = "APPROVAL " . strtoupper(str_replace('_', ' ', $tablename));
 
+        if (empty($user->name)) {
+            $username = $created_by_name;
+        } else {
+            $username = $user->name;
+        }
+
         $link = "approvalDetail('$table', '$approved_to', '$approved_by', '$title')";
         echo '  <li class="list-isi">
                     <a onclick="' . $link . '">
@@ -723,7 +729,7 @@ class Approvals extends CI_Controller
                                     </div>
                                 </td>
                                 <td style="padding-left: 10px;">
-                                    <b>' . $user->name . '</b><br>
+                                    <b>' . $username . '</b><br>
                                     <small>Sent a request to approve data <b>' . strtoupper(str_replace("_", " ", $tablename)) . '</b></small>
                                 </td>
                             </tr>
